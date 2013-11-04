@@ -4,6 +4,7 @@ by Jason Costello, @jsncostello
 *******************************************************************************/
 
 @import url(pygment_trac.css);
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
 
 /*******************************************************************************
 MeyerWeb Reset
@@ -54,9 +55,9 @@ Theme Styles
 body {
   box-sizing: border-box;
   color:#373737;
-  background: #212121;
+  background: #ffffff;
   font-size: 16px;
-  font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+  font-family: 'Nanum Gothic', Calibri, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -65,7 +66,7 @@ h1, h2, h3, h4, h5, h6 {
   margin: 10px 0;
   font-weight: 700;
   color:#222222;
-  font-family: 'Lucida Grande', 'Calibri', Helvetica, Arial, sans-serif;
+  font-family: 'Nanum Gothic', 'Calibri', Helvetica, Arial, sans-serif;
   letter-spacing: -1px;
 }
 
@@ -281,12 +282,7 @@ Full-Width Styles
 }
 
 #header_wrap {
-  background: #212121;
-  background: -moz-linear-gradient(top, #373737, #212121);
-  background: -webkit-linear-gradient(top, #373737, #212121);
-  background: -ms-linear-gradient(top, #373737, #212121);
-  background: -o-linear-gradient(top, #373737, #212121);
-  background: linear-gradient(top, #373737, #212121);
+  background: #ffffff;
 }
 
 #header_wrap .inner {
@@ -295,10 +291,9 @@ Full-Width Styles
 
 #project_title {
   margin: 0;
-  color: #fff;
+  color: #000000;
   font-size: 42px;
   font-weight: 700;
-  text-shadow: #111 0px 0px 10px;
 }
 
 #project_tagline {
@@ -349,7 +344,7 @@ Full-Width Styles
 }
 
 #main_content_wrap {
-  background: #f2f2f2;
+  background: #fafafa;
   border-top: 1px solid #111;
   border-bottom: 1px solid #111;
 }
