@@ -357,6 +357,13 @@ Full-Width Styles
   background: #212121;
 }
 
+.grid {
+  width: 100%;
+  background-color: white;
+  font-size: 12px;
+  text-align: center;
+}
+
 
 
 /*******************************************************************************
