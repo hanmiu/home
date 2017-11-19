@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      h2 {
+        text-align: center;
+      }
+      
+      #container {
+        text-align: center;
+      }
+      
+      #loading {
+        background-color: yellow;
+        padding: 10px;
+      }
+      
+      #info {
+        color: gray;
+        padding: 10px;
+      }
+      
+      #part1 {
+        display: inline-block;
+        width: 400px;
+      }
+      
+      #part2 {
+        display: inline-block;
+        width: 400px;
+      }
+      
+      .part {
+        padding: 20px;
+        text-align: center;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      
+      .th {
+        padding: 10px;
+        border: 1px solid silver;
+      }
+      
+      td {
+        padding: 5px;
+        border: 1px dotted rgb(220, 220, 220);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>한미유치원 2018학년도 교육설명회 신청확인</h2>
+    <div id="container">
+      <div id="loading">로딩중</div>
+      <div id="info">설명회 참석, 상담, 원서접수 확정은 12월 9일(토) 예정입니다.</div>
+      <div id="part1">
+        <div class="part">오전 10시 (2014년생)</div>
+        <table id="t-part1">
+          <tr>
+            <td class="th">연번</td>
+            <td class="th">신청인 이름</td>
+            <td class="th">어린이 생년월일</td>
+          </tr>
+        </table>
+      </div>
+      <div id="part2">
+        <div class="part">오후 1시 (2013년생, 2012년생)</div>
+        <table id="t-part2">
+          <tr>
+            <td class="th">연번</td>
+            <td class="th">신청인 이름</td>
+            <td class="th">어린이 생년월일</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    
+  </body>
+  <script>
+    var t_part1 = document.querySelector('#t-part1');
+    var t_part2 = document.querySelector('#t-part2');
+    var callback_register = function(data) {
+      document.querySelector('#loading').style.display = 'none';
+      var count1 = 0;
+      var count2 = 0;
+      var arr1 = [];
+      var arr2 = [];
+      for(var i = 0; i < data.length; i++) {
+        var o = data[i];
+        var dt = new Date(o.birthday);
+        var birthday = dt.toLocaleDateString();
+        if(o.agree === '동의') {
+          var tr = document.createElement('tr');
+          var html = '<td>%n%</td><td>%name%</td><td>%birthday%</td>';
+          html = html.replace('%name%', o.name);
+          html = html.replace('%birthday%', birthday);
+          if(o.checkin === '오전 10시 (만3세)') {
+            count1++;
+            html = html.replace('%n%', count1);
+            tr.innerHTML = html;
+            arr1.push(tr);
+          }
+          else {
+            if(dt.getFullYear() !== 2014) {
+              count2++;
+              html = html.replace('%n%', count2);
+              tr.innerHTML = html;
+              arr2.push(tr);  
+            }
+          }
+        }
+      }
+      
+      while(arr1.length > 0) {
+        t_part1.appendChild(arr1.pop());
+      }
+      while(arr2.length > 0) {
+        t_part2.appendChild(arr2.pop());
+      }
+    };
+    
+    (function() {
+      var code_url = 'https://script.google.com/macros/s/AKfycbzqBS5zmSQVQBqxHTD3e0S6zUrtkMqI8bM94DcOwSMG9WP7bIo/exec';
+      var s_code = document.createElement('script');
+      s_code.type = 'text/javascript';
+      s_code.src = code_url;
+      document.head.appendChild(s_code);
+    })();
+  </script>
+</html>
