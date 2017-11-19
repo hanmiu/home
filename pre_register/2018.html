@@ -83,7 +83,7 @@
   <script>
     var t_part1 = document.querySelector('#t-part1');
     var t_part2 = document.querySelector('#t-part2');
-    var callback_register = function(data) {
+    function callback_register(data) {
       document.querySelector('#loading').style.display = 'none';
       var count1 = 0;
       var count2 = 0;
@@ -99,13 +99,15 @@
           html = html.replace('%name%', o.name);
           html = html.replace('%birthday%', birthday);
           if(o.checkin === '오전 10시 (만3세)') {
-            count1++;
-            html = html.replace('%n%', count1);
-            tr.innerHTML = html;
-            arr1.push(tr);
+            if(dt.getFullYear() == 2014) {
+              count1++;
+              html = html.replace('%n%', count1);
+              tr.innerHTML = html;
+              arr1.push(tr);
+            }
           }
           else {
-            if(dt.getFullYear() !== 2014) {
+            if(dt.getFullYear() != 2014) {
               count2++;
               html = html.replace('%n%', count2);
               tr.innerHTML = html;
@@ -123,12 +125,14 @@
       }
     };
     
-    (function() {
-      var code_url = 'https://script.google.com/macros/s/AKfycbzqBS5zmSQVQBqxHTD3e0S6zUrtkMqI8bM94DcOwSMG9WP7bIo/exec';
-      var s_code = document.createElement('script');
-      s_code.type = 'text/javascript';
-      s_code.src = code_url;
-      document.head.appendChild(s_code);
-    })();
+    function reqListener () {
+      callback_register(JSON.parse(this.responseText));
+    }
+
+    var code_url = 'https://script.google.com/macros/s/AKfycbzqBS5zmSQVQBqxHTD3e0S6zUrtkMqI8bM94DcOwSMG9WP7bIo/exec';
+    var xhr = new XMLHttpRequest();
+    xhr.addEventListener('load', reqListener);
+    xhr.open('GET', code_url);
+    xhr.send();
   </script>
 </html>
