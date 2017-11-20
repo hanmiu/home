@@ -103,7 +103,9 @@
               count1++;
               html = html.replace('%n%', count1);
               tr.innerHTML = html;
-              arr1.push(tr);
+              if(arr1.length < 90) { // 참석인원 제한
+                arr1.push(tr);
+              }
             }
           }
           else {
