@@ -58,7 +58,7 @@
       <div id="loading">로딩중</div>
       <div id="info">설명회 참석, 상담, 원서접수 확정은 12월 9일(토) 예정입니다.</div>
       <div id="part1">
-        <div class="part">오전 10시 (2014년생)</div>
+        <div class="part">오전 10시: 2014년생</div>
         <table id="t-part1">
           <tr>
             <td class="th">연번</td>
@@ -68,7 +68,7 @@
         </table>
       </div>
       <div id="part2">
-        <div class="part">오후 1시 (2013년생, 2012년생)</div>
+        <div class="part">오후 1시: 2013년생, 2012년생</div>
         <table id="t-part2">
           <tr>
             <td class="th">연번</td>
@@ -89,6 +89,10 @@
       var count2 = 0;
       var arr1 = [];
       var arr2 = [];
+      
+      var count_man4 = 0;
+      var count_man5 = 0;
+      
       for(var i = 0; i < data.length; i++) {
         var o = data[i];
         var dt = new Date(o.birthday);
@@ -114,6 +118,9 @@
               html = html.replace('%n%', count2);
               tr.innerHTML = html;
               arr2.push(tr);  
+              
+              if(dt.getFullYear() == 2013) count_man4++;
+              if(dt.getFullYear() == 2012) count_man5++;
             }
           }
         }
@@ -125,6 +132,10 @@
       while(arr2.length > 0) {
         t_part2.appendChild(arr2.pop());
       }
+      
+      document.querySelector('#part1 .part').textContent = `오전 10시: 2014년생 (${count1}명)`;
+      
+      document.querySelector('#part2 .part').textContent = `오후 1시: 2013년생 (${count_man4}명), 2012년생 (${count_man5}명)`;
     };
     
     function reqListener () {
