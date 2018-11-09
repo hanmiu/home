@@ -1,0 +1,140 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- 한미유치원 -->
+<style>
+  body {
+    margin: 0;
+    background-color: black;
+    overflow: hidden;
+  }
+  
+  #header {
+    height: 50px;
+  }
+  
+  #content {
+    margin: 0;
+    padding: 0;
+    display: block;
+    margin: auto;
+  }
+  
+  #video {
+    display: block;
+    transform-origin: center center;
+  }
+  
+  #captures {
+    height: 100px;
+    overflow-x: scroll;
+    overflow-y: hidden;
+  }
+  
+  #track {
+  }
+  
+  .frame {
+    height: 100px;
+  }
+</style>
+<body>
+  <div id="content">
+    <div id="header"></div>
+    <video id="video"></video>
+    <div id="ui"></div>
+    <div id="captures">
+      <div id="track"></div>
+    </div>
+  </div>
+</body>
+<script>
+  let el_content = document.querySelector('#content');
+  let el_header = document.querySelector('#header');
+  let el_video = document.querySelector('#video');
+  let el_ui = document.querySelector('#ui');
+  let el_captures = document.querySelector('#captures');
+  let el_track = document.querySelector('#track');
+  let g = document.createElement('canvas').getContext('2d');
+  
+  let transform = { x: 1, y: 1, r: 0 };
+  
+  function layout() {
+    el_content.style.width = video.videoWidth + 'px';
+    el_captures.style.width = video.videoWidth + 'px';
+    g.canvas.width = video.videoWidth;
+    g.canvas.height = video.videoHeight;
+  }
+  
+  function transform_video() {
+    transform.r = transform.r % 360;
+    let x = transform.x;
+    let y = transform.y;
+    if(transform.r > 0) {
+      x = transform.x * 0.6;
+      y = transform.y * 0.6;
+    }
+    el_video.style.transform = `scale(${x}, ${y}) rotate(${transform.r}deg)`;
+  }
+  
+  function capture() {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    g.save();
+    let tx = transform.x < 0 ? el_video.videoWidth : 0;
+    let ty = transform.y < 0 ? el_video.videoHeight : 0;
+    g.translate(tx, ty);
+    g.scale(transform.x, transform.y);
+    g.drawImage(video, 0, 0);
+    g.restore();
+    let img = document.createElement('img');
+    img.className = 'frame';
+    img.src = g.canvas.toDataURL('image/jpeg', 0.9);
+    el_track.appendChild(img);
+    img.onload = function() {
+      let w = 0;
+      for(let el of el_track.children) {
+        w += parseFloat(getComputedStyle(el).width);
+      }
+      el_track.style.width = w + 'px';
+      img.scrollIntoView();
+    }
+  }
+  
+  navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+  .then(function(mediaStream) {
+    el_video.srcObject = mediaStream;
+    el_video.onloadedmetadata = function(e) {
+      video.play();
+      layout();
+    };
+  })
+  .catch(function(err) { console.log(err.name + ": " + err.message); });
+  
+  window.onkeydown = function(e) {
+    console.log(e.code);
+    switch(e.code) {
+      case 'ArrowLeft':
+        transform.x = -1;
+        transform_video();
+        break;
+      case 'ArrowRight':
+        transform.x = 1;
+        transform_video();
+        break;
+      case 'ArrowUp':
+        transform.y = -1;
+        transform_video();
+        break;
+      case 'ArrowDown':
+        transform.y = 1;
+        transform_video();
+        break;
+      case 'ShiftRight':
+        transform.r += 90;
+        transform_video();
+        break;
+      case 'Space':
+        capture();
+        break;
+    } 
+  };
+</script>
