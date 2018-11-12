@@ -6,10 +6,12 @@
     margin: 0;
     background-color: black;
     overflow: hidden;
+    cursor: crosshair;
+    user-select: none;
   }
   
   #header {
-    height: 50px;
+    height: 10px;
   }
   
   #content {
@@ -19,83 +21,155 @@
     margin: auto;
   }
   
-  #video {
+  #canvas {
     display: block;
     transform-origin: center center;
   }
   
   #captures {
-    height: 100px;
+    height: 120px;
     overflow-x: scroll;
     overflow-y: hidden;
+  }
+  
+  #ui {
+    margin-top: 10px;
+    height: 40px;
+  }
+  
+  .u-item {
+    font-size: 30px;
+    color: white;
+    margin-right: 10px;
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  
+  .u-item:hover {
+    color: aqua;
+  }
+  
+  #speed {
+    width: 80px;  
   }
   
   #track {
   }
   
   .frame {
+    border: 3px solid rgb(64, 64, 64);
     height: 100px;
+    cursor: pointer;
+  }
+  
+  .frame-selected {
+    border: 3px solid white;
+    height: 100px;
+    cursor: pointer;
   }
 </style>
 <body>
   <div id="content">
     <div id="header"></div>
-    <video id="video"></video>
-    <div id="ui"></div>
+    <div>
+      <canvas id="canvas"></canvas>
+    </div>
+    <div id="ui">
+      <span class="u-item" id="live">●</span>
+      <span class="u-item" id="play">▶</span>
+      <input type="range" id="speed" value="8" min="1" max="10"></input>
+      <span class="u-item" id="trash">🗑️</span>
+      <span class="u-item" id="print">🖨️</span>
+      <span class="u-item" id="save">💾</span>
+    </div>
     <div id="captures">
       <div id="track"></div>
     </div>
   </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
 <script>
   let el_content = document.querySelector('#content');
   let el_header = document.querySelector('#header');
-  let el_video = document.querySelector('#video');
+  let el_video = document.createElement('video');
   let el_ui = document.querySelector('#ui');
+  let el_live = document.querySelector('#live');
+  let el_play = document.querySelector('#play');
+  let el_speed = document.querySelector('#speed');
+  let el_trash = document.querySelector('#trash');
+  let el_print = document.querySelector('#print');
+  let el_save = document.querySelector('#save');
   let el_captures = document.querySelector('#captures');
   let el_track = document.querySelector('#track');
-  let g = document.createElement('canvas').getContext('2d');
+  let g = document.querySelector('#canvas').getContext('2d');
   
   let transform = { x: 1, y: 1, r: 0 };
+  let past_time = performance.now();
+  let mode = 'live';
+  let curr_frame = null;
+  let play_speed = (11 - el_speed.value) * 100;
   
   function layout() {
-    el_content.style.width = video.videoWidth + 'px';
-    el_captures.style.width = video.videoWidth + 'px';
-    g.canvas.width = video.videoWidth;
-    g.canvas.height = video.videoHeight;
-  }
-  
-  function transform_video() {
-    transform.r = transform.r % 360;
-    let x = transform.x;
-    let y = transform.y;
-    if(transform.r > 0) {
-      x = transform.x * 0.6;
-      y = transform.y * 0.6;
-    }
-    el_video.style.transform = `scale(${x}, ${y}) rotate(${transform.r}deg)`;
+    el_content.style.width = el_video.videoWidth + 'px';
+    el_captures.style.width = el_video.videoWidth + 'px';
+    g.canvas.width = el_video.videoWidth;
+    g.canvas.height = el_video.videoHeight;
   }
   
   function capture() {
-    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
-    g.save();
-    let tx = transform.x < 0 ? el_video.videoWidth : 0;
-    let ty = transform.y < 0 ? el_video.videoHeight : 0;
-    g.translate(tx, ty);
-    g.scale(transform.x, transform.y);
-    g.drawImage(video, 0, 0);
-    g.restore();
     let img = document.createElement('img');
     img.className = 'frame';
-    img.src = g.canvas.toDataURL('image/jpeg', 0.9);
+    g.canvas.toBlob(function(blob) {
+      img.src = URL.createObjectURL(blob);
+    }, 'image/jpeg', 0.9);
     el_track.appendChild(img);
     img.onload = function() {
       let w = 0;
       for(let el of el_track.children) {
-        w += parseFloat(getComputedStyle(el).width);
+        w += parseFloat(getComputedStyle(el).width) + 6;
       }
+      w += parseFloat(getComputedStyle(img).width) + 6;
       el_track.style.width = w + 'px';
       img.scrollIntoView();
+    }
+  }
+  
+  function draw() {
+    let aspect_ratio = el_video.videoWidth / el_video.videoHeight;
+    let scale_factor = 1.0;
+    if(transform.r % 180 != 0) {
+      scale_factor = 1.0 / aspect_ratio;
+    }
+    if(mode == 'live') {
+      g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+      g.save();
+      g.translate(g.canvas.width * 0.5, g.canvas.height * 0.5);
+      g.scale(transform.x * scale_factor, transform.y * scale_factor);
+      g.rotate(transform.r / 180 * Math.PI);
+      g.translate(-el_video.videoWidth * 0.5, -el_video.videoHeight * 0.5);
+      g.drawImage(el_video, 0, 0);
+      g.restore(); 
+    }
+    
+    if(mode == 'play') {
+      let curr_time = performance.now();
+      if(curr_time - past_time > play_speed) {
+        if(curr_frame) {
+          g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+          g.save();
+          g.translate(g.canvas.width * 0.5, g.canvas.height * 0.5);
+          g.translate(-el_video.videoWidth * 0.5, -el_video.videoHeight * 0.5);
+          g.drawImage(curr_frame, 0, 0);
+          g.restore(); 
+          if(curr_frame.nextSibling) {
+            curr_frame = curr_frame.nextSibling;
+          }
+          else {
+            curr_frame = el_track.firstChild;
+          }
+        } 
+        past_time = curr_time;
+      } 
     }
   }
   
@@ -103,7 +177,7 @@
   .then(function(mediaStream) {
     el_video.srcObject = mediaStream;
     el_video.onloadedmetadata = function(e) {
-      video.play();
+      el_video.play();
       layout();
     };
   })
@@ -112,29 +186,86 @@
   window.onkeydown = function(e) {
     console.log(e.code);
     switch(e.code) {
-      case 'ArrowLeft':
-        transform.x = -1;
-        transform_video();
+      case 'KeyH':
+        transform.x *= -1;
         break;
-      case 'ArrowRight':
-        transform.x = 1;
-        transform_video();
+      case 'KeyV':
+        transform.y *= -1;
         break;
-      case 'ArrowUp':
-        transform.y = -1;
-        transform_video();
-        break;
-      case 'ArrowDown':
-        transform.y = 1;
-        transform_video();
-        break;
-      case 'ShiftRight':
+      case 'KeyR':
         transform.r += 90;
-        transform_video();
         break;
       case 'Space':
         capture();
         break;
     } 
   };
+  
+  window.onmousedown = function(e) {
+    if(e.target.className == 'frame') {
+      e.target.className = 'frame-selected';
+    }
+    else if(e.target.className == 'frame-selected') {
+      e.target.className = 'frame';
+    }
+  };
+  
+  el_live.onclick = function() {
+    mode = 'live';
+  };
+  
+  el_play.onclick = function() {
+    mode = 'play';
+    curr_frame = el_track.firstChild;
+    past_time = performance.now();
+  };
+  
+  el_trash.onclick = function() {
+    to_remove = document.querySelectorAll('.frame-selected');
+    for(let img of to_remove) {
+      URL.revokeObjectURL(img.src);
+      img.remove();
+    }
+  };
+  
+  el_speed.oninput = function(e) {
+    play_speed = (11 - el_speed.value) * 100;
+  }
+  
+  el_save.onclick = function() {
+    let zip = new JSZip();
+    let photos = zip.folder("photos");
+
+    (async function() {
+      let count = 1;
+      for(let img of el_track.children) {
+        let fn = String(count).padStart(4, '0') + '.jpg';
+        let blob = await fetch(img.src).then(r => r.blob());
+        console.log(blob);
+        photos.file(fn, blob);
+        count++;
+      }
+
+      zip.generateAsync({type: 'blob'}).then(function (blob) {
+        let a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        a.href = URL.createObjectURL(blob);
+        a.download = 'hello';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, function (err) {
+        console.log(err);
+      });
+
+    })()
+  };
+  
+  function loop() {
+    draw();
+    requestAnimationFrame(loop);
+  }
+  
+  loop();
 </script>
