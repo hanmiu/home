@@ -62,7 +62,7 @@
     cursor: pointer;
   }
   
-  .frame-selected {
+  .frame.selected {
     border: 3px solid white;
     height: 100px;
     cursor: pointer;
@@ -203,9 +203,9 @@
   
   window.onmousedown = function(e) {
     if(e.target.className == 'frame') {
-      e.target.className = 'frame-selected';
+      e.target.className = 'frame selected';
     }
-    else if(e.target.className == 'frame-selected') {
+    else if(e.target.className == 'frame selected') {
       e.target.className = 'frame';
     }
   };
@@ -221,7 +221,7 @@
   };
   
   el_trash.onclick = function() {
-    to_remove = document.querySelectorAll('.frame-selected');
+    to_remove = document.querySelectorAll('.frame.selected');
     for(let img of to_remove) {
       URL.revokeObjectURL(img.src);
       img.remove();
@@ -261,6 +261,26 @@
 
     })()
   };
+  
+  window.ondragend = function(e) {
+    if(e.target.classList.contains('frame')) {
+      let tgt = e.target;
+      let rect_tgt = tgt.getBoundingClientRect();
+      let frame_list = [].slice.call(el_track.children);
+      let el_pos = null;
+      for(let frame of frame_list) {
+        if(frame != tgt) {
+          let rect = frame.getBoundingClientRect();
+          if(rect.left < rect_tgt.left + e.offsetX) {
+            el_pos = frame;
+          }
+        }
+      }
+      if(el_pos) {
+        el_track.insertBefore(tgt, el_pos);
+      }
+    }
+  }
   
   function loop() {
     draw();
