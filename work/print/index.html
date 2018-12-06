@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body {
+    margin: 0;  
+  }
+  
+  .area {
+    display: flex;
+    box-sizing: border-box;
+    border: 3pt solid black;
+    width: 210mm;
+    height: 297mm;
+    align-items: center;
+    justify-content: center;
+    font-family: AppleSDGothicNeo-Thin;
+    font-size: 24pt;
+  }
+  
+  .image {
+    display: inline-block;
+    margin: 2mm;
+    height: 80mm;
+  }
+  
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  @media print {
+    html, body {
+      width: 210mm;
+      height: 297mm;
+    }
+  }
+</style>
+<body></body>
+<script>
+  window.ondragover = function(e) {
+    e.preventDefault();  
+  };
+  
+  window.ondrop = function(e) {
+    e.preventDefault();
+    let imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg'];
+    if (e.dataTransfer && e.dataTransfer.files) {
+      for(let file of e.dataTransfer.files) {
+        console.log(file);
+        let img = new Image();
+        img.className = 'image';
+        let reader = new FileReader();
+        reader.onload = function(){
+          img.src = reader.result;
+          document.body.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    }  
+  };
+</script>
