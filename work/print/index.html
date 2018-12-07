@@ -2,25 +2,38 @@
 <meta charset="utf-8">
 <style>
   body {
-    margin: 0;  
+    margin: 0;
+    user-select: none;
   }
   
   .area {
     display: flex;
+    position: relative;
     box-sizing: border-box;
-    border: 3pt solid black;
     width: 210mm;
     height: 297mm;
     align-items: center;
     justify-content: center;
     font-family: AppleSDGothicNeo-Thin;
     font-size: 24pt;
+    overflow: hidden;
+  }
+  
+  .image-box {
+    position: absolute;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 0.1mm solid rgba(0, 0, 0, 0.25);
   }
   
   .image {
-    display: inline-block;
-    margin: 2mm;
-    height: 80mm;
+    transform-origin: left top;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  
+  #ui {
+    padding: 20px;
   }
   
   @page {
@@ -33,10 +46,69 @@
       width: 210mm;
       height: 297mm;
     }
+    
+    #ui {
+      display: none;  
+    }
   }
 </style>
-<body></body>
+<body>
+  <div id="ui">
+    <label>다음 중 필요한 레이아웃을 고른 후</label>
+    <button id="l_2x2">2x2</button>
+    <button id="l_2x3">2x3</button>
+    <button id="l_2x4">2x4</button>
+    <label>아래의 공간에 이미지 파일을 끌어 놓은 다음</label>
+    <button id="print">인쇄</button>
+    <label>해 주세요.</label>
+  </div>
+</body>
 <script>
+  let bt_2x2 = document.querySelector('#l_2x2');
+  let bt_2x3 = document.querySelector('#l_2x3');
+  let bt_2x4 = document.querySelector('#l_2x4');
+  let bt_print = document.querySelector('#print');
+  
+  let img_count = 0;
+  let curr_page = null;
+  let count_for_break = 4;
+  bt_2x2.style.backgroundColor = 'yellow';
+  
+  let modes = {
+    l2x2: {
+      width: 90.1,
+      height: 140,
+      position: [
+        { x: 5, y: 7 },
+        { x: 106, y: 7 },
+        { x: 5, y: 146.5 },
+        { x: 106, y: 146.5 },
+      ]
+    },
+    l2x3: {
+      width: 90.1,
+      height: 140,
+      position: [
+        { x: 5, y: 7 },
+        { x: 106, y: 7 },
+        { x: 5, y: 146.5 },
+        { x: 106, y: 146.5 },
+      ]
+    },
+    l2x4: {
+      width: 90.1,
+      height: 140,
+      position: [
+        { x: 5, y: 7 },
+        { x: 106, y: 7 },
+        { x: 5, y: 146.5 },
+        { x: 106, y: 146.5 },
+      ]
+    },
+  };
+  
+  let mode = modes.l2x2;
+  
   window.ondragover = function(e) {
     e.preventDefault();  
   };
@@ -46,16 +118,77 @@
     let imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg'];
     if (e.dataTransfer && e.dataTransfer.files) {
       for(let file of e.dataTransfer.files) {
-        console.log(file);
+        if(img_count % mode.position.length == 0) {
+          let page = document.createElement('div');
+          page.className = 'area';
+          document.body.appendChild(page);
+          curr_page = page;
+        }
+        let box = document.createElement('div');
+        box.className = 'image-box';
         let img = new Image();
         img.className = 'image';
+        box.appendChild(img);
+        curr_page.appendChild(box);
+        
+        let idx = img_count % mode.position.length;
+        box.style.left = mode.position[idx].x + 'mm';
+        box.style.top = mode.position[idx].y + 'mm';
+        box.style.width = mode.width + 'mm';
+        box.style.height = mode.height + 'mm';
+  
+        img_count++;
         let reader = new FileReader();
         reader.onload = function(){
           img.src = reader.result;
-          document.body.appendChild(img);
+          img.onload = function(e) {
+            //console.log(e.target.naturalWidth);
+            let aspect_ratio = e.target.naturalWidth / e.target.naturalHeight;
+            if(aspect_ratio > 1.0) {
+              /*
+              e.target.style.width = mode.width + 'mm';
+              //e.target.style.transform = 'rotate(90deg)';
+              */
+              //e.target.style.transform = 'rotate(90deg)';
+            }
+            else {
+              /*
+              let factor = 3.2430;
+              let wpx = mode.width * factor;
+              let hpx = mode.height * factor;
+              e.target.style.width = hpx + 'px';
+              console.log(getComputedStyle(e.target).height);
+              */
+            }
+          }
         };
         reader.readAsDataURL(file);
       }
     }  
+  };
+  
+  bt_2x2.onclick = function() {
+    bt_2x2.style.backgroundColor = 'yellow';
+    bt_2x3.style.backgroundColor = '';
+    bt_2x4.style.backgroundColor = '';
+    mode = modes.l2x2;
+  };
+  
+  bt_2x3.onclick = function() {
+    bt_2x2.style.backgroundColor = '';
+    bt_2x3.style.backgroundColor = 'yellow';
+    bt_2x4.style.backgroundColor = '';
+    mode = modes.l2x3;
+  };
+  
+  bt_2x4.onclick = function() {
+    bt_2x2.style.backgroundColor = '';
+    bt_2x3.style.backgroundColor = '';
+    bt_2x4.style.backgroundColor = 'yellow';
+    mode = modes.l2x4;
+  };
+  
+  bt_print.onclick = function() {
+    window.print();
   };
 </script>
