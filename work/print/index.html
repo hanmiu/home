@@ -64,6 +64,7 @@
     <label>아래의 공간에 이미지 파일을 끌어 놓은 다음</label>
     <button id="print">인쇄</button>
     <label>해 주세요.</label>
+    <button id="clear">다 비우기</button>
   </div>
 </body>
 <script>
@@ -71,6 +72,7 @@
   let bt_2x3 = document.querySelector('#l_2x3');
   let bt_2x4 = document.querySelector('#l_2x4');
   let bt_print = document.querySelector('#print');
+  let bt_clear = document.querySelector('#clear');
   
   let img_count = 0;
   let curr_page = null;
@@ -118,6 +120,80 @@
   
   let mode = modes.l2x4;
   let mode_aspect_ratio = mode.width / mode.height;
+  let files_list = [];
+  
+  function generate_layout(files) {
+    let imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg'];
+    for(let file of files) {
+      if(img_count % mode.position.length == 0) {
+        let page = document.createElement('div');
+        page.className = 'area';
+        document.body.appendChild(page);
+        curr_page = page;
+      }
+      let box = document.createElement('div');
+      box.className = 'image-box';
+
+      let pivot = document.createElement('div');
+      pivot.className = 'pivot';
+      pivot.style.left = (mode.width * 0.5) + 'mm';
+      pivot.style.top = (mode.height * 0.5) + 'mm';
+      box.appendChild(pivot);
+
+      let img = new Image();
+      img.className = 'image';
+      pivot.appendChild(img);
+      curr_page.appendChild(box);
+
+      let idx = img_count % mode.position.length;
+      box.style.left = mode.position[idx].x + 'mm';
+      box.style.top = mode.position[idx].y + 'mm';
+      box.style.width = mode.width + 'mm';
+      box.style.height = mode.height + 'mm';
+
+      img_count++;
+      let reader = new FileReader();
+      reader.onload = function(){
+        img.src = reader.result;
+        img.onload = function(e) {
+          e.target.style.left = -(e.target.naturalWidth * 0.5) + 'px';
+          e.target.style.top = -(e.target.naturalHeight * 0.5) + 'px';
+          let aspect_ratio = e.target.naturalWidth / e.target.naturalHeight;
+          let rect = box.getBoundingClientRect();
+          if(mode_aspect_ratio < 1.0) {
+            if(aspect_ratio > 1.0) {
+              let f_a = rect.width / e.target.naturalHeight;
+              let f_b = rect.height / e.target.naturalWidth;
+              let factor = Math.min(f_a, f_b);
+              e.target.style.transform = `scale(${factor}) rotate(90deg)`;
+            }
+            else {
+              let f_a = rect.width / e.target.naturalWidth;
+              let f_b = rect.height / e.target.naturalHeight;
+              let factor = Math.min(f_a, f_b);
+              e.target.style.transform = `scale(${factor})`;
+            }
+          }
+          else {
+            if(aspect_ratio > 1.0) {
+              let f_a = rect.width / e.target.naturalWidth;
+              let f_b = rect.height / e.target.naturalHeight;
+              let factor = Math.min(f_a, f_b);
+              e.target.style.transform = `scale(${factor})`;
+            }
+            else {
+              let f_a = rect.width / e.target.naturalHeight;
+              let f_b = rect.height / e.target.naturalWidth;
+              let factor = Math.min(f_a, f_b);
+              e.target.style.transform = `scale(${factor}) rotate(90deg)`;
+            }
+          }
+
+        }
+      };
+      reader.readAsDataURL(file);
+    }  
+  }
   
   window.ondragover = function(e) {
     e.preventDefault();  
@@ -125,79 +201,27 @@
   
   window.ondrop = function(e) {
     e.preventDefault();
-    let imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg'];
     if (e.dataTransfer && e.dataTransfer.files) {
-      for(let file of e.dataTransfer.files) {
-        if(img_count % mode.position.length == 0) {
-          let page = document.createElement('div');
-          page.className = 'area';
-          document.body.appendChild(page);
-          curr_page = page;
-        }
-        let box = document.createElement('div');
-        box.className = 'image-box';
-        
-        let pivot = document.createElement('div');
-        pivot.className = 'pivot';
-        pivot.style.left = (mode.width * 0.5) + 'mm';
-        pivot.style.top = (mode.height * 0.5) + 'mm';
-        box.appendChild(pivot);
-        
-        let img = new Image();
-        img.className = 'image';
-        pivot.appendChild(img);
-        curr_page.appendChild(box);
-        
-        let idx = img_count % mode.position.length;
-        box.style.left = mode.position[idx].x + 'mm';
-        box.style.top = mode.position[idx].y + 'mm';
-        box.style.width = mode.width + 'mm';
-        box.style.height = mode.height + 'mm';
-  
-        img_count++;
-        let reader = new FileReader();
-        reader.onload = function(){
-          img.src = reader.result;
-          img.onload = function(e) {
-            e.target.style.left = -(e.target.naturalWidth * 0.5) + 'px';
-            e.target.style.top = -(e.target.naturalHeight * 0.5) + 'px';
-            let aspect_ratio = e.target.naturalWidth / e.target.naturalHeight;
-            let rect = box.getBoundingClientRect();
-            if(mode_aspect_ratio < 1.0) {
-              if(aspect_ratio > 1.0) {
-                let f_a = rect.width / e.target.naturalHeight;
-                let f_b = rect.height / e.target.naturalWidth;
-                let factor = Math.min(f_a, f_b);
-                e.target.style.transform = `scale(${factor}) rotate(90deg)`;
-              }
-              else {
-                let f_a = rect.width / e.target.naturalWidth;
-                let f_b = rect.height / e.target.naturalHeight;
-                let factor = Math.min(f_a, f_b);
-                e.target.style.transform = `scale(${factor})`;
-              }
-            }
-            else {
-              if(aspect_ratio > 1.0) {
-                let f_a = rect.width / e.target.naturalWidth;
-                let f_b = rect.height / e.target.naturalHeight;
-                let factor = Math.min(f_a, f_b);
-                e.target.style.transform = `scale(${factor})`;
-              }
-              else {
-                let f_a = rect.width / e.target.naturalHeight;
-                let f_b = rect.height / e.target.naturalWidth;
-                let factor = Math.min(f_a, f_b);
-                e.target.style.transform = `scale(${factor}) rotate(90deg)`;
-              }
-            }
-            
-          }
-        };
-        reader.readAsDataURL(file);
-      }
+      files_list.push(e.dataTransfer.files);
+      generate_layout(e.dataTransfer.files);  
     }  
   };
+  
+  function clear_all() {
+    let areas = document.querySelectorAll('.area');
+    for(let area of areas) {
+      area.remove();
+    }
+    img_count = 0;
+  }
+  
+  function reload_all() {
+    if(files_list.length > 0) {
+      for(let files of files_list) {
+        generate_layout(files);  
+      }
+    }
+  }
   
   bt_2x2.onclick = function() {
     bt_2x2.style.backgroundColor = 'yellow';
@@ -205,6 +229,8 @@
     bt_2x4.style.backgroundColor = '';
     mode = modes.l2x2;
     mode_aspect_ratio = mode.width / mode.height;
+    clear_all();
+    reload_all();
   };
   
   bt_2x3.onclick = function() {
@@ -213,6 +239,8 @@
     bt_2x4.style.backgroundColor = '';
     mode = modes.l2x3;
     mode_aspect_ratio = mode.width / mode.height;
+    clear_all();
+    reload_all();
   };
   
   bt_2x4.onclick = function() {
@@ -221,9 +249,16 @@
     bt_2x4.style.backgroundColor = 'yellow';
     mode = modes.l2x4;
     mode_aspect_ratio = mode.width / mode.height;
+    clear_all();
+    reload_all();
   };
   
   bt_print.onclick = function() {
     window.print();
+  };
+  
+  bt_clear.onclick = function() {
+    clear_all();
+    files_list = [];
   };
 </script>
