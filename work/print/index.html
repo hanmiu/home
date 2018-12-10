@@ -26,10 +26,13 @@
     border: 0.1mm solid rgba(0, 0, 0, 0.25);
   }
   
+  .pivot {
+    position: absolute;
+  }
+  
   .image {
-    transform-origin: left top;
-    max-width: 100%;
-    max-height: 100%;
+    position: absolute;
+    transform-origin: center center;
   }
   
   #ui {
@@ -72,7 +75,7 @@
   let img_count = 0;
   let curr_page = null;
   let count_for_break = 4;
-  bt_2x2.style.backgroundColor = 'yellow';
+  bt_2x4.style.backgroundColor = 'yellow';
   
   let modes = {
     l2x2: {
@@ -80,34 +83,41 @@
       height: 140,
       position: [
         { x: 5, y: 7 },
-        { x: 106, y: 7 },
+        { x: 107, y: 7 },
         { x: 5, y: 146.5 },
-        { x: 106, y: 146.5 },
+        { x: 107, y: 146.5 },
       ]
     },
     l2x3: {
       width: 99.1,
-      height: 140,
+      height: 93.1,
       position: [
         { x: 5, y: 7 },
-        { x: 106, y: 7 },
-        { x: 5, y: 146.5 },
-        { x: 106, y: 146.5 },
+        { x: 107, y: 7 },
+        { x: 5, y: 100 },
+        { x: 107, y: 100 },
+        { x: 5, y: 193 },
+        { x: 107, y: 193 },
       ]
     },
     l2x4: {
       width: 99.1,
-      height: 140,
+      height: 67.7,
       position: [
-        { x: 5, y: 7 },
-        { x: 106, y: 7 },
-        { x: 5, y: 146.5 },
-        { x: 106, y: 146.5 },
+        { x: 5, y: 11.6 },
+        { x: 107, y: 11.6 },
+        { x: 5, y: 79.3 },
+        { x: 107, y: 79.3 },
+        { x: 5, y: 146.9 },
+        { x: 107, y: 146.9 },
+        { x: 5, y: 214.6 },
+        { x: 107, y: 214.6 },
       ]
     },
   };
   
-  let mode = modes.l2x2;
+  let mode = modes.l2x4;
+  let mode_aspect_ratio = mode.width / mode.height;
   
   window.ondragover = function(e) {
     e.preventDefault();  
@@ -126,9 +136,16 @@
         }
         let box = document.createElement('div');
         box.className = 'image-box';
+        
+        let pivot = document.createElement('div');
+        pivot.className = 'pivot';
+        pivot.style.left = (mode.width * 0.5) + 'mm';
+        pivot.style.top = (mode.height * 0.5) + 'mm';
+        box.appendChild(pivot);
+        
         let img = new Image();
         img.className = 'image';
-        box.appendChild(img);
+        pivot.appendChild(img);
         curr_page.appendChild(box);
         
         let idx = img_count % mode.position.length;
@@ -142,24 +159,39 @@
         reader.onload = function(){
           img.src = reader.result;
           img.onload = function(e) {
-            //console.log(e.target.naturalWidth);
+            e.target.style.left = -(e.target.naturalWidth * 0.5) + 'px';
+            e.target.style.top = -(e.target.naturalHeight * 0.5) + 'px';
             let aspect_ratio = e.target.naturalWidth / e.target.naturalHeight;
-            if(aspect_ratio > 1.0) {
-              /*
-              e.target.style.width = mode.width + 'mm';
-              //e.target.style.transform = 'rotate(90deg)';
-              */
-              //e.target.style.transform = 'rotate(90deg)';
+            let rect = box.getBoundingClientRect();
+            if(mode_aspect_ratio < 1.0) {
+              if(aspect_ratio > 1.0) {
+                let f_a = rect.width / e.target.naturalHeight;
+                let f_b = rect.height / e.target.naturalWidth;
+                let factor = Math.min(f_a, f_b);
+                e.target.style.transform = `scale(${factor}) rotate(90deg)`;
+              }
+              else {
+                let f_a = rect.width / e.target.naturalWidth;
+                let f_b = rect.height / e.target.naturalHeight;
+                let factor = Math.min(f_a, f_b);
+                e.target.style.transform = `scale(${factor})`;
+              }
             }
             else {
-              /*
-              let factor = 3.2430;
-              let wpx = mode.width * factor;
-              let hpx = mode.height * factor;
-              e.target.style.width = hpx + 'px';
-              console.log(getComputedStyle(e.target).height);
-              */
+              if(aspect_ratio > 1.0) {
+                let f_a = rect.width / e.target.naturalWidth;
+                let f_b = rect.height / e.target.naturalHeight;
+                let factor = Math.min(f_a, f_b);
+                e.target.style.transform = `scale(${factor})`;
+              }
+              else {
+                let f_a = rect.width / e.target.naturalHeight;
+                let f_b = rect.height / e.target.naturalWidth;
+                let factor = Math.min(f_a, f_b);
+                e.target.style.transform = `scale(${factor}) rotate(90deg)`;
+              }
             }
+            
           }
         };
         reader.readAsDataURL(file);
@@ -172,6 +204,7 @@
     bt_2x3.style.backgroundColor = '';
     bt_2x4.style.backgroundColor = '';
     mode = modes.l2x2;
+    mode_aspect_ratio = mode.width / mode.height;
   };
   
   bt_2x3.onclick = function() {
@@ -179,6 +212,7 @@
     bt_2x3.style.backgroundColor = 'yellow';
     bt_2x4.style.backgroundColor = '';
     mode = modes.l2x3;
+    mode_aspect_ratio = mode.width / mode.height;
   };
   
   bt_2x4.onclick = function() {
@@ -186,6 +220,7 @@
     bt_2x3.style.backgroundColor = '';
     bt_2x4.style.backgroundColor = 'yellow';
     mode = modes.l2x4;
+    mode_aspect_ratio = mode.width / mode.height;
   };
   
   bt_print.onclick = function() {
