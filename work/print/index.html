@@ -23,7 +23,7 @@
     position: absolute;
     overflow: hidden;
     box-sizing: border-box;
-    border: 0.1mm solid rgba(0, 0, 0, 0.25);
+    /* border: 0.1mm solid rgba(0, 0, 0, 0.25); */
   }
   
   .pivot {
@@ -32,7 +32,14 @@
   
   .image {
     position: absolute;
+    box-sizing: border-box;
     transform-origin: center center;
+    border: 0.1mm solid rgba(0, 0, 0, 1);
+    cursor: pointer;
+  }
+  
+  .no-print {
+    opacity: 0.2;
   }
   
   #ui {
@@ -141,7 +148,7 @@
       box.appendChild(pivot);
 
       let img = new Image();
-      img.className = 'image';
+      img.className = 'image print';
       pivot.appendChild(img);
       curr_page.appendChild(box);
 
@@ -195,6 +202,37 @@
     }  
   }
   
+  function generate_layout_for_print() {
+    let images = document.querySelectorAll('.image.print');
+    clear_all();
+    for(let image of images) {
+      if(img_count % mode.position.length == 0) {
+        let page = document.createElement('div');
+        page.className = 'area';
+        document.body.appendChild(page);
+        curr_page = page;
+      }
+      let box = document.createElement('div');
+      box.className = 'image-box';
+
+      let pivot = document.createElement('div');
+      pivot.className = 'pivot';
+      pivot.style.left = (mode.width * 0.5) + 'mm';
+      pivot.style.top = (mode.height * 0.5) + 'mm';
+      box.appendChild(pivot);
+
+      pivot.appendChild(image);
+      curr_page.appendChild(box);
+
+      let idx = img_count % mode.position.length;
+      box.style.left = mode.position[idx].x + 'mm';
+      box.style.top = mode.position[idx].y + 'mm';
+      box.style.width = mode.width + 'mm';
+      box.style.height = mode.height + 'mm';
+      img_count++;
+    }
+  }
+  
   window.ondragover = function(e) {
     e.preventDefault();  
   };
@@ -205,6 +243,15 @@
       files_list.push(e.dataTransfer.files);
       generate_layout(e.dataTransfer.files);  
     }  
+  };
+  
+  window.onclick = function(e) {
+    if(e.target.className == 'image print') {
+      e.target.className = 'image no-print';  
+    }
+    else if(e.target.className == 'image no-print') {
+      e.target.className = 'image print';
+    }
   };
   
   function clear_all() {
@@ -254,6 +301,7 @@
   };
   
   bt_print.onclick = function() {
+    generate_layout_for_print();
     window.print();
   };
   
