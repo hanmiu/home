@@ -1,0 +1,213 @@
+<!doctype html>
+<meta charset="utf-8">
+<style title="main">
+  @import url('https://fonts.googleapis.com/css?family=Black+Han+Sans');
+  @import url('https://fonts.googleapis.com/css?family=Do+Hyeon');
+  
+  .svg-back-glyph {
+    font-family: 'Black Han Sans', sans-serif;
+    fill: transparent;
+    stroke: black;
+    stroke-width: 5px;
+    font-size: 200px;
+    transform-origin: center center;
+  }
+  
+  .svg-fore-glyph {
+    font-family: 'Black Han Sans', sans-serif;
+    fill: white;
+    font-size: 200px;
+  }
+
+  .inner-rotation {
+    transform: rotate(0deg);
+  }
+  
+  .translation {
+    transform: translateY(-100px);
+  }
+  
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  @media print {
+    html, body {
+      width: 210mm;
+      height: 297mm;
+    }
+    
+    #ui {
+      display: none;  
+    }
+  }
+</style>
+<body>
+  <div id="ui">
+    <input id="text" type="text" value="한">
+    <input id="amount" type="range" min="3" max="12" value="8">
+    <input id="distance" type="range" min="-250" max="250" value="-50">
+    <input id="rotation" type="range" min="0" max="360" value="0">
+    <input id="mirror" type="checkbox" checked>
+    <input id="fill" type="checkbox" checked>
+    <input id="fore-color" type="color">
+  </div>
+  <div id="content">
+    <svg id="svg-canvas" width="800" height="800" xmlns="http://www.w3.org/2000/svg">
+      <g id="background"></g>
+      <g id="foreground"></g>
+    </svg>
+  </div>
+</body>
+<script>
+  let svg_ns = 'http://www.w3.org/2000/svg';
+  let el_content = document.querySelector('#content');
+  let el_svg = document.querySelector('#svg-canvas');
+  let el_background = document.querySelector('#background');
+  let el_foreground = document.querySelector('#foreground');
+  
+  let input_text = document.querySelector('#text');
+  let range_amount = document.querySelector('#amount');
+  let range_distance = document.querySelector('#distance');
+  let range_rotation = document.querySelector('#rotation');
+  let checkbox_mirror = document.querySelector('#mirror');
+  let checkbox_fill = document.querySelector('#fill');
+  
+  let main_stylesheet = [].slice.call(document.styleSheets).filter(x => x.title == 'main')[0];
+  
+  function get_style_rule(selectorText) {
+    return [].slice.call(main_stylesheet.cssRules).filter(x => x.selectorText == selectorText)[0];
+  }
+  
+  let style_inner_rotation = get_style_rule('.inner-rotation').style;
+  let style_translation = get_style_rule('.translation').style;
+  let style_fore_glyph = get_style_rule('.svg-fore-glyph').style;
+  
+  let cx = 400;
+  let cy = 400;
+  
+  function doit(n) {
+    el_background.innerHTML = '';
+    el_foreground.innerHTML = '';
+    let angle = 360 / n;
+    el_background.style.transform = `translate(${cx}px, ${cy}px)`;
+    el_foreground.style.transform = `translate(${cx}px, ${cy}px)`;
+    for(let i = 0; i < n; i++) {
+      let deg = i * angle;
+      
+      let pivot_outer_rotation = document.createElementNS(svg_ns, 'g');
+      pivot_outer_rotation.setAttribute('class', 'outer_rotation');
+      pivot_outer_rotation.style.transform = `rotate(${deg}deg)`;
+      
+      let pivot_translation = document.createElementNS(svg_ns, 'g');
+      pivot_translation.setAttribute('class', 'translation');
+      
+      let pivot_scale = document.createElementNS(svg_ns, 'g');
+      pivot_scale.setAttribute('class', 'scale');
+      
+      if(i % 2 == 0 && checkbox_mirror.checked) {
+        pivot_scale.style.transform = 'scale(-1, 1)';
+      }
+      
+      let pivot_inner_rotation = document.createElementNS(svg_ns, 'g');
+      pivot_inner_rotation.setAttribute('class', 'inner-rotation');
+      
+      let glyph = document.createElementNS(svg_ns, 'text');
+      glyph.setAttribute('class', 'svg-back-glyph');
+      glyph.setAttribute('text-anchor', 'middle');
+      glyph.setAttribute('alignment-baseline', 'middle');
+      glyph.textContent = input_text.value;
+      
+      pivot_inner_rotation.appendChild(glyph);
+      pivot_scale.appendChild(pivot_inner_rotation);
+      pivot_translation.appendChild(pivot_scale);
+      pivot_outer_rotation.appendChild(pivot_translation);
+      el_background.appendChild(pivot_outer_rotation);
+    }
+
+    for(let i = 0; i < n; i++) {
+      let deg = i * angle;
+      
+      let pivot_outer_rotation = document.createElementNS(svg_ns, 'g');
+      pivot_outer_rotation.setAttribute('class', 'outer_rotation');
+      pivot_outer_rotation.style.transform = `rotate(${deg}deg)`;
+      
+      let pivot_translation = document.createElementNS(svg_ns, 'g');
+      pivot_translation.setAttribute('class', 'translation');
+      
+      let pivot_scale = document.createElementNS(svg_ns, 'g');
+      pivot_scale.setAttribute('class', 'scale');
+      
+      if(i % 2 == 0 && checkbox_mirror.checked) {
+        pivot_scale.style.transform = 'scale(-1, 1)';
+      }
+      
+      let pivot_inner_rotation = document.createElementNS(svg_ns, 'g');
+      pivot_inner_rotation.setAttribute('class', 'inner-rotation');
+      
+      let glyph = document.createElementNS(svg_ns, 'text');
+      glyph.setAttribute('class', 'svg-fore-glyph');
+      glyph.setAttribute('text-anchor', 'middle');
+      glyph.setAttribute('alignment-baseline', 'middle');
+      glyph.textContent = input_text.value;
+      
+      pivot_inner_rotation.appendChild(glyph);
+      pivot_scale.appendChild(pivot_inner_rotation);
+      pivot_translation.appendChild(pivot_scale);
+      pivot_outer_rotation.appendChild(pivot_translation);
+      el_foreground.appendChild(pivot_outer_rotation);
+    }
+  }
+  
+  range_amount.oninput = function(e) {
+    doit(parseInt(e.target.value));
+  };
+  
+  range_distance.oninput = function(e) {
+    style_translation.transform = `translateY(${e.target.value}px)`;
+  };
+  
+  range_rotation.oninput = function(e) {
+    style_inner_rotation.transform = `rotate(${e.target.value}deg)`;
+  };
+  
+  input_text.oninput = function(e) {
+    let back_glyphs = el_background.querySelectorAll('.svg-back-glyph');
+    let fore_glyphs = el_foreground.querySelectorAll('.svg-fore-glyph');
+    for(let back_glyph of back_glyphs) {
+      back_glyph.textContent = e.target.value;
+    }
+    for(let fore_glyph of fore_glyphs) {
+      fore_glyph.textContent = e.target.value;
+    }
+  };
+  
+  checkbox_mirror.oninput = function(e) {
+    let back_pivot_scales = el_background.querySelectorAll('.scale');
+    let fore_pivot_scales = el_foreground.querySelectorAll('.scale');
+    for(let i = 0; i < back_pivot_scales.length; i++) {
+      if(i % 2 == 0) {
+        if(checkbox_mirror.checked) {
+          back_pivot_scales[i].style.transform = 'scale(-1, 1)';
+          fore_pivot_scales[i].style.transform = 'scale(-1, 1)';  
+        }
+        else {
+          back_pivot_scales[i].style.transform = 'scale(1, 1)';
+          fore_pivot_scales[i].style.transform = 'scale(1, 1)'; 
+        }
+      }
+    }
+  };
+  
+  checkbox_fill.oninput = function(e) {
+    if(checkbox_fill.checked) {
+      style_fore_glyph.opacity = 1;  
+    }
+    else {
+      style_fore_glyph.opacity = 0; 
+    }
+  };
+  
+  doit(8);
+</script>
