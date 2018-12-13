@@ -4,6 +4,31 @@
   @import url('https://fonts.googleapis.com/css?family=Black+Han+Sans');
   @import url('https://fonts.googleapis.com/css?family=Do+Hyeon');
   
+  body {
+    user-select: none;
+    background-color: white;
+  }
+  
+  #stage {
+    display:block;
+    margin: auto;
+    position: relative;
+    width: 800px;
+    height: 800px;
+  }
+  
+  .layer {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  #drawing {  
+  }
+  
+  #svg-canvas {
+  }
+  
   .svg-back-glyph {
     font-family: 'Black Han Sans', sans-serif;
     fill: transparent;
@@ -46,33 +71,50 @@
 <body>
   <div id="ui">
     <input id="text" type="text" value="한">
-    <input id="amount" type="range" min="2" max="12" value="8">
-    <input id="distance" type="range" min="-250" max="250" value="-50">
+    <input id="ngon" type="range" min="2" max="16" value="8">
+    <input id="distance" type="range" min="-250" max="250" value="-236">
+    <input id="center-rotation" type="range" min="0" max="360" value="0">
     <input id="rotation" type="range" min="0" max="360" value="0">
     <input id="mirror" type="checkbox" checked>
     <input id="fill" type="checkbox" checked>
-    <input id="fore-color" type="color">
+    <input id="stroke-width" type="range" min="3" max="40" value="5">
+    <input id="stroke-color" type="color">
+    <input id="font-size" type="range" min="100" max="250" value="200">
+    <button id="print">print</button>
   </div>
   <div id="content">
-    <svg id="svg-canvas" width="800" height="800" xmlns="http://www.w3.org/2000/svg">
-      <g id="background"></g>
-      <g id="foreground"></g>
-    </svg>
+    <div id="stage">
+      <canvas id="drawing" class="layer"></canvas>
+      <svg id="svg-canvas" class="layer"width="800" height="800" xmlns="http://www.w3.org/2000/svg">
+        <g id="center">
+          <g id="background"></g>
+          <g id="foreground"></g>
+        </g>
+      </svg>
+    </div>
   </div>
 </body>
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
   let el_content = document.querySelector('#content');
+  let el_drawing = document.querySelector('#drawing');
   let el_svg = document.querySelector('#svg-canvas');
+  let el_center = document.querySelector('#center');
   let el_background = document.querySelector('#background');
   let el_foreground = document.querySelector('#foreground');
   
   let input_text = document.querySelector('#text');
-  let range_amount = document.querySelector('#amount');
+  let range_ngon = document.querySelector('#ngon');
   let range_distance = document.querySelector('#distance');
+  let range_center_rotation = document.querySelector('#center-rotation');
   let range_rotation = document.querySelector('#rotation');
   let checkbox_mirror = document.querySelector('#mirror');
   let checkbox_fill = document.querySelector('#fill');
+  let range_stroke_width = document.querySelector('#stroke-width');
+  let range_stroke_color = document.querySelector('#stroke-color');
+  let range_font_size = document.querySelector('#font-size');
+  
+  let button_print = document.querySelector('#print');
   
   let main_stylesheet = [].slice.call(document.styleSheets).filter(x => x.title == 'main')[0];
   
@@ -82,17 +124,26 @@
   
   let style_inner_rotation = get_style_rule('.inner-rotation').style;
   let style_translation = get_style_rule('.translation').style;
+  let style_back_glyph = get_style_rule('.svg-back-glyph').style;
   let style_fore_glyph = get_style_rule('.svg-fore-glyph').style;
   
   let cx = 400;
   let cy = 400;
+  let n_gon = 0;
+  el_center.style.transform = `translate(${cx}px, ${cy}px)`;
+  
+  let g = el_drawing.getContext('2d');
+  g.canvas.width = 800;
+  g.canvas.height = 800;
+  let drawing_rect = el_drawing.getBoundingClientRect();  
   
   function doit(n) {
+    n_gon = n;
+    range_center_rotation.step = 360 / n / 4;
     el_background.innerHTML = '';
     el_foreground.innerHTML = '';
     let angle = 360 / n;
-    el_background.style.transform = `translate(${cx}px, ${cy}px)`;
-    el_foreground.style.transform = `translate(${cx}px, ${cy}px)`;
+    style_translation.transform = `translateY(${range_distance.value}px)`;
     for(let i = 0; i < n; i++) {
       let deg = i * angle;
       
@@ -117,7 +168,7 @@
       glyph.setAttribute('class', 'svg-back-glyph');
       glyph.setAttribute('text-anchor', 'middle');
       glyph.setAttribute('alignment-baseline', 'middle');
-      glyph.textContent = input_text.value;
+      glyph.textContent = input_text.value[i%input_text.value.length];
       
       pivot_inner_rotation.appendChild(glyph);
       pivot_scale.appendChild(pivot_inner_rotation);
@@ -150,7 +201,7 @@
       glyph.setAttribute('class', 'svg-fore-glyph');
       glyph.setAttribute('text-anchor', 'middle');
       glyph.setAttribute('alignment-baseline', 'middle');
-      glyph.textContent = input_text.value;
+      glyph.textContent = input_text.value[i%input_text.value.length];
       
       pivot_inner_rotation.appendChild(glyph);
       pivot_scale.appendChild(pivot_inner_rotation);
@@ -160,26 +211,47 @@
     }
   }
   
-  range_amount.oninput = function(e) {
+  range_ngon.oninput = function(e) {
     doit(parseInt(e.target.value));
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
   };
   
   range_distance.oninput = function(e) {
     style_translation.transform = `translateY(${e.target.value}px)`;
   };
   
+  range_center_rotation.oninput = function(e) {
+    el_center.style.transform = `translate(${cx}px, ${cy}px) rotate(${e.target.value}deg)`;
+  };
+  
   range_rotation.oninput = function(e) {
     style_inner_rotation.transform = `rotate(${e.target.value}deg)`;
+  };
+  
+  range_stroke_width.oninput = function(e) {
+    style_back_glyph['stroke-width'] = e.target.value + 'px';
+  };
+  
+  range_stroke_color.oninput = function(e) {
+    style_back_glyph['stroke'] = e.target.value;
+  };
+  
+  range_font_size.oninput = function(e) {
+    style_back_glyph['font-size'] = e.target.value + 'px';
+    style_fore_glyph['font-size'] = e.target.value + 'px';
   };
   
   input_text.oninput = function(e) {
     let back_glyphs = el_background.querySelectorAll('.svg-back-glyph');
     let fore_glyphs = el_foreground.querySelectorAll('.svg-fore-glyph');
-    for(let back_glyph of back_glyphs) {
-      back_glyph.textContent = e.target.value;
+    let text = e.target.value;
+    for(let i = 0; i < back_glyphs.length; i++) {
+      let bg = back_glyphs[i];
+      bg.textContent = text[i%text.length];
     }
-    for(let fore_glyph of fore_glyphs) {
-      fore_glyph.textContent = e.target.value;
+    for(let i = 0; i < fore_glyphs.length; i++) {
+      let fg = fore_glyphs[i];
+      fg.textContent = text[i%text.length];
     }
   };
   
@@ -208,6 +280,71 @@
       style_fore_glyph.opacity = 0; 
     }
   };
+  
+  button_print.onclick = function() {
+    window.print();
+  }
+  
+  let touch = {
+    down: false,
+    px: 0,
+    py: 0,
+    x: 0,
+    y: 0,
+  };
+  
+  function draw() {
+    
+  }
+  
+  function touchdown(e) {
+    touch.down = true;
+    touch.px = e.pageX - drawing_rect.left;
+    touch.py = e.pageY - drawing_rect.top;
+  }
+  
+  function touchup(e) {
+    touch.down = false; 
+  }
+  
+  let on = false;
+  
+  function touchmove(e) {
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = e.pageX - drawing_rect.left;
+    touch.y = e.pageY - drawing_rect.top;
+    
+    if(touch.down && on) {
+      let theta = Math.PI * 2 / n_gon;
+      for(let i = 0; i < n_gon; i++) {
+        g.save();
+        g.translate(cx, cy);
+        g.rotate(theta * i);
+        if(i % 2 == 1 && checkbox_mirror.checked) {
+          g.scale(-1, 1);
+        }
+        g.translate(-cx, -cy);
+        
+        g.beginPath();
+        g.moveTo(touch.px, touch.py);
+        g.lineTo(touch.x, touch.y);
+        g.lineWidth = 5;
+        g.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+        g.stroke();
+        g.restore();
+      }
+    }
+  }
+  
+  function resize() {
+    drawing_rect = el_drawing.getBoundingClientRect();
+  }
+  
+  window.onmousedown = touchdown;
+  window.onmouseup = touchup;
+  window.onmousemove = touchmove;
+  window.onresize = resize;
   
   doit(8);
 </script>
