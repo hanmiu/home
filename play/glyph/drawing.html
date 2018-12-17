@@ -1,0 +1,241 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css?family=Black+Han+Sans');
+  @import url('https://fonts.googleapis.com/css?family=Do+Hyeon');
+  
+  body {
+    margin: 0;
+    user-select: none;
+    overflow: hidden;
+    background-color: white;
+  }
+  
+  #ui {
+    position: fixed;
+    margin: 20px;
+    left: 0px;
+    top: 0px;
+  }
+  
+  #text {
+    width: 200px;
+  }
+  
+  #content {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  .layer {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  #hidden {
+    display: none;
+  }
+  
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  @media print {
+    html, body {
+      width: 210mm;
+      height: 297mm;
+    }
+    
+    #ui {
+      display: none;  
+    }
+  }
+</style>
+<body>
+  <div id="content">
+    <div class="layer">
+      <svg id="svg">
+        <g id="hidden"></g>
+        <g id="background"></g>
+        <g id="foreground"></g>
+      </svg>
+    </div>
+    <div class="layer">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+  <div id="ui">
+    <input type="text" id="text" value="한미유치원">
+    <button id="print">print</button>
+    <button id="clear">clear</button>
+  </div>
+</body>
+<script>
+  let svg_ns = 'http://www.w3.org/2000/svg';
+  
+  let el_canvas = document.querySelector('#canvas');
+  let el_svg = document.querySelector('#svg');
+  let el_hidden = document.querySelector('#hidden');
+  let el_background = document.querySelector('#background');
+  let el_foreground = document.querySelector('#foreground');
+  
+  let input_text = document.querySelector('#text');
+  
+  let button_print = document.querySelector('#print');
+  let button_clear = document.querySelector('#clear');
+  
+  let g = el_canvas.getContext('2d');
+  let touch = {
+    down: false,
+    px: 0,
+    py: 0,
+    x: 0,
+    y: 0,
+  };
+  let text_for_stroke = input_text.value;
+  let base_font_size = 100;
+  let svg_text_for_stroke = document.createElementNS(svg_ns, 'text');
+  svg_text_for_stroke.style['font-family'] = 'Black Han Sans';
+  svg_text_for_stroke.style['font-size'] = base_font_size + 'px';
+  svg_text_for_stroke.setAttribute('text-anchor', 'middle');
+  svg_text_for_stroke.setAttribute('alignment-baseline', 'middle');
+  svg_text_for_stroke.textContent = text_for_stroke;
+  svg_text_for_stroke.setAttribute('x', innerWidth / 2);
+  svg_text_for_stroke.setAttribute('y', innerHeight / 2);
+  el_hidden.appendChild(svg_text_for_stroke);
+  
+  let partial_stroke = [];
+  let char_idx = 0;
+  
+  function touchdown(x, y) {
+    touch.down = true;
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = x;
+    touch.y = y;
+    partial_stroke = [];
+  }
+  
+  function touchup(x, y) {
+    touch.down = false;
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = x;
+    touch.y = y;
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+  }
+  
+  function touchmove(x, y) {
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = x;
+    touch.y = y;
+    
+    if(touch.down) {
+      g.beginPath();
+      g.moveTo(touch.px, touch.py);
+      g.lineTo(touch.x, touch.y);
+      g.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+      g.setLineDash([2, 10]);
+      g.stroke();
+      
+      partial_stroke.push([x, y]);
+      if(partial_stroke.length > 1) {
+        let dx = x - partial_stroke[0][0];
+        let dy = y - partial_stroke[0][1];
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        let ratio = dist / partial_stroke.length;
+        let size = ratio * 10;
+        if(dist * 1.75 > ratio * 10) {
+          let idx = char_idx % text_for_stroke.length;
+          let char = text_for_stroke[idx];
+          //----
+          let mean_x = 0;
+          let mean_y = 0;
+          for(let i = 0; i < partial_stroke.length; i++) {
+            mean_x += partial_stroke[i][0];
+            mean_y += partial_stroke[i][1];
+          }
+          mean_x /= partial_stroke.length;
+          mean_y /= partial_stroke.length;
+          let theta = Math.atan2(dy, dx);
+          let angle = theta / Math.PI * 180;
+          let glyph = document.createElementNS(svg_ns, 'text');
+          glyph.style['font-family'] = 'Black Han Sans';
+          glyph.style['font-size'] = base_font_size + 'px';
+          glyph.style['transform'] = `translate(${mean_x}px, ${mean_y}px) scale(${ratio*0.1}, ${ratio*0.1}) rotate(${angle}deg)`;
+          glyph.style['fill'] = 'transparent';
+          glyph.style['stroke'] = 'black';
+          glyph.style['stroke-width'] = '5px';
+          glyph.setAttribute('text-anchor', 'middle');
+          glyph.setAttribute('alignment-baseline', 'middle');
+          glyph.textContent = char;
+          glyph.setAttribute('x', 0);
+          glyph.setAttribute('y', 0);
+          el_background.appendChild(glyph);
+          
+          glyph = document.createElementNS(svg_ns, 'text');
+          glyph.style['font-family'] = 'Black Han Sans';
+          glyph.style['font-size'] = base_font_size + 'px';
+          glyph.style['transform'] = `translate(${mean_x}px, ${mean_y}px) scale(${ratio*0.1}, ${ratio*0.1}) rotate(${angle}deg)`;
+          glyph.style['fill'] = 'white';
+          glyph.setAttribute('text-anchor', 'middle');
+          glyph.setAttribute('alignment-baseline', 'middle');
+          glyph.textContent = char;
+          glyph.setAttribute('x', 0);
+          glyph.setAttribute('y', 0);
+          el_foreground.appendChild(glyph);
+          //----
+          char_idx++;
+          partial_stroke = [];
+        }
+      }
+    }
+  }
+  
+  input_text.oninput = function(e) {
+    text_for_stroke = e.target.value;
+    svg_text_for_stroke.textContent = text_for_stroke;
+    char_idx = 0;
+  };
+  
+  button_print.onclick = function() {
+    window.print();
+  };
+  
+  button_clear.onclick = function() {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    el_background.innerHTML = '';
+    el_foreground.innerHTML = '';
+  }
+  
+  function layout() {
+    el_canvas.width = innerWidth;
+    el_canvas.height = innerHeight;
+    el_svg.setAttribute('width', innerWidth);
+    el_svg.setAttribute('height', innerHeight);
+  }
+  
+  window.onmousedown = function(e) {
+    touchdown(e.pageX, e.pageY);
+  };
+  
+  window.onmouseup = function(e) {
+    touchup(e.pageX, e.pageY);
+  };
+  
+  window.onmousemove = function(e) {
+    touchmove(e.pageX, e.pageY);
+  };
+  
+  window.onresize = function() {
+    layout();
+  };
+  
+  window.onload = function() {
+    layout();
+  };
+</script>
