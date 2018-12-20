@@ -1,0 +1,166 @@
+<!doctype html>
+<meta charset="utf-8">
+<style title="main">
+  @import url('https://fonts.googleapis.com/css?family=Black+Han+Sans');
+  @import url('https://fonts.googleapis.com/css?family=Do+Hyeon');
+  
+  body {
+    margin: 0;
+    user-select: none;
+  }
+  
+  .glyph {
+  }
+  
+  .desc {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 30px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  
+  .gpath {
+    fill: blue;
+    cursor: pointer;
+  }
+  
+  #ui {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+  }
+</style>
+<body>
+  <svg id="svg"></svg>
+  <div id="ui">
+    <input type="checkbox" id="show-desc">
+  </div>
+</body>
+<script>
+  let svg_ns = 'http://www.w3.org/2000/svg';
+  let el_svg = document.querySelector('#svg');
+  el_svg.setAttribute('width', innerWidth);
+  el_svg.setAttribute('height', innerHeight);
+  
+  let checkbox_show_desc = document.querySelector('#show-desc');
+  
+  let main_stylesheet = [].slice.call(document.styleSheets).filter(x => x.title == 'main')[0];
+  
+  function get_style_rule(selectorText) {
+    return [].slice.call(main_stylesheet.cssRules).filter(x => x.selectorText == selectorText)[0];
+  }
+  
+  let style_desc = get_style_rule('.desc').style;
+  
+  let files = [
+    '새.svg',
+    '모른다.svg',
+    '풀 위에 토끼.svg',
+  ];
+  
+  let dom_parser = new DOMParser();
+  
+  for(let file of files) {
+    fetch('./data/mmj/' + file)
+    .then(response => response.text())
+    .then(text => {
+      let xml = dom_parser.parseFromString(text, 'text/xml');
+      let paths = xml.querySelectorAll('path');
+      for(let i = 0; i < paths.length; i++) {
+        let d = paths[i].getAttribute('d');
+        if(d.trim().length > 0) {
+          let group = document.createElementNS(svg_ns, 'g');
+          group.setAttribute('class', 'glyph');
+          
+          let gpath = document.createElementNS(svg_ns, 'path');
+          gpath.setAttribute('class', 'gpath');
+          gpath.setAttribute('d', d);
+          
+          let desc = document.createElementNS(svg_ns, 'text');
+          //desc.style['font-family'] = 'Black Han Sans';
+          //desc.style['font-size'] = 20 + 'px';
+          desc.style['transform'] = `translate(${0}px, ${100}px)`;
+          desc.setAttribute('class', 'desc');
+          desc.setAttribute('text-anchor', 'middle');
+          desc.setAttribute('alignment-baseline', 'middle');
+          desc.textContent = file.split('.')[0];
+          desc.setAttribute('x', 0);
+          desc.setAttribute('y', 0);
+          
+          
+          let x = Math.random() * 800;
+          let y = Math.random() * 800;
+          group.style.transform = `translate(${x}px, ${y}px)`;
+          
+          group.appendChild(desc);
+          group.appendChild(gpath);
+          el_svg.appendChild(group);
+          
+          let bbox = gpath.getBBox();
+          gpath.style.transform = `scale(0.3, 0.3) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
+        }
+      }
+    });  
+  }
+  
+  let touch = {
+    down: false,
+    px: 0,
+    py: 0,
+    x: 0,
+    y: 0,
+    glyph: null,
+  };
+  
+  function touchdown(x, y) {
+    touch.down = true;
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = x;
+    touch.y = y;
+  }
+  
+  function touchup(x, y) {
+    touch.down = false;
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = x;
+    touch.y = y;
+    touch.glyph = null;
+  }
+  
+  function touchmove(x, y) {
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = x;
+    touch.y = y;
+    
+    if(touch.down) {
+      touch.glyph.style.transform = `translate(${touch.x}px, ${touch.y}px)`;
+    }
+  }
+  
+  window.onmousedown = function(e) {
+    if(e.target.getAttribute('class') == 'gpath') {
+      touch.glyph = e.target.parentElement;
+      touchdown(e.pageX, e.pageY);
+    }
+  };
+  
+  window.onmouseup = function(e) {
+    touchup(e.pageX, e.pageY);
+  };
+  
+  window.onmousemove = function(e) {
+    touchmove(e.pageX, e.pageY);
+  };
+  
+  checkbox_show_desc.oninput = function() {
+    if(checkbox_show_desc.checked) {
+      style_desc.opacity = 1;  
+    }
+    else {
+      style_desc.opacity = 0; 
+    } 
+  };
+</script>
