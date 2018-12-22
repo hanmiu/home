@@ -48,8 +48,6 @@
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
   let el_svg = document.querySelector('#svg');
-  el_svg.setAttribute('width', innerWidth);
-  el_svg.setAttribute('height', innerHeight);
   
   let checkbox_show_desc = document.querySelector('#show-desc');
   
@@ -143,7 +141,7 @@
     touch.y = y;
     
     if(touch.down) {
-      touch.glyph.style.transform = `translate(${touch.x}px, ${touch.y}px)`;
+      touch.glyph.style.transform = `translate(${touch.x - window.scrollX}px, ${touch.y - window.scrollY}px)`;
     }
   }
   
@@ -188,5 +186,18 @@
     else {
       //style_desc.opacity = 0; 
     } 
+  };
+  
+  function layout () {
+    el_svg.setAttribute('width', innerWidth);
+    el_svg.setAttribute('height', innerHeight);
+  }
+  
+  window.onsize = function() {
+    layout();
+  };
+  
+  window.onload = function() {
+    layout();
   };
 </script>
