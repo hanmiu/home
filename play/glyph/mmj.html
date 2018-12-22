@@ -24,8 +24,8 @@
   .desc {
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
-    opacity: 0;
-    transition: opacity 0.5s;
+    /*opacity: 1;*/
+    /*transition: opacity 0.5s;*/
   }
   
   .gpath {
@@ -97,8 +97,8 @@
           desc.setAttribute('y', 0);
           
           
-          let x = Math.random() * 800;
-          let y = Math.random() * 800;
+          let x = Math.random() * innerWidth;
+          let y = Math.random() * innerHeight;
           group.style.transform = `translate(${x}px, ${y}px)`;
           
           group.appendChild(desc);
@@ -183,10 +183,10 @@
   
   checkbox_show_desc.oninput = function() {
     if(checkbox_show_desc.checked) {
-      style_desc.opacity = 1;  
+      //style_desc.opacity = 1;  
     }
     else {
-      style_desc.opacity = 0; 
+      //style_desc.opacity = 0; 
     } 
   };
 </script>
