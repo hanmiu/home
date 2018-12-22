@@ -176,10 +176,12 @@
         touchstart(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
       }
     }
+    e.preventDefault();
   };
   
   el_svg.ontouchend = function(e) {
     touchend();
+    e.preventDefault();
   };
   
   el_svg.ontouchmove = function(e) {
