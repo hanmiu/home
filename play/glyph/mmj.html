@@ -22,7 +22,8 @@
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
     fill: black;
-    transition: fill 0.2s;
+    transition: transform 0.2s;
+    transform: translate(0px, 100px) scale(0, 0);
   }
   
   .gpath {
@@ -90,7 +91,7 @@
           gpath.setAttribute('d', d);
           
           let desc = document.createElementNS(svg_ns, 'text');
-          desc.style['transform'] = `translate(${0}px, ${100}px)`;
+          //desc.style['transform'] = `translate(${0}px, ${100}px)`;
           desc.setAttribute('class', 'desc');
           desc.setAttribute('text-anchor', 'middle');
           desc.setAttribute('alignment-baseline', 'middle');
@@ -192,10 +193,10 @@
   
   checkbox_show_desc.oninput = function() {
     if(checkbox_show_desc.checked) {
-      style_desc['fill'] = 'black';  
+      style_desc['transform'] = 'translate(0px, 100px) scale(1, 1)';  
     }
     else {
-      style_desc['fill'] = 'white'; 
+      style_desc['transform'] = 'translate(0px, 100px) scale(0, 0)'; 
     } 
   };
   
