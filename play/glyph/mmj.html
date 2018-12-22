@@ -39,7 +39,7 @@
     top: 0px;
     width: 100vw;
     height: 10vh;
-    background-color: #304ef0;
+    background-color: #30f09f;
   }
   
   #svg {
@@ -200,7 +200,7 @@
       for(let desc of descs) {
         desc.setAttribute('opacity', 1);
       }
-      document.querySelector('body').style.backgroundColor = 'yellow';
+      document.querySelector('#ui').style.backgroundColor = 'yellow';
     }
     else {
       //style_desc['transform'] = 'translate(0px, 100px) scale(0, 0)';
@@ -208,7 +208,7 @@
       for(let desc of descs) {
         desc.setAttribute('opacity', 0);
       }
-      document.querySelector('body').style.backgroundColor = 'cyan';
+      document.querySelector('#ui').style.backgroundColor = 'cyan';
     } 
   };
   
