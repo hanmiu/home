@@ -10,6 +10,9 @@
   }
   
   body {
+    position: fixed;
+    left: 0px;
+    top: 0px;
     margin: 0;
     user-select: none;
     overflow: hidden;
@@ -103,7 +106,7 @@
           el_svg.appendChild(group);
           
           let bbox = gpath.getBBox();
-          gpath.style.transform = `scale(0.3, 0.3) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
+          gpath.style.transform = `scale(0.5, 0.5) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
         }
       }
     });  
@@ -126,12 +129,10 @@
     touch.y = y;
   }
   
-  function touchend(x, y) {
+  function touchend() {
     touch.down = false;
     touch.px = touch.x;
     touch.py = touch.y;
-    touch.x = x;
-    touch.y = y;
     touch.glyph = null;
   }
   
@@ -154,7 +155,7 @@
   };
   
   window.onmouseup = function(e) {
-    touchend(e.pageX, e.pageY);
+    touchend();
   };
   
   window.onmousemove = function(e) {
@@ -162,23 +163,16 @@
   };
   
   window.ontouchstart = function(e) {
-    if(e.target.getAttribute('class') == 'gpath') {
+    if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
       touch.glyph = e.target.parentElement;
       if(e.touches.length > 0) {
         touchstart(e.touches[0].pageX, e.touches[0].pageY);
-        return true;
       }
     }
-    
-    e.preventDefault();
-    
-    return false;
   };
   
   window.ontouchend = function(e) {
-    if(e.touches.length > 0) {
-      touchend(e.touches[0].pageX, e.touches[0].pageY);
-    }
+    touchend();
   };
   
   window.ontouchmove = function(e) {
