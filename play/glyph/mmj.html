@@ -21,7 +21,7 @@
   .desc {
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
-    display: none;
+    opacity: 0.5;
   }
   
   .gpath {
@@ -89,8 +89,6 @@
           gpath.setAttribute('d', d);
           
           let desc = document.createElementNS(svg_ns, 'text');
-          //desc.style['font-family'] = 'Black Han Sans';
-          //desc.style['font-size'] = 20 + 'px';
           desc.style['transform'] = `translate(${0}px, ${100}px)`;
           desc.setAttribute('class', 'desc');
           desc.setAttribute('text-anchor', 'middle');
@@ -148,7 +146,7 @@
     touch.y = y;
     
     if(touch.down) {
-      touch.glyph.style.transform = `translate(${touch.x - window.scrollX - touch.dx}px, ${touch.y - window.scrollY - touch.dy}px)`;
+      touch.glyph.style.transform = `translate(${touch.x - touch.dx}px, ${touch.y - touch.dy}px)`;
     }
   }
   
@@ -187,15 +185,16 @@
   el_svg.ontouchmove = function(e) {
     if(e.touches.length > 0) {
       touchmove(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
+      e.preventDefault();
     }
   };
   
   checkbox_show_desc.oninput = function() {
     if(checkbox_show_desc.checked) {
-      style_desc.display = '';  
+      //style_desc.display = '';  
     }
     else {
-      style_desc.display = 'none'; 
+      //style_desc.display = 'none'; 
     } 
   };
   
