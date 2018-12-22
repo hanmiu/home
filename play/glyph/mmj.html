@@ -201,7 +201,7 @@
   function layout () {
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight - rect_ui.height);
+    el_svg.setAttribute('height', innerHeight - 2 - rect_ui.height);
     el_svg.style.left = '0px';
     el_svg.style.top = rect_ui.height + 'px';
   }
