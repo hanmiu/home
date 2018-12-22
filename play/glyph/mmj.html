@@ -10,9 +10,6 @@
   }
   
   body {
-    position: fixed;
-    left: 0px;
-    top: 0px;
     margin: 0;
     user-select: none;
     overflow: hidden;
@@ -24,8 +21,7 @@
   .desc {
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
-    /*opacity: 1;*/
-    /*transition: opacity 0.5s;*/
+    display: none;
   }
   
   .gpath {
@@ -37,6 +33,13 @@
     position: fixed;
     left: 0px;
     top: 0px;
+    width: 100vw;
+    height: 10vh;
+    background-color: antiquewhite;
+  }
+  
+  #svg {
+    position: fixed;
   }
 </style>
 <body>
@@ -48,6 +51,8 @@
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
   let el_svg = document.querySelector('#svg');
+  let el_ui = document.querySelector('#ui');
+  let rect_ui = el_ui.getBoundingClientRect();
   
   let checkbox_show_desc = document.querySelector('#show-desc');
   
@@ -114,6 +119,8 @@
     down: false,
     px: 0,
     py: 0,
+    dx: 0,
+    dy: 0,
     x: 0,
     y: 0,
     glyph: null,
@@ -141,59 +148,66 @@
     touch.y = y;
     
     if(touch.down) {
-      touch.glyph.style.transform = `translate(${touch.x - window.scrollX}px, ${touch.y - window.scrollY}px)`;
+      touch.glyph.style.transform = `translate(${touch.x - window.scrollX - touch.dx}px, ${touch.y - window.scrollY - touch.dy}px)`;
     }
   }
   
-  window.onmousedown = function(e) {
-    if(e.target.getAttribute('class') == 'gpath') {
+  el_svg.onmousedown = function(e) {
+    if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
+      console.log(e.target);
       touch.glyph = e.target.parentElement;
-      touchstart(e.pageX, e.pageY);
+      touchstart(e.pageX, e.pageY - rect_ui.height);
     }
   };
   
-  window.onmouseup = function(e) {
+  el_svg.onmouseup = function(e) {
     touchend();
   };
   
-  window.onmousemove = function(e) {
-    touchmove(e.pageX, e.pageY);
+  el_svg.onmousemove = function(e) {
+    touchmove(e.pageX, e.pageY - rect_ui.height);
   };
   
-  window.ontouchstart = function(e) {
+  el_svg.ontouchstart = function(e) {
     if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
       touch.glyph = e.target.parentElement;
       if(e.touches.length > 0) {
-        touchstart(e.touches[0].pageX, e.touches[0].pageY);
+        let rect = e.target.getBoundingClientRect();
+        touch.dx = e.touches[0].pageX - (rect.left + rect.right) * 0.5;
+        touch.dy = e.touches[0].pageY - (rect.top + rect.bottom) * 0.5;
+        touchstart(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
       }
     }
   };
   
-  window.ontouchend = function(e) {
+  el_svg.ontouchend = function(e) {
     touchend();
   };
   
-  window.ontouchmove = function(e) {
+  el_svg.ontouchmove = function(e) {
     if(e.touches.length > 0) {
-      touchmove(e.touches[0].pageX, e.touches[0].pageY);
+      touchmove(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
     }
   };
   
   checkbox_show_desc.oninput = function() {
     if(checkbox_show_desc.checked) {
-      //style_desc.opacity = 1;  
+      style_desc.display = '';  
     }
     else {
-      //style_desc.opacity = 0; 
+      style_desc.display = 'none'; 
     } 
   };
   
   function layout () {
+    rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight);
+    el_svg.setAttribute('height', innerHeight - rect_ui.height);
+    el_svg.style.left = '0px';
+    el_svg.style.top = rect_ui.height + 'px';
   }
   
-  window.onsize = function() {
+  window.onresize = function() {
     layout();
   };
   
