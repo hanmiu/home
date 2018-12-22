@@ -112,7 +112,7 @@
     glyph: null,
   };
   
-  function touchdown(x, y) {
+  function touchstart(x, y) {
     touch.down = true;
     touch.px = touch.x;
     touch.py = touch.y;
@@ -120,7 +120,7 @@
     touch.y = y;
   }
   
-  function touchup(x, y) {
+  function touchend(x, y) {
     touch.down = false;
     touch.px = touch.x;
     touch.py = touch.y;
@@ -143,16 +143,37 @@
   window.onmousedown = function(e) {
     if(e.target.getAttribute('class') == 'gpath') {
       touch.glyph = e.target.parentElement;
-      touchdown(e.pageX, e.pageY);
+      touchstart(e.pageX, e.pageY);
     }
   };
   
   window.onmouseup = function(e) {
-    touchup(e.pageX, e.pageY);
+    touchend(e.pageX, e.pageY);
   };
   
   window.onmousemove = function(e) {
     touchmove(e.pageX, e.pageY);
+  };
+  
+  window.ontouchstart = function(e) {
+    if(e.target.getAttribute('class') == 'gpath') {
+      touch.glyph = e.target.parentElement;
+      if(e.touches.length > 0) {
+        touchstart(e.touches[0].pageX, e.touches[0].pageY);
+      }
+    }
+  };
+  
+  window.ontouchend = function(e) {
+    if(e.touches.length > 0) {
+      touchend(e.touches[0].pageX, e.touches[0].pageY);
+    }
+  };
+  
+  window.ontouchmove = function(e) {
+    if(e.touches.length > 0) {
+      touchmove(e.touches[0].pageX, e.touches[0].pageY);
+    }
   };
   
   checkbox_show_desc.oninput = function() {
