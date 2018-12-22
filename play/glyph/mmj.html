@@ -22,6 +22,7 @@
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
     fill-opacity: 0;
+    visibility: visible;
     transition: fill-opacity 0.2s;
   }
   
@@ -177,12 +178,10 @@
         touchstart(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
       }
     }
-    e.preventDefault();
   };
   
   el_svg.ontouchend = function(e) {
     touchend();
-    e.preventDefault();
   };
   
   el_svg.ontouchmove = function(e) {
