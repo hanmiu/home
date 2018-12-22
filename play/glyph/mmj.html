@@ -21,9 +21,8 @@
   .desc {
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
-    fill-opacity: 0;
-    visibility: visible;
-    transition: fill-opacity 0.2s;
+    fill: black;
+    transition: fill 0.2s;
   }
   
   .gpath {
@@ -193,10 +192,10 @@
   
   checkbox_show_desc.oninput = function() {
     if(checkbox_show_desc.checked) {
-      style_desc['fill-opacity'] = 1;  
+      style_desc['fill'] = 'black';  
     }
     else {
-      style_desc['fill-opacity'] = 0; 
+      style_desc['fill'] = 'white'; 
     } 
   };
   
