@@ -1,12 +1,18 @@
 <!doctype html>
 <meta charset="utf-8">
+<title>몸문자</title>
 <style title="main">
   @import url('https://fonts.googleapis.com/css?family=Black+Han+Sans');
   @import url('https://fonts.googleapis.com/css?family=Do+Hyeon');
   
+  html {
+    overflow: hidden; 
+  }
+  
   body {
     margin: 0;
     user-select: none;
+    overflow: hidden;
   }
   
   .glyph {
@@ -160,8 +166,13 @@
       touch.glyph = e.target.parentElement;
       if(e.touches.length > 0) {
         touchstart(e.touches[0].pageX, e.touches[0].pageY);
+        return true;
       }
     }
+    
+    e.preventDefault();
+    
+    return false;
   };
   
   window.ontouchend = function(e) {
