@@ -25,6 +25,8 @@
     fill: black;
     transition: transform 0.2s;
     */
+    opacity: 0;
+    transition: opacity 0.2s;
     transform: translate(0px, 100px);
   }
   
@@ -45,17 +47,68 @@
   #svg {
     position: fixed;
   }
+  
+  #info {
+    position: fixed;
+    right: 0px;
+    bottom: 0px;
+    font-size: 2em;
+  }
+  
+  #pane {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100px;
+    height: 100vh;
+    background-color: aquamarine;
+    overflow-x: hidden;
+    overflow-y: scroll;
+  }
+  
+  .item {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    background-color: blueviolet;
+  }
+  
+  input {
+    transform-origin: left top;
+    transform: scale(2, 2);
+  }
+  
+  #message {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    left: 0px;
+    top: 0px;
+    font-size: 5vw;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    line-height: 33vh;
+  }
 </style>
 <body>
   <svg id="svg"></svg>
   <div id="ui">
     <input type="checkbox" id="show-desc">
+    <button id="test">test</button>
+  </div>
+  <div id="info">0</div>
+  <div id="pane"></div>
+  <div id="message">
+    <div id="inner">아직 만드는 중,<br>늦어져서 미안해요!<br>12월 25일 아침까지 기다려 주세요.</div>
   </div>
 </body>
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
   let el_svg = document.querySelector('#svg');
   let el_ui = document.querySelector('#ui');
+  let el_pane = document.querySelector('#pane');
+  let rect_svg = el_svg.getBoundingClientRect();
   let rect_ui = el_ui.getBoundingClientRect();
   
   let checkbox_show_desc = document.querySelector('#show-desc');
@@ -128,7 +181,12 @@
     glyph: null,
   };
   
-  function touchstart(x, y) {
+  function touchstart(target, x, y) {
+    touch.glyph = target.parentElement;
+    let rect = target.getBoundingClientRect();
+    touch.dx = x - (rect.left + rect.right) * 0.5;
+    touch.dy = y - (rect.top + rect.bottom) * 0.5 + rect_svg.top;
+    
     touch.down = true;
     touch.px = touch.x;
     touch.py = touch.y;
@@ -156,9 +214,7 @@
   
   el_svg.onmousedown = function(e) {
     if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
-      console.log(e.target);
-      touch.glyph = e.target.parentElement;
-      touchstart(e.pageX, e.pageY - rect_ui.height);
+      touchstart(e.target, e.pageX, e.pageY - rect_svg.top);
     }
   };
   
@@ -167,28 +223,26 @@
   };
   
   el_svg.onmousemove = function(e) {
-    touchmove(e.pageX, e.pageY - rect_ui.height);
+    touchmove(e.pageX, e.pageY - rect_svg.top);
   };
   
   el_svg.ontouchstart = function(e) {
     if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
-      touch.glyph = e.target.parentElement;
       if(e.touches.length > 0) {
-        let rect = e.target.getBoundingClientRect();
-        touch.dx = e.touches[0].pageX - (rect.left + rect.right) * 0.5;
-        touch.dy = e.touches[0].pageY - (rect.top + rect.bottom) * 0.5;
-        touchstart(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
+        touchstart(e.target, e.touches[0].pageX, e.touches[0].pageY - rect_svg.top);
       }
     }
+    e.preventDefault();
   };
   
   el_svg.ontouchend = function(e) {
     touchend();
+    e.preventDefault();
   };
   
   el_svg.ontouchmove = function(e) {
     if(e.touches.length > 0) {
-      touchmove(e.touches[0].pageX, e.touches[0].pageY - rect_ui.height);
+      touchmove(e.touches[0].pageX, e.touches[0].pageY - rect_svg.top);
       e.preventDefault();
     }
   };
@@ -213,18 +267,31 @@
   };
   
   function layout () {
+    document.querySelector('#info').textContent = window.scrollY;
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight - 2 - rect_ui.height);
+    el_svg.setAttribute('height', innerHeight + window.scrollY);
     el_svg.style.left = '0px';
     el_svg.style.top = rect_ui.height + 'px';
+    rect_svg = el_svg.getBoundingClientRect();
   }
   
   window.onresize = function() {
-    layout();
+    setTimeout(layout, 500);
   };
   
   window.onload = function() {
-    layout();
+    setTimeout(layout, 500);
+    
+    for(let i = 0; i < 100; i++) {
+      let el = document.createElement('div');
+      el.className = 'item';
+      el.textContent = i;
+      el_pane.appendChild(el);
+    }
   };
+  
+  document.querySelector('#test').onclick = function() {
+    style_desc['opacity'] = 1;
+  }
 </script>
