@@ -146,7 +146,6 @@
           gpath.setAttribute('d', d);
           
           let desc = document.createElementNS(svg_ns, 'text');
-          //desc.style['transform'] = `translate(${0}px, ${100}px)`;
           desc.setAttribute('class', 'desc');
           desc.setAttribute('text-anchor', 'middle');
           desc.setAttribute('alignment-baseline', 'middle');
@@ -158,6 +157,8 @@
           let x = Math.random() * innerWidth;
           let y = Math.random() * innerHeight;
           group.style.transform = `translate(${x}px, ${y}px)`;
+          group.dataset.x = x;
+          group.dataset.y = y;
           
           group.appendChild(desc);
           group.appendChild(gpath);
@@ -182,10 +183,13 @@
   };
   
   function touchstart(target, x, y) {
-    touch.glyph = target.parentElement;
+    touch.glyph = target;
     let rect = target.getBoundingClientRect();
-    touch.dx = x - (rect.left + rect.right) * 0.5;
-    touch.dy = y - (rect.top + rect.bottom) * 0.5 + rect_svg.top;
+    //touch.dx = x - (rect.left + rect.right) * 0.5;
+    //touch.dy = y - (rect.top + rect.bottom) * 0.5;
+    
+    touch.dx = x - parseFloat(touch.glyph.dataset.x);
+    touch.dy = y - parseFloat(touch.glyph.dataset.y);
     
     touch.down = true;
     touch.px = touch.x;
@@ -208,13 +212,30 @@
     touch.y = y;
     
     if(touch.down) {
-      touch.glyph.style.transform = `translate(${touch.x - touch.dx}px, ${touch.y - touch.dy}px)`;
+      let x = touch.x - touch.dx;
+      let y = touch.y - touch.dy - rect_svg.top;
+      touch.glyph.style.transform = `translate(${x}px, ${y}px)`;
+      touch.glyph.dataset.x = x;
+      touch.glyph.dataset.y = y;
+    }
+  }
+  
+  function find_nearest_touchable(x, y) {
+    let glyphs = document.querySelectorAll('.glyph');
+    for(let glyph of glyphs) {
+      let dx = x - parseFloat(glyph.dataset.x);
+      let dy = y - parseFloat(glyph.dataset.y);
+      let d = Math.sqrt(dx*dx + dy*dy);
+      if(d < 50) {
+        console.log(d);
+        touchstart(glyph, x, y);
+      }
     }
   }
   
   el_svg.onmousedown = function(e) {
     if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
-      touchstart(e.target, e.pageX, e.pageY - rect_svg.top);
+      touchstart(e.target.parentElement, e.pageX, e.pageY);
     }
   };
   
@@ -229,8 +250,11 @@
   el_svg.ontouchstart = function(e) {
     if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
       if(e.touches.length > 0) {
-        touchstart(e.target, e.touches[0].pageX, e.touches[0].pageY - rect_svg.top);
+        touchstart(e.target.parentElement, e.touches[0].pageX, e.touches[0].pageY);
       }
+    }
+    else {
+      find_nearest_touchable(e.touches[0].pageX, e.touches[0].pageY);
     }
     e.preventDefault();
   };
@@ -242,7 +266,7 @@
   
   el_svg.ontouchmove = function(e) {
     if(e.touches.length > 0) {
-      touchmove(e.touches[0].pageX, e.touches[0].pageY - rect_svg.top);
+      touchmove(e.touches[0].pageX, e.touches[0].pageY);
       e.preventDefault();
     }
   };
