@@ -105,6 +105,7 @@
     bottom: 0px;
     background-color: beige;
     overflow: hidden;
+    transition: bottom 0.5s;
   }
   
   #dictionary {
@@ -143,6 +144,7 @@
 <body>
   <svg id="svg"></svg>
   <div id="ui">
+    <div id="pick" class="button">고르기</div>
     <div id="show" class="button">보이기</div>
     <div id="hide" class="button">숨기기</div>
   </div>
@@ -161,6 +163,12 @@
   let svg_ns = 'http://www.w3.org/2000/svg';
   let el_svg = document.querySelector('#svg');
   let el_ui = document.querySelector('#ui');
+  
+  let el_drawer = document.querySelector('#drawer');
+  let el_pick = document.querySelector('#pick');
+  let el_show = document.querySelector('#show');
+  let el_hide = document.querySelector('#hide');
+  
   let el_pane = document.querySelector('#pane');
   let rect_svg = el_svg.getBoundingClientRect();
   let rect_ui = el_ui.getBoundingClientRect();
@@ -175,10 +183,21 @@
   }
   
   let style_desc = get_style_rule('.desc').style;
+  let style_bt_glyph = get_style_rule('.bt-glyph').style;
   
   let files = [
     '새.svg',
     '모른다.svg',
+    '나무.svg',
+    '있다.svg',
+    '즐겁다.svg',
+    '논다.svg',
+    '즐겁다.svg',
+    '다시.svg',
+    '지치다.svg',
+    '유치원.svg',
+    '집.svg',
+    '화장실.svg',
     '풀 위에 토끼.svg',
   ];
   
@@ -244,6 +263,7 @@
       el.onclick = function(e) {
         console.log(name);
         add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, 100);
+        wait = 60 * 5;
         layout();
       };
     }
@@ -430,11 +450,17 @@
     }
   };
   
-  document.querySelector('#show').onclick = function() {
+  wait = 0;
+  el_pick.onclick = function() {
+    el_drawer.style['bottom'] = '0vh';
+    wait = 60 * 5;
+  };
+  
+  el_show.onclick = function() {
     style_desc['opacity'] = 0.5;
   };
   
-  document.querySelector('#hide').onclick = function() {
+  el_hide.onclick = function() {
     style_desc['opacity'] = 0;
   };
   
@@ -452,6 +478,15 @@
     let size = innerWidth / nw;
     base_scale = size / 300;
     let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
+    
+    if(aspect_ratio > 1.0) {
+      style_bt_glyph['width'] = '10vh';
+      style_bt_glyph['height'] = '10vh';
+    }
+    else {
+      style_bt_glyph['width'] = '7vh';
+      style_bt_glyph['height'] = '7vh';
+    }
     
     let glyphs = document.querySelectorAll('.glyph');
     
@@ -522,6 +557,12 @@
   
   function loop() {
     scene_update();
+    if(wait > 0) {
+      wait--;
+      if(wait == 0) {
+        el_drawer.style['bottom'] = '-33vh';
+      }
+    }
     requestAnimationFrame(loop);
   }
 </script>
