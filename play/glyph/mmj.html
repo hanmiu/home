@@ -32,7 +32,7 @@
   }
   
   .gpath {
-    fill: blue;
+    fill: black;
     cursor: pointer;
   }
   
@@ -66,6 +66,7 @@
   }
   
   #info {
+    display: none;
     position: fixed;
     right: 0px;
     bottom: 0px;
@@ -118,19 +119,25 @@
     height: 10vh;
     margin: 3px;
     background-repeat: no-repeat;
+    border-radius: 2vh;
+  }
+  
+  .bt-glyph:active {
+    background-color: burlywood;
   }
   
   #message {
     position: fixed;
-    width: 100vw;
-    height: 100vh;
-    left: 0px;
-    top: 0px;
-    font-size: 5vw;
-    text-align: center;
+    /* width: 100vw;
+    height: 100vh; */
+    right: 2vh;
+    bottom: 2vh;
+    font-size: 3vw;
+    /* text-align: center;
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     line-height: 33vh;
+    */
   }
 </style>
 <body>
@@ -145,10 +152,9 @@
     <div id="dictionary"></div>
   </div>
   
-  <!--<div id="message">
-    <div id="inner">아직 만드는 중,<br>늦어져서 미안해요!<br>12월 25일 아침까지 기다려 주세요.</div>
+  <div id="message">
+    <div id="inner">계속 만드는 중, 문자를 클릭하고 움직이며 실험해 보세요!</div>
   </div>
-  -->
   <div id="info">0</div>
 </body>
 <script>
@@ -228,7 +234,7 @@
       let cy = (bbox.y + bbox.height) * 0.5;
       path.remove();
       
-      let svg_xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path fill="brown" transform="translate(20, 20) scale(0.09, 0.09) translate(${-cx}, ${-cy})" d="${d}"/></svg>`;
+      let svg_xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path fill="black" transform="translate(20, 20) scale(0.09, 0.09) translate(${-cx}, ${-cy})" d="${d}"/></svg>`;
       let url = `data:image/svg+xml;utf8,${svg_xml}`;
       let el = document.createElement('div');
       el.className = 'bt-glyph';
@@ -425,33 +431,12 @@
   };
   
   document.querySelector('#show').onclick = function() {
-    style_desc['opacity'] = 1;
+    style_desc['opacity'] = 0.5;
   };
   
   document.querySelector('#hide').onclick = function() {
     style_desc['opacity'] = 0;
   };
-  
-  /*
-  checkbox_show_desc.oninput = function() {
-    if(checkbox_show_desc.checked) {
-      //style_desc['transform'] = 'translate(0px, 100px) scale(1, 1)';
-      let descs = document.querySelectorAll('.desc');
-      for(let desc of descs) {
-        desc.setAttribute('opacity', 1);
-      }
-      document.querySelector('#ui').style.backgroundColor = 'yellow';
-    }
-    else {
-      //style_desc['transform'] = 'translate(0px, 100px) scale(0, 0)';
-      let descs = document.querySelectorAll('.desc');
-      for(let desc of descs) {
-        desc.setAttribute('opacity', 0);
-      }
-      document.querySelector('#ui').style.backgroundColor = 'cyan';
-    } 
-  };
-  */
   
   function layout () {
     document.querySelector('#info').textContent = window.scrollY;
