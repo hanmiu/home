@@ -19,16 +19,13 @@
   }
   
   .gpath {
+    transform: scale(0, 0);
     transition: transform 0.2s;
   }
   
   .desc {
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
-    /*
-    fill: black;
-    transition: transform 0.2s;
-    */
     opacity: 0;
     transition: opacity 0.2s;
     transform: translate(0px, 100px);
@@ -45,7 +42,23 @@
     top: 0px;
     width: 100vw;
     height: 10vh;
-    background-color: #30f09f;
+    /* background-color: #30f09f; */
+  }
+  
+  #ui .button {
+    margin-top: 5vh;
+    margin-left: 3vw;
+    margin-right: 1vw;
+    display: inline-block;
+    font-size: 4vw;
+    font-family: 'Black Han Sans', sans-serif;
+    padding: 1vh 2vw 1vh 2vw;
+    border-radius: 2vw;
+    background-color: antiquewhite; 
+  }
+  
+  #ui .button:active {
+    background-color: #eabf85; 
   }
   
   #svg {
@@ -68,6 +81,7 @@
     background-color: aquamarine;
     overflow-x: hidden;
     overflow-y: scroll;
+    display: none;
   }
   
   .item {
@@ -80,6 +94,30 @@
   input {
     transform-origin: left top;
     transform: scale(2, 2);
+  }
+  
+  #drawer {
+    position: fixed;
+    width: 100vw;
+    height: 33vh;
+    left: 0px;
+    bottom: 0px;
+    background-color: beige;
+    overflow: hidden;
+  }
+  
+  #dictionary {
+    margin-left: 5vw;
+    margin-right: 5vw;
+    margin-top: 5vh;
+  }
+  
+  .bt-glyph {
+    display: inline-block;
+    width: 10vh;
+    height: 10vh;
+    margin: 3px;
+    background-repeat: no-repeat;
   }
   
   #message {
@@ -98,16 +136,20 @@
 <body>
   <svg id="svg"></svg>
   <div id="ui">
-    <input type="checkbox" id="show-desc">
-    <button id="test">test</button>
+    <div id="show" class="button">보이기</div>
+    <div id="hide" class="button">숨기기</div>
   </div>
-  <div id="info">0</div>
-  <div id="pane"></div>
   
-  <div id="message">
+  <div id="pane"></div>
+  <div id="drawer">
+    <div id="dictionary"></div>
+  </div>
+  
+  <!--<div id="message">
     <div id="inner">아직 만드는 중,<br>늦어져서 미안해요!<br>12월 25일 아침까지 기다려 주세요.</div>
   </div>
-  
+  -->
+  <div id="info">0</div>
 </body>
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
@@ -116,7 +158,7 @@
   let el_pane = document.querySelector('#pane');
   let rect_svg = el_svg.getBoundingClientRect();
   let rect_ui = el_ui.getBoundingClientRect();
-  let base_scale = 1.0;
+  let base_scale = 0.0;
   
   let checkbox_show_desc = document.querySelector('#show-desc');
   
@@ -135,24 +177,104 @@
   ];
   
   let dom_parser = new DOMParser();
-  
+  let dic_glyph_data = {};
   let ptcls = [];
   
+  function add_glyph(name, x, y) {
+    let d = dic_glyph_data[name];
+    if(d) {
+      let group = document.createElementNS(svg_ns, 'g');
+      group.setAttribute('class', 'glyph');
+
+      let gpath = document.createElementNS(svg_ns, 'path');
+      gpath.setAttribute('class', 'gpath');
+      gpath.setAttribute('d', d);
+
+      let desc = document.createElementNS(svg_ns, 'text');
+      desc.setAttribute('class', 'desc');
+      desc.setAttribute('text-anchor', 'middle');
+      desc.setAttribute('alignment-baseline', 'middle');
+      desc.textContent = name;
+      desc.setAttribute('x', 0);
+      desc.setAttribute('y', 0);
+
+      group.style.transform = `translate(${x}px, ${y}px)`;
+
+      group.appendChild(desc);
+      group.appendChild(gpath);
+      el_svg.appendChild(group);
+
+      group.info = {
+        x: x,
+        y: y,
+        radius: 1.0,
+        name: name,
+      };
+      ptcls.push(group);
+
+      let bbox = gpath.getBBox();
+      gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;  
+    }
+  }
+  
+  function add_bt_glyph(name) {
+    let d = dic_glyph_data[name];
+    if(d) {
+      let path = document.createElementNS(svg_ns, 'path');
+      path.setAttribute('d', d);
+      el_svg.appendChild(path);
+      let bbox = path.getBBox();
+      let cx = (bbox.x + bbox.width) * 0.5;
+      let cy = (bbox.y + bbox.height) * 0.5;
+      path.remove();
+      
+      let svg_xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path fill="brown" transform="translate(20, 20) scale(0.09, 0.09) translate(${-cx}, ${-cy})" d="${d}"/></svg>`;
+      let url = `data:image/svg+xml;utf8,${svg_xml}`;
+      let el = document.createElement('div');
+      el.className = 'bt-glyph';
+      el.style['background-image'] = `url('${url}')`;
+      document.querySelector('#dictionary').appendChild(el);
+      
+      el.onclick = function(e) {
+        console.log(name);
+        add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, 100);
+        layout();
+      };
+    }
+  }
+  
+  function load_glyph_data() {
+    for(let file of files) {
+      fetch('./data/mmj/' + file)
+      .then(response => response.text())
+      .then(text => {
+        let xml = dom_parser.parseFromString(text, 'text/xml');
+        let paths = xml.querySelectorAll('path');
+
+        for(let i = 0; i < paths.length; i++) {
+          let d = paths[i].getAttribute('d').trim();
+          if(d.length > 0) {
+            let name = file.split('.')[0];
+            dic_glyph_data[name] = d;
+            add_bt_glyph(name);
+          }
+        }
+      });  
+    }
+  }
+  
+  /*
   for(let file of files) {
     fetch('./data/mmj/' + file)
     .then(response => response.text())
     .then(text => {
       let xml = dom_parser.parseFromString(text, 'text/xml');
       let paths = xml.querySelectorAll('path');
-      
-      let aspect_ratio = innerWidth / innerHeight;
-      let nw = aspect_ratio > 1.0 ? 10 : 8;
-      let size = innerWidth / nw;
-      base_scale = size / 300;
-      
+
       for(let i = 0; i < paths.length; i++) {
         let d = paths[i].getAttribute('d');
         if(d.trim().length > 0) {
+          let name = file.split('.')[0];
           let group = document.createElementNS(svg_ns, 'g');
           group.setAttribute('class', 'glyph');
           
@@ -164,10 +286,9 @@
           desc.setAttribute('class', 'desc');
           desc.setAttribute('text-anchor', 'middle');
           desc.setAttribute('alignment-baseline', 'middle');
-          desc.textContent = file.split('.')[0];
+          desc.textContent = name;
           desc.setAttribute('x', 0);
           desc.setAttribute('y', 0);
-          
           
           let x = Math.random() * innerWidth;
           let y = Math.random() * innerHeight;
@@ -177,12 +298,11 @@
           group.appendChild(gpath);
           el_svg.appendChild(group);
           
-          let rect = group.getBoundingClientRect();
-          let radius = (rect.width + rect.height) * 0.5;
           group.info = {
             x: x,
             y: y,
-            radius: radius,
+            radius: 1.0,
+            name: name,
           };
           ptcls.push(group);
           
@@ -192,6 +312,7 @@
       }
     });  
   }
+  */
   
   let touch = {
     down: false,
@@ -237,28 +358,30 @@
       touch.glyph.style.transform = `translate(${x}px, ${y}px)`;
       touch.glyph.info.x = x;
       touch.glyph.info.y = y;
+      document.querySelector('#info').textContent = `${x|0}, ${y|0}`;
     }
   }
   
   function find_nearest_touchable(x, y) {
     let min_d = Number.MAX_VALUE;
     let gp = null;
-    let radius = 0;
     for(let glyph of ptcls) {
       let dx = x - glyph.info.x;
-      let dy = y - glyph.info.y;
+      let dy = y - glyph.info.y - rect_svg.top;
       let d = Math.sqrt(dx*dx + dy*dy);
       if(d < min_d) {
         min_d = d;
         gp = glyph;
-        radius = glyph.info.radius;
       }
     }
-  
-    if(min_d < radius && gp) {
-      let rect = gp.getBoundingClientRect();
+
+    if(gp) {
+      let rect = gp.querySelector('.gpath').getBoundingClientRect();
       if((x > rect.left && x < rect.right) && (y > rect.top && y < rect.bottom)) {
         touchstart(gp, x, y);   
+      }
+      else {
+        console.log('add here');
       }
     }
   }
@@ -282,11 +405,11 @@
       if(e.touches.length > 0) {
         touchstart(e.target.parentElement, e.touches[0].pageX, e.touches[0].pageY);
       }
+      e.preventDefault();
     }
     else {
       find_nearest_touchable(e.touches[0].pageX, e.touches[0].pageY);
     }
-    e.preventDefault();
   };
   
   el_svg.ontouchend = function(e) {
@@ -301,6 +424,15 @@
     }
   };
   
+  document.querySelector('#show').onclick = function() {
+    style_desc['opacity'] = 1;
+  };
+  
+  document.querySelector('#hide').onclick = function() {
+    style_desc['opacity'] = 0;
+  };
+  
+  /*
   checkbox_show_desc.oninput = function() {
     if(checkbox_show_desc.checked) {
       //style_desc['transform'] = 'translate(0px, 100px) scale(1, 1)';
@@ -319,40 +451,43 @@
       document.querySelector('#ui').style.backgroundColor = 'cyan';
     } 
   };
+  */
   
   function layout () {
     document.querySelector('#info').textContent = window.scrollY;
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight + window.scrollY);
+    el_svg.setAttribute('height', innerHeight - rect_ui.bottom + window.scrollY);
     el_svg.style.left = '0px';
     el_svg.style.top = rect_ui.height + 'px';
     rect_svg = el_svg.getBoundingClientRect();
     
     let aspect_ratio = innerWidth / innerHeight;
-    let nw = aspect_ratio > 1.0 ? 10 : 8;
+    let nw = aspect_ratio > 1.0 ? 10 : 7;
     let size = innerWidth / nw;
     base_scale = size / 300;
+    let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
     
     let glyphs = document.querySelectorAll('.glyph');
     
     for(let glyph of glyphs) {
-      let rect = glyph.querySelector('.gpath').getBoundingClientRect();
-      glyph.info.radius = (rect.width, rect.height) * 0.5;
       let gpath = glyph.querySelector('.gpath');
       let bbox = gpath.getBBox();
       gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
-      if(glyph.info.x - glyph.info.radius > rect_svg.right) {
-        glyph.info.x = rect_svg.right - glyph.info.radius;
+      let rect = gpath.getBoundingClientRect();
+      glyph.info.radius = Math.min(bbox.width, bbox.height) * 0.25 * r_scale;
+      
+      if(rect.right > rect_svg.right) {
+        glyph.info.x = rect_svg.right - rect.width;
       }
-      if(glyph.info.x + glyph.info.radius < rect_svg.left) {
-        glyph.info.x = rect_svg.left + glyph.info.radius;
+      if(rect.left < rect_svg.left) {
+        glyph.info.x = rect_svg.left + rect.width;
       }
-      if(glyph.info.y - glyph.info.radius > rect_svg.bottom) {
-        glyph.info.y = rect_svg.bottom - glyph.info.radius;
+      if(rect.bottom > rect_svg.bottom) {
+        glyph.info.y = rect_svg.bottom - rect.height;
       }
-      if(glyph.info.y + glyph.info.radius < rect_svg.top) {
-        glyph.info.y = rect_svg.top + glyph.info.radius;
+      if(rect.top < rect_svg.top) {
+        glyph.info.y = rect.height;
       }
       glyph.style.transform = `translate(${glyph.info.x}px, ${glyph.info.y}px)`;
     }
@@ -363,6 +498,8 @@
   };
   
   window.onload = function() {
+    load_glyph_data();
+    
     setTimeout(layout, 500);
     
     for(let i = 0; i < 100; i++) {
@@ -374,10 +511,6 @@
     
     loop();
   };
-  
-  document.querySelector('#test').onclick = function() {
-    style_desc['opacity'] = 1;
-  }
   
   function scene_update() {
     for(let j = 0; j < ptcls.length; j++) {
