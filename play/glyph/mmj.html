@@ -18,6 +18,10 @@
   .glyph {
   }
   
+  .gpath {
+    transition: transform 0.2s;
+  }
+  
   .desc {
     font-family: 'Black Han Sans', sans-serif;
     font-size: 30px;
@@ -99,9 +103,11 @@
   </div>
   <div id="info">0</div>
   <div id="pane"></div>
+  
   <div id="message">
     <div id="inner">아직 만드는 중,<br>늦어져서 미안해요!<br>12월 25일 아침까지 기다려 주세요.</div>
   </div>
+  
 </body>
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
@@ -110,6 +116,7 @@
   let el_pane = document.querySelector('#pane');
   let rect_svg = el_svg.getBoundingClientRect();
   let rect_ui = el_ui.getBoundingClientRect();
+  let base_scale = 1.0;
   
   let checkbox_show_desc = document.querySelector('#show-desc');
   
@@ -129,12 +136,20 @@
   
   let dom_parser = new DOMParser();
   
+  let ptcls = [];
+  
   for(let file of files) {
     fetch('./data/mmj/' + file)
     .then(response => response.text())
     .then(text => {
       let xml = dom_parser.parseFromString(text, 'text/xml');
       let paths = xml.querySelectorAll('path');
+      
+      let aspect_ratio = innerWidth / innerHeight;
+      let nw = aspect_ratio > 1.0 ? 10 : 8;
+      let size = innerWidth / nw;
+      base_scale = size / 300;
+      
       for(let i = 0; i < paths.length; i++) {
         let d = paths[i].getAttribute('d');
         if(d.trim().length > 0) {
@@ -157,15 +172,22 @@
           let x = Math.random() * innerWidth;
           let y = Math.random() * innerHeight;
           group.style.transform = `translate(${x}px, ${y}px)`;
-          group.dataset.x = x;
-          group.dataset.y = y;
           
           group.appendChild(desc);
           group.appendChild(gpath);
           el_svg.appendChild(group);
           
+          let rect = group.getBoundingClientRect();
+          let radius = (rect.width + rect.height) * 0.5;
+          group.info = {
+            x: x,
+            y: y,
+            radius: radius,
+          };
+          ptcls.push(group);
+          
           let bbox = gpath.getBBox();
-          gpath.style.transform = `scale(0.5, 0.5) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
+          gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
         }
       }
     });  
@@ -185,11 +207,9 @@
   function touchstart(target, x, y) {
     touch.glyph = target;
     let rect = target.getBoundingClientRect();
-    //touch.dx = x - (rect.left + rect.right) * 0.5;
-    //touch.dy = y - (rect.top + rect.bottom) * 0.5;
     
-    touch.dx = x - parseFloat(touch.glyph.dataset.x);
-    touch.dy = y - parseFloat(touch.glyph.dataset.y);
+    touch.dx = x - touch.glyph.info.x;
+    touch.dy = y - touch.glyph.info.y;
     
     touch.down = true;
     touch.px = touch.x;
@@ -213,22 +233,32 @@
     
     if(touch.down) {
       let x = touch.x - touch.dx;
-      let y = touch.y - touch.dy - rect_svg.top;
+      let y = touch.y - touch.dy;
       touch.glyph.style.transform = `translate(${x}px, ${y}px)`;
-      touch.glyph.dataset.x = x;
-      touch.glyph.dataset.y = y;
+      touch.glyph.info.x = x;
+      touch.glyph.info.y = y;
     }
   }
   
   function find_nearest_touchable(x, y) {
-    let glyphs = document.querySelectorAll('.glyph');
-    for(let glyph of glyphs) {
-      let dx = x - parseFloat(glyph.dataset.x);
-      let dy = y - parseFloat(glyph.dataset.y);
+    let min_d = Number.MAX_VALUE;
+    let gp = null;
+    let radius = 0;
+    for(let glyph of ptcls) {
+      let dx = x - glyph.info.x;
+      let dy = y - glyph.info.y;
       let d = Math.sqrt(dx*dx + dy*dy);
-      if(d < 50) {
-        console.log(d);
-        touchstart(glyph, x, y);
+      if(d < min_d) {
+        min_d = d;
+        gp = glyph;
+        radius = glyph.info.radius;
+      }
+    }
+  
+    if(min_d < radius && gp) {
+      let rect = gp.getBoundingClientRect();
+      if((x > rect.left && x < rect.right) && (y > rect.top && y < rect.bottom)) {
+        touchstart(gp, x, y);   
       }
     }
   }
@@ -244,7 +274,7 @@
   };
   
   el_svg.onmousemove = function(e) {
-    touchmove(e.pageX, e.pageY - rect_svg.top);
+    touchmove(e.pageX, e.pageY);
   };
   
   el_svg.ontouchstart = function(e) {
@@ -298,6 +328,34 @@
     el_svg.style.left = '0px';
     el_svg.style.top = rect_ui.height + 'px';
     rect_svg = el_svg.getBoundingClientRect();
+    
+    let aspect_ratio = innerWidth / innerHeight;
+    let nw = aspect_ratio > 1.0 ? 10 : 8;
+    let size = innerWidth / nw;
+    base_scale = size / 300;
+    
+    let glyphs = document.querySelectorAll('.glyph');
+    
+    for(let glyph of glyphs) {
+      let rect = glyph.querySelector('.gpath').getBoundingClientRect();
+      glyph.info.radius = (rect.width, rect.height) * 0.5;
+      let gpath = glyph.querySelector('.gpath');
+      let bbox = gpath.getBBox();
+      gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
+      if(glyph.info.x - glyph.info.radius > rect_svg.right) {
+        glyph.info.x = rect_svg.right - glyph.info.radius;
+      }
+      if(glyph.info.x + glyph.info.radius < rect_svg.left) {
+        glyph.info.x = rect_svg.left + glyph.info.radius;
+      }
+      if(glyph.info.y - glyph.info.radius > rect_svg.bottom) {
+        glyph.info.y = rect_svg.bottom - glyph.info.radius;
+      }
+      if(glyph.info.y + glyph.info.radius < rect_svg.top) {
+        glyph.info.y = rect_svg.top + glyph.info.radius;
+      }
+      glyph.style.transform = `translate(${glyph.info.x}px, ${glyph.info.y}px)`;
+    }
   }
   
   window.onresize = function() {
@@ -313,9 +371,39 @@
       el.textContent = i;
       el_pane.appendChild(el);
     }
+    
+    loop();
   };
   
   document.querySelector('#test').onclick = function() {
     style_desc['opacity'] = 1;
+  }
+  
+  function scene_update() {
+    for(let j = 0; j < ptcls.length; j++) {
+      let ptcl = ptcls[j];
+      for(let i = 0; i < ptcls.length; i++) {
+        let other = ptcls[i];
+        if(ptcl != other) {
+          let dx = ptcl.info.x - other.info.x;
+          let dy = ptcl.info.y - other.info.y;
+          let d = Math.sqrt(dx*dx + dy*dy);
+          let r = ptcl.info.radius + other.info.radius;
+          if(d < r && d > 0) {
+            let dr = r - d;
+            let ux = dx / d;
+            let uy = dy / d;
+            ptcl.info.x += dr * 0.5 * ux;
+            ptcl.info.y += dr * 0.5 * uy;
+            ptcl.style.transform = `translate(${ptcl.info.x}px, ${ptcl.info.y}px)`;
+          }
+        }
+      }
+    }
+  }
+  
+  function loop() {
+    scene_update();
+    requestAnimationFrame(loop);
   }
 </script>
