@@ -41,8 +41,8 @@
     left: 0px;
     top: 0px;
     width: 100vw;
-    /*height: 10vh;*/
     text-align: center;
+    background-color: rgba(255, 255, 255, 0.9);
   }
   
   #ui .button {
@@ -322,13 +322,26 @@
       group.info = {
         x: x,
         y: y,
+        fx: 0.5,
+        fy: 0.5,
         radius: 1.0,
         name: name,
       };
       ptcls.push(group);
+      
+      let aspect_ratio = innerWidth / innerHeight;
+      let nw = aspect_ratio > 1.0 ? 10 : 7;
+      let size = innerWidth / nw;
+      base_scale = size / 300;
+      let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
 
       let bbox = gpath.getBBox();
-      gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;  
+      
+      gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
+      let rect = gpath.getBoundingClientRect();
+      group.info.radius = Math.min(bbox.width, bbox.height) * 0.25 * r_scale;
+      group.info.fx = x / innerWidth;
+      group.info.fy = y / innerHeight;
     }
   }
   
@@ -351,9 +364,8 @@
       document.querySelector('#dictionary').appendChild(el);
       
       el.onclick = function(e) {
-        add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, innerHeight * 0.3);
+        add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, innerHeight * 0.5);
         wait = 60 * 8;
-        layout();
       };
     }
   }
@@ -410,6 +422,8 @@
     if(touch.glyph) {
       let rect = el_trashcan.getBoundingClientRect();
       if(touch.x > rect.left) {
+        let idx = ptcls.indexOf(touch.glyph);
+        ptcls.splice(idx, 1);
         touch.glyph.remove();
       }
     }
@@ -429,6 +443,8 @@
       touch.glyph.style.transform = `translate(${x}px, ${y}px)`;
       touch.glyph.info.x = x;
       touch.glyph.info.y = y;
+      touch.glyph.info.fx = x / innerWidth;
+      touch.glyph.info.fy = y / innerHeight;
       document.querySelector('#info').textContent = `${x|0}, ${y|0}`;
       el_trashcan.style['right'] = '0vw';
     }
@@ -451,9 +467,6 @@
       let rect = gp.querySelector('.gpath').getBoundingClientRect();
       if((x > rect.left && x < rect.right) && (y > rect.top && y < rect.bottom)) {
         touchstart(gp, x, y);   
-      }
-      else {
-        //console.log('add here');
       }
     }
   }
@@ -523,9 +536,64 @@
     document.querySelector('#info').textContent = window.scrollY;
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight - rect_ui.bottom + window.scrollY);
+    el_svg.setAttribute('height', innerHeight + window.scrollY);
     el_svg.style.left = '0px';
-    el_svg.style.top = rect_ui.height + 'px';
+    el_svg.style.top = '0px';
+    rect_svg = el_svg.getBoundingClientRect();
+    
+    let aspect_ratio = innerWidth / innerHeight;
+    let nw = aspect_ratio > 1.0 ? 10 : 7;
+    let size = innerWidth / nw;
+    base_scale = size / 300;
+    let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
+    
+    if(aspect_ratio > 1.0) {
+      style_bt_glyph['width'] = '10vh';
+      style_bt_glyph['height'] = '10vh';
+    }
+    else {
+      style_bt_glyph['width'] = '7vh';
+      style_bt_glyph['height'] = '7vh';
+    }
+    
+    let glyphs = document.querySelectorAll('.glyph');
+    
+    for(let i = 0; i < glyphs.length; i++) {
+      let glyph = glyphs[i];
+      let gpath = glyph.querySelector('.gpath');
+      let bbox = gpath.getBBox();
+      gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
+      let rect = gpath.getBoundingClientRect();
+      glyph.info.radius = Math.min(bbox.width, bbox.height) * 0.25 * r_scale;
+      
+      glyph.info.x = glyph.info.fx * innerWidth;
+      glyph.info.y = glyph.info.fy * innerHeight;
+      
+      /*
+      if(rect.right > rect_svg.right) {
+        glyph.info.x = rect_svg.right - rect.width;
+      }
+      if(rect.left < rect_svg.left) {
+        glyph.info.x = rect_svg.left + rect.width;
+      }
+      if(rect.bottom > rect_svg.bottom) {
+        glyph.info.y = rect_svg.bottom - rect.height;
+      }
+      if(rect.top < rect_svg.top) {
+        glyph.info.y = rect.height;
+      }
+      */
+      glyph.style.transform = `translate(${glyph.info.x}px, ${glyph.info.y}px)`;
+    }
+  }
+  
+  function _layout () {
+    document.querySelector('#info').textContent = window.scrollY;
+    rect_ui = el_ui.getBoundingClientRect();
+    el_svg.setAttribute('width', innerWidth);
+    el_svg.setAttribute('height', innerHeight + window.scrollY);
+    el_svg.style.left = '0px';
+    el_svg.style.top = '0px';
     rect_svg = el_svg.getBoundingClientRect();
     
     let aspect_ratio = innerWidth / innerHeight;
