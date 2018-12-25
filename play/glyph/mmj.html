@@ -147,6 +147,24 @@
     color: rgb(0, 0, 0, 0.25);
   }
   
+  #logo {
+    position: fixed;
+    right: 1vw;
+    bottom: 1vh;
+  }
+  
+  #logotype {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-miterlimit: 1.5;
+  }
+  
+  #logotype path {
+    stroke-width: 4.5px;
+    stroke: rgb(211, 211, 211);
+    fill: none;
+  }
+  
   #trashcan {
     display: flex;
     align-items: center;
@@ -182,11 +200,35 @@
   <div id="ui">
     <div id="pick" class="button">고르기</div>
     <div id="show" class="button">보이기</div>
-    <div id="hide" class="button">숨기기</div>
+    <div id="hide" class="button">감추기</div>
     <div id="print" class="button">프린트</div>
   </div>
   
-  <div id="pane"></div>
+  <div id="logo">
+    <svg id="logotype" height="50" viewBox="0 0 305 100">
+      <path d="M26.405 23.245 C26.405 23.245 26.881 26.114 27.220 29.950"></path>
+      <path d="M11.354 29.950 L41.454 29.950"></path>
+      <path d="M37.190 48.339 C37.190 43.725 33.062 39.980 27.979 39.980 L24.830 39.980 C19.746 39.980 15.620 43.725 15.620 48.339 C15.620 52.953 19.746 56.697 24.830 56.697 L27.979 56.697 C33.062 56.697 37.190 52.953 37.190 48.339 Z"></path>
+      <path d="M54.946 23.241 L54.946 60.041"></path>
+      <path d="M54.945 43.324 L64.902 43.324"></path>
+      <path d="M18.038 66.730 C18.038 71.342 16.822 76.787 25.891 76.760 L58.121 76.760"></path>
+      <path d="M77.431 29.950 L100.399 29.950 L100.399 63.385 L77.431 63.385 Z"></path>
+      <path d="M117.555 23.263 L117.555 73.417"></path>
+      <path d="M171.459 34.571 C171.459 28.397 166.278 23.386 159.897 23.386 L155.944 23.386 C149.561 23.386 144.382 28.397 144.382 34.571 C144.382 40.744 149.561 45.755 155.944 45.755 L159.897 45.755 C166.278 45.755 171.459 40.744 171.459 34.571 Z"></path>
+      <path d="M151.173 76.708 C151.173 62.099 152.196 54.288 142.887 53.984 C135.824 53.754 132.047 49.789 131.672 45.756"></path>
+      <path d="M164.606 76.760 C164.606 62.151 163.644 54.340 172.954 54.036 C180.017 53.806 183.794 50.522 184.168 46.489"></path>
+      <path d="M193.295 33.337 L220.044 33.337"></path>
+      <path d="M206.677 26.649 C206.677 26.649 208.893 40.002 206.677 46.092 C204.447 52.221 193.314 63.261 193.296 63.429"></path>
+      <path d="M206.675 46.092 L220.043 63.429"></path>
+      <path d="M233.419 23.263 L233.419 73.417"></path>
+      <path d="M273.707 31.600 C273.707 26.986 269.579 23.241 264.497 23.241 L261.348 23.241 C256.264 23.241 252.137 26.986 252.137 31.600 C252.137 36.214 256.264 39.958 261.348 39.958 L264.497 39.958 C269.579 39.958 273.707 36.214 273.707 31.600 Z"></path>
+      <path d="M246.856 50.012 C263.000 50.801 272.258 51.404 280.395 46.668"></path>
+      <path d="M262.923 59.077 C262.923 59.077 263.527 55.428 263.959 50.550"></path>
+      <path d="M282.312 57.379 L292.270 57.379"></path>
+      <path d="M292.293 23.241 L292.293 63.407"></path>
+      <path d="M253.685 66.730 C253.685 71.342 252.468 76.787 261.537 76.760 L293.767 76.760"></path>
+    </svg>
+  </div>
   <div id="drawer">
     <div id="dictionary"></div>
   </div>
@@ -209,7 +251,7 @@
   let el_hide = document.querySelector('#hide');
   let el_print = document.querySelector('#print');
   
-  let el_pane = document.querySelector('#pane');
+  let el_logo = document.querySelector('#logo');
   let rect_svg = el_svg.getBoundingClientRect();
   let rect_ui = el_ui.getBoundingClientRect();
   let base_scale = 0.0;
@@ -294,6 +336,8 @@
   let dom_parser = new DOMParser();
   let dic_glyph_data = {};
   let ptcls = [];
+  let dragging = 0;
+  let wait = 0;
   
   function add_glyph(name, x, y) {
     let d = dic_glyph_data[name];
@@ -413,6 +457,8 @@
     touch.py = touch.y;
     touch.x = x;
     touch.y = y;
+    
+    dragging = 20;
   }
   
   function touchend() {
@@ -446,7 +492,12 @@
       touch.glyph.info.fx = x / innerWidth;
       touch.glyph.info.fy = y / innerHeight;
       document.querySelector('#info').textContent = `${x|0}, ${y|0}`;
-      el_trashcan.style['right'] = '0vw';
+      if(dragging > 0) {
+        dragging--;
+        if(dragging == 0) {
+          el_trashcan.style['right'] = '0vw';  
+        }
+      }
     }
   }
   
@@ -509,7 +560,6 @@
     }
   };
   
-  wait = 0;
   el_pick.onclick = function() {
     el_drawer.style['bottom'] = '0vh';
     wait = 60 * 8;
@@ -644,13 +694,6 @@
     load_glyph_data();
     
     setTimeout(layout, 500);
-    
-    for(let i = 0; i < 100; i++) {
-      let el = document.createElement('div');
-      el.className = 'item';
-      el.textContent = i;
-      el_pane.appendChild(el);
-    }
     
     loop();
   };
