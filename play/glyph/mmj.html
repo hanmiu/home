@@ -181,6 +181,7 @@
   
   let el_trashcan = document.querySelector('#trashcan');
   let el_drawer = document.querySelector('#drawer');
+  let el_dictionary = document.querySelector('#dictionary');
   let el_pick = document.querySelector('#pick');
   let el_show = document.querySelector('#show');
   let el_hide = document.querySelector('#hide');
@@ -494,6 +495,10 @@
   
   el_hide.onclick = function() {
     style_desc['opacity'] = 0;
+  };
+  
+  el_dictionary.onscroll = function(e) {
+    wait = 60 * 8; 
   };
   
   function layout () {
