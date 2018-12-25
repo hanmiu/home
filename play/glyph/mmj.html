@@ -414,9 +414,9 @@
     }
   }
   
-  function load_glyph_data() {
+  async function load_glyph_data() {
     for(let file of files) {
-      fetch('./data/mmj/' + file)
+      await fetch('./data/mmj/' + file)
       .then(response => response.text())
       .then(text => {
         let xml = dom_parser.parseFromString(text, 'text/xml');
