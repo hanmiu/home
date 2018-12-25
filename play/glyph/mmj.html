@@ -379,12 +379,10 @@
       base_scale = size / 300;
       let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
       
-      style_desc['transform'] = `translate(0px, ${base_scale*240}px) scale(${r_scale}, ${r_scale})`;
+      style_desc['transform'] = `translate(0px, ${size*0.8}px) scale(${r_scale}, ${r_scale})`;
 
       let bbox = gpath.getBBox();
-      
       gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
-      let rect = gpath.getBoundingClientRect();
       group.info.radius = Math.min(bbox.width, bbox.height) * 0.25 * r_scale;
       group.info.fx = x / innerWidth;
       group.info.fy = y / innerHeight;
@@ -600,7 +598,7 @@
     base_scale = size / 300;
     let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
     
-    style_desc['transform'] = `translate(0px, ${base_scale*240}px) scale(${r_scale}, ${r_scale})`;
+    style_desc['transform'] = `translate(0px, ${size*0.8}px) scale(${r_scale}, ${r_scale})`;
     
     if(aspect_ratio > 1.0) {
       style_bt_glyph['width'] = '10vh';
