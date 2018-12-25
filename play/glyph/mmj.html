@@ -140,8 +140,18 @@
     line-height: 33vh;
     */
   }
+  
+  #trashcan {
+    position: fixed;
+    right: 0vw;
+    top: 0vh;
+    width: 10vw;
+    height: 100vh;
+    background-color: #d8d8d8;
+  }
 </style>
 <body>
+  <div id="trashcan"></div>
   <svg id="svg"></svg>
   <div id="ui">
     <div id="pick" class="button">고르기</div>
@@ -164,6 +174,7 @@
   let el_svg = document.querySelector('#svg');
   let el_ui = document.querySelector('#ui');
   
+  let el_trashcan = document.querySelector('#trashcan');
   let el_drawer = document.querySelector('#drawer');
   let el_pick = document.querySelector('#pick');
   let el_show = document.querySelector('#show');
@@ -262,7 +273,7 @@
       el.onclick = function(e) {
         console.log(name);
         add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, 100);
-        wait = 60 * 5;
+        wait = 60 * 8;
         layout();
       };
     }
@@ -368,6 +379,12 @@
     touch.down = false;
     touch.px = touch.x;
     touch.py = touch.y;
+    if(touch.glyph) {
+      let rect = el_trashcan.getBoundingClientRect();
+      if(touch.x > rect.left) {
+        touch.glyph.remove();
+      }
+    }
     touch.glyph = null;
   }
   
@@ -452,7 +469,7 @@
   wait = 0;
   el_pick.onclick = function() {
     el_drawer.style['bottom'] = '0vh';
-    wait = 60 * 5;
+    wait = 60 * 8;
   };
   
   el_show.onclick = function() {
