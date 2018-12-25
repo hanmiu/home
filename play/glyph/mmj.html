@@ -112,6 +112,9 @@
     margin-left: 5vw;
     margin-right: 5vw;
     margin-top: 5vh;
+    margin-bottom: 5vh;
+    height: 23vh;
+    overflow-y: scroll;
   }
   
   .bt-glyph {
@@ -128,17 +131,19 @@
   }
   
   #message {
+    display: none;
     position: fixed;
     /* width: 100vw;
     height: 100vh; */
-    right: 2vh;
+    left: 2vh;
     bottom: 2vh;
-    font-size: 3vw;
+    font-size: 3vh;
     /* text-align: center;
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     line-height: 33vh;
     */
+    color: rgb(0, 0, 0, 0.25);
   }
   
   #trashcan {
@@ -209,6 +214,14 @@
     '집.svg',
     '화장실.svg',
     '풀 위에 토끼.svg',
+    '토끼를 잡은 사냥꾼.svg',
+    '없다.svg',
+    '사람.svg',
+    '가다.svg',
+    '나.svg',
+    '너.svg',
+    '우리.svg',
+    '만들다.svg',
   ];
   
   let dom_parser = new DOMParser();
@@ -271,8 +284,7 @@
       document.querySelector('#dictionary').appendChild(el);
       
       el.onclick = function(e) {
-        console.log(name);
-        add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, 100);
+        add_glyph(name, innerWidth * 0.5 + (Math.random()*2-1)*10, innerHeight * 0.3);
         wait = 60 * 8;
         layout();
       };
