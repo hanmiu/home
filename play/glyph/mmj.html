@@ -378,6 +378,8 @@
       let size = innerWidth / nw;
       base_scale = size / 300;
       let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
+      
+      style_desc['transform'] = `translate(0px, ${base_scale*240}px) scale(${r_scale}, ${r_scale})`;
 
       let bbox = gpath.getBBox();
       
@@ -584,9 +586,10 @@
   
   function layout () {
     document.querySelector('#info').textContent = window.scrollY;
+    el_ui.style['top'] = window.scrollY + 'px';
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight + window.scrollY);
+    el_svg.setAttribute('height', innerHeight);
     el_svg.style.left = '0px';
     el_svg.style.top = '0px';
     rect_svg = el_svg.getBoundingClientRect();
@@ -596,6 +599,8 @@
     let size = innerWidth / nw;
     base_scale = size / 300;
     let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
+    
+    style_desc['transform'] = `translate(0px, ${base_scale*240}px) scale(${r_scale}, ${r_scale})`;
     
     if(aspect_ratio > 1.0) {
       style_bt_glyph['width'] = '10vh';
