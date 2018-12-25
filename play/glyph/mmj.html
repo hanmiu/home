@@ -15,9 +15,6 @@
     overflow: hidden;
   }
   
-  .glyph {
-  }
-  
   .gpath {
     transform: scale(0, 0);
     transition: transform 0.2s;
@@ -28,7 +25,7 @@
     font-size: 30px;
     opacity: 0;
     transition: opacity 0.2s;
-    transform: translate(0px, 100px);
+    /* transform: translate(0px, 100px); */
   }
   
   .gpath {
@@ -80,11 +77,6 @@
     height: 80px;
     border-radius: 40px;
     background-color: blueviolet;
-  }
-  
-  input {
-    transform-origin: left top;
-    transform: scale(2, 2);
   }
   
   #drawer {
@@ -368,7 +360,7 @@
       base_scale = size / 300;
       let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
       
-      //style_desc['transform'] = `translate(0px, ${r_scale*90}px) scale(${r_scale}, ${r_scale})`;
+      desc.setAttribute('transform', `translate(0, ${260 * base_scale})`);
 
       let bbox = gpath.getBBox();
       gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
@@ -577,7 +569,7 @@
   
   function layout () {
     //document.querySelector('#info').textContent = window.scrollY;
-    document.querySelector('#info').textContent = innerHeight;
+    //document.querySelector('#info').textContent = innerHeight;
     el_ui.style['top'] = window.scrollY + 'px';
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
@@ -591,8 +583,6 @@
     let size = innerWidth / nw;
     base_scale = size / 300;
     let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
-    
-    //style_desc['transform'] = `translate(0px, ${r_scale*90}px) scale(${r_scale}, ${r_scale})`;
     
     if(aspect_ratio > 1.0) {
       style_bt_glyph['width'] = '10vh';
@@ -631,55 +621,9 @@
       }
       */
       glyph.style.transform = `translate(${glyph.info.x}px, ${glyph.info.y}px)`;
-    }
-  }
-  
-  function _layout () {
-    document.querySelector('#info').textContent = window.scrollY;
-    rect_ui = el_ui.getBoundingClientRect();
-    el_svg.setAttribute('width', innerWidth);
-    el_svg.setAttribute('height', innerHeight + window.scrollY);
-    el_svg.style.left = '0px';
-    el_svg.style.top = '0px';
-    rect_svg = el_svg.getBoundingClientRect();
-    
-    let aspect_ratio = innerWidth / innerHeight;
-    let nw = aspect_ratio > 1.0 ? 10 : 7;
-    let size = innerWidth / nw;
-    base_scale = size / 300;
-    let r_scale = aspect_ratio > 1.0 ? 1.0 : 10.0 / 7.0;
-    
-    if(aspect_ratio > 1.0) {
-      style_bt_glyph['width'] = '10vh';
-      style_bt_glyph['height'] = '10vh';
-    }
-    else {
-      style_bt_glyph['width'] = '7vh';
-      style_bt_glyph['height'] = '7vh';
-    }
-    
-    let glyphs = document.querySelectorAll('.glyph');
-    
-    for(let glyph of glyphs) {
-      let gpath = glyph.querySelector('.gpath');
-      let bbox = gpath.getBBox();
-      gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
-      let rect = gpath.getBoundingClientRect();
-      glyph.info.radius = Math.min(bbox.width, bbox.height) * 0.25 * r_scale;
       
-      if(rect.right > rect_svg.right) {
-        glyph.info.x = rect_svg.right - rect.width;
-      }
-      if(rect.left < rect_svg.left) {
-        glyph.info.x = rect_svg.left + rect.width;
-      }
-      if(rect.bottom > rect_svg.bottom) {
-        glyph.info.y = rect_svg.bottom - rect.height;
-      }
-      if(rect.top < rect_svg.top) {
-        glyph.info.y = rect.height;
-      }
-      glyph.style.transform = `translate(${glyph.info.x}px, ${glyph.info.y}px)`;
+      let desc = glyph.querySelector('.desc');
+      desc.setAttribute('transform', `translate(0, ${260 * base_scale})`);
     }
   }
   
