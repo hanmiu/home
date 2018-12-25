@@ -447,6 +447,7 @@
   };
   
   function touchstart(target, x, y) {
+    y -= window.scrollY;
     touch.glyph = target;
     let rect = target.getBoundingClientRect();
     
@@ -479,6 +480,7 @@
   }
   
   function touchmove(x, y) {
+    y -= window.scrollY;
     touch.px = touch.x;
     touch.py = touch.y;
     touch.x = x;
