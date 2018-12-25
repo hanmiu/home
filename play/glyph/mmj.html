@@ -41,14 +41,14 @@
     left: 0px;
     top: 0px;
     width: 100vw;
-    height: 10vh;
-    /* background-color: #30f09f; */
+    text-align: center;
   }
   
   #ui .button {
     margin-top: 5vh;
     margin-left: 3vw;
     margin-right: 1vw;
+    margin-bottom: 1vh;
     display: inline-block;
     font-size: 4vw;
     font-family: 'Black Han Sans', sans-serif;
@@ -147,21 +147,42 @@
   }
   
   #trashcan {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: fixed;
-    right: 0vw;
+    right: -10vw;
     top: 0vh;
     width: 10vw;
     height: 100vh;
     background-color: #d8d8d8;
+    transition: right 0.5s;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 3vw;
+    line-height: 5vw;
+    color: #6d6d6d;
+  }
+  
+  @media print {
+    /*
+    html, body {
+      width: 210mm;
+      height: 297mm;
+    }
+    */
+    #ui {
+      display: none;  
+    }
   }
 </style>
 <body>
-  <div id="trashcan"></div>
+  <div id="trashcan">휴<br>지<br>통</div>
   <svg id="svg"></svg>
   <div id="ui">
     <div id="pick" class="button">고르기</div>
     <div id="show" class="button">보이기</div>
     <div id="hide" class="button">숨기기</div>
+    <div id="print" class="button">프린트</div>
   </div>
   
   <div id="pane"></div>
@@ -185,6 +206,7 @@
   let el_pick = document.querySelector('#pick');
   let el_show = document.querySelector('#show');
   let el_hide = document.querySelector('#hide');
+  let el_print = document.querySelector('#print');
   
   let el_pane = document.querySelector('#pane');
   let rect_svg = el_svg.getBoundingClientRect();
@@ -332,57 +354,6 @@
     }
   }
   
-  /*
-  for(let file of files) {
-    fetch('./data/mmj/' + file)
-    .then(response => response.text())
-    .then(text => {
-      let xml = dom_parser.parseFromString(text, 'text/xml');
-      let paths = xml.querySelectorAll('path');
-
-      for(let i = 0; i < paths.length; i++) {
-        let d = paths[i].getAttribute('d');
-        if(d.trim().length > 0) {
-          let name = file.split('.')[0];
-          let group = document.createElementNS(svg_ns, 'g');
-          group.setAttribute('class', 'glyph');
-          
-          let gpath = document.createElementNS(svg_ns, 'path');
-          gpath.setAttribute('class', 'gpath');
-          gpath.setAttribute('d', d);
-          
-          let desc = document.createElementNS(svg_ns, 'text');
-          desc.setAttribute('class', 'desc');
-          desc.setAttribute('text-anchor', 'middle');
-          desc.setAttribute('alignment-baseline', 'middle');
-          desc.textContent = name;
-          desc.setAttribute('x', 0);
-          desc.setAttribute('y', 0);
-          
-          let x = Math.random() * innerWidth;
-          let y = Math.random() * innerHeight;
-          group.style.transform = `translate(${x}px, ${y}px)`;
-          
-          group.appendChild(desc);
-          group.appendChild(gpath);
-          el_svg.appendChild(group);
-          
-          group.info = {
-            x: x,
-            y: y,
-            radius: 1.0,
-            name: name,
-          };
-          ptcls.push(group);
-          
-          let bbox = gpath.getBBox();
-          gpath.style.transform = `scale(${base_scale}, ${base_scale}) translate(${-bbox.width*0.5}px, ${-bbox.height*0.5}px)`;
-        }
-      }
-    });  
-  }
-  */
-  
   let touch = {
     down: false,
     px: 0,
@@ -419,6 +390,7 @@
       }
     }
     touch.glyph = null;
+    el_trashcan.style['right'] = '-10vw';
   }
   
   function touchmove(x, y) {
@@ -434,6 +406,7 @@
       touch.glyph.info.x = x;
       touch.glyph.info.y = y;
       document.querySelector('#info').textContent = `${x|0}, ${y|0}`;
+      el_trashcan.style['right'] = '0vw';
     }
   }
   
@@ -456,7 +429,7 @@
         touchstart(gp, x, y);   
       }
       else {
-        console.log('add here');
+        //console.log('add here');
       }
     }
   }
@@ -512,6 +485,10 @@
   el_hide.onclick = function() {
     style_desc['opacity'] = 0;
     wait = 1;
+  };
+  
+  el_print.onclick = function() {
+    window.print();
   };
   
   el_dictionary.onscroll = function(e) {
