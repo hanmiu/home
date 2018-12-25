@@ -68,7 +68,7 @@
   }
   
   #info {
-    display: none;
+    /* display: none; */
     position: fixed;
     right: 0px;
     bottom: 0px;
@@ -447,7 +447,6 @@
   };
   
   function touchstart(target, x, y) {
-    y -= window.scrollY;
     touch.glyph = target;
     let rect = target.getBoundingClientRect();
     
@@ -480,7 +479,6 @@
   }
   
   function touchmove(x, y) {
-    y -= window.scrollY;
     touch.px = touch.x;
     touch.py = touch.y;
     touch.x = x;
@@ -494,7 +492,10 @@
       touch.glyph.info.y = y;
       touch.glyph.info.fx = x / innerWidth;
       touch.glyph.info.fy = y / innerHeight;
-      document.querySelector('#info').textContent = `${x|0}, ${y|0}`;
+      //document.querySelector('#info').textContent = `${x|0}, ${y|0}`;
+      //document.querySelector('#info').textContent = `${window.scrollY}`;
+      //let rect = el_svg.getBoundingClientRect();
+      //document.querySelector('#info').textContent = `${rect.left},${rect.top},${rect.width},${rect.height}`;
       if(dragging > 0) {
         dragging--;
         if(dragging == 0) {
@@ -505,11 +506,12 @@
   }
   
   function find_nearest_touchable(x, y) {
+    y -= window.scrollY;
     let min_d = Number.MAX_VALUE;
     let gp = null;
     for(let glyph of ptcls) {
       let dx = x - glyph.info.x;
-      let dy = y - glyph.info.y - rect_svg.top;
+      let dy = y - glyph.info.y;
       let d = Math.sqrt(dx*dx + dy*dy);
       if(d < min_d) {
         min_d = d;
@@ -520,7 +522,7 @@
     if(gp) {
       let rect = gp.querySelector('.gpath').getBoundingClientRect();
       if((x > rect.left && x < rect.right) && (y > rect.top && y < rect.bottom)) {
-        touchstart(gp, x, y);   
+        touchstart(gp, x, y + window.scrollY);   
       }
     }
   }
@@ -586,13 +588,14 @@
   };
   
   function layout () {
-    document.querySelector('#info').textContent = window.scrollY;
+    //document.querySelector('#info').textContent = window.scrollY;
+    document.querySelector('#info').textContent = innerHeight;
     el_ui.style['top'] = window.scrollY + 'px';
     rect_ui = el_ui.getBoundingClientRect();
     el_svg.setAttribute('width', innerWidth);
     el_svg.setAttribute('height', innerHeight);
     el_svg.style.left = '0px';
-    el_svg.style.top = '0px';
+    el_svg.style.top = window.scrollY + 'px';
     rect_svg = el_svg.getBoundingClientRect();
     
     let aspect_ratio = innerWidth / innerHeight;
