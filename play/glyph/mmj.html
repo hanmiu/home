@@ -130,8 +130,10 @@
   
   #logo {
     position: fixed;
-    left: 1vw;
+    display: flex;
+    width: 100vw;
     bottom: 1vh;
+    justify-content: center;
   }
   
   #logotype {
@@ -172,6 +174,10 @@
     */
     #ui {
       display: none;  
+    }
+    
+    #logo {
+      display: none;
     }
   }
 </style>
@@ -511,6 +517,7 @@
     if(e.target.getAttribute('class') == 'gpath' && touch.glyph == null) {
       touchstart(e.target.parentElement, e.pageX, e.pageY);
     }
+    el_ui.style['top'] = window.scrollY + 'px';
   };
   
   el_svg.onmouseup = function(e) {
@@ -531,6 +538,7 @@
     else {
       find_nearest_touchable(e.touches[0].pageX, e.touches[0].pageY);
     }
+    el_ui.style['top'] = window.scrollY + 'px';
   };
   
   el_svg.ontouchend = function(e) {
@@ -556,6 +564,8 @@
   
   el_hide.onclick = function() {
     style_desc['opacity'] = 0;
+    let rect = el_ui.getBoundingClientRect();
+    el_ui.style['top'] = -rect.height + window.scrollY + 'px';
     wait = 1;
   };
   
