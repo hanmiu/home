@@ -57,28 +57,26 @@
     
     let svg_str = qrcode.svg();
     
-    let title = '?';
+    let title = params.get('w');
     let desc = '?';
     let hint = '???';
     
-    switch(params.get('word')) {
-      case 'child':
-        title = '아이';
+    console.log(params.get('w'));
+    
+    switch(params.get('w')) {
+      case '아이':
         desc = '우리 아이들...';
         hint = '개나리반으로 가면~';
         break;
-      case 'life':
-        title = '삶';
+      case '삶':
         desc = '인생...';
         hint = '종달새반으로 가면';
         break;
-      case '5min':
-        title = '잠깐';
+      case '잠깐':
         desc = '밥먹을 때도 잠깐만, 놀 때도 잠깐만';
         hint = '원감님을 찾으면';
         break;
-      case 'more':
-        title = '더';
+      case '더':
         desc = '더 더 자라고 싶다';
         hint = '까치반으로 가면';
         break;
