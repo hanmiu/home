@@ -34,7 +34,7 @@
     if(params.get('scene') == 's01') {
       el_content.innerHTML = `
       <h1>시나리오 1</h1>
-      <div style="width: 200px; height: 100px">${svg_str}</div>
+      <div style="width: 200px; height: 200px">${svg_str}</div>
       <p>그래서 어디로?</p>
       <ul>
         <li><a href="./v2019.html?scene=s02">시나리오 2</a></li>
@@ -46,7 +46,7 @@
     if(params.get('scene') == 's02') {
       el_content.innerHTML = `
       <h1>시나리오 2</h1>
-      <div style="width: 200px; height: 100px">${svg_str}</div>
+      <div style="width: 200px; height: 200px">${svg_str}</div>
       <p>여기는 2, 그리고 갈 수 있는 곳은</p>
       <ul>
         <li><a href="./v2019.html?scene=s03">시나리오 3</a></li>
@@ -58,7 +58,7 @@
     if(params.get('scene') == 's03') {
       el_content.innerHTML = `
       <h1>시나리오 3</h1>
-      <div style="width: 200px; height: 100px">${svg_str}</div>
+      <div style="width: 200px; height: 200px">${svg_str}</div>
       <p>여기는 3, 그리고 갈 수 있는 곳은</p>
       <ul>
         <li><a href="./v2019.html?scene=s03">시나리오 2</a></li>
@@ -66,6 +66,11 @@
       </ul>  
       `;
     }
+    
+    let svg = el_content.querySelector('svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', '0 0 100 100');
   }
   
   window.onload = init;
