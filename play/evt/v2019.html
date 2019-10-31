@@ -8,16 +8,23 @@
   }
   
   h1 {
-    font-size: 10vh;
+    font-size: 6vh;
     text-align: center;
   }
   
   p {
     font-size: 2.5vh;
+    line-height: 1.5em;
+  }
+  
+  li {
+    font-size: 2vh;
+    line-height: 1.5em;
   }
   
   .qr {
     height: 25vh;
+    margin-bottom: 5vh;
   }
 </style>
 <body>
@@ -41,6 +48,7 @@
     let qrcode = new QRCode({
       content: location.href,
       ecl: 'L',
+      padding: 0,
       width: 100,
       height: 100,
       color: "#000000",
