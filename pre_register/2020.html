@@ -81,6 +81,18 @@
     
   </body>
   <script>
+    // 웹에 게시 후
+    let url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRccPzu2xu6pAM8CsCSFPNFxE-ZS0JvvDpl9Fg3NOtcKf5aa5lt2Z-tMYBIt-Q2VNVHZuYZHNQVz3d1/pub?gid=0&single=true&output=tsv';
+    
+    async function load() {
+      const response = await fetch(url);
+      const myJson = await response.json();
+      console.log(JSON.stringify(myJson));  
+    }
+    
+    load();
+    
+    /*
     var t_part1 = document.querySelector('#t-part1');
     var t_part2 = document.querySelector('#t-part2');
     function callback_register(data) {
@@ -149,5 +161,6 @@
     xhr.addEventListener('load', reqListener);
     xhr.open('GET', code_url);
     xhr.send();
+    */
   </script>
 </html>
