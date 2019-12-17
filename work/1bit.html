@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>단색화</title>
+<style>
+  #ui {
+    margin: 20px;  
+  }
+  
+  .source {
+    display: block;
+    margin: 20px;
+    height: 100px;
+  }
+  
+  .target {
+    margin: 20px;
+    height: 400px;
+  }
+</style>
+<body>
+  <div id="ui">
+    <p>단색화를 적용하고자 하는 이미지를 붙여넣기 하세요. 아래 슬라이더에서 표상의 검은색 선이 흐리면(밝은편이면) 높게, 어두우면 낮게 조정합니다.</p>
+    <input id="thres" type="range" min="0" max="255" value="128"/>
+    <p>결과로 나온 이미지를 오른쪽 클릭하여 복사해서 사용하고, 새로 이미지를 붙여 넣으면 이전 이미지는 사라집니다.</p>
+  </div>
+  <div id="content"></div>
+</body>
+<script>
+  let range_thres = document.querySelector('#thres');
+  let el_content = document.querySelector('#content');
+  
+  function make_1_bit(data_url) {
+    el_content.innerHTML = '';
+    
+    let img = document.createElement('img');
+    img.src = data_url;
+  
+    el_content.appendChild(img);
+    img.onload = function(e) {
+      let g = document.createElement('canvas').getContext('2d');
+      let w = e.target.width;
+      let h = e.target.height;
+      g.canvas.width = w;
+      g.canvas.height = h;
+      g.drawImage(img, 0, 0);
+      let im0 = g.getImageData(0, 0, w, h);
+      let im1 = g.createImageData(w, h);
+      for(let y = 0; y < h; y++) {
+        for(let x = 0; x < w; x++) {
+          let i = y * w + x;
+          let R = im0.data[4 * i + 0];
+          let G = im0.data[4 * i + 1];
+          let B = im0.data[4 * i + 2];
+          let A = im0.data[4 * i + 3];
+          let K = 0;
+          let gr = (R + G + B) / 3 | 0;
+          if(gr < Number(range_thres.value)) {
+            A = 255;
+            K = 0;
+          }
+          else {
+            A = 0;
+            K = 255;
+          }
+          im1.data[4 * i + 0] = K;
+          im1.data[4 * i + 1] = K;
+          im1.data[4 * i + 2] = K;
+          im1.data[4 * i + 3] = A;
+        }
+      }
+      g.clearRect(0, 0, w, h);
+      g.putImageData(im1, 0, 0);
+      
+      img.className = 'source';
+      g.canvas.className = 'target';
+      el_content.appendChild(g.canvas);
+    };
+  }
+  
+  document.onpaste = function(e) {
+    for(let item of e.clipboardData.items) {
+      if(item.kind == 'file') {
+        let blob = item.getAsFile();
+        let reader = new FileReader();
+        reader.onload = function(evt) {
+          make_1_bit(event.target.result);
+        };
+        reader.readAsDataURL(blob);
+      }
+    }  
+  };
+</script>
