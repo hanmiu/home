@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>메리 크리스마스</title>
+<link href="https://fonts.googleapis.com/css?family=Cute+Font&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  #card {
+    position: fixed;
+    margin: 0;
+  }
+  
+  #ui {
+    position: fixed;
+    left: 5vw;
+    top: 5vw;
+    font-size: 5vh;
+  }
+</style>
+<body>
+  <canvas id="card"></canvas>
+  <div id="ui">
+    <input id="message" type="text" value="메리 크리스마스!" style="font-size: 5vw">
+    <button id="bt-save" style="font-size: 5vw">저장</button>
+  </div>
+</body>
+<script>
+  let el_message = document.querySelector('#message');
+  let bt_save = document.querySelector('#bt-save');
+  let img_tree = new Image();
+  img_tree.src = './images/tree_1.png';
+  
+  let g = document.querySelector('#card').getContext('2d');
+  g.canvas.width = innerWidth;
+  g.canvas.height = innerHeight;
+  
+  let message = el_message.value;
+  
+  let ptcls = [];
+  
+  function update() {
+    for(let i = 0; i < ptcls.length; i++) {
+      ptcls[i].update();
+    }
+  }
+  
+  function draw() {
+    g.fillStyle = 'white';
+    g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+    g.fillStyle = 'rgb(240, 240, 240)';
+    g.strokeStyle = 'rgb(180, 180, 180)';
+    for(let i = 0; i < ptcls.length; i++) {
+      ptcls[i].draw();
+    }
+    
+    let sh = (innerHeight / 15 | 0);
+    let iw = sh * 6;
+    g.drawImage(img_tree, innerWidth / 2 - iw/2, innerHeight * 0.8 - iw, iw, iw);
+    
+    g.fillStyle = 'black';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    
+    g.font = `${sh}px 'Cute Font'`;
+    g.fillText(message, innerWidth / 2, innerHeight * 0.35 | 0);
+  }
+  
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  
+  bt_save.onclick = function(e) {
+    let link = document.createElement('a');
+    link.download = "x-mas.png";
+    link.href = g.canvas.toDataURL();
+    link.click();
+  }
+  
+  el_message.oninput = function(e) {
+    message = el_message.value;
+  }
+  
+  class Ptcl {
+    constructor(x, y, r) {
+      this.x = x;
+      this.to_x = x;
+      this.y = y;
+      this.r = r;
+      this.speed = 0.5 + Math.random() * 1.5;
+    }
+    
+    update() {
+      this.to_x += (Math.random() * 2 - 1)  * 2;
+      this.x += (this.to_x - this.x) * 0.1;
+      this.y += this.speed;
+      
+      if(this.x + this.r < 0) {
+        this.x = g.canvas.width + this.r;
+        this.to_x = this.x;
+      }
+      if(this.x - this.r > g.canvas.width) {
+        this.x = -this.r;
+        this.to_x = this.x;
+      }
+      if(this.y - this.r > g.canvas.height) this.y = -this.r;
+    }
+    
+    draw() {
+      g.save();
+      g.translate(this.x, this.y);
+      g.beginPath();
+      g.arc(0, 0, this.r, 0, Math.PI * 2);
+      g.fill();
+      g.stroke();
+      g.restore();
+    }
+  }
+  
+  function init() {
+    let sh = innerHeight / 300;
+    for(let i = 0; i < 100; i++) {
+      let x = Math.random() * g.canvas.width;
+      let y = Math.random() * g.canvas.height;
+      let r = sh + 2 * sh * Math.random();
+      let ptcl = new Ptcl(x, y, r);
+      ptcls.push(ptcl);
+    }
+  }
+  
+  init();
+  loop();
+</script>
