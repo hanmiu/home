@@ -34,8 +34,20 @@
   let img_names = [
     'tree_1',
     'tree_2',
+    'tree_3',
+    'tree_4',
+    'tree_4',
+    'tree_5',
+    'tree_6',
     'snowman_1',
     'snowman_2',
+    'snowman_3',
+    'snowman_4',
+    'snowman_5',
+    'snowman_6',
+    'snowman_7',
+    'rudolph_1',
+    'rudolph_2',
   ];
   img_tree.src = `./images/${img_names[Math.random() * img_names.length | 0]}.png`;
   
@@ -48,9 +60,9 @@
   ctx.canvas.height = g.canvas.height;
   
   let gradient = g.createLinearGradient(0,g.canvas.height/2, 0,g.canvas.height);
-  gradient.addColorStop(0, '#ffffff');
-  gradient.addColorStop(.5, '#8afff2');
-  gradient.addColorStop(1, 'rgb(105, 169, 224)');
+  gradient.addColorStop(0, 'hsl(0, 0%, 100%)');
+  gradient.addColorStop(.5, `hsl(${173 + (Math.random()*2-1) * 20}, 100%, 77%)`);
+  gradient.addColorStop(1, `hsl(${208 + (Math.random()*2-1) * 20}, 66%, 65%)`);
   
   let message = el_message.value;
   
@@ -109,8 +121,8 @@
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     
-    g.font = `${sh}px 'Cute Font'`;
     g.fillText(message, innerWidth / 2, innerHeight * 0.35 | 0);
+    g.font = `${sh}px 'Cute Font'`;
     
     draw_logo();
   }
