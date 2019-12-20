@@ -398,6 +398,19 @@
     if(touch.down) {
       paint_flake(touch.x, touch.y);  
     }
+    
+    for(let i = 0; i < ptcls.length; i++) {
+      let ptcl = ptcls[i];
+      let dx = touch.x - ptcl.x;
+      let dy = touch.y - ptcl.y;
+      let d = Math.sqrt(dx*dx+dy*dy) + 1e-6;
+      if(d < g.canvas.height * 0.1) {
+        let ux = dx / d;
+        let uy = dy / d;
+        ptcl.to_x += -ux * 10;
+        ptcl.to_y += -uy * 10;
+      }
+    }
   }
   
   function touchend(e) {
