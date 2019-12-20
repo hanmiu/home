@@ -32,7 +32,7 @@
   <div id="three"></div>
   <canvas id="card"></canvas>
   <div id="ui">
-    <input id="message" type="text" value="메리 크리스마스!" style="font-size: 5vw">
+    <input id="message" type="text" value="즐거운,크리스마스,보내요!" style="font-size: 5vw">
     <button id="bt-change" style="font-size: 5vw">그림 바꾸기</button>
     <button id="bt-save" style="font-size: 5vw">저장</button>
   </div>
@@ -77,7 +77,7 @@
   gradient.addColorStop(.5, `hsla(${173 + (Math.random()*2-1) * 20}, 100%, 77%, 0.8)`);
   gradient.addColorStop(1, `hsl(${208 + (Math.random()*2-1) * 20}, 66%, 65%)`);
   
-  let message = el_message.value.split(' ');
+  let message = el_message.value.split(',').map(x=>x.trim()).filter(x =>x.length > 0);
   
   let time = 0;
   
@@ -275,7 +275,7 @@
   }
   
   el_message.oninput = function(e) {
-    message = el_message.value.split(' ');
+    message = el_message.value.split(',').map(x=>x.trim()).filter(x =>x.length > 0);
   }
   
   class Ptcl {
