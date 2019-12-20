@@ -224,6 +224,15 @@
     let h = (Math.sin(time * 0.0001) * 0.5 + 0.5);
     let sat = 78 + (Math.sin(time * 0.0002) * 0.5 + 0.5) * 20;
     let lig = 17 + (Math.cos(time * 0.0003) * 0.5 + 0.5) * 30;
+    
+    g.lineWidth = sh*0.2;
+    g.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    for(let i = 0; i < message.length; i++) {
+      let hh = 12 + i * 10 + h * 200;
+      g.strokeText(message[message.length - 1 - i], innerWidth / 2, (innerHeight * 0.35 | 0) - sh * i);  
+    }
+
+    g.lineWidth = 1;
     for(let i = 0; i < message.length; i++) {
       let hh = 12 + i * 10 + h * 200;
       g.fillStyle = `hsl(${hh}, ${sat}%, ${lig}%)`;
