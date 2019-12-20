@@ -37,9 +37,23 @@
   g.canvas.width = innerWidth;
   g.canvas.height = innerHeight;
   
+  let gradient = g.createLinearGradient(0,g.canvas.height/2, 0,g.canvas.height);
+  gradient.addColorStop(0, '#ffffff');
+  gradient.addColorStop(.5, '#8afff2');
+  gradient.addColorStop(1, 'rgb(105, 169, 224)');
+  
   let message = el_message.value;
   
+  let flakes = [];
   let ptcls = [];
+  
+  let touch = {
+    down: false,
+    x: 0,
+    y: 0,
+    oldx: 0,
+    oldy: 0,
+  };
   
   function update() {
     for(let i = 0; i < ptcls.length; i++) {
@@ -52,13 +66,25 @@
     g.fillRect(0, 0, g.canvas.width, g.canvas.height);
     g.fillStyle = 'rgb(240, 240, 240)';
     g.strokeStyle = 'rgb(180, 180, 180)';
-    for(let i = 0; i < ptcls.length; i++) {
+    for(let i = 0; i < ptcls.length / 2; i++) {
       ptcls[i].draw();
     }
     
-    let sh = (innerHeight / 15 | 0);
+    let sh = (g.canvas.height / 15 | 0);
     let iw = sh * 6;
-    g.drawImage(img_tree, innerWidth / 2 - iw/2, innerHeight * 0.8 - iw, iw, iw);
+    g.drawImage(img_tree, g.canvas.width / 2 - iw/2, g.canvas.height * 0.8 - iw, iw, iw);
+    
+    for(let i = ptcls.length / 2; i < ptcls.length; i++) {
+      ptcls[i].draw();
+    }
+    
+    g.fillStyle = gradient;
+    g.beginPath();
+    g.moveTo(0, g.canvas.height * 0.85);
+    g.quadraticCurveTo(g.canvas.width/2, g.canvas.height * 0.75, g.canvas.width, g.canvas.height * 0.85);
+    g.lineTo(g.canvas.width, g.canvas.height);
+    g.lineTo(0, g.canvas.height);
+    g.fill();
     
     g.fillStyle = 'black';
     g.textAlign = 'center';
@@ -66,6 +92,8 @@
     
     g.font = `${sh}px 'Cute Font'`;
     g.fillText(message, innerWidth / 2, innerHeight * 0.35 | 0);
+    
+    draw_logo();
   }
   
   function loop() {
@@ -86,50 +114,126 @@
   }
   
   class Ptcl {
-    constructor(x, y, r) {
+    constructor(x, y, r, img) {
       this.x = x;
       this.to_x = x;
       this.y = y;
+      this.to_y = y;
       this.r = r;
-      this.speed = 0.5 + Math.random() * 1.5;
+      this.img = img;
+      this.speed = 0.5 + Math.random() * 0.5;
+      this.rot_dir = Math.random() > 0.5 ? 1 : -1;
+      this.rot_angle = 0.01 + Math.random() * 0.02;
+      this.rot = 0;
     }
     
     update() {
       this.to_x += (Math.random() * 2 - 1)  * 2;
       this.x += (this.to_x - this.x) * 0.1;
-      this.y += this.speed;
+      //this.y += this.speed;
+      this.to_y += this.speed + (2* Math.random() - 1) * 0.3;
+      this.y += (this.to_y - this.y) * 0.1;
+      this.rot += this.rot_dir * this.rot_angle;
       
-      if(this.x + this.r < 0) {
-        this.x = g.canvas.width + this.r;
+      if(this.x + this.r*2 < 0) {
+        this.x = g.canvas.width + this.r*2;
         this.to_x = this.x;
       }
-      if(this.x - this.r > g.canvas.width) {
-        this.x = -this.r;
+      if(this.x - this.r*2 > g.canvas.width) {
+        this.x = -this.r*2;
         this.to_x = this.x;
       }
-      if(this.y - this.r > g.canvas.height) this.y = -this.r;
+      if(this.y - this.r*2 > g.canvas.height) {
+        this.y = -this.r*2;
+        this.to_y = this.y;
+        this.x = Math.random() * g.canvas.width;
+        this.to_x = this.x;
+      }
     }
     
     draw() {
       g.save();
       g.translate(this.x, this.y);
-      g.beginPath();
-      g.arc(0, 0, this.r, 0, Math.PI * 2);
-      g.fill();
-      g.stroke();
+      g.rotate(this.rot);
+      g.scale(this.r / 25, this.r / 25);
+      g.drawImage(this.img, -64, -64);
       g.restore();
     }
   }
   
+  function draw_logo() {
+    let s = g.canvas.height * 0.07 / 100;
+    g.save();
+    g.translate(g.canvas.width / 2, g.canvas.height - 50);
+    g.save();
+    g.scale(s, s);
+    g.translate(-305 / 2, -50);
+    g.beginPath();
+    g.moveTo(26.405,23.245);g.bezierCurveTo(26.405,23.245,26.881,26.114,27.220,29.950);g.moveTo(11.354,29.950);g.lineTo(41.454,29.950);g.moveTo(37.190,48.339);g.bezierCurveTo(37.190,43.725,33.062,39.980,27.979,39.980);g.lineTo(24.830,39.980);g.bezierCurveTo(19.746,39.980,15.620,43.725,15.620,48.339);g.bezierCurveTo(15.620,52.953,19.746,56.697,24.830,56.697);g.lineTo(27.979,56.697);g.bezierCurveTo(33.062,56.697,37.190,52.953,37.190,48.339);g.closePath();g.moveTo(54.946,23.241);g.lineTo(54.946,60.041);g.moveTo(54.945,43.324);g.lineTo(64.902,43.324);g.moveTo(18.038,66.730);g.bezierCurveTo(18.038,71.342,16.822,76.787,25.891,76.760);g.lineTo(58.121,76.760);g.moveTo(77.431,29.950);g.lineTo(100.399,29.950);g.lineTo(100.399,63.385);g.lineTo(77.431,63.385);g.closePath();g.moveTo(117.555,23.263);g.lineTo(117.555,73.417);g.moveTo(171.459,34.571);g.bezierCurveTo(171.459,28.397,166.278,23.386,159.897,23.386);g.lineTo(155.944,23.386);g.bezierCurveTo(149.561,23.386,144.382,28.397,144.382,34.571);g.bezierCurveTo(144.382,40.744,149.561,45.755,155.944,45.755);g.lineTo(159.897,45.755);g.bezierCurveTo(166.278,45.755,171.459,40.744,171.459,34.571);g.closePath();g.moveTo(151.173,76.708);g.bezierCurveTo(151.173,62.099,152.196,54.288,142.887,53.984);g.bezierCurveTo(135.824,53.754,132.047,49.789,131.672,45.756);g.moveTo(164.606,76.760);g.bezierCurveTo(164.606,62.151,163.644,54.340,172.954,54.036);g.bezierCurveTo(180.017,53.806,183.794,50.522,184.168,46.489);g.moveTo(193.295,33.337);g.lineTo(220.044,33.337);g.moveTo(206.677,26.649);g.bezierCurveTo(206.677,26.649,208.893,40.002,206.677,46.092);g.bezierCurveTo(204.447,52.221,193.314,63.261,193.296,63.429);g.moveTo(206.675,46.092);g.lineTo(220.043,63.429);g.moveTo(233.419,23.263);g.lineTo(233.419,73.417);g.moveTo(273.707,31.600);g.bezierCurveTo(273.707,26.986,269.579,23.241,264.497,23.241);g.lineTo(261.348,23.241);g.bezierCurveTo(256.264,23.241,252.137,26.986,252.137,31.600);g.bezierCurveTo(252.137,36.214,256.264,39.958,261.348,39.958);g.lineTo(264.497,39.958);g.bezierCurveTo(269.579,39.958,273.707,36.214,273.707,31.600);g.closePath();g.moveTo(246.856,50.012);g.bezierCurveTo(263.000,50.801,272.258,51.404,280.395,46.668);g.moveTo(262.923,59.077);g.bezierCurveTo(262.923,59.077,263.527,55.428,263.959,50.550);g.moveTo(282.312,57.379);g.lineTo(292.270,57.379);g.moveTo(292.293,23.241);g.lineTo(292.293,63.407);g.moveTo(253.685,66.730);g.bezierCurveTo(253.685,71.342,252.468,76.787,261.537,76.760);g.lineTo(293.767,76.760);
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.lineWidth = 4.5;
+    g.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    g.stroke();
+    g.restore();
+    g.restore();
+    g.lineWidth = 1;
+  }
+  
+  function touchstart(e) {
+    e.preventDefault();
+    if(e.changedTouches) {
+      console.log('start', e);
+    }
+    else {
+      
+    }
+  }
+  
+  function touchmove(e) {
+    e.preventDefault();
+    if(e.changedTouches) {
+      console.log('move', e);
+    }
+    else {
+      
+    }
+  }
+  
+  function touchend(e) {
+    e.preventDefault();
+    if(e.changedTouches) {
+      console.log('end', e);
+    }
+    else {
+      
+    }
+  }
+  
   function init() {
-    let sh = innerHeight / 300;
+    for(let i = 0; i < 9; i++) {
+      let img = new Image();
+      img.src = `./images/snow(${i}).png`;
+      flakes.push(img);
+    }
+    
+    let sh = g.canvas.height / 300;
     for(let i = 0; i < 100; i++) {
       let x = Math.random() * g.canvas.width;
       let y = Math.random() * g.canvas.height;
       let r = sh + 2 * sh * Math.random();
-      let ptcl = new Ptcl(x, y, r);
+      let img = flakes[Math.random() * flakes.length | 0];
+      let ptcl = new Ptcl(x, y, r, img);
       ptcls.push(ptcl);
     }
+    
+    window.addEventListener('mousedown', touchstart, false);
+    window.addEventListener('mousemove', touchmove, false);
+    window.addEventListener('mouseup', touchend, false);
+    
+    window.addEventListener('touchstart', touchstart, false);
+    window.addEventListener('touchmove', touchmove, false);
+    window.addEventListener('touchend', touchend, false);
   }
   
   init();
