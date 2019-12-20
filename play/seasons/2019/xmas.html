@@ -37,6 +37,10 @@
   g.canvas.width = innerWidth;
   g.canvas.height = innerHeight;
   
+  let ctx = document.createElement('canvas').getContext('2d');
+  ctx.canvas.width = g.canvas.width;
+  ctx.canvas.height = g.canvas.height;
+  
   let gradient = g.createLinearGradient(0,g.canvas.height/2, 0,g.canvas.height);
   gradient.addColorStop(0, '#ffffff');
   gradient.addColorStop(.5, '#8afff2');
@@ -69,6 +73,8 @@
     for(let i = 0; i < ptcls.length / 2; i++) {
       ptcls[i].draw();
     }
+    
+    g.drawImage(ctx.canvas, 0, 0);
     
     let sh = (g.canvas.height / 15 | 0);
     let iw = sh * 6;
@@ -180,34 +186,65 @@
     g.lineWidth = 1;
   }
   
+  function paint_flake(x, y) {
+    let s = g.canvas.height * 0.0001 + (Math.random() * 0.01); 
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.random() * Math.PI * 2);
+    ctx.scale(s, s);
+    ctx.drawImage(flakes[Math.random() * (flakes.length - 1) | 0], -64, -64);
+    ctx.restore();
+  }
+  
   function touchstart(e) {
     e.preventDefault();
+    touch.down = true;
     if(e.changedTouches) {
-      console.log('start', e);
+      if(e.changedTouches.length > 0) {
+        touch.x = e.changedTouches[0].pageX;
+        touch.y = e.changedTouches[0].pageY;
+      }
     }
     else {
-      
+      touch.x = e.pageX;
+      touch.y = e.pageY;
     }
+    touch.oldx = touch.x;
+    touch.oldy = touch.y;
+    paint_flake(touch.x, touch.y);
   }
   
   function touchmove(e) {
     e.preventDefault();
+    touch.oldx = touch.x;
+    touch.oldy = touch.y;
     if(e.changedTouches) {
-      console.log('move', e);
+      if(e.changedTouches.length > 0) {
+        touch.x = e.changedTouches[0].pageX;
+        touch.y = e.changedTouches[0].pageY;
+      }
     }
     else {
-      
+      touch.x = e.pageX;
+      touch.y = e.pageY;
     }
+    paint_flake(touch.x, touch.y);
   }
   
   function touchend(e) {
     e.preventDefault();
+    touch.down = false;
     if(e.changedTouches) {
-      console.log('end', e);
+      if(e.changedTouches.length > 0) {
+        touch.x = e.changedTouches[0].pageX;
+        touch.y = e.changedTouches[0].pageY;
+      }
     }
     else {
-      
+      touch.x = e.pageX;
+      touch.y = e.pageY;
     }
+    paint_flake(touch.x, touch.y);
   }
   
   function init() {
@@ -227,13 +264,13 @@
       ptcls.push(ptcl);
     }
     
-    window.addEventListener('mousedown', touchstart, false);
-    window.addEventListener('mousemove', touchmove, false);
-    window.addEventListener('mouseup', touchend, false);
+    g.canvas.addEventListener('mousedown', touchstart, false);
+    g.canvas.addEventListener('mousemove', touchmove, false);
+    g.canvas.addEventListener('mouseup', touchend, false);
     
-    window.addEventListener('touchstart', touchstart, false);
-    window.addEventListener('touchmove', touchmove, false);
-    window.addEventListener('touchend', touchend, false);
+    g.canvas.addEventListener('touchstart', touchstart, false);
+    g.canvas.addEventListener('touchmove', touchmove, false);
+    g.canvas.addEventListener('touchend', touchend, false);
   }
   
   init();
