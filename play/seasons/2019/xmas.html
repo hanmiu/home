@@ -33,12 +33,14 @@
   <canvas id="card"></canvas>
   <div id="ui">
     <input id="message" type="text" value="메리 크리스마스!" style="font-size: 5vw">
+    <button id="bt-change" style="font-size: 5vw">바꾸기</button>
     <button id="bt-save" style="font-size: 5vw">저장</button>
   </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script>
   let el_message = document.querySelector('#message');
+  let bt_change = document.querySelector('#bt-change');
   let bt_save = document.querySelector('#bt-save');
   let img_tree = new Image();
   let img_names = [
@@ -59,6 +61,7 @@
     'rudolph_1',
     'rudolph_2',
   ];
+  let shuffled_names = [];
   img_tree.src = `./images/${img_names[Math.random() * img_names.length | 0]}.png`;
   
   let g = document.querySelector('#card').getContext('2d');
@@ -246,6 +249,29 @@
     link.download = "x-mas.png";
     link.href = g.canvas.toDataURL();
     link.click();
+  }
+  
+  function shuffle(array) {
+    let n = array.length, t, i;
+    while (n) {
+      i = Math.random() * n-- | 0; // 0 ≤ i < n
+      t = array[n];
+      array[n] = array[i];
+      array[i] = t;
+    }
+    return array;
+  }
+  
+  bt_change.onclick = function(e) {
+    if(shuffled_names.length == 0) {
+      for(let i = 0; i < img_names.length; i++) {
+        shuffled_names.push(img_names[i]);
+      }
+      shuffle(shuffled_names);
+    }
+    if(shuffled_names.length > 0) {
+      img_tree.src = `./images/${shuffled_names.shift()}.png`;  
+    }
   }
   
   el_message.oninput = function(e) {
