@@ -367,6 +367,7 @@
   }
   
   function touchstart(e) {
+    e.target.focus();
     e.preventDefault();
     touch.down = true;
     if(e.changedTouches) {
