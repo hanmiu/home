@@ -31,7 +31,13 @@
   let el_message = document.querySelector('#message');
   let bt_save = document.querySelector('#bt-save');
   let img_tree = new Image();
-  img_tree.src = './images/tree_1.png';
+  let img_names = [
+    'tree_1',
+    'tree_2',
+    'snowman_1',
+    'snowman_2',
+  ];
+  img_tree.src = `./images/${img_names[Math.random() * img_names.length | 0]}.png`;
   
   let g = document.querySelector('#card').getContext('2d');
   g.canvas.width = innerWidth;
@@ -47,6 +53,8 @@
   gradient.addColorStop(1, 'rgb(105, 169, 224)');
   
   let message = el_message.value;
+  
+  let time = 0;
   
   let flakes = [];
   let ptcls = [];
@@ -78,7 +86,12 @@
     
     let sh = (g.canvas.height / 15 | 0);
     let iw = sh * 6;
-    g.drawImage(img_tree, g.canvas.width / 2 - iw/2, g.canvas.height * 0.8 - iw, iw, iw);
+    //g.drawImage(img_tree, g.canvas.width / 2 - iw/2, g.canvas.height * 0.8 - iw, iw, iw);
+    g.save();
+    g.translate(g.canvas.width / 2, g.canvas.height * 0.8);
+    g.rotate(Math.sin(time * 0.001) * Math.PI * 0.01);
+    g.drawImage(img_tree, -iw/2, -iw, iw, iw);
+    g.restore();
     
     for(let i = ptcls.length / 2; i < ptcls.length; i++) {
       ptcls[i].draw();
@@ -102,7 +115,8 @@
     draw_logo();
   }
   
-  function loop() {
+  function loop(timestamp) {
+    time = timestamp;
     update();
     draw();
     requestAnimationFrame(loop);
@@ -136,7 +150,6 @@
     update() {
       this.to_x += (Math.random() * 2 - 1)  * 2;
       this.x += (this.to_x - this.x) * 0.1;
-      //this.y += this.speed;
       this.to_y += this.speed + (2* Math.random() - 1) * 0.3;
       this.y += (this.to_y - this.y) * 0.1;
       this.rot += this.rot_dir * this.rot_angle;
