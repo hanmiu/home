@@ -187,7 +187,10 @@
     g.fillStyle = 'white';
     g.fillRect(0, 0, g.canvas.width, g.canvas.height);
     
-    g.drawImage(renderer.domElement, 0, 0, g.canvas.width, g.canvas.height);
+    g.save();
+    g.scale(2, 2);
+    g.drawImage(renderer.domElement, 0, 0);
+    g.restore();
     
     g.fillStyle = 'rgb(240, 240, 240)';
     g.strokeStyle = 'rgb(180, 180, 180)';
@@ -245,7 +248,7 @@
   function loop(timestamp) {
     time = timestamp;
     uniforms[ "time" ].value = timestamp / 1000;
-    if(frame_count % 2 == 0) {
+    if(frame_count % 4 == 0) {
       renderer.render( scene, camera );  
     }
     update();
