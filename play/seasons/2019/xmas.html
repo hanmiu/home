@@ -71,7 +71,7 @@
   
   let gradient = g.createLinearGradient(0,g.canvas.height/2, 0,g.canvas.height);
   gradient.addColorStop(0, 'hsl(0, 0%, 100%)');
-  gradient.addColorStop(.5, `hsl(${173 + (Math.random()*2-1) * 20}, 100%, 77%)`);
+  gradient.addColorStop(.5, `hsla(${173 + (Math.random()*2-1) * 20}, 100%, 77%, 0.8)`);
   gradient.addColorStop(1, `hsl(${208 + (Math.random()*2-1) * 20}, 66%, 65%)`);
   
   let message = el_message.value;
@@ -155,12 +155,17 @@
 
     vec3 color = vec3(0.0);
 	
-	color += fbm(p + fbm(p * 2.0) + time * 0.1);
+    float fb = fbm(p + fbm(p * 2.0) + time * 0.1);
+    float fb1 = fbm(p + fbm(p * 2.0) + time * 0.2);
+	color += fb;
 	//color += gradient(p);
     color += 0.3;
-    color *= vec3(0.4, p.y*0.5+0.5, 0.6) * 2.0;
+    color *= vec3(0.4, (p.y*0.5+0.5)*2.0, 0.6) * 2.0;
     color += vec3(0.0, sin(time)*0.5+0.5, 0.2) * 0.2;
-    color = pow(color, vec3(0.2545));
+    color *= (fb1 + 0.6);
+    color += vec3(p.y*0.5+0.5)*0.5;
+    color = pow(color, vec3(0.9545)*fb);
+    
 
 	gl_FragColor = vec4( color, 1.0 );
   }
@@ -177,7 +182,7 @@
     g.fillStyle = 'white';
     g.fillRect(0, 0, g.canvas.width, g.canvas.height);
     
-    g.drawImage(renderer.domElement, 0, 0);
+    g.drawImage(renderer.domElement, 0, 0, g.canvas.width, g.canvas.height);
     
     g.fillStyle = 'rgb(240, 240, 240)';
     g.strokeStyle = 'rgb(180, 180, 180)';
@@ -402,9 +407,9 @@
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( 1 );
     
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    uniforms.resolution.value.x = window.innerWidth;
-    uniforms.resolution.value.y = window.innerHeight;
+    renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+    uniforms.resolution.value.x = window.innerWidth/2;
+    uniforms.resolution.value.y = window.innerHeight/2;
     
     g.canvas.addEventListener('mousedown', touchstart, false);
     g.canvas.addEventListener('mousemove', touchmove, false);
