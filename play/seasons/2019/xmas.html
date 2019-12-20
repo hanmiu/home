@@ -386,7 +386,9 @@
       touch.x = e.pageX;
       touch.y = e.pageY;
     }
-    paint_flake(touch.x, touch.y);
+    if(touch.down) {
+      paint_flake(touch.x, touch.y);  
+    }
   }
   
   function touchend(e) {
@@ -402,7 +404,6 @@
       touch.x = e.pageX;
       touch.y = e.pageY;
     }
-    paint_flake(touch.x, touch.y);
   }
   
   function init() {
