@@ -22,6 +22,12 @@
     font-size: 2vh;
   }
   
+  #ui label {
+    color: slategray;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  
   #text {
     width: 90%;
   }
@@ -67,6 +73,7 @@
     <div class="layer">
       <svg id="svg">
         <g id="hidden"></g>
+        <rect id="bg-rect" x="0" y="0" width="100" height="100" fill="white"></rect>
         <g id="background"></g>
         <g id="foreground"></g>
       </svg>
@@ -78,10 +85,11 @@
   <div id="ui">
     <p><input type="text" id="text" value="새해 복 많이 받으세요" spellcheck="false"></p>
     <p>
-      <input type="color" id="fc" value="#ffffff">
-      <input type="color" id="bc" value="#000000">
+      <label>배경색</label><input type="color" id="bg" value="#ffffff">
+      <label>글씨색</label><input type="color" id="fc" value="#ffffff">
+      <label>외각색</label><input type="color" id="bc" value="#000000">
     </p>
-    <p>위 문장을 편집하고, 화면을 터치해서(마우스로 움직여서) 그림을 그려보세요.</p>
+    <p>위 문장을 편집하고 색도 바꾼 후, 화면을 터치해서(마우스로 움직여서) 그림을 그려보세요.</p>
     <button id="print">프린트</button>
     <button id="save">저장</button>
     <button id="undo-stroke">한 줄 취소</button>
@@ -97,8 +105,10 @@
   let el_hidden = document.querySelector('#hidden');
   let el_background = document.querySelector('#background');
   let el_foreground = document.querySelector('#foreground');
+  let el_bg_rect = document.querySelector('#bg-rect');
   
   let input_text = document.querySelector('#text');
+  let input_bg = document.querySelector('#bg');
   let input_fc = document.querySelector('#fc');
   let input_bc = document.querySelector('#bc');
   
@@ -258,6 +268,10 @@
     char_idx = 0;
   };
   
+  input_bg.oninput = function(e) {
+    el_bg_rect.setAttribute('fill', input_bg.value);
+  };
+  
   button_print.onclick = function() {
     window.print();
   };
@@ -285,12 +299,10 @@
   button_save.onclick = function(e) {
     let link = document.createElement('a');
     link.download = "glyph_drawing.png";
-    let cvs = document.createElement('canvas');
-    cvs.width = g.canvas.width;
-    cvs.height = g.canvas.height;
-    canvg(cvs, el_svg.outerHTML)
-    link.href = cvs.toDataURL();
+    canvg(g.canvas, el_svg.outerHTML)
+    link.href = g.canvas.toDataURL();
     link.click();
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     
     /*
     var xml = new XMLSerializer().serializeToString(svg);
@@ -305,6 +317,8 @@
     el_canvas.height = innerHeight;
     el_svg.setAttribute('width', innerWidth);
     el_svg.setAttribute('height', innerHeight);
+    el_bg_rect.setAttribute('width', innerWidth);
+    el_bg_rect.setAttribute('height', innerHeight);
   }
   
   window.onresize = function() {
