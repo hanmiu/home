@@ -13,17 +13,25 @@
   
   #ui {
     position: fixed;
-    margin: 20px;
+    margin: 1vw;
     left: 0px;
     top: 0px;
   }
   
-  #text {
-    width: 200px;
+  #ui input {
+    font-size: 2vh;
   }
   
+  #text {
+    width: 90%;
+  }
+  
+  #ui button {
+    font-size: 1vh;
+  }
+
   #content {
-    position: absolute;
+    position: fixed;
     left: 0px;
     top: 0px;
   }
@@ -68,11 +76,19 @@
     </div>
   </div>
   <div id="ui">
-    <input type="text" id="text" value="한미유치원" spellcheck="false">
-    <button id="print">print</button>
-    <button id="clear">clear</button>
+    <p><input type="text" id="text" value="새해 복 많이 받으세요" spellcheck="false"></p>
+    <p>
+      <input type="color" id="fc" value="#ffffff">
+      <input type="color" id="bc" value="#000000">
+    </p>
+    <p>위 문장을 편집하고, 화면을 터치해서(마우스로 움직여서) 그림을 그려보세요.</p>
+    <button id="print">프린트</button>
+    <button id="save">저장</button>
+    <button id="undo-stroke">한 줄 취소</button>
+    <button id="clear">전부 비우기</button>
   </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
 <script>
   let svg_ns = 'http://www.w3.org/2000/svg';
   
@@ -83,8 +99,12 @@
   let el_foreground = document.querySelector('#foreground');
   
   let input_text = document.querySelector('#text');
+  let input_fc = document.querySelector('#fc');
+  let input_bc = document.querySelector('#bc');
   
   let button_print = document.querySelector('#print');
+  let button_save = document.querySelector('#save');
+  let button_undo_stroke = document.querySelector('#undo-stroke');
   let button_clear = document.querySelector('#clear');
   
   let g = el_canvas.getContext('2d');
@@ -105,34 +125,68 @@
   svg_text_for_stroke.textContent = text_for_stroke;
   svg_text_for_stroke.setAttribute('x', innerWidth / 2);
   svg_text_for_stroke.setAttribute('y', innerHeight / 2);
-  el_hidden.appendChild(svg_text_for_stroke);
+  //el_hidden.appendChild(svg_text_for_stroke);
   
   let partial_stroke = [];
+  let glyph_stroke;
+  let glyph_stroke_list = [];
   let char_idx = 0;
   
-  function touchdown(x, y) {
+  function touchstart(e) {
+    char_idx = 0;
+    e.target.focus();
+    e.preventDefault();
     touch.down = true;
     touch.px = touch.x;
     touch.py = touch.y;
-    touch.x = x;
-    touch.y = y;
+    if(e.changedTouches) {
+      if(e.changedTouches.length > 0) {
+        touch.x = e.changedTouches[0].pageX;
+        touch.y = e.changedTouches[0].pageY;
+      }
+    }
+    else {
+      touch.x = e.pageX;
+      touch.y = e.pageY;
+    }
     partial_stroke = [];
+    glyph_stroke = [];
   }
   
-  function touchup(x, y) {
+  function touchend(e) {
+    e.preventDefault();
     touch.down = false;
     touch.px = touch.x;
     touch.py = touch.y;
-    touch.x = x;
-    touch.y = y;
+    if(e.changedTouches) {
+      if(e.changedTouches.length > 0) {
+        touch.x = e.changedTouches[0].pageX;
+        touch.y = e.changedTouches[0].pageY;
+      }
+    }
+    else {
+      touch.x = e.pageX;
+      touch.y = e.pageY;
+    }
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    
+    glyph_stroke_list.push(glyph_stroke);
   }
   
-  function touchmove(x, y) {
+  function touchmove(e) {
+    e.preventDefault();
     touch.px = touch.x;
     touch.py = touch.y;
-    touch.x = x;
-    touch.y = y;
+    if(e.changedTouches) {
+      if(e.changedTouches.length > 0) {
+        touch.x = e.changedTouches[0].pageX;
+        touch.y = e.changedTouches[0].pageY;
+      }
+    }
+    else {
+      touch.x = e.pageX;
+      touch.y = e.pageY;
+    }
     
     if(touch.down) {
       g.beginPath();
@@ -142,10 +196,10 @@
       g.setLineDash([2, 10]);
       g.stroke();
       
-      partial_stroke.push([x, y]);
+      partial_stroke.push([touch.x, touch.y]);
       if(partial_stroke.length > 1) {
-        let dx = x - partial_stroke[0][0];
-        let dy = y - partial_stroke[0][1];
+        let dx = touch.x - partial_stroke[0][0];
+        let dy = touch.y - partial_stroke[0][1];
         let dist = Math.sqrt(dx*dx + dy*dy);
         let ratio = dist / partial_stroke.length;
         let size = ratio * 10;
@@ -168,7 +222,7 @@
           glyph.style['font-size'] = base_font_size + 'px';
           glyph.style['transform'] = `translate(${mean_x}px, ${mean_y}px) scale(${ratio*0.1}, ${ratio*0.1}) rotate(${angle}deg)`;
           glyph.style['fill'] = 'transparent';
-          glyph.style['stroke'] = 'black';
+          glyph.style['stroke'] = input_bc.value;
           glyph.style['stroke-width'] = '5px';
           glyph.setAttribute('text-anchor', 'middle');
           glyph.setAttribute('alignment-baseline', 'middle');
@@ -176,18 +230,20 @@
           glyph.setAttribute('x', 0);
           glyph.setAttribute('y', 0);
           el_background.appendChild(glyph);
+          glyph_stroke.push(glyph);
           
           glyph = document.createElementNS(svg_ns, 'text');
           glyph.style['font-family'] = 'Black Han Sans';
           glyph.style['font-size'] = base_font_size + 'px';
           glyph.style['transform'] = `translate(${mean_x}px, ${mean_y}px) scale(${ratio*0.1}, ${ratio*0.1}) rotate(${angle}deg)`;
-          glyph.style['fill'] = 'white';
+          glyph.style['fill'] = input_fc.value;
           glyph.setAttribute('text-anchor', 'middle');
           glyph.setAttribute('alignment-baseline', 'middle');
           glyph.textContent = char;
           glyph.setAttribute('x', 0);
           glyph.setAttribute('y', 0);
           el_foreground.appendChild(glyph);
+          glyph_stroke.push(glyph);
           //----
           char_idx++;
           partial_stroke = [];
@@ -210,6 +266,38 @@
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     el_background.innerHTML = '';
     el_foreground.innerHTML = '';
+    
+    while(glyph_stroke_list.length > 0) {
+      let gs = glyph_stroke_list.pop();
+      while(gs.length > 0) {
+        gs.pop();
+      } 
+    }
+  }
+  
+  button_undo_stroke.onclick = function() {
+    if(glyph_stroke_list.length > 0) {
+      let gs = glyph_stroke_list.pop();
+      gs.forEach(x => x.remove());  
+    }
+  }
+  
+  button_save.onclick = function(e) {
+    let link = document.createElement('a');
+    link.download = "glyph_drawing.png";
+    let cvs = document.createElement('canvas');
+    cvs.width = g.canvas.width;
+    cvs.height = g.canvas.height;
+    canvg(cvs, el_svg.outerHTML)
+    link.href = cvs.toDataURL();
+    link.click();
+    
+    /*
+    var xml = new XMLSerializer().serializeToString(svg);
+    var svg64 = btoa(xml); //for utf8: btoa(unescape(encodeURIComponent(xml)))
+    var b64start = 'data:image/svg+xml;base64,';
+    var image64 = b64start + svg64;
+    */
   }
   
   function layout() {
@@ -219,23 +307,19 @@
     el_svg.setAttribute('height', innerHeight);
   }
   
-  window.onmousedown = function(e) {
-    touchdown(e.pageX, e.pageY);
-  };
-  
-  window.onmouseup = function(e) {
-    touchup(e.pageX, e.pageY);
-  };
-  
-  window.onmousemove = function(e) {
-    touchmove(e.pageX, e.pageY);
-  };
-  
   window.onresize = function() {
     layout();
   };
   
   window.onload = function() {
     layout();
+    
+    g.canvas.addEventListener('mousedown', touchstart, false);
+    g.canvas.addEventListener('mousemove', touchmove, false);
+    g.canvas.addEventListener('mouseup', touchend, false);
+    
+    g.canvas.addEventListener('touchstart', touchstart, false);
+    g.canvas.addEventListener('touchmove', touchmove, false);
+    g.canvas.addEventListener('touchend', touchend, false);
   };
 </script>
