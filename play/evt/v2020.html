@@ -17,13 +17,33 @@
     line-height: 1.5em;
   }
   
-  strong {
-    background-color: yellow;
-  }
-  
   .desc {
+    margin-left: auto;
+    margin-right: auto;
+    width: 600px;
     color: slategray;
     text-align: left;
+  }
+  
+  strong {
+    background-color: yellow;
+    /* padding: 5px; */
+    /* border-radius: 5px; */
+  }
+  
+  hr {
+    border: 1px dashed #b9d100;
+    width: 600px;
+  }
+  
+  .desc .magic {
+    display: block;
+    color: #3e86f8;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-style: italic;
+    text-shadow: 0px 0px 5px #c1e0ff;
+    text-align: center;
   }
   
   .hint {
@@ -43,13 +63,15 @@
   }
   
   .qr {
-    height: 25vh;
+    height: 10vh;
     margin-bottom: 5vh;
   }
   
   .visual img {
     display: block;
+    width: 600px;
     margin: auto;
+    border-radius: 10px;
   }
   
   .solve {
@@ -85,30 +107,16 @@
   <div id="content">한미유치원 2019학년도 2학기 참여 수업</div>
 </body>
 <script src="./qrcode.min.js"></script>
-</script>
 <script>
   let el_content = document.querySelector('#content');
   
   function init() {
     let params = new URLSearchParams(location.search.slice(1));
-    
-    let qrcode = new QRCode({
-      content: location.href,
-      ecl: 'L',
-      padding: 0,
-      width: 100,
-      height: 100,
-      color: "#000000",
-      background: "#ffffff",
-    });
-    
-    let svg_str = qrcode.svg();
-    
     let title = params.get('w');
     let desc = '?';
     let hint = '???';
     
-    console.log(params.get('w'));
+    //console.log(params.get('w'));
     
     switch(params.get('w')) {
       case 'A1_m9dc':
@@ -116,15 +124,15 @@
         hint = '';
         break;
       case 'A2_c50y':
-        desc = `다음 날, 코로일구가 마을에 다시 나타나자 목화는 코로일구를 물리칠 방법을 생각했어. 그러던 중 주변에 주렁주렁 열려있던 <strong>열매</strong>가 눈에 띄었지. 한참을 고민하던 목화는 주문을 외우기 시작했어. <p>뚜뚜따리 뚜뚜따리 얍~</p>`;
+        desc = `다음 날, 코로일구가 마을에 다시 나타나자 목화는 코로일구를 물리칠 방법을 생각했어. 그러던 중 주변에 주렁주렁 열려있던 <strong>열매</strong>가 눈에 띄었지. 한참을 고민하던 목화는 주문을 외우기 시작했어. <span class="magic">뚜뚜따리 뚜뚜따리 얍~</span>`;
         hint = '';
         break;
       case 'A3_p5y6':
-        desc = `목화가 주문을 외우자 마을에 있던 열매들이 슝~ 날아와서 마을 주변으로 모였어. <strong>다닥다닥 붙은</strong> 열매들은 동그랗게 마을에 보호막을 만들기 시작했어. 목화는 주문을 한번 더 외웠어. <p>뚜뚜따리 뚜뚜따리 얍~</p> 그러자 열매에서 환한 빛이 나오더니 코로일구가 먼지처럼 사라졌어! 코로일구가 사라지자 목화는 다시 주문을 외웠어 <p>뚜뚜따리 뚜뚜따리 얍~</p>`;
+        desc = `목화가 주문을 외우자 마을에 있던 열매들이 슝~ 날아와서 마을 주변으로 모였어. <strong>다닥다닥 붙은</strong> 열매들은 동그랗게 마을에 보호막을 만들기 시작했어. 목화는 주문을 한번 더 외웠어. <span class="magic">뚜뚜따리 뚜뚜따리 얍~</span> 그러자 열매에서 환한 빛이 나오더니 코로일구가 먼지처럼 사라졌어! 코로일구가 사라지자 목화는 다시 주문을 외웠어 <span class="magic">뚜뚜따리 뚜뚜따리 얍~</span><br>`;
         hint = '';
         break;
       case 'A4_06ch':
-        desc = `그러자 열매들이 다시 슝~ 하고 나무로 돌아갔어. <strong>나무는</strong> 열매들이 돌아오자 마법의 힘을 얻어 쑥쓕 자라나고 더 맑은 공기를 만들어내서 코로일구같은 나쁜 바이러스들이 더이상 오지 못했대~`;
+        desc = `그러자 열매들이 다시 슝~ 하고 나무로 돌아갔어. <strong>나무는</strong> 열매들이 돌아오자 마법의 힘을 얻어 쑥쑥 자라나고 더 맑은 공기를 만들어내서 코로일구같은 나쁜 바이러스들이 더이상 오지 못했대~`;
         hint = '';
         break;
       case 'A5_51j8':
@@ -132,53 +140,81 @@
         hint = '';
         break;
       case 'B1_6g67':
-        desc = `어느 평화로운 마을에 조금은 무서운 일이났어. 코로일구라는 괴물들이 마을을 습격한거야! 그 마을에는 요술 <strong>모자를 쓴</strong> 아이가 있었어. 바로 목화였지. 모자를 쓴 목화는 코로일구가 잠든 사이에 마을 사람들을 안전한 곳으로 데려다 주었어.`;
+        desc = `<strong>나</strong>는 노는게 제일 좋아.<br>가능성으로 가득 차 있어.`;
         hint = '';
         break;
       case 'B2_4rd2':
-        desc = `다음 날, 코로일구가 마을에 다시 나타나자 목화는 코로일구를 물리칠 방법을 생각했어. 그러던 중 주변에 주렁주렁 열려있던 <strong>열매</strong>가 눈에 띄었지. 한참을 고민하던 목화는 주문을 외우기 시작했어. <p>뚜뚜따리 뚜뚜따리 얍~</p>`;
+        desc = `하고 싶은 것도 많아.<br>나<strong>는</strong> 참 다채로워.`;
         hint = '';
         break;
       case 'B3_5f89':
-        desc = `목화가 주문을 외우자 마을에 있던 열매들이 슝~ 날아와서 마을 주변으로 모였어. <strong>다닥다닥 붙은</strong> 열매들은 동그랗게 마을에 보호막을 만들기 시작했어. 목화는 주문을 한번 더 외웠어. <p>뚜뚜따리 뚜뚜따리 얍~</p> 그러자 열매에서 환한 빛이 나오더니 코로일구가 먼지처럼 사라졌어! 코로일구가 사라지자 목화는 다시 주문을 외웠어 <p>뚜뚜따리 뚜뚜따리 얍~</p>`;
+        desc = `나는 <strong>누구</strong>와도 친구가 될 수 있지.<br>무척 호기심이 많아.`;
         hint = '';
         break;
       case 'B4_zp0s':
-        desc = `그러자 열매들이 다시 슝~ 하고 나무로 돌아갔어. <strong>나무는</strong> 열매들이 돌아오자 마법의 힘을 얻어 쑥쓕 자라나고 더 맑은 공기를 만들어내서 코로일구같은 나쁜 바이러스들이 더이상 오지 못했대~`;
+        desc = `나는 이제 다섯 살, 여섯 살, 그리고 <strong>일</strong>곱 살이 됐어.<br>금방 쑥쑥 자라지.`;
         hint = '';
         break;
       case 'B5_0r74':
-        desc = `그런데 코로일구가 갑자기 마을을 공격한 이유는 <strong>무엇일까?</strong> 정말 궁금하지 않니?`;
+        desc = `어른들은 날 어리다고 말하지만 <span class="magic">내 생각은 하늘까지 우주<strong>까</strong>지 닿아.</span> 나는 지금이 좋아.`;
         hint = '';
         break;
       case 'C1_3poh':
-        desc = `어느 평화로운 마을에 조금은 무서운 일이났어. 코로일구라는 괴물들이 마을을 습격한거야! 그 마을에는 요술 <strong>모자를 쓴</strong> 아이가 있었어. 바로 목화였지. 모자를 쓴 목화는 코로일구가 잠든 사이에 마을 사람들을 안전한 곳으로 데려다 주었어.`;
+        desc = `알을 깨고 나온 날, 눈이 마주친 <strong>나를</strong> 보고 기뻐하며 인사하던 아빠 얼굴이 떠올라요.`;
         hint = '';
         break;
       case 'C2_1x29':
-        desc = `다음 날, 코로일구가 마을에 다시 나타나자 목화는 코로일구를 물리칠 방법을 생각했어. 그러던 중 주변에 주렁주렁 열려있던 <strong>열매</strong>가 눈에 띄었지. 한참을 고민하던 목화는 주문을 외우기 시작했어. <p>뚜뚜따리 뚜뚜따리 얍~</p>`;
+        desc = `엄마가 <strong>낳은</strong> 알 속에서부터 따뜻하게 품어주셨던 사랑을 느끼고 있었죠.</p>`;
         hint = '';
         break;
       case 'C3_ru90':
-        desc = `목화가 주문을 외우자 마을에 있던 열매들이 슝~ 날아와서 마을 주변으로 모였어. <strong>다닥다닥 붙은</strong> 열매들은 동그랗게 마을에 보호막을 만들기 시작했어. 목화는 주문을 한번 더 외웠어. <p>뚜뚜따리 뚜뚜따리 얍~</p> 그러자 열매에서 환한 빛이 나오더니 코로일구가 먼지처럼 사라졌어! 코로일구가 사라지자 목화는 다시 주문을 외웠어 <p>뚜뚜따리 뚜뚜따리 얍~</p>`;
+        desc = `<strong>두 분</strong>이 함께 행복한 우리 가족 둥지를 꾸며주셨어요.`;
         hint = '';
         break;
       case 'C4_66em':
-        desc = `그러자 열매들이 다시 슝~ 하고 나무로 돌아갔어. <strong>나무는</strong> 열매들이 돌아오자 마법의 힘을 얻어 쑥쓕 자라나고 더 맑은 공기를 만들어내서 코로일구같은 나쁜 바이러스들이 더이상 오지 못했대~`;
+        desc = `그때 저는 언젠가 엄마 아빠처럼 멋지게 하늘을 날고 싶다고 <strong>생각하는</strong> 작은 새였습니다.`;
         hint = '';
         break;
       case 'C5_q6wk':
-        desc = `그런데 코로일구가 갑자기 마을을 공격한 이유는 <strong>무엇일까?</strong> 정말 궁금하지 않니?`;
+        desc = `이제 날개에 힘에 생겨 훨훨 하늘을 <strong>날</strong>다 드문드문 보이는 새 둥지를 보면, <span class="magic">그때 그 따스함이 생각나곤 합니다.</span>`;
         hint = '';
         break;
     }
     
+    let category = title[0];
+    let colors = {
+      A: '#000000',
+      B: '#2A8000',
+      C: '#0061EA',
+    };
+    
+    let qrcode = new QRCode({
+      content: location.href,
+      ecl: 'L',
+      padding: 0,
+      width: 100,
+      height: 100,
+      color: colors[category],
+      background: "#ffffff",
+    });
+    
+    let svg_str = qrcode.svg();
+    
     let index = title[1];
     let id = title.slice(0, 2);
+    
+    // 다섯 개 중 첫 번째 이야기 조각을 찾았습니다!
+    let nth = {
+      1: '첫',
+      2: '두',
+      3: '세',
+      4: '네',
+      5: '다섯',
+    }
+    
     let template = `
-      <p class="intro">이야기 조각을 찾았습니다!</p>
-      <p class="notice">아래 이야기를 캡쳐해서 수수께끼를 풀 때 활용하세요.</p>
-      <h1>${index}/5</h1>
+      <p class="intro">다섯 개 중 ${nth[index]} 번째 이야기 조각을 찾았습니다!</p>
+      <h1 style="color: ${colors[category]}">${index}/5</h1>
       <div class="qr">${svg_str}</div>
       <div class="visual">
         <img src="./img/2020/${id}.jpg">
@@ -186,10 +222,11 @@
       <p class="desc">${desc}</p>
       <hr>
       <p>
-        <p class="notice">모든 이야기 조각을 모아 이야기를 합쳐보면, 수수께끼(노란색으로 강조한 글들을 합치면)가 나옵니다.</p>
+        <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요.</p>
+        <p class="notice">모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다.</p>
         <p class="notice">아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
       <div-class="solve">
-        <div class="solve-riddle"><a href="https://google.com" target="_blank">수수께끼 풀기</a></div>
+        <div class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></div>
       </div>
     `;
     
