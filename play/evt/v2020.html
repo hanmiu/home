@@ -20,7 +20,7 @@
   .desc {
     margin-left: auto;
     margin-right: auto;
-    width: 600px;
+    width: 700px;
     color: slategray;
     text-align: left;
   }
@@ -33,7 +33,7 @@
   
   hr {
     border: 1px dashed #b9d100;
-    width: 600px;
+    width: 700px;
   }
   
   .desc .magic {
@@ -53,8 +53,8 @@
   
   .notice {
     color: #6c2aff;
-    text-align: center;
-    font-size: 1em; 
+    text-align: left;
+    font-size: 1.5vh; 
   }
   
   .intro {
@@ -69,23 +69,29 @@
   
   .visual img {
     display: block;
-    width: 600px;
+    width: 700px;
     margin: auto;
     border-radius: 10px;
   }
   
+  .bottom {
+    width: 700px;
+    margin: auto;
+  }
+  
   .solve {
     text-align: center;
+    margin-top: 2vh;
   }
   
   .solve-riddle {
     text-align: center;
     margin: auto;
-    padding: 5px;
-    width: 200px;
-    height: 40px;
-    line-height: 40px;
-    font-size: 30px;
+    padding: 10px 20px 10px 20px;
+    /* width: 200px; */
+    height: 4vh;
+    line-height: 4vh;
+    font-size: 3vh;
     border-radius: 15px;
     background-color: aquamarine;
     color: cadetblue;
@@ -221,12 +227,11 @@
       </div>
       <p class="desc">${desc}</p>
       <hr>
-      <p>
-        <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요.</p>
-        <p class="notice">모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다.</p>
-        <p class="notice">아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
-      <div-class="solve">
-        <div class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></div>
+      <div class="bottom">
+        <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요. 모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다. 아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
+        <div class="solve">
+          <span class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></span>
+        </div>
       </div>
     `;
     
