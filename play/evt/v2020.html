@@ -68,6 +68,7 @@
   }
   
   .qr svg {
+    -webkit-animation: rot 3s ease-in-out;
     animation: rot 3s ease-in-out;
   }
   
@@ -111,6 +112,10 @@
   .solve-riddle a {
     text-decoration: none;
     color: cadetblue;
+  }
+  
+  @-webkit-keyframes rot {
+    from { transform: rotate(0deg)} to { transform: rotate(1080deg) }
   }
   
   @keyframes rot {
