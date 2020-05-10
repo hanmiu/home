@@ -7,6 +7,23 @@
     font-family: sans-serif;
   }
   
+  #bg {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    opacity: 0.2;
+  }
+  
+  #content {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100vw;
+  }
+  
   h1 {
     font-size: 6vh;
     text-align: center;
@@ -76,7 +93,8 @@
     display: block;
     width: 700px;
     margin: auto;
-    border-radius: 10px;
+    border-radius: 1vh;
+    /* mix-blend-mode: multiply; */
   }
   
   .bottom {
@@ -123,13 +141,24 @@
   }
 </style>
 <body>
-  <div id="content">한미유치원 2019학년도 2학기 참여 수업</div>
+  <canvas id="bg"></canvas>
+  <div id="content"></div>
 </body>
 <script src="./qrcode.min.js"></script>
 <script>
+  let el_bg = document.querySelector('#bg');
   let el_content = document.querySelector('#content');
   
+  let g = el_bg.getContext('2d');
+  
+  function layout() {
+    g.canvas.width = innerWidth;
+    g.canvas.height = innerHeight;
+  }
+  
   function init() {
+    layout();
+    
     let params = new URLSearchParams(location.search.slice(1));
     let title = params.get('w');
     let desc = '?';
@@ -254,7 +283,37 @@
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.setAttribute('viewBox', '0 0 100 100');
+    
+    loop();
+  }
+  
+  let frame_count = 0;
+  let px = Math.random() * g.canvas.width;
+  let py = Math.random() * g.canvas.height;
+  let pr = 10 + Math.random() * g.canvas.height * 0.1;
+  let hue = Math.random() * 360;
+  function draw(timestamp) {
+    if(frame_count < 10000) {
+      if(frame_count % 30 === 0) {
+        px = Math.random() * g.canvas.width;
+        py = Math.random() * g.canvas.height;
+        pr = 10 + Math.random() * g.canvas.height * 0.1;  
+      }
+      g.beginPath();
+      g.arc(px, py, pr, 0, Math.PI*2);
+      hue = (Math.sin(timestamp * 0.001) * 0.5 + 0.5) * 360 | 0;
+      g.fillStyle = `hsla(${hue}, 100%, 50%, 0.01)`;
+      g.fill();
+      pr += 1;
+    }
+  }
+  
+  function loop(timestamp) {
+    draw(timestamp);
+    frame_count += 1;
+    requestAnimationFrame(loop);
   }
   
   window.onload = init;
+  window.onresize = layout;
 </script>
