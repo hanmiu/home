@@ -96,8 +96,7 @@
     border-radius: 1vh;
     /* mix-blend-mode: multiply; */
     box-shadow: 0px 0px 20px white;
-    -webkit-animation: appear 3s ease-in-out;
-    animation: appear 3s ease-in-out;
+    visibility: hidden;
   }
   
   .bottom {
@@ -346,6 +345,13 @@
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.setAttribute('viewBox', '0 0 100 100');
+    
+    let img = el_content.querySelector('.visual img');
+    img.onload = function() {
+      img.style['-webkit-animation'] = 'appear 3s ease-in-out';
+      img.style['animation'] = 'appear 3s ease-in-out';
+      img.style['visibility'] = 'visible';
+    };
     
     loop();
   }
