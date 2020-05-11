@@ -274,7 +274,7 @@
       5: '다섯',
     }
     
-    sessionStorage.setItem(id, 'found');
+    localStorage.setItem(id, 'found:' + Date.now());
     
     let riddle = {
       A: '모자를 쓴,열매가,다닥다닥 붙은,나무는,무엇일까?'.split(','),
@@ -285,11 +285,23 @@
     let solved = '?,?,?,?,?'.split(',');
     
     let count_found = 0;
+    let last_t = Number.MAX_SAFE_INTEGER;
     for(let i = 0; i < 5; i++) {
-      if(sessionStorage.getItem(category + (i + 1)) === 'found') {
-        solved[i] = riddle[category][i]; 
-        count_found += 1;
+      let vt = localStorage.getItem(category + (i + 1));
+      if(vt) {
+        let [v, t] = vt.split(':');
+        last_t = Math.min(last_t, Number(t));
+        if(v === 'found') {
+          solved[i] = riddle[category][i]; 
+          count_found += 1;
+        }  
       }
+    }
+    
+    let elapsed = Date.now() - last_t;
+    if(elapsed > 1000 * 3600 * 2) {
+      localStorage.clear();
+      localStorage.setItem(id, 'found:' + Date.now());
     }
     
     let template = `
