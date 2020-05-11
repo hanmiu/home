@@ -95,6 +95,9 @@
     margin: auto;
     border-radius: 1vh;
     /* mix-blend-mode: multiply; */
+    box-shadow: 0px 0px 20px white;
+    -webkit-animation: appear 3s ease-in-out;
+    animation: appear 3s ease-in-out;
   }
   
   .bottom {
@@ -144,6 +147,14 @@
   .solve-riddle a {
     text-decoration: none;
     color: cadetblue;
+  }
+  
+  @-webkit-keyframes appear {
+    from { opacity: 0} to { opacity: 1 }
+  }
+  
+  @keyframes appear {
+    from { opacity: 0} to { opacity: 1 }
   }
   
   @-webkit-keyframes rot {
@@ -340,10 +351,11 @@
   }
   
   let frame_count = 0;
+  /*
   let px = Math.random() * g.canvas.width;
   let py = Math.random() * g.canvas.height;
   let pr = 10 + Math.random() * g.canvas.height * 0.1;
-  let hue = Math.random() * 360;
+  
   function draw(timestamp) {
     if(frame_count < 10000) {
       if(frame_count % 30 === 0) {
@@ -357,6 +369,29 @@
       g.fillStyle = `hsla(${hue}, 100%, 50%, 0.01)`;
       g.fill();
       pr += 1;
+    }
+  }
+  */
+  let pxs = [Math.random() * g.canvas.width, Math.random() * g.canvas.width, Math.random() * g.canvas.width];
+  let pys = [Math.random() * g.canvas.height, Math.random() * g.canvas.height, Math.random() * g.canvas.height];
+  let prs = [10 + Math.random() * g.canvas.height * 0.1, 10 + Math.random() * g.canvas.height * 0.1, 10 + Math.random() * g.canvas.height * 0.1];
+  let hue = Math.random() * 360;
+  
+  function draw(timestamp) {
+    if(frame_count < 3000) {
+      for(let i = 0; i < 3; i++) {
+        if(frame_count % 30 === 0) {
+          pxs[i] = Math.random() * g.canvas.width;
+          pys[i] = Math.random() * g.canvas.height;
+          prs[i] = 10 + Math.random() * g.canvas.height * 0.1;  
+        }
+        g.beginPath();
+        g.arc(pxs[i], pys[i], prs[i], 0, Math.PI*2);
+        hue = (Math.sin(timestamp * 0.001) * 0.5 + 0.5) * 360 | 0;
+        g.fillStyle = `hsla(${hue}, 100%, 50%, 0.01)`;
+        g.fill();
+        prs[i] += 1;  
+      }
     }
   }
   
