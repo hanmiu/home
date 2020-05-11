@@ -102,6 +102,19 @@
     margin: auto;
   }
   
+  .found {
+    text-align: center;
+  }
+  
+  .got {
+    margin: 5px 10px 5px 10px;
+    padding: 3px;
+    background-color: yellow;
+    color: slategray;
+    font-size: 2vh;
+    border-radius: 10px;
+  }
+  
   .solve {
     text-align: center;
     margin-top: 4vh;
@@ -244,7 +257,7 @@
       width: 100,
       height: 100,
       color: colors[category],
-      background: "#ffffff",
+      background: "#ffffff00",
     });
     
     let svg_str = qrcode.svg();
@@ -261,6 +274,24 @@
       5: '다섯',
     }
     
+    sessionStorage.setItem(id, 'found');
+    
+    let riddle = {
+      A: '모자를 쓴,열매가,다닥다닥 붙은,나무는,무엇일까?'.split(','),
+      B: '나,는,누구,일,까'.split(','),
+      C: '나를,낳은,두 분,생각하는,날'.split(','),
+    };
+    
+    let solved = '?,?,?,?,?'.split(',');
+    
+    let count_found = 0;
+    for(let i = 0; i < 5; i++) {
+      if(sessionStorage.getItem(category + (i + 1)) === 'found') {
+        solved[i] = riddle[category][i]; 
+        count_found += 1;
+      }
+    }
+    
     let template = `
       <p class="intro">다섯 개 중 ${nth[index]} 번째 이야기 조각을 찾았습니다!</p>
       <h1 style="color: ${colors[category]}">${index}/5</h1>
@@ -271,7 +302,15 @@
       <p class="desc">${desc}</p>
       <hr>
       <div class="bottom">
-        <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요. 모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다. 아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
+        <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요. 모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다. 지금까지 ${count_found}개의 조각을 찾았습니다.</p>
+        <div class="found">
+          <span class="got">${solved[0]}</span>
+          <span class="got">${solved[1]}</span>
+          <span class="got">${solved[2]}</span>
+          <span class="got">${solved[3]}</span>
+          <span class="got">${solved[4]}</span>
+        </div>
+        <p class="notice">아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
         <div class="solve">
           <span class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></span>
         </div>
@@ -284,8 +323,6 @@
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.setAttribute('viewBox', '0 0 100 100');
-    
-    sessionStorage.setItem(id, 'found');
     
     loop();
   }
