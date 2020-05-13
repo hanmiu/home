@@ -3,31 +3,50 @@
 <style>
   button {
     font-size: 2vh;
+    margin: 5px;
+  }
+  
+  .info {
+    font-size: 2vh;
+    margin: 5px;
   }
 </style>
 <body>
-  <button id="find-me">현재 위치 확인</button><br/>
+  <button id="find-me">현재 위치 확인</button><br>
   <!--
   <p id = "status"></p>
   <a id = "map-link" target="_blank"></a>
   -->
-  <div><span>위도: </span><span id="latitude"></span></div>
-  <div><span>경도: </span><span id="longitude"></span></div>
+  <div><span class="info">위도: </span><span id="latitude" class="info"></span></div>
+  <div><span class="info">경도: </span><span id="longitude" class="info"></span></div>
+  <div><span class="info">가속도계: </span><span id="acl" class="info"></span></div>
   <!-- @37.683408,126.769612,17z -->
 <!--
   <iframe src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d6315.714740570071!2d126.7432744!3d37.6760591!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skr!4v1589337229744!5m2!1sen!2skr" width="600" height="450" frameborder="0" style="border:0;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
 -->
-<iframe id="map" src="https://maps.google.com/maps?q=37.683408,126.769612&z=18&output=embed" width="600" height="450" frameborder="0" style="border:0"></iframe>
-  <div id="time"></div>
+  <button id="on-map">지도 갱신</button><br>
+  <iframe id="map" src="https://maps.google.com/maps?q=37.683408,126.769612&z=18&output=embed" width="600" height="450" frameborder="0" style="border:0"></iframe>
+  <br>
+  <div id="time">...</div>
 
+  <button id="get-path">경로 모음</button><br>
+  <textarea id="data"></textarea>
 </body>
 <script>
   let bt_find_me = document.querySelector('#find-me');
+  let bt_on_map = document.querySelector('#on-map');
+  let bt_get_path = document.querySelector('#get-path');
   let el_lat = document.querySelector('#latitude');
   let el_long = document.querySelector('#longitude');
+  let el_acl = document.querySelector('#acl');
   let el_time = document.querySelector('#time');
   let el_map = document.querySelector('#map');
+  let el_data = document.querySelector('#data');
   let on_trace = false;
+  
+  let pos_list = [];
+  
+  let acl = new Accelerometer({frequency: 60});
   
   function success(position) {
     const latitude  = position.coords.latitude;
@@ -36,7 +55,7 @@
     el_lat.textContent = latitude;
     el_long.textContent = longitude;
     
-    el_map.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=18&output=embed`;
+    pos_list.push([latitude,longitude]);
   }
   
   function error() {
@@ -47,6 +66,17 @@
   bt_find_me.onclick = function() {
     navigator.geolocation.getCurrentPosition(success, error);
     on_trace = true;
+  }
+  
+  bt_on_map.onclick = function() {
+    if(pos_list.length > 0) {
+      let pos = pos_list[pos_list.length - 1];
+      el_map.src = `https://maps.google.com/maps?q=${pos[0]},${pos[1]}&z=18&output=embed`;  
+    }
+  }
+  
+  bt_get_path.onclick = function() {
+    el_data.textContent = pos_list.join(',');
   }
   
   let frame_count = 0;
@@ -64,6 +94,12 @@
     update();
     requestAnimationFrame(loop);
   }
+  
+  acl.addEventListener('reading', () => {
+    el_acl.textContent = `x: ${acl.x}, y: ${acl.y}, z: ${acl.z}`;
+  });
+
+acl.start();
   
   loop();
 </script>
