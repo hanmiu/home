@@ -177,13 +177,38 @@
     loop();
   }
   
+  function handleOrientationEvent(frontToBack, leftToRight, rotateDegrees) {
+      // do something amazing
+  }
   
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientation", function(event) {
+      // alpha: rotation around z-axis
+      var rotateDegrees = event.alpha;
+      // gamma: left to right
+      var leftToRight = event.gamma;
+      // beta: front back motion
+      var frontToBack = event.beta;
+      
+      el_ort.textContent = `α: ${event.alpha}, β: ${event.beta}, γ: ${event.gamma}`;
+      
+      console.log('!');
+
+      //handleOrientationEvent(frontToBack, leftToRight, rotateDegrees);
+    }, true);
+  }
+
+  function handleOrientationEvent(frontToBack, leftToRight, rotateDegrees) {
+      // do something amazing
+  }
+  /*
   function handleOrientation(evt) {
     // https://developer.mozilla.org/en-US/docs/Web/API/Detecting_device_orientation
     el_ort.textContent = `α: ${evt.alpha}, β: ${evt.beta}, γ: ${evt.gamma}`;
   }
 
   window.ondeviceorientation = handleOrientation;
+  */
   
   init();
 </script>
