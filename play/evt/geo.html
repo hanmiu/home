@@ -19,7 +19,7 @@
   -->
   <div><span class="info">위도: </span><span id="latitude" class="info"></span></div>
   <div><span class="info">경도: </span><span id="longitude" class="info"></span></div>
-  <div><span class="info">가속도계: </span><span id="acl" class="info"></span></div>
+  <div><span class="info">Ort: </span><span id="ort" class="info"></span></div>
   <!-- @37.683408,126.769612,17z -->
 <!--
   <iframe src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d6315.714740570071!2d126.7432744!3d37.6760591!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skr!4v1589337229744!5m2!1sen!2skr" width="600" height="450" frameborder="0" style="border:0;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
@@ -38,7 +38,7 @@
   let bt_get_path = document.querySelector('#get-path');
   let el_lat = document.querySelector('#latitude');
   let el_long = document.querySelector('#longitude');
-  let el_acl = document.querySelector('#acl');
+  let el_ort = document.querySelector('#ort');
   let el_time = document.querySelector('#time');
   let el_map = document.querySelector('#map');
   let el_data = document.querySelector('#data');
@@ -95,11 +95,12 @@
     requestAnimationFrame(loop);
   }
   
-  acl.addEventListener('reading', () => {
-    el_acl.textContent = `x: ${acl.x}, y: ${acl.y}, z: ${acl.z}`;
-  });
+  function handleOrientation(evt) {
+    // https://developer.mozilla.org/en-US/docs/Web/API/Detecting_device_orientation
+    el_ort.textContent = `α: ${evt.x}, β: ${evt.y}, γ: ${evt.z}`;
+  }
 
-acl.start();
+  window.addEventListener('deviceorientation', handleOrientation);
   
   loop();
 </script>
