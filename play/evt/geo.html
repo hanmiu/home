@@ -24,6 +24,7 @@
   -->
   <div><span class="info">위도: </span><span id="latitude" class="info"></span></div>
   <div><span class="info">경도: </span><span id="longitude" class="info"></span></div>
+  <div><span class="info">문턱거리: </span><input id="thres" class="info" type="number" value="0.0002"></div>
   <div><span class="info">목표거리: </span><span id="dist" class="info"></span></div>
   <div><span class="info">Ort: </span><span id="ort" class="info"></span></div>
   <!-- @37.683408,126.769612,17z -->
@@ -44,6 +45,8 @@
   let bt_find_me = document.querySelector('#find-me');
   let bt_on_map = document.querySelector('#on-map');
   let bt_get_path = document.querySelector('#get-path');
+  
+  let input_thres = document.querySelector('#thres');
   
   let el_lat = document.querySelector('#latitude');
   let el_long = document.querySelector('#longitude');
@@ -87,7 +90,7 @@
     let dist = Math.sqrt(d_lat*d_lat + d_long*d_long);
     
     el_dist.textContent = dist;
-    if(dist <= 0.0001) {
+    if(dist <= Number(input_thres.value)) {
       on_tgt = true;
     }
     else {
