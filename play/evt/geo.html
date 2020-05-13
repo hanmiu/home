@@ -1,41 +1,64 @@
 <!doctype html>
 <meta charset="utf-8">
-<style></style>
+<style>
+  button {
+    font-size: 2vh;
+  }
+</style>
 <body>
-  <button id = "find-me">Show my location</button><br/>
+  <button id="find-me">현재 위치 확인</button><br/>
+  <!--
   <p id = "status"></p>
   <a id = "map-link" target="_blank"></a>
+  -->
+  <div><span>위도: </span><span id="latitude"></span></div>
+  <div><span>경도: </span><span id="longitude"></span></div>
+  <!-- @37.683408,126.769612,17z -->
+<!--
+  <iframe src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d6315.714740570071!2d126.7432744!3d37.6760591!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skr!4v1589337229744!5m2!1sen!2skr" width="600" height="450" frameborder="0" style="border:0;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
+-->
+<iframe id="map" src="https://maps.google.com/maps?q=37.683408,126.769612&z=18&output=embed" width="600" height="450" frameborder="0" style="border:0"></iframe>
+
 </body>
 <script>
-  function geoFindMe() {
-
-    const status = document.querySelector('#status');
-    const mapLink = document.querySelector('#map-link');
-
-    mapLink.href = '';
-    mapLink.textContent = '';
-
-    function success(position) {
-      const latitude  = position.coords.latitude;
-      const longitude = position.coords.longitude;
-
-      status.textContent = '';
-      mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
-      mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °`;
-    }
-
-    function error() {
-      status.textContent = 'Unable to retrieve your location';
-    }
-
-    if(!navigator.geolocation) {
-      status.textContent = 'Geolocation is not supported by your browser';
-    } else {
-      status.textContent = 'Locating…';
-      navigator.geolocation.getCurrentPosition(success, error);
-    }
-
+  let bt_find_me = document.querySelector('#find-me');
+  let el_lat = document.querySelector('#latitude');
+  let el_long = document.querySelector('#longitude');
+  let el_map = document.querySelector('#map');
+  let on_trace = false;
+  
+  function success(position) {
+    const latitude  = position.coords.latitude;
+    const longitude = position.coords.longitude; 
+    
+    el_lat.textContent = latitude;
+    el_long.textContent = longitude;
+    
+    el_map.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=18&output=embed`;
   }
-
-  document.querySelector('#find-me').addEventListener('click', geoFindMe);
+  
+  function error() {
+    console.log('Unable to retrieve your location');
+    on_trace = false;
+  }
+  
+  bt_find_me.onclick = function() {
+    navigator.geolocation.getCurrentPosition(success, error);
+    on_trace = true;
+  }
+  
+  let frame_count = 0;
+  function update() {
+    if(frame_count % (60*3) === 0) {
+      if(on_trace) {
+        navigator.geolocation.getCurrentPosition(success, error);
+      }  
+    }
+    frame_count += 1;
+  }
+  
+  function loop() {
+    update();
+    requestAnimationFrame(loop);
+  }
 </script>
