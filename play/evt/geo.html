@@ -18,12 +18,14 @@
   <iframe src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d6315.714740570071!2d126.7432744!3d37.6760591!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skr!4v1589337229744!5m2!1sen!2skr" width="600" height="450" frameborder="0" style="border:0;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
 -->
 <iframe id="map" src="https://maps.google.com/maps?q=37.683408,126.769612&z=18&output=embed" width="600" height="450" frameborder="0" style="border:0"></iframe>
+  <div id="time"></div>
 
 </body>
 <script>
   let bt_find_me = document.querySelector('#find-me');
   let el_lat = document.querySelector('#latitude');
   let el_long = document.querySelector('#longitude');
+  let el_time = document.querySelector('#time');
   let el_map = document.querySelector('#map');
   let on_trace = false;
   
@@ -49,9 +51,10 @@
   
   let frame_count = 0;
   function update() {
-    if(frame_count % (60*3) === 0) {
+    if(frame_count % (60*5) === 0) {
       if(on_trace) {
         navigator.geolocation.getCurrentPosition(success, error);
+        el_time.textContent = (new Date()).toString();
       }  
     }
     frame_count += 1;
@@ -61,4 +64,6 @@
     update();
     requestAnimationFrame(loop);
   }
+  
+  loop();
 </script>
