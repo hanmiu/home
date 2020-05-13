@@ -52,8 +52,6 @@
   
   let pos_list = [];
   
-  let acl = new Accelerometer({frequency: 60});
-  
   function success(position) {
     const latitude  = position.coords.latitude;
     const longitude = position.coords.longitude; 
@@ -105,8 +103,8 @@
     let constraints = {
       audio: false,
       video: true,
-      //video: { facingMode: { exact: "environment" } },
     };
+    //video: { facingMode: { exact: "environment" } },
     
     navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) {
