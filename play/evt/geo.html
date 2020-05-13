@@ -30,6 +30,7 @@
   <div id="time">...</div>
   <div>
     <video id="video" autoplay></video>
+    <canvas id="canvas">
   </div>
   <button id="get-path">경로 모음</button><br>
   <textarea id="data"></textarea>
@@ -46,6 +47,8 @@
   let el_map = document.querySelector('#map');
   let el_video = document.querySelector('#video');
   let el_data = document.querySelector('#data');
+  
+  let g = document.querySelector('#canvas').getContext('2d');
   
   
   let on_trace = false;
@@ -94,7 +97,12 @@
     frame_count += 1;
   }
   
+  function draw() {
+    g.drawImage(el_video, 0, 0, g.canvas.width, g.canvas.height);
+  }
+  
   function loop() {
+    draw();
     update();
     requestAnimationFrame(loop);
   }
@@ -102,6 +110,7 @@
   function init() {
     let constraints = {
       audio: false,
+      //video: { facingMode: { exact: "environment" } }
       video: true,
     };
     //video: { facingMode: { exact: "environment" } },
@@ -112,6 +121,9 @@
       el_video.srcObject = stream;
       el_video.onloadedmetadata = function(e) {
         el_video.play();
+        console.dir(el_video);
+        g.canvas.width = el_video.videoWidth;
+        g.canvas.height = el_video.videoHeight;
       };
     })
     .catch(function(err) {
