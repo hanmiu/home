@@ -24,13 +24,14 @@
   -->
   <div><span class="info">위도: </span><span id="latitude" class="info"></span></div>
   <div><span class="info">경도: </span><span id="longitude" class="info"></span></div>
+  <div><span class="info">목표거리: </span><span id="dist" class="info"></span></div>
   <div><span class="info">Ort: </span><span id="ort" class="info"></span></div>
   <!-- @37.683408,126.769612,17z -->
 <!--
   <iframe src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d6315.714740570071!2d126.7432744!3d37.6760591!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skr!4v1589337229744!5m2!1sen!2skr" width="600" height="450" frameborder="0" style="border:0;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
 -->
   <button id="on-map">지도 갱신</button><br>
-  <iframe id="map" src="https://maps.google.com/maps?q=37.683408,126.769612&z=18&output=embed" width="600" height="450" frameborder="0" style="border:0"></iframe>
+  <iframe id="map" src="https://maps.google.com/maps?q=37.683408,126.769612&z=20&output=embed" width="600" height="450" frameborder="0" style="border:0"></iframe>
   <br>
   <div id="time">...</div>
   <div>
@@ -46,6 +47,7 @@
   
   let el_lat = document.querySelector('#latitude');
   let el_long = document.querySelector('#longitude');
+  let el_dist = document.querySelector('#dist');
   let el_ort = document.querySelector('#ort');
   let el_time = document.querySelector('#time');
   let el_map = document.querySelector('#map');
@@ -63,15 +65,34 @@
   
   
   let on_trace = false;
+  let on_tgt = false;
   
   let pos_list = [];
   
   function success(position) {
+    // 유치원: 37.683408,126.769612
+    // cu 앞: 37.683738, 126.772063
+    // 37.683427, 126.771939
+    const tgt_lat = 37.683738;
+    const tgt_long = 126.772063;
+    
     const latitude  = position.coords.latitude;
     const longitude = position.coords.longitude; 
     
     el_lat.textContent = latitude;
     el_long.textContent = longitude;
+    
+    let d_lat = latitude - tgt_lat;
+    let d_long = longitude - tgt_long;
+    let dist = Math.sqrt(d_lat*d_lat + d_long*d_long);
+    
+    el_dist.textContent = dist;
+    if(dist <= 0.001) {
+      on_tgt = true;
+    }
+    else {
+      on_tgt = false;
+    }
     
     pos_list.push([latitude,longitude]);
   }
@@ -99,7 +120,8 @@
   
   let frame_count = 0;
   function update() {
-    if(frame_count % (60*5) === 0) {
+    
+    if(frame_count % 60 === 0) {
       if(on_trace) {
         navigator.geolocation.getCurrentPosition(success, error);
         el_time.textContent = (new Date()).toString();
@@ -109,7 +131,15 @@
   }
   
   function draw() {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     g.drawImage(el_video, 0, 0, g.canvas.width, g.canvas.height);
+    
+    if(on_tgt) {
+      g.beginPath();
+      g.arc(g.canvas.width/2, g.canvas.height/2, 50, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(255, 255, 0, 0.5)';
+      g.fill();
+    }
   }
   
   function loop() {
