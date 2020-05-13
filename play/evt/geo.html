@@ -182,7 +182,8 @@
   }
   
   if (window.DeviceOrientationEvent) {
-    window.addEventListener("deviceorientation", function(event) {
+    el_data.textContent = 'deviceorientation supported';
+    window.addEventListener('deviceorientation', function(event) {
       // alpha: rotation around z-axis
       var rotateDegrees = event.alpha;
       // gamma: left to right
@@ -192,7 +193,7 @@
       
       el_ort.textContent = `α: ${event.alpha}, β: ${event.beta}, γ: ${event.gamma}`;
       
-      console.log('!');
+      el_data.textContent += '@';
 
       //handleOrientationEvent(frontToBack, leftToRight, rotateDegrees);
     }, true);
