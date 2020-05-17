@@ -115,6 +115,7 @@
   bt_deviceort.onclick = function() {
     // deviceorientation permission
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      el_ort.textContent = 'has requestPermission';
       DeviceOrientationEvent.requestPermission()
         .then(permissionState => {
           if (permissionState === 'granted') {
