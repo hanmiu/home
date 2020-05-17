@@ -108,6 +108,30 @@
   bt_find_me.onclick = function() {
     navigator.geolocation.getCurrentPosition(success, error);
     on_trace = true;
+    
+    // deviceorientation permission
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(permissionState => {
+          if (permissionState === 'granted') {
+            window.addEventListener('deviceorientation', function(event) {
+              // alpha: rotation around z-axis
+              var rotateDegrees = event.alpha;
+              // gamma: left to right
+              var leftToRight = event.gamma;
+              // beta: front back motion
+              var frontToBack = event.beta;
+
+              el_ort.textContent = `α: ${event.alpha}, β: ${event.beta}, γ: ${event.gamma}`;
+
+              //handleOrientationEvent(frontToBack, leftToRight, rotateDegrees);
+            }, true);
+          }
+        })
+        .catch(console.error);
+    } else {
+      // handle regular non iOS 13+ devices
+    }
   }
   
   bt_on_map.onclick = function() {
@@ -181,6 +205,7 @@
       // do something amazing
   }
   
+  /*
   if (window.DeviceOrientationEvent) {
     el_data.textContent = 'deviceorientation supported';
     window.addEventListener('deviceorientation', function(event) {
@@ -196,10 +221,8 @@
       //handleOrientationEvent(frontToBack, leftToRight, rotateDegrees);
     }, true);
   }
+  */
 
-  function handleOrientationEvent(frontToBack, leftToRight, rotateDegrees) {
-      // do something amazing
-  }
   /*
   function handleOrientation(evt) {
     // https://developer.mozilla.org/en-US/docs/Web/API/Detecting_device_orientation
