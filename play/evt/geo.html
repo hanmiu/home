@@ -18,6 +18,7 @@
 </style>
 <body>
   <button id="find-me">현재 위치 확인</button><br>
+  <button id="deviceort">디바이스오리엔테이션</button><br>
   <!--
   <p id = "status"></p>
   <a id = "map-link" target="_blank"></a>
@@ -43,6 +44,7 @@
 </body>
 <script>
   let bt_find_me = document.querySelector('#find-me');
+  let bt_deviceort = document.querySelector('#deviceort');
   let bt_on_map = document.querySelector('#on-map');
   let bt_get_path = document.querySelector('#get-path');
   
@@ -108,7 +110,9 @@
   bt_find_me.onclick = function() {
     navigator.geolocation.getCurrentPosition(success, error);
     on_trace = true;
-    
+  }
+  
+  bt_deviceort.onclick = function() {
     // deviceorientation permission
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission()
