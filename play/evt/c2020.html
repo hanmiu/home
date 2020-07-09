@@ -1,0 +1,41 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body {
+    margin: 0;
+    padding: 10vw;
+    font-family: sans-serif;
+  }
+</style>
+<body>
+  <div id="info">신기한 동물 사전</div>
+</body>
+<script>
+
+  
+  function init() {
+    //layout();
+    
+    let params = new URLSearchParams(location.search.slice(1));
+    let title = params.get('w');
+    let desc = '?';
+    
+    //console.log(params.get('w'));
+    
+    switch(params.get('w')) {
+      case 'hint_5l6g':
+        desc = `이야기가 있는 보물 찾기에서 얻은 스티커`;
+        break;
+    }
+    
+    switch(params.get('k')) {
+      case '4545':
+        desc = `가능한가!?`;
+        break;
+    }
+    
+    document.querySelector('#info').textContent = desc;
+  }
+  
+  window.onload = init;
+</script>
