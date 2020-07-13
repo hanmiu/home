@@ -18,6 +18,10 @@
     margin-right: 10px;
     color: snow;
   }
+  
+  canvas {
+    cursor: pointer;
+  }
 </style>
 <body>
   <div id="ui_A" class="ui">
@@ -115,6 +119,40 @@
     fps = (30 / parseInt(document.querySelector('#fps').value)) | 0
   });
   
+  cam.canvas.addEventListener('click', () => {
+    if(cam.canvas.style['width'] === '') {
+      cam.canvas.style['width'] = '100%';
+      g.canvas.style['display'] = 'none';
+      document.querySelectorAll('.ui').forEach(el => {
+        el.style['display'] = 'none';  
+      });
+    }
+    else {
+      cam.canvas.style['width'] = '';
+      g.canvas.style['display'] = '';
+      document.querySelectorAll('.ui').forEach(el => {
+        el.style['display'] = '';  
+      });
+    }
+  });
+  
+  g.canvas.addEventListener('click', () => {
+    if(g.canvas.style['width'] === '') {
+      g.canvas.style['width'] = '100%';
+      cam.canvas.style['display'] = 'none';
+      document.querySelectorAll('.ui').forEach(el => {
+        el.style['display'] = 'none';  
+      });
+    }
+    else {
+      g.canvas.style['width'] = '';
+      cam.canvas.style['display'] = '';
+      document.querySelectorAll('.ui').forEach(el => {
+        el.style['display'] = '';  
+      });
+    }
+  });
+  
   bt_record.addEventListener('click', () => {
     is_recording = !is_recording;
     if(is_recording) {
@@ -143,29 +181,35 @@
   bt_download.addEventListener('click', () => {
     chunks = [];
     mediaRecorder.start();
-    is_downloading = true;
     bt_download.disabled = true;
-    
+    is_downloading = true;
     current_frame = 0;
     is_playing = true;
   });
   
   function download() {
     mediaRecorder.stop();
-    const blob = new Blob(chunks, {type: 'video/webm'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'timelapse.webm';
-    document.body.appendChild(a);
-    a.click();
     setTimeout(() => {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }, 100);
-    is_downloading = false;
-    bt_download.disabled = false;
+      const blob = new Blob(chunks, {type: 'video/webm'});
+      const url = URL.createObjectURL(blob);
+      
+      let dt = new Date();
+      let ymd6 = String(dt.getFullYear()).slice(2,4).padStart(2, '0')
+        + String(dt.getMonth()+1).padStart(2, '0')
+        + String(dt.getDate()).padStart(2, '0');
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `타임랩스(${ymd6}-${cam.captures.length}장).webm`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      is_downloading = false;
+      bt_download.disabled = false;
+    }, 500);
   }
   
   let past_timestamp = 0;
