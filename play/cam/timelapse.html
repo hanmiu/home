@@ -157,6 +157,7 @@
     is_recording = !is_recording;
     if(is_recording) {
       cam.chunks = [];
+      cam.captures = [];
       //cam.mediaRecorder.start();
       cam.is_capturing = true;
       bt_record.textContent = '■ 캡쳐 종료';
