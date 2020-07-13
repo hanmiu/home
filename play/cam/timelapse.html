@@ -1,0 +1,211 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body {
+    background: black;
+  }
+  
+  .ui {
+    margin: 10px;
+  }
+  
+  input {
+    width: 50px;
+  }
+  
+  label {
+    margin-left: 10px;
+    margin-right: 10px;
+    color: snow;
+  }
+</style>
+<body>
+  <div id="ui_A" class="ui">
+    <input id="interval" type="number" value="5" min="1">
+    <label>초 마다</label>
+    <button id="record">● 캡쳐 시작</button>
+    <label id="took_count"></label>
+  </div>
+  <div id="cam"></div>
+  <div id="ui_B" class="ui">
+    <label>1초에</label>
+    <input id="fps" type="number" value="5" min="1">
+    <label>장 속도로</label>
+    <button id="play">▶ 재생</button>
+    <button id="download">다운로드</button>
+    <label id="play_head">(/)</label>
+  </div>
+  <div id="vid"></div>
+</body>
+<script>
+  class Cam {
+    constructor(constraints) {
+      let scope = this;
+      let video = document.createElement('video');
+      scope.canvas = document.createElement('canvas');
+      scope.g = this.canvas.getContext('2d');
+      scope.canvas.width = constraints.video.width;
+      scope.canvas.height = constraints.video.height;
+      scope.video = video;
+      scope.mediaRecorder = null;
+      scope.chunks = [];
+      scope.is_capturing = false;
+      scope.captures = [];
+
+      navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(mediaStream) {
+        video.srcObject = mediaStream;
+        let mediaRecorder = new MediaRecorder(mediaStream);
+        mediaRecorder.ondataavailable = function(e) {
+          scope.chunks.push(e.data);
+        }
+        scope.mediaRecorder = mediaRecorder;
+        video.onloadedmetadata = function(e) {
+          video.play();
+        };
+      })
+      .catch(function(err) { console.log(err.name + ": " + err.message); });
+    }
+
+    update() {
+      this.g.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.g.save();
+      this.g.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+      this.g.restore();
+    }
+
+    capture() {
+      if(this.is_capturing) {
+        let img = new Image();
+        img.src = this.canvas.toDataURL('img/webp', 0.95);
+        this.captures.push(img);  
+      }
+    }
+  }
+  
+  let cam = new Cam({ audio: false, video: { width: 1280, height: 720 } });
+  document.querySelector('#cam').appendChild(cam.canvas);
+  
+  let g = document.createElement('canvas').getContext('2d');
+  g.canvas.width = 1280;
+  g.canvas.height = 720;
+  let strm = g.canvas.captureStream();
+  let mediaRecorder = new MediaRecorder(strm);
+  let chunks = [];
+  mediaRecorder.ondataavailable = function(e) {
+    chunks.push(e.data);
+  };
+  document.querySelector('#vid').appendChild(g.canvas);
+  
+  let bt_record = document.querySelector('#record');
+  let bt_play = document.querySelector('#play');
+  let bt_download = document.querySelector('#download');
+  let is_recording = false;
+  let is_playing = false;
+  let is_downloading = false;
+  
+  let interval = parseInt(document.querySelector('#interval').value);
+  let fps = (30 / parseInt(document.querySelector('#fps').value)) | 0;
+  
+  document.querySelector('#interval').addEventListener('input', () => {
+    interval = parseInt(document.querySelector('#interval').value);
+  });
+  
+  document.querySelector('#fps').addEventListener('input', () => {
+    fps = (30 / parseInt(document.querySelector('#fps').value)) | 0
+  });
+  
+  bt_record.addEventListener('click', () => {
+    is_recording = !is_recording;
+    if(is_recording) {
+      cam.chunks = [];
+      //cam.mediaRecorder.start();
+      cam.is_capturing = true;
+      bt_record.textContent = '■ 캡쳐 종료';
+    }
+    else {
+      //cam.mediaRecorder.stop();
+      cam.is_capturing = false;
+      bt_record.textContent = '● 캡쳐 시작';
+    }
+  });
+  
+  bt_play.addEventListener('click', () => {
+    is_playing = !is_playing;
+    if(is_playing) {
+      bt_play.textContent = '■ 멈춤';
+    }
+    else {
+      bt_play.textContent = '● 재생';
+    }
+  });
+  
+  bt_download.addEventListener('click', () => {
+    chunks = [];
+    mediaRecorder.start();
+    is_downloading = true;
+    bt_download.disabled = true;
+    
+    current_frame = 0;
+    is_playing = true;
+  });
+  
+  function download() {
+    mediaRecorder.stop();
+    const blob = new Blob(chunks, {type: 'video/webm'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'timelapse.webm';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 100);
+    is_downloading = false;
+    bt_download.disabled = false;
+  }
+  
+  let past_timestamp = 0;
+  let elapsed_time = 0;
+  let current_frame = 0;
+  let frame_count = 0;
+  
+  function loop(timestamp) {
+    if(past_timestamp > 0) {
+      elapsed_time += timestamp - past_timestamp;
+      if(elapsed_time > interval * 1000) {
+        cam.capture();
+        document.querySelector('#took_count').textContent = `${cam.captures.length} 장 캡쳐`;
+        elapsed_time = 0;
+      }
+    }
+    past_timestamp = timestamp;
+    
+    cam.update();
+    
+    if(cam.captures.length > 0 && is_playing) {
+      if(frame_count % fps === 0 && current_frame < cam.captures.length) {
+        document.querySelector('#play_head').textContent = `(${current_frame+1} / ${cam.captures.length})`;
+        g.drawImage(cam.captures[current_frame], 0, 0);
+        current_frame += 1;
+        if(current_frame > cam.captures.length - 1) {
+          if(!is_downloading) {
+            current_frame = 0;
+          }
+          else {
+            download();
+          }
+        }  
+      }
+    }
+    
+    frame_count += 1;
+    
+    requestAnimationFrame(loop);
+  }
+  
+  loop();
+</script>
