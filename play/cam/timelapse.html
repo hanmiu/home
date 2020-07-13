@@ -36,11 +36,13 @@
     <input id="fps" type="number" value="5" min="1">
     <label>장 속도로</label>
     <button id="play">▶ 재생</button>
-    <button id="download">다운로드</button>
+    <button id="download">다운로드(영상)</button>
+    <button id="download_seq">다운로드(사진압축)</button>
     <label id="play_head">(/)</label>
   </div>
   <div id="vid"></div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
 <script>
   class Cam {
     constructor(constraints) {
@@ -81,7 +83,9 @@
     capture() {
       if(this.is_capturing) {
         let img = new Image();
-        img.src = this.canvas.toDataURL('img/webp', 0.95);
+        this.canvas.toBlob(blob => {
+          img.src = URL.createObjectURL(blob);
+        }, 'image/jpeg', 0.95);
         this.captures.push(img);  
       }
     }
@@ -104,19 +108,20 @@
   let bt_record = document.querySelector('#record');
   let bt_play = document.querySelector('#play');
   let bt_download = document.querySelector('#download');
+  let bt_download_seq = document.querySelector('#download_seq');
   let is_recording = false;
   let is_playing = false;
   let is_downloading = false;
   
-  let interval = parseInt(document.querySelector('#interval').value);
-  let fps = (30 / parseInt(document.querySelector('#fps').value)) | 0;
+  let interval = parseFloat(document.querySelector('#interval').value);
+  let fps = (30 / parseFloat(document.querySelector('#fps').value)) | 0;
   
   document.querySelector('#interval').addEventListener('input', () => {
-    interval = parseInt(document.querySelector('#interval').value);
+    interval = parseFloat(document.querySelector('#interval').value);
   });
   
   document.querySelector('#fps').addEventListener('input', () => {
-    fps = (30 / parseInt(document.querySelector('#fps').value)) | 0
+    fps = (30 / parseFloat(document.querySelector('#fps').value)) | 0
   });
   
   cam.canvas.addEventListener('click', () => {
@@ -173,9 +178,10 @@
     is_playing = !is_playing;
     if(is_playing) {
       bt_play.textContent = '■ 멈춤';
+      current_frame = 0;
     }
     else {
-      bt_play.textContent = '● 재생';
+      bt_play.textContent = '▶ 재생';
     }
   });
   
@@ -183,9 +189,52 @@
     chunks = [];
     mediaRecorder.start();
     bt_download.disabled = true;
+    bt_download_seq.disabled = true;
     is_downloading = true;
     current_frame = 0;
     is_playing = true;
+  });
+  
+  async function download_seq() {
+    bt_download_seq.disabled = true;
+    bt_download.disabled = true;
+    is_playing = false;
+    bt_play.textContent = '▶ 재생';
+    document.querySelector('#play_head').textContent = `압축 중...`;
+    
+    let zip = new JSZip();
+    let n = String(cam.captures.length).length;
+    for(let i = 0; i < cam.captures.length; i++) {
+      let blob = await fetch(cam.captures[i].src).then(r => r.blob());
+      let idx = String(i).padStart(n, '0');
+      zip.file(`${idx}.jpg`, blob);
+    }
+    
+    await zip.generateAsync({type:"blob"})
+    .then(blob => {
+        let dt = new Date();
+        let ymd6 = String(dt.getFullYear()).slice(2,4).padStart(2, '0')
+          + String(dt.getMonth()+1).padStart(2, '0')
+          + String(dt.getDate()).padStart(2, '0');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `타임랩스(${ymd6}-${cam.captures.length}장).zip`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            document.querySelector('#play_head').textContent = `(${current_frame+1} / ${cam.captures.length})`;
+            bt_download_seq.disabled = false;
+            bt_download.disabled = false;
+          }, 100);
+    });
+  }
+  
+  bt_download_seq.addEventListener('click', () => {
+    download_seq();
   });
   
   function download() {
@@ -210,6 +259,8 @@
       }, 100);
       is_downloading = false;
       bt_download.disabled = false;
+      bt_download_seq.disabled = false;
+      bt_play.textContent = '▶ 재생';
     }, 500);
   }
   
