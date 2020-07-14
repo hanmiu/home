@@ -19,12 +19,18 @@
     color: snow;
   }
   
+  #flip-h {
+    width: auto;
+  }
+  
   canvas {
     cursor: pointer;
   }
 </style>
 <body>
   <div id="ui_A" class="ui">
+    <input type="checkbox" id="flip-h">
+    <label>좌우 반전</label>
     <input id="interval" type="number" value="5" min="1">
     <label>초 마다</label>
     <button id="record">● 캡쳐 시작</button>
@@ -57,6 +63,8 @@
       scope.chunks = [];
       scope.is_capturing = false;
       scope.captures = [];
+      scope.captimes = [];
+      scope.flipH = false;
 
       navigator.mediaDevices.getUserMedia(constraints)
       .then(function(mediaStream) {
@@ -76,6 +84,10 @@
     update() {
       this.g.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.g.save();
+      if(this.flipH) {
+        this.g.translate(this.canvas.width, 0);
+        this.g.scale(-1, 1);
+      }
       this.g.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
       this.g.restore();
     }
@@ -86,7 +98,8 @@
         this.canvas.toBlob(blob => {
           img.src = URL.createObjectURL(blob);
         }, 'image/jpeg', 0.95);
-        this.captures.push(img);  
+        this.captures.push(img);
+        this.captimes.push(new Date());
       }
     }
   }
@@ -105,6 +118,7 @@
   };
   document.querySelector('#vid').appendChild(g.canvas);
   
+  let cb_flip_h = document.querySelector('#flip-h');
   let bt_record = document.querySelector('#record');
   let bt_play = document.querySelector('#play');
   let bt_download = document.querySelector('#download');
@@ -115,6 +129,10 @@
   
   let interval = parseFloat(document.querySelector('#interval').value);
   let fps = (30 / parseFloat(document.querySelector('#fps').value)) | 0;
+  
+  cb_flip_h.addEventListener('input', () => {
+    cam.flipH = cb_flip_h.checked;
+  });
   
   document.querySelector('#interval').addEventListener('input', () => {
     interval = parseFloat(document.querySelector('#interval').value);
@@ -163,6 +181,7 @@
     if(is_recording) {
       cam.chunks = [];
       cam.captures = [];
+      cam.captimes = [];
       //cam.mediaRecorder.start();
       cam.is_capturing = true;
       bt_record.textContent = '■ 캡쳐 종료';
@@ -195,6 +214,20 @@
     is_playing = true;
   });
   
+  function get_date_string(dt) {
+    let ymd6 = String(dt.getFullYear()).slice(2,4).padStart(2, '0')
+          + String(dt.getMonth()+1).padStart(2, '0')
+          + String(dt.getDate()).padStart(2, '0');
+    return ymd6;
+  }
+  
+  function get_time_string(dt) {
+    let ts = String(dt.getHours()).padStart(2, '0')
+           + String(dt.getMinutes()).padStart(2, '0')
+           + String(dt.getSeconds()).padStart(2, '0');
+    return ts;
+  }
+  
   async function download_seq() {
     bt_download_seq.disabled = true;
     bt_download.disabled = true;
@@ -212,24 +245,24 @@
     
     await zip.generateAsync({type:"blob"})
     .then(blob => {
-        let dt = new Date();
-        let ymd6 = String(dt.getFullYear()).slice(2,4).padStart(2, '0')
-          + String(dt.getMonth()+1).padStart(2, '0')
-          + String(dt.getDate()).padStart(2, '0');
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = `타임랩스(${ymd6}-${cam.captures.length}장).zip`;
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            document.querySelector('#play_head').textContent = `(${current_frame+1} / ${cam.captures.length})`;
-            bt_download_seq.disabled = false;
-            bt_download.disabled = false;
-          }, 100);
+      let dt = new Date();
+      let ds = get_date_string(dt);
+      let ts0 = get_time_string(cam.captimes[0]);
+      let ts1 = get_time_string(cam.captimes[cam.captimes.length - 1]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          document.querySelector('#play_head').textContent = `(${current_frame+1} / ${cam.captures.length})`;
+          bt_download_seq.disabled = false;
+          bt_download.disabled = false;
+        }, 100);
     });
   }
   
@@ -238,19 +271,21 @@
   });
   
   function download() {
-    mediaRecorder.stop();
+    if(mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();  
+    }
     setTimeout(() => {
       const blob = new Blob(chunks, {type: 'video/webm'});
       const url = URL.createObjectURL(blob);
       
       let dt = new Date();
-      let ymd6 = String(dt.getFullYear()).slice(2,4).padStart(2, '0')
-        + String(dt.getMonth()+1).padStart(2, '0')
-        + String(dt.getDate()).padStart(2, '0');
+      let ds = get_date_string(dt);
+      let ts0 = get_time_string(cam.captimes[0]);
+      let ts1 = get_time_string(cam.captimes[cam.captimes.length - 1]);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `타임랩스(${ymd6}-${cam.captures.length}장).webm`;
+      a.download = `타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).webm`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -261,6 +296,7 @@
       bt_download.disabled = false;
       bt_download_seq.disabled = false;
       bt_play.textContent = '▶ 재생';
+      is_playing = false;
     }, 500);
   }
   
