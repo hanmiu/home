@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>신기한 여름방학</title>
+<style>
+  body {
+    margin: 0;
+    padding: 10vw;
+    font-family: sans-serif;
+  }
+  
+  #dice {
+    width: 200px;
+    height: 200px;
+    font-size: 180px;
+    line-height: 200px;
+  }
+  
+  #info {
+    font-size: 20px;
+  }
+</style>
+<body>
+  <button id="roll">주사위 굴리기</button>
+  <div id="dice">⚀</div>
+  <div id="info"></div>
+</body>
+<script>
+  let bt_roll = document.querySelector('#roll');
+  let el_dice = document.querySelector('#dice');
+  let el_info = document.querySelector('#info');
+  let dice_states = `⚀ ⚁ ⚂ ⚃ ⚄ ⚅`.split(' ');
+  let frame_count = 0;
+  let n_rolling = 10;
+  let current_face = 0;
+  
+  function roll() {
+    return Math.random() * 6 + 1 | 0;
+  }
+  
+  function roll_the_dice() {
+    current_face = roll() - 1;
+    el_dice.textContent = dice_states[current_face];
+  }
+  
+  bt_roll.onclick = function() {
+    n_rolling = 10 + Math.random() * 5 | 0;  
+  }
+  
+  function init() {
+    //layout();
+    
+    let params = new URLSearchParams(location.search.slice(1));
+    let title = params.get('w');
+    let desc = '';
+    
+    //console.log(params.get('w'));
+    
+    switch(params.get('w')) {
+      case 'abc':
+        desc = `어떤 미션`;
+        break;
+      case 'def':
+        desc = `주사위를 굴려 ${dice_states[roll()-1]}이 나오면 샛길로 점프`;
+        break;
+      case 'hij':
+        desc = `설정한 약속 실행하기`;
+        break;
+    }
+    
+    el_info.textContent = desc;
+    
+    loop();
+  }
+  
+  function update() {
+    if(n_rolling > 0) {
+      if(frame_count % 10 === 0) {
+        el_dice.style['color'] = 'gray';
+        roll_the_dice();
+        n_rolling -= 1;
+        if(n_rolling === 0) {
+          el_dice.style['color'] = 'black';
+        }
+      }
+    }
+    frame_count += 1;
+  }
+  
+  function loop() {
+    update();
+    requestAnimationFrame(loop);
+  }
+  
+  window.onload = init;
+</script>
