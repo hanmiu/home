@@ -1,14 +1,27 @@
 <!doctype html>
 <meta charset="utf-8">
+<title>신기한 생물 사전</title>
 <style>
   body {
     margin: 0;
     padding: 10vw;
     font-family: sans-serif;
   }
+  
+  #title {
+    font-size: 10vh;
+    color: aquamarine;
+  }
+  
+  #info {
+    font-size: 3vh;
+    color: black;
+    line-height: 1.5em;
+  }
 </style>
 <body>
-  <div id="info">신기한 생물 사전</div>
+  <div id="title">신기한 생물 사전</div>
+  <div id="info">(준비중)</div>
 </body>
 <script>
 
@@ -18,13 +31,13 @@
     
     let params = new URLSearchParams(location.search.slice(1));
     let title = params.get('w');
-    let desc = '?';
+    let desc = '(시험판 준비중)';
     
     //console.log(params.get('w'));
     
     switch(params.get('w')) {
       case 'H1_5l6g':
-        desc = `이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우 (계속 준비중!)`;
+        desc = `이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. <br> 신기한 생물 사전 시험판이 시작될 때 다시 스티커의 QR코드를 통해 다시 방문해 보세요.`;
         break;
     }
     
@@ -34,7 +47,7 @@
         break;
     }
     
-    document.querySelector('#info').textContent = desc;
+    document.querySelector('#info').innerHTML = desc;
   }
   
   window.onload = init;
