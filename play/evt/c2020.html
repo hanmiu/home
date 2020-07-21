@@ -251,7 +251,7 @@
     if(e.target.className == 'sbutton') {
       console.log(e.target.textContent);
       
-      el_stage.style.display = 'block';
+      el_stage.style.display = '';
       el_map.style.display = 'none';
       
       layout();
@@ -267,7 +267,7 @@
   
   el_stage.onclick = function() {
     el_stage.style.display = 'none';
-    el_map.style.display = 'block';
+    el_map.style.display = '';
   }
   
   function parse_data(lines) {
