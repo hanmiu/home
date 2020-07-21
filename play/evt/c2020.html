@@ -322,9 +322,6 @@
     }
   }
   
-  //let a_list = 'monster1.svg,근육맨.png,monster2.svg,나비.png'.split(',');
-  //let a_idx = 0;
-  
   function fire(e) {
     if(e.target.className === 'sbutton') {
       let name = e.target.textContent;
@@ -348,6 +345,9 @@
           break;
       }
       */
+      let emos = '🐙 ,🐚 ,🐌 ,🦋 ,🐛 ,🐜 ,🐝 ,🐞 ,🦠 ,🌸 ,💖 ,💚 ,🔍,🧸,🌕,🌧,💧,🌪,⭐,🦀,🍄,🌹,🌱,🌷,🌻,🍀,🐠,🐦,🐤,🐹,🐼'.split(',');
+      let emo = emos[Math.random() * emos.length | 0];
+      
       if(dic_assets[name]) {
         let fn = name + '.' + dic_assets[name];
         switch(dic_assets[name]) {
@@ -363,13 +363,22 @@
         let author = o.author;
         console.log(author.length);
         if(author.length > 1) {
-          author = author[0] + '❤️' + author.slice(2, author.length);  
+          author = author[0] + emo + author.slice(2, author.length);  
         }
         document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '이/가')}  나타났다! - ${author}`;
         document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
       }
       else {
+        let o = dic_spots[name];
+        let author = o.author;
+        if(author.length > 1) {
+          author = author[0] + emo + author.slice(2, author.length);  
+        }
         console.log('아직 asset이 없음');
+        let fn = 'monster' + (Math.random()*10 + 1 | 0) + '.svg';
+        loadsvg('./20_creatures/assets/'+fn);
+        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '은/는')} 아직 준비중! - ${author}`;
+        document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
       }
       
     }
