@@ -358,6 +358,15 @@
             loadpng('./20_creatures/assets/'+fn);
             break; 
         }
+        
+        let o = dic_spots[name];
+        let author = o.author;
+        console.log(author.length);
+        if(author.length > 1) {
+          author = author[0] + '❤️' + author.slice(2, author.length);  
+        }
+        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '이/가')}  나타났다! - ${author}`;
+        document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
       }
       else {
         console.log('아직 asset이 없음');
@@ -401,7 +410,7 @@
       }
       o['latlng'] = o['latlng'].split(',').map(x => Number(x.trim()));
       spots.push(o);
-      dic_spots[fields[0]] = o;
+      dic_spots[o.name] = o;
     }
     
     for(let spot of spots) {
