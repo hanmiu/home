@@ -147,6 +147,8 @@
   let el_map = document.querySelector('#map');
   let el_info = document.querySelector('#info');
   let el_video = document.createElement('video');
+  el_video.autoplay = true;
+  el_video.playsInline = true;
   let v_canvas = document.querySelector('#v-canvas');
   let g = v_canvas.getContext('2d');
   
