@@ -43,6 +43,7 @@
   }
   
   #map {
+    display: none;
     width: 100vw;
     height: 50vh;
   }
@@ -108,6 +109,20 @@
   .creat {
     color: deeppink;
   }
+  
+  #stage {
+    display: block;
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  #video {
+    width: 100vw;
+  }
 </style>
 <body>
   <div id="title"></div>
@@ -117,6 +132,9 @@
   </div>
   <div id="map"></div>
   <div id="info">(준비중)</div>
+  <div id="stage">
+    <video id="video"></video>
+  </div>
 </body>
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
  integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
@@ -126,7 +144,9 @@
   let map, marker_here, marker_range, latlng_here;
   
   let bt_trace_on = document.querySelector('#trace_on');
+  let el_map = document.querySelector('#map');
   let el_info = document.querySelector('#info');
+  let el_video = document.querySelector('#video');
   
   let is_trace_on = false;
   let past_timestamp = 0;
@@ -207,6 +227,12 @@
     navigator.geolocation.getCurrentPosition(trace, error_trace);
   }
   
+  window.onclick = function(e) {
+    if(e.target.className == 'sbutton') {
+      console.log(e.target.textContent);
+    }
+  }
+  
   function parse_data(lines) {
     let fields = lines.shift().split('\t').map(x => x.trim());
     for(let i = 0; i < lines.length; i++) {
@@ -267,28 +293,37 @@
       fillOpacity: 0.25,
       radius: 5
     }).addTo(map);
-
-    /*
-    L.marker([37.694985, 126.779613]).addTo(map)
-        .bindPopup('나비');
-    L.marker([37.682633,126.767514]).addTo(map)
-        .bindPopup('프리티 포그 로포 사우르스');
-    L.marker([37.679896, 126.776859]).addTo(map)
-        .bindPopup('소피');
-        
-    let circle = L.circle([37.673616, 126.786746], {
-      color: 'red',
-      fillColor: '#f03',
-      fillOpacity: 0.25,
-      radius: 500
-    }).addTo(map);
-    */
     
     fetch('./20_creatures/data/spots.tsv')
     .then(r => r.text())
     .then(text => {
       parse_data(text.split('\n'));  
     });
+  }
+  
+  function init_video() {
+    let constraints = {
+      audio: false,
+      video: { facingMode: 'environment' }
+    };
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(stream) {
+      el_video.srcObject = stream;
+      el_video.onloadedmetadata = function(e) {
+        el_video.play();
+        //g.canvas.width = el_video.videoWidth;
+        //g.canvas.height = el_video.videoHeight;
+      };
+    })
+    .catch(function(err) {
+      /* handle the error */
+      console.log(err.name + ": " + err.message);
+    });
+  }
+  
+  function layout(e) {
+      
   }
 
   function loop(timestamp) {
@@ -328,9 +363,12 @@
     el_info.innerHTML = desc;
     
     init_map();
+    init_video();
+    layout();
     
     loop();
   }
   
   window.onload = init;
+  window.onresize = layout;
 </script>
