@@ -24,13 +24,136 @@
     color: black;
     line-height: 1.5em;
   }
+  
+  #map {
+    width: 100vw;
+    height: 50vh;
+  }
 </style>
 <body>
   <div id="title"></div>
+  <div id="map"></div>
+  <div id="ui">
+    <button id="trace_on">현재 위치 탐색</button>
+  </div>
   <div id="info">(준비중)</div>
 </body>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+ integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+ crossorigin=""></script>
 <script>
+  let map;
+  
+  let bt_trace_on = document.querySelector('#trace_on');
+  let is_trace_on = false;
+  let past_timestamp = 0;
+  let elapsed_time = 0;
+  
+  class Periodic {
+    constructor (seconds, callback) {
+      this.dur = seconds * 1000;
+      this.elapsed = 0;
+      this.t = 0;
+      this.callback = callback;
+    }
+    
+    update(diff) {
+      this.elapsed += diff;
+      this.t = this.elapsed / this.dur;
+      if(this.t >= 1.0) {
+        this.elapsed = 0;
+        this.callback();
+      }
+    }
+  }
+  
+  let perodics = {
+    trace: new Periodic(3, () => {
+      navigator.geolocation.getCurrentPosition(trace, error_trace);
+    }),
+  }
+  
+  function error_trace() {
+    is_trace_on = false;
+    console.log('trace error');
+  }
+  
+  function trace(position) {
+    map.setView([position.coords.latitude, position.coords.longitude], map.getZoom());
+    /*
+    // 유치원: 37.683408,126.769612
+    // cu 앞: 37.683738, 126.772063
+    // 37.683427, 126.771939
+    const tgt_lat = 37.683738;
+    const tgt_long = 126.772063;
+    
+    const latitude  = position.coords.latitude;
+    const longitude = position.coords.longitude; 
+    
+    el_lat.textContent = latitude;
+    el_long.textContent = longitude;
+    
+    let d_lat = latitude - tgt_lat;
+    let d_long = longitude - tgt_long;
+    let dist = Math.sqrt(d_lat*d_lat + d_long*d_long);
+    
+    el_dist.textContent = dist;
+    if(dist <= Number(input_thres.value)) {
+      on_tgt = true;
+    }
+    else {
+      on_tgt = false;
+    }
+    
+    pos_list.push([latitude,longitude]);
+    */
+  }
+  
+  bt_trace_on.onclick = function() {
+    is_trace_on = true;
+    navigator.geolocation.getCurrentPosition(trace, error_trace);
+  }
+  
+  function init_map() {
+    // 유치원: 37.683408,126.769612
+    map = L.map('map').setView([37.673616, 126.786746], 17);
 
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+      tileSize: 512,
+      zoomOffset: -1
+    }).addTo(map);
+
+    L.marker([37.694985, 126.779613]).addTo(map)
+        .bindPopup('나비');
+    L.marker([37.682633,126.767514]).addTo(map)
+        .bindPopup('프리티 포그 로포 사우르스');
+    L.marker([37.679896, 126.776859]).addTo(map)
+        .bindPopup('소피');
+
+    /*
+    let circle = L.circle([37.673616, 126.786746], {
+      color: 'red',
+      fillColor: '#f03',
+      fillOpacity: 0.25,
+      radius: 500
+    }).addTo(map);
+    */
+  }
+
+  function loop(timestamp) {
+    if(timestamp) {
+      let diff_time = timestamp - past_timestamp;
+      elapsed_time += diff_time;
+      past_timestamp = timestamp;
+      if(is_trace_on) {
+        perodics.trace.update(diff_time);  
+      }
+    }
+    
+    requestAnimationFrame(loop);
+  }
   
   function init() {
     //layout();
@@ -54,6 +177,10 @@
     }
     
     document.querySelector('#info').innerHTML = desc;
+    
+    init_map();
+    
+    loop();
   }
   
   window.onload = init;
