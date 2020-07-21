@@ -85,7 +85,7 @@ let fs1 = `
     }
 
     //gl_FragColor = vec4( color, 1.0 );
-    gl_FragColor = vec4( vec3(1.0, vUv.y, 0.0) * 0.0 + color, 1.0 );
+    gl_FragColor = vec4( vec3(1.0, vUv.y, 1.0) * color, 1.0 );
 
   }
 `;
