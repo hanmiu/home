@@ -217,6 +217,11 @@
       }
       
       el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리에 있는 『<span class="creat">${res[0].name}</span>』입니다. 100m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
+      
+      let bts = el_info.querySelectorAll('.sbutton');
+      for(let bt of bts) {
+        bt.onclick = fire;
+      }
     }
   }
   
@@ -249,8 +254,8 @@
     navigator.geolocation.getCurrentPosition(trace, error_trace);
   }
   
-  window.addEventListener('click', (e) => {
-    if(e.target.className == 'sbutton') {
+  function fire(e) {
+    if(e.target.className === 'sbutton') {
       console.log(e.target.textContent);
       
       el_stage.style.display = 'block';
@@ -265,7 +270,27 @@
         loadpng('./20_creatures/assets/근육맨.png');  
       }
     }
-  });
+  }
+  
+  /*
+  window.onclick = function(e) {
+    if(e.target.className === 'sbutton') {
+      console.log(e.target.textContent);
+      
+      el_stage.style.display = 'block';
+      el_map.style.display = 'none';
+      
+      layout();
+      
+      if(Math.random() > 0.5) {
+        loadsvg('./20_creatures/assets/monster1.svg');  
+      }
+      else {
+        loadpng('./20_creatures/assets/근육맨.png');  
+      }
+    }
+  }
+  */
   
   el_stage.onclick = function() {
     el_stage.style.display = 'none';
