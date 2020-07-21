@@ -4,6 +4,11 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
  integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
  crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Black+And+White+Picture&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Stylish&display=swap" rel="stylesheet">
+
 <title>신기한 생물 사전</title>
 <style>
   body {
@@ -13,14 +18,25 @@
   
   #title {
     width: 100vw;
-    height: 20vh;
+    height: 10vh;
     background-image: url('./20_creatures/front/strange_creatures.svg');
     background-position: center center;
     background-repeat: no-repeat;
   }
   
+  #notice {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-family: 'Noto Serif KR';
+    font-size: 2vh;
+    color: deeppink;
+  }
+  
   #info {
-    font-size: 3vh;
+    padding: 2vh;
+    font-family: 'Noto Serif KR';
+    font-size: 2.5vh;
     color: black;
     line-height: 1.5em;
   }
@@ -29,25 +45,61 @@
     width: 100vw;
     height: 50vh;
   }
+  
+  .ui {
+    text-align: center;
+  }
+  
+  .button {
+    display: inline-block;
+    position: relative;
+    left: -1px;
+    top: -1px;
+    box-sizing: border-box;
+    margin: 1vh;
+    font-family: 'Stylish';
+    text-align: center;
+    font-size: 3vh;
+    background-color: azure;
+    color: #2f5f5f;
+    padding: 1vh 2vh 1vh 2vh;
+    border-radius: 1vh;
+    border: 1px solid #427979;
+    user-select: none;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), inset 2px 2px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+  
+  .button:active {
+    left: 0px;
+    top: 0px;
+    background-color: #c6d4d4;
+    box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
+  }
 </style>
 <body>
   <div id="title"></div>
-  <div id="map"></div>
-  <div id="ui">
-    <button id="trace_on">현재 위치 탐색</button>
+  <div id="notice">안전 주의! 스마트폰을 보며 걷지 않기</div>
+  <div class="ui">
+    <div id="trace_on" class="button">현재 위치</div>
   </div>
+  <div id="map"></div>
   <div id="info">(준비중)</div>
 </body>
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
  integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
  crossorigin=""></script>
 <script>
-  let map;
+  let map, marker_here, latlng_here;
   
   let bt_trace_on = document.querySelector('#trace_on');
+  let el_info = document.querySelector('#info');
+  
   let is_trace_on = false;
   let past_timestamp = 0;
   let elapsed_time = 0;
+  let spots = [];
+  let dic_spots = {};
   
   class Periodic {
     constructor (seconds, callback) {
@@ -67,9 +119,17 @@
     }
   }
   
+  function display_info() {
+    if(is_trace_on) {
+      let res = find_nearest_spot();
+      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res.dist | 0}m 멀리에 있는 『${res.the_one.name}』입니다.`;
+    }
+  }
+  
   let perodics = {
     trace: new Periodic(3, () => {
       navigator.geolocation.getCurrentPosition(trace, error_trace);
+      display_info();  
     }),
   }
   
@@ -79,7 +139,9 @@
   }
   
   function trace(position) {
-    map.setView([position.coords.latitude, position.coords.longitude], map.getZoom());
+    latlng_here = [position.coords.latitude, position.coords.longitude];
+    map.setView(latlng_here, map.getZoom());
+    marker_here.setLatLng(latlng_here);
     /*
     // 유치원: 37.683408,126.769612
     // cu 앞: 37.683738, 126.772063
@@ -114,10 +176,44 @@
     navigator.geolocation.getCurrentPosition(trace, error_trace);
   }
   
+  function parse_data(lines) {
+    let fields = lines.shift().split('\t').map(x => x.trim());
+    for(let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      let items = line.split('\t').map(x => x.trim());
+      let o = {};
+      for(let j = 0; j < fields.length; j++) {
+        o[fields[j]] = items[j];
+      }
+      o['latlng'] = o['latlng'].split(',').map(x => Number(x.trim()));
+      spots.push(o);
+      dic_spots[fields[0]] = o;
+    }
+    
+    for(let spot of spots) {
+      L.marker(spot.latlng).addTo(map)
+        .bindPopup(spot.name);
+    }
+  }
+  
+  function find_nearest_spot() {
+    let min_d = Number.MAX_VALUE;
+    let the_one;
+    for(let spot of spots) {
+      let d = map.distance(spot.latlng, latlng_here);
+      if(d < min_d) {
+        the_one = spot;
+        min_d = d;
+      }
+    }
+    return { the_one: the_one, dist: min_d };
+  }
+  
   function init_map() {
     // 유치원: 37.683408,126.769612
-    map = L.map('map').setView([37.673616, 126.786746], 17);
-
+    latlang_here = [37.683408,126.769612]
+    map = L.map('map').setView(latlang_here, 17);
+    
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 18,
@@ -125,14 +221,21 @@
       zoomOffset: -1
     }).addTo(map);
 
+    marker_here = L.circleMarker(latlang_here, {
+      color: 'red',
+      fillColor: '#f03',
+      fillOpacity: 0.25,
+      radius: 5
+    }).addTo(map);
+
+    /*
     L.marker([37.694985, 126.779613]).addTo(map)
         .bindPopup('나비');
     L.marker([37.682633,126.767514]).addTo(map)
         .bindPopup('프리티 포그 로포 사우르스');
     L.marker([37.679896, 126.776859]).addTo(map)
         .bindPopup('소피');
-
-    /*
+        
     let circle = L.circle([37.673616, 126.786746], {
       color: 'red',
       fillColor: '#f03',
@@ -140,6 +243,12 @@
       radius: 500
     }).addTo(map);
     */
+    
+    fetch('./20_creatures/data/spots.tsv')
+    .then(r => r.text())
+    .then(text => {
+      parse_data(text.split('\n'));  
+    });
   }
 
   function loop(timestamp) {
@@ -160,13 +269,13 @@
     
     let params = new URLSearchParams(location.search.slice(1));
     let title = params.get('w');
-    let desc = '(시험판 준비중)';
+    let desc = `시험판: 『현재 위치』 버튼을 눌러 보세요!`;
     
     //console.log(params.get('w'));
     
     switch(params.get('w')) {
       case 'H1_5l6g':
-        desc = `이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. <br> 신기한 생물 사전 시험판이 시작될 때 스티커의 QR코드를 통해 다시 방문해 보세요.`;
+        desc = `시험판: 이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. '현재 위치' 버튼을 클릭해 보세요!`;
         break;
     }
     
@@ -176,7 +285,7 @@
         break;
     }
     
-    document.querySelector('#info').innerHTML = desc;
+    el_info.innerHTML = desc;
     
     init_map();
     
