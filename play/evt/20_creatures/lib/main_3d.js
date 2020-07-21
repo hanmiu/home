@@ -85,7 +85,7 @@ let fs1 = `
     }
 
     //gl_FragColor = vec4( color, 1.0 );
-    gl_FragColor = vec4( vec3(1.0, vUv.y, 0.0) * color, 1.0 );
+    gl_FragColor = vec4( vec3(1.0, vUv.y, 0.0) * 0.0 + color, 1.0 );
 
   }
 `;
@@ -104,7 +104,9 @@ camera.position.z = 3;
 scene = new THREE.Scene();
 
 renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-renderer.setPixelRatio( window.devicePixelRatio );
+//renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setPixelRatio( 1 );
+
 renderer.domElement.id = 'layer-3d';
 document.querySelector('#stage').appendChild( renderer.domElement );
 
@@ -138,6 +140,10 @@ canvas.height = 512;
 const ctx = canvas.getContext('2d');
 
 function loadsvg(url) {
+  if(ext) {
+    scene.remove(ext);
+  }
+  
   fetch(url)
   .then(r => r.text())
   .then(text => {
@@ -187,10 +193,6 @@ function loadsvg(url) {
 
     let group = new THREE.Group();
     addExtrudeObject( group, obj, material );
-
-    if(ext) {
-      scene.remove(ext);
-    }
 
     ext = group;
 
@@ -246,10 +248,6 @@ function process_png(e) {
     let group = new THREE.Group();
     addExtrudeObject( group, obj, material1 );
 
-    if(ext) {
-      scene.remove(ext);
-    }
-
     ext = group;
 
     scene.add(group);
@@ -257,6 +255,10 @@ function process_png(e) {
 }
   
 function loadpng(url) {
+  if(ext) {
+    scene.remove(ext);
+  }
+  
   let png_image = new Image();
   png_image.src = url;
   png_image.onload = process_png;

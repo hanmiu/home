@@ -58,13 +58,14 @@
     left: -1px;
     top: -1px;
     box-sizing: border-box;
-    margin: 1vh;
+    margin: 0.5vh;
+    margin-bottom: 1vh;
     font-family: 'Stylish';
     text-align: center;
-    font-size: 3vh;
+    font-size: 2.5vh;
     background-color: azure;
     color: #2f5f5f;
-    padding: 1vh 2vh 1vh 2vh;
+    padding: 0.5vh 1vh 0.5vh 1vh;
     border-radius: 1vh;
     border: 1px solid #427979;
     user-select: none;
@@ -169,6 +170,8 @@
   el_video.playsInline = true;
   let v_canvas = document.querySelector('#v-canvas');
   let g = v_canvas.getContext('2d');
+  let view_mode = 'map';
+  let is_video_initiated = false;
   
   let is_trace_on = false;
   let past_timestamp = 0;
@@ -254,12 +257,31 @@
     navigator.geolocation.getCurrentPosition(trace, error_trace);
   }
   
+  function change_view_mode(mode) {
+    switch(mode) {
+      case 'map':
+        el_stage.style.display = 'none';
+        el_map.style.display = 'block';
+        view_mode = 'map';
+        el_video.pause();
+        break;
+      case '3d':
+        if(!is_video_initiated) {
+          init_video();
+        }
+        el_stage.style.display = 'block';
+        el_map.style.display = 'none';
+        view_mode = '3d';
+        el_video.play();
+        break;
+    }
+  }
+  
   function fire(e) {
     if(e.target.className === 'sbutton') {
       console.log(e.target.textContent);
       
-      el_stage.style.display = 'block';
-      el_map.style.display = 'none';
+      change_view_mode('3d');
       
       layout();
       
@@ -293,8 +315,7 @@
   */
   
   el_stage.onclick = function() {
-    el_stage.style.display = 'none';
-    el_map.style.display = 'block';
+    change_view_mode('map');
   }
   
   function parse_data(lines) {
@@ -378,9 +399,6 @@
         el_video.play();
         
         layout();
-        
-        //loadsvg('./20_creatures/assets/monster1.svg');
-        //loadpng('./20_creatures/assets/근육맨.png');
       };
     })
     .catch(function(err) {
@@ -418,7 +436,9 @@
         perodics.trace.update(diff_time);  
       }
       
-      draw();
+      if(view_mode === '3d') {
+        draw();  
+      }
     }
     
     requestAnimationFrame(loop);
@@ -448,7 +468,7 @@
     el_info.innerHTML = desc;
     
     init_map();
-    init_video();
+    //init_video();
     
     loop();
   }
