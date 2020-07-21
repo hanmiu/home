@@ -365,6 +365,10 @@
         if(author.length > 1) {
           author = author[0] + emo + author.slice(2, author.length);  
         }
+        
+        if(name === '개나리반 선생님') {
+          name = author;
+        }
         document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '이/가')}  나타났다! - ${author}`;
         document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
       }
