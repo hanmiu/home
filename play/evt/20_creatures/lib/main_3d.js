@@ -108,7 +108,7 @@ renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
 renderer.setPixelRatio( 1 );
 
 renderer.domElement.id = 'layer-3d';
-document.querySelector('#stage').appendChild( renderer.domElement );
+document.querySelector('#webgl').appendChild( renderer.domElement );
 
 let texture = new THREE.Texture(im0);
 let texture1 = new THREE.Texture(im1);

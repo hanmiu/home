@@ -136,6 +136,46 @@
     top: 0px;
     width: 100vw;
   }
+  
+  #webgl {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #interface {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #dialog {
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+    height: 20vh;
+    font-family: 'Stylish';
+    font-size: 3vh;
+    color: white;
+    text-shadow: 0px 0px 2px deeppink;
+    padding: 2vh 2vh 2vh 5vh;
+  }
+  
+  #profile {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    height: 20vh;
+    font-family: 'Stylish';
+    font-size: 3vh;
+    color: white;
+    text-shadow: 0px 0px 2px deeppink;
+    padding: 4vh 2vh 2vh 5vh;
+  }
 </style>
 <body>
   <div id="title"></div>
@@ -147,6 +187,9 @@
   <div id="info">(준비중)</div>
   <div id="stage">
     <canvas id="v-canvas"></canvas>
+    <div id="webgl"></div>
+    <div id="profile">OO가 나타났다!</div>
+    <div id="dialog">안녕!</div>
   </div>
 </body>
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
@@ -178,6 +221,7 @@
   let elapsed_time = 0;
   let spots = [];
   let dic_spots = {};
+  let dic_assets = {};
   let range_meet = 500;
   
   class Periodic {
@@ -278,17 +322,19 @@
     }
   }
   
-  let a_list = 'monster1.svg,근육맨.png,monster2.svg,나비.png'.split(',');
-  let a_idx = 0;
+  //let a_list = 'monster1.svg,근육맨.png,monster2.svg,나비.png'.split(',');
+  //let a_idx = 0;
   
   function fire(e) {
     if(e.target.className === 'sbutton') {
-      console.log(e.target.textContent);
+      let name = e.target.textContent;
+      console.log(name);
       
       change_view_mode('3d');
       
       layout();
       
+      /*
       let fn = a_list[a_idx];
       a_idx += 1;
       if(a_idx > a_list.length - 1) a_idx = 0;
@@ -301,6 +347,22 @@
           loadpng('./20_creatures/assets/'+fn);
           break;
       }
+      */
+      if(dic_assets[name]) {
+        let fn = name + '.' + dic_assets[name];
+        switch(dic_assets[name]) {
+          case 'svg':
+            loadsvg('./20_creatures/assets/'+fn);
+            break;
+          case 'png':
+            loadpng('./20_creatures/assets/'+fn);
+            break; 
+        }
+      }
+      else {
+        console.log('아직 asset이 없음');
+      }
+      
     }
   }
   
@@ -345,6 +407,14 @@
     for(let spot of spots) {
       L.marker(spot.latlng).addTo(map)
         .bindPopup(spot.name);
+    }
+  }
+  
+  function parse_asset_dic(lines) {
+    for(let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      let kv = line.split('.');
+      dic_assets[kv[0]] = kv[1];
     }
   }
   
@@ -393,6 +463,12 @@
     .then(r => r.text())
     .then(text => {
       parse_data(text.split('\n'));  
+    });
+    
+    fetch('./20_creatures/data/list.txt')
+    .then(r => r.text())
+    .then(text => {
+      parse_asset_dic(text.split('\n'));  
     });
   }
   
