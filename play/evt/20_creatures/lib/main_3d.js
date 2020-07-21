@@ -170,16 +170,14 @@ function loadsvg(url) {
     v1.start();
     im1 = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    setTimeout(() => {
-      texture.image = im0;
-      texture.needsUpdate = true;
+    texture.image = im0;
+    texture.needsUpdate = true;
 
-      texture1.image = im1;
-      texture1.needsUpdate = true;
-      
-      uniforms['colorTexture'].value = texture;
-      uniforms['strokeTexture'].value = texture1; 
-    }, 500);
+    texture1.image = im1;
+    texture1.needsUpdate = true;
+
+    uniforms['colorTexture'].value = texture;
+    uniforms['strokeTexture'].value = texture1; 
 
     let obj = {
       depths: [],
@@ -222,16 +220,18 @@ function process_png(e) {
     let xdoc = dom_parser.parseFromString(svg_string, "text/xml");
     let paths = xdoc.querySelectorAll('path');
     
-    texture.image = im0;
-    texture.needsUpdate = true;
+    setTimeout(() => {
+      texture.image = im0;
+      texture.needsUpdate = true;
 
-    texture1.image = im1;
-    texture1.needsUpdate = true;
+      texture1.image = im1;
+      texture1.needsUpdate = true;
 
-    ctx.putImageData(im1, 0, 0);
+      ctx.putImageData(im1, 0, 0);
 
-    uniforms['colorTexture'].value = texture;
-    uniforms['strokeTexture'].value = texture1;
+      uniforms['colorTexture'].value = texture;
+      uniforms['strokeTexture'].value = texture1;  
+    }, 500);
 
     uniforms['base_color'].value = new THREE.Color(0.5+Math.random()*0.5,0.5+Math.random()*0.5,0.5+Math.random()*0.5);
 
