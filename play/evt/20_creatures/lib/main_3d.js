@@ -63,7 +63,7 @@ let fs1 = `
 
   void main( void ) {
     vec2 position = - 1.0 + 2.0 * vUv;
-
+/*
     float fill_mask = texture2D( colorTexture, vUv ).a;
     vec4 stroke_tex = texture2D( strokeTexture, vUv );
     //stroke_tex = texture2D( strokeTexture, gl_FragCoord.xy / 512.0);
@@ -84,8 +84,10 @@ let fs1 = `
     else {
       color = stroke_tex.rgb;
     }
+*/
 
-    gl_FragColor = vec4( color, 1.0 );
+    //gl_FragColor = vec4( color, 1.0 );
+    gl_FragColor = vec4( vec3(1.0, vUv.y, 0.0), 1.0 );
 
   }
 `;
