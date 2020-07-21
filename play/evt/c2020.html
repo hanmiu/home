@@ -14,11 +14,12 @@
   body {
     margin: 0;
     font-family: sans-serif;
+    background-color: #ffffa6;
   }
   
   #title {
     width: 100vw;
-    height: 10vh;
+    height: 7vh;
     background-image: url('./20_creatures/front/strange_creatures.svg');
     background-position: center center;
     background-repeat: no-repeat;
@@ -77,6 +78,33 @@
     box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
   }
   
+  .sbutton {
+    display: inline-block;
+    position: relative;
+    left: -1px;
+    top: -1px;
+    box-sizing: border-box;
+    margin: 0.5vh;
+    font-family: 'Stylish';
+    text-align: center;
+    font-size: 2.5vh;
+    background-color: azure;
+    color: #2f5f5f;
+    padding: 0.5vh;
+    border-radius: 1vh;
+    border: 1px solid #427979;
+    user-select: none;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), inset 2px 2px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+  
+  .sbutton:active {
+    left: 0px;
+    top: 0px;
+    background-color: #c6d4d4;
+    box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
+  }
+  
   .creat {
     color: deeppink;
   }
@@ -93,8 +121,9 @@
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
  integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
  crossorigin=""></script>
+<script src="./20_creatures/lib/josa.js"></script>
 <script>
-  let map, marker_here, latlng_here;
+  let map, marker_here, marker_range, latlng_here;
   
   let bt_trace_on = document.querySelector('#trace_on');
   let el_info = document.querySelector('#info');
@@ -126,12 +155,31 @@
   function display_info() {
     if(is_trace_on) {
       let res = find_nearest_spot();
-      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res.dist | 0}m 멀리에 있는 『<span class="creat">${res.the_one.name}</span>』입니다. 100m 안으로 가까이 다가가면 만날 수 있습니다.`;
+      
+      let creats = [];
+      for(let r of res) {
+        if(r.dist <= 100) {
+          creats.push(r);
+        }
+      }
+      let to_meet = '';
+      if(creats.length > 0) {
+        to_meet = creats.map(x => `<div class="sbutton">${x.name}</div>`).join(', ');
+        if(creats.length === 1) {
+          let josa = Josa.c(creats[0].name, '을/를');
+          to_meet += `${josa} 클릭해서 만나 보세요.`;  
+        }
+        else {
+          to_meet += ` 중에 하나를 클릭해서 만나 보세요.`;
+        }
+      }
+      
+      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리에 있는 『<span class="creat">${res[0].name}</span>』입니다. 100m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
     }
   }
   
   let perodics = {
-    trace: new Periodic(3, () => {
+    trace: new Periodic(10, () => {
       navigator.geolocation.getCurrentPosition(trace, error_trace);
       display_info();  
     }),
@@ -142,37 +190,16 @@
     console.log('trace error');
   }
   
-  function trace(position) {
-    latlng_here = [position.coords.latitude, position.coords.longitude];
+  function go_there(latlng) {
+    latlng_here = latlng;
     map.setView(latlng_here, map.getZoom());
+    marker_range.setLatLng(latlng_here);
     marker_here.setLatLng(latlng_here);
-    /*
-    // 유치원: 37.683408,126.769612
-    // cu 앞: 37.683738, 126.772063
-    // 37.683427, 126.771939
-    const tgt_lat = 37.683738;
-    const tgt_long = 126.772063;
-    
-    const latitude  = position.coords.latitude;
-    const longitude = position.coords.longitude; 
-    
-    el_lat.textContent = latitude;
-    el_long.textContent = longitude;
-    
-    let d_lat = latitude - tgt_lat;
-    let d_long = longitude - tgt_long;
-    let dist = Math.sqrt(d_lat*d_lat + d_long*d_long);
-    
-    el_dist.textContent = dist;
-    if(dist <= Number(input_thres.value)) {
-      on_tgt = true;
-    }
-    else {
-      on_tgt = false;
-    }
-    
-    pos_list.push([latitude,longitude]);
-    */
+    display_info();
+  }
+  
+  function trace(position) {
+    go_there([position.coords.latitude, position.coords.longitude]);
   }
   
   bt_trace_on.onclick = function() {
@@ -203,14 +230,16 @@
   function find_nearest_spot() {
     let min_d = Number.MAX_VALUE;
     let the_one;
+    let list = [];
     for(let spot of spots) {
       let d = map.distance(spot.latlng, latlng_here);
       if(d < min_d) {
         the_one = spot;
         min_d = d;
+        list.unshift({ name: the_one.name, dist: d });
       }
     }
-    return { the_one: the_one, dist: min_d };
+    return list.slice(0, 3);
   }
   
   function init_map() {
@@ -223,6 +252,13 @@
       maxZoom: 18,
       tileSize: 512,
       zoomOffset: -1
+    }).addTo(map);
+    
+    marker_range = L.circle(latlang_here, {
+      color: 'rgba(255, 255, 0, 0.5)',
+      fillColor: '#f03',
+      fillOpacity: 0.1,
+      radius: 100
     }).addTo(map);
 
     marker_here = L.circleMarker(latlang_here, {
