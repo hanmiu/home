@@ -84,8 +84,8 @@ let fs1 = `
       color = stroke_tex.rgb;
     }
 
-    gl_FragColor = vec4( color, 1.0 );
-    //gl_FragColor = vec4( vec3(1.0, vUv.y, 0.0), 1.0 );
+    //gl_FragColor = vec4( color, 1.0 );
+    gl_FragColor = vec4( vec3(1.0, vUv.y, 0.0) * color, 1.0 );
 
   }
 `;
@@ -265,8 +265,7 @@ function loadpng(url) {
 function render() {
   if(ext) {
       let time = elapsed_time / 1000;
-      ext.rotation.y = 0.2 * 3.141592 * Math.sin(time); 
-      //ext.rotation.y = msh.rotation.y;
+      ext.rotation.y = 0.2 * 3.141592 * Math.sin(time);
       let k = 0.5 + 0.5 * Math.sin(time * 4);
       ext.position.y = k*k*0.2 - 0.2;
       uniforms['time'].value = time;

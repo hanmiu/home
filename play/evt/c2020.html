@@ -43,7 +43,7 @@
   }
   
   #map {
-    display: none;
+    display: block;
     width: 100vw;
     height: 50vh;
   }
@@ -111,7 +111,7 @@
   }
   
   #stage {
-    display: block;
+    display: none;
     position: fixed;
     left: 0px;
     top: 0px;
@@ -161,6 +161,7 @@
   let bt_trace_on = document.querySelector('#trace_on');
   let el_map = document.querySelector('#map');
   let el_info = document.querySelector('#info');
+  let el_stage = document.querySelector('#stage');
   let el_video = document.createElement('video');
   el_video.autoplay = true;
   el_video.playsInline = true;
@@ -249,7 +250,24 @@
   window.onclick = function(e) {
     if(e.target.className == 'sbutton') {
       console.log(e.target.textContent);
+      
+      el_stage.style.display = 'block';
+      el_map.style.display = 'none';
+      
+      layout();
+      
+      if(Math.random() > 0.5) {
+        loadsvg('./20_creatures/assets/monster1.svg');  
+      }
+      else {
+        loadpng('./20_creatures/assets/근육맨.png');  
+      }
     }
+  }
+  
+  el_stage.onclick = function() {
+    el_stage.style.display = 'none';
+    el_map.style.display = 'block';
   }
   
   function parse_data(lines) {
@@ -335,7 +353,7 @@
         layout();
         
         //loadsvg('./20_creatures/assets/monster1.svg');
-        loadpng('./20_creatures/assets/근육맨.png');
+        //loadpng('./20_creatures/assets/근육맨.png');
       };
     })
     .catch(function(err) {
