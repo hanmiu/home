@@ -203,7 +203,7 @@
       
       let creats = [];
       for(let r of res) {
-        if(r.dist <= 100) {
+        if(r.dist <= 500) {
           creats.push(r);
         }
       }
@@ -219,7 +219,7 @@
         }
       }
       
-      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리에 있는 『<span class="creat">${res[0].name}</span>』입니다. 100m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
+      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리 있는 『<span class="creat">${res[0].name}</span>』입니다. 500m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
       
       let bts = el_info.querySelectorAll('.sbutton');
       for(let bt of bts) {
@@ -369,7 +369,7 @@
       color: 'rgba(255, 255, 0, 0.5)',
       fillColor: '#f03',
       fillOpacity: 0.1,
-      radius: 100
+      radius: 500
     }).addTo(map);
 
     marker_here = L.circleMarker(latlang_here, {
