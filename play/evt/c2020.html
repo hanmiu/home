@@ -278,6 +278,9 @@
     }
   }
   
+  let a_list = 'monster1.svg,근육맨.png,monster2.svg,나비.png'.split(',');
+  let a_idx = 0;
+  
   function fire(e) {
     if(e.target.className === 'sbutton') {
       console.log(e.target.textContent);
@@ -286,11 +289,17 @@
       
       layout();
       
-      if(Math.random() > 0.5) {
-        loadsvg('./20_creatures/assets/monster1.svg');  
-      }
-      else {
-        loadpng('./20_creatures/assets/근육맨.png');  
+      let fn = a_list[a_idx];
+      a_idx += 1;
+      if(a_idx > a_list.length - 1) a_idx = 0;
+      
+      switch(fn.split('.')[1]) {
+        case 'svg':
+          loadsvg('./20_creatures/assets/'+fn);
+          break;
+        case 'png':
+          loadpng('./20_creatures/assets/'+fn);
+          break;
       }
     }
   }
