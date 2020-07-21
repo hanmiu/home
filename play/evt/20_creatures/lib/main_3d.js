@@ -176,8 +176,10 @@ function loadsvg(url) {
     texture1.image = im1;
     texture1.needsUpdate = true;
 
-    uniforms['colorTexture'].value = texture;
-    uniforms['strokeTexture'].value = texture1;
+    setTimeout(() => {
+      uniforms['colorTexture'].value = texture;
+      uniforms['strokeTexture'].value = texture1; 
+    }, 500);
 
     let obj = {
       depths: [],
