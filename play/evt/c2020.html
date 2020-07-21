@@ -249,7 +249,7 @@
     navigator.geolocation.getCurrentPosition(trace, error_trace);
   }
   
-  window.onclick = function(e) {
+  window.addEventListener('click', (e) => {
     if(e.target.className == 'sbutton') {
       console.log(e.target.textContent);
       
@@ -265,7 +265,7 @@
         loadpng('./20_creatures/assets/근육맨.png');  
       }
     }
-  }
+  });
   
   el_stage.onclick = function() {
     el_stage.style.display = 'none';
