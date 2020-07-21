@@ -170,11 +170,15 @@ function loadsvg(url) {
     v1.start();
     im1 = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    texture.image = im0;
-    texture.needsUpdate = true;
-
-    texture1.image = im1;
-    texture1.needsUpdate = true;
+    if(texture.image !== im0) {
+      texture.image = im0;
+      texture.needsUpdate = true;  
+    }
+    
+    if(texture1.image !== im1) {
+      texture1.image = im1;
+      texture1.needsUpdate = true;  
+    }
 
     uniforms['colorTexture'].value = texture;
     uniforms['strokeTexture'].value = texture1; 
@@ -220,11 +224,15 @@ function process_png(e) {
     let xdoc = dom_parser.parseFromString(svg_string, "text/xml");
     let paths = xdoc.querySelectorAll('path');
     
-    texture.image = im0;
-    texture.needsUpdate = true;
+    if(texture.image !== im0) {
+      texture.image = im0;
+      texture.needsUpdate = true;  
+    }
     
-    texture1.image = im1;
-    texture1.needsUpdate = true;
+    if(texture1.image !== im1) {
+      texture1.image = im1;
+      texture1.needsUpdate = true;  
+    }
 
     uniforms['colorTexture'].value = texture;
     uniforms['strokeTexture'].value = texture1; 
