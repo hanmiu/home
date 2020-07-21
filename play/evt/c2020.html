@@ -121,6 +121,16 @@
   }
   
   #v-canvas {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100vw;
+  }
+  
+  #layer-3d {
+    position: absolute;
+    left: 0px;
+    top: 0px;
     width: 100vw;
   }
 </style>
@@ -139,7 +149,12 @@
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
  integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
  crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r118/three.min.js"></script>
 <script src="./20_creatures/lib/josa.js"></script>
+<script src="./20_creatures/lib/umd.js"></script>
+<script src="./20_creatures/lib/potrace.js"></script>
+<script src="./20_creatures/lib/svg_to_mesh.js"></script>
+<script src="./20_creatures/lib/main_3d.js"></script>
 <script>
   let map, marker_here, marker_range, latlng_here;
   
@@ -318,6 +333,8 @@
         el_video.play();
         g.canvas.width = el_video.videoWidth;
         g.canvas.height = el_video.videoHeight;
+        
+        loadsvg('./20_creatures/assets/monster1.svg');
       };
     })
     .catch(function(err) {
@@ -328,7 +345,8 @@
   
   function draw() {
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
-    g.drawImage(el_video, 0, 0, g.canvas.width, g.canvas.height);  
+    g.drawImage(el_video, 0, 0, g.canvas.width, g.canvas.height);
+    render();
   }
   
   function layout(e) {
