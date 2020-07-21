@@ -85,7 +85,7 @@ let fs1 = `
     }
 
     //gl_FragColor = vec4( color, 1.0 );
-    gl_FragColor = vec4( vec3(1.0, vUv.y, 1.0) * color, 1.0 );
+    gl_FragColor = vec4( vec3(1.0, vUv.y, 1.0), 1.0 );
 
   }
 `;
@@ -170,13 +170,13 @@ function loadsvg(url) {
     v1.start();
     im1 = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    texture.image = im0;
-    texture.needsUpdate = true;
-
-    texture1.image = im1;
-    texture1.needsUpdate = true;
-
     setTimeout(() => {
+      texture.image = im0;
+      texture.needsUpdate = true;
+
+      texture1.image = im1;
+      texture1.needsUpdate = true;
+      
       uniforms['colorTexture'].value = texture;
       uniforms['strokeTexture'].value = texture1; 
     }, 500);
