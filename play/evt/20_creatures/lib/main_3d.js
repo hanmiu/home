@@ -217,23 +217,14 @@ function process_png(e) {
     let svg_string = Potrace.getSVG(1);
     let xdoc = dom_parser.parseFromString(svg_string, "text/xml");
     let paths = xdoc.querySelectorAll('path');
-    document.querySelector('#test').innerHTML = svg_string;
-
+    
     texture.image = im0;
     texture.needsUpdate = true;
 
     texture1.image = im1;
-    //texture1.wrapS = THREE.ClampToEdgeWrapping;
-    //texture1.wrapT = THREE.ClampToEdgeWrapping;
     texture1.needsUpdate = true;
 
     ctx.putImageData(im1, 0, 0);
-
-    /*
-    ctx.fillStyle = 'rgb(255, 0, 255)';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.drawImage(ctx.canvas, 0, 0);
-    */
 
     uniforms['colorTexture'].value = texture;
     uniforms['strokeTexture'].value = texture1;
