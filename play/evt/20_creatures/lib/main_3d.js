@@ -220,18 +220,16 @@ function process_png(e) {
     let xdoc = dom_parser.parseFromString(svg_string, "text/xml");
     let paths = xdoc.querySelectorAll('path');
     
-    setTimeout(() => {
-      texture.image = im0;
-      texture.needsUpdate = true;
+    //texture.image = im0;
+    //texture.needsUpdate = true;
+    texture = new THREE.Texture(im0);
+    
+    //texture1.image = im1;
+    //texture1.needsUpdate = true;
+    texture = new THREE.Texture(im1);
 
-      texture1.image = im1;
-      texture1.needsUpdate = true;
-
-      ctx.putImageData(im1, 0, 0);
-
-      uniforms['colorTexture'].value = texture;
-      uniforms['strokeTexture'].value = texture1;  
-    }, 500);
+    uniforms['colorTexture'].value = texture;
+    uniforms['strokeTexture'].value = texture1; 
 
     uniforms['base_color'].value = new THREE.Color(0.5+Math.random()*0.5,0.5+Math.random()*0.5,0.5+Math.random()*0.5);
 
