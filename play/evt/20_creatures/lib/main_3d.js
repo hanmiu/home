@@ -84,8 +84,8 @@ let fs1 = `
       color = stroke_tex.rgb;
     }
 
-    //gl_FragColor = vec4( color, 1.0 );
-    gl_FragColor = vec4( vec3(1.0, vUv.y, 1.0), 1.0 );
+    gl_FragColor = vec4( color, 1.0 );
+    //gl_FragColor = vec4( vec3(1.0, vUv.y, 1.0), 1.0 );
 
   }
 `;
@@ -220,13 +220,13 @@ function process_png(e) {
     let xdoc = dom_parser.parseFromString(svg_string, "text/xml");
     let paths = xdoc.querySelectorAll('path');
     
-    //texture.image = im0;
-    //texture.needsUpdate = true;
-    texture = new THREE.Texture(im0);
+    texture.image = im0;
+    texture.needsUpdate = true;
+    //texture = new THREE.Texture(im0);
     
-    //texture1.image = im1;
-    //texture1.needsUpdate = true;
-    texture = new THREE.Texture(im1);
+    texture1.image = im1;
+    texture1.needsUpdate = true;
+    //texture = new THREE.Texture(im1);
 
     uniforms['colorTexture'].value = texture;
     uniforms['strokeTexture'].value = texture1; 
