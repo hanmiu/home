@@ -206,7 +206,7 @@
       }
       let to_meet = '';
       if(creats.length > 0) {
-        to_meet = creats.map(x => `<div class="sbutton">${x.name}</div>`).join(', ');
+        to_meet = creats.map(x => `<button class="sbutton">${x.name}</button>`).join(', ');
         if(creats.length === 1) {
           let josa = Josa.c(creats[0].name, '을/를');
           to_meet += `${josa} 클릭해서 만나 보세요.`;  
