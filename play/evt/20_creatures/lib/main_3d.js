@@ -222,11 +222,9 @@ function process_png(e) {
     
     texture.image = im0;
     texture.needsUpdate = true;
-    //texture = new THREE.Texture(im0);
     
     texture1.image = im1;
     texture1.needsUpdate = true;
-    //texture = new THREE.Texture(im1);
 
     uniforms['colorTexture'].value = texture;
     uniforms['strokeTexture'].value = texture1; 
