@@ -117,7 +117,7 @@
     top: 0px;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 1);
   }
   
   #v-canvas {
@@ -331,8 +331,8 @@
       el_video.srcObject = stream;
       el_video.onloadedmetadata = function(e) {
         el_video.play();
-        g.canvas.width = el_video.videoWidth;
-        g.canvas.height = el_video.videoHeight;
+        
+        layout();
         
         loadsvg('./20_creatures/assets/monster1.svg');
       };
@@ -350,7 +350,17 @@
   }
   
   function layout(e) {
-      
+    let aspect_ratio = el_video.videoWidth / el_video.videoHeight;
+    g.canvas.width = innerWidth;
+    g.canvas.height = innerWidth / aspect_ratio;
+    
+    let y = innerHeight/2 - parseFloat(getComputedStyle(g.canvas)['height'])/2;
+    g.canvas.style.top = y + 'px';
+    renderer.domElement.style.top = y + 'px';
+    
+    camera.aspect = g.canvas.width / g.canvas.height;
+    camera.updateProjectionMatrix();
+    renderer.setSize( g.canvas.width, g.canvas.height );
   }
 
   function loop(timestamp) {
@@ -393,7 +403,6 @@
     
     init_map();
     init_video();
-    layout();
     
     loop();
   }

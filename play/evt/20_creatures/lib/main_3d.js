@@ -105,9 +105,6 @@ scene = new THREE.Scene();
 
 renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
 renderer.setPixelRatio( window.devicePixelRatio );
-camera.aspect = 372 / 626;
-camera.updateProjectionMatrix();
-renderer.setSize( 372, 626 );
 renderer.domElement.id = 'layer-3d';
 document.querySelector('#stage').appendChild( renderer.domElement );
 
@@ -274,16 +271,15 @@ function loadpng(url) {
   png_image.onload = process_png;
 }
 
-let frame_count = 0;
 function render() {
   if(ext) {
-      ext.rotation.y = 0.2 * 3.141592 * Math.sin(frame_count / 60); 
+      let time = elapsed_time / 1000;
+      ext.rotation.y = 0.2 * 3.141592 * Math.sin(time); 
       //ext.rotation.y = msh.rotation.y;
-      let k = 0.5 + 0.5 * Math.sin(frame_count / 60 * 4);
+      let k = 0.5 + 0.5 * Math.sin(time * 4);
       ext.position.y = k*k*0.2 - 0.2;
-      uniforms['time'].value = frame_count / 60;
+      uniforms['time'].value = time;
     }
   
   renderer.render( scene, camera );
-  frame_count += 1;
 }
