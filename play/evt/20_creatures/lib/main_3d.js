@@ -147,10 +147,9 @@ function loadsvg(url) {
   }
   else {
     last_loaded_url = url;
-  }
-     
-  if(ext) {
-    scene.remove(ext);
+    if(ext) {
+      scene.remove(ext);
+    }
   }
   
   fetch(url)
@@ -286,10 +285,9 @@ function loadpng(url) {
   }
   else {
     last_loaded_url = url;
-  }
-  
-  if(ext) {
-    scene.remove(ext);
+    if(ext) {
+      scene.remove(ext);
+    }
   }
   
   let png_image = new Image();
