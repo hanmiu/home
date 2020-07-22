@@ -259,9 +259,9 @@
       }
       let to_meet = '';
       if(creats.length > 0) {
-        to_meet = creats.map(x => `<button class="sbutton">${x.name}</button>`).join(', ');
+        to_meet = creats.map(x => `<button class="sbutton">${x.name.split('#')[0]}</button>`).join(', ');
         if(creats.length === 1) {
-          let josa = Josa.c(creats[0].name, '을/를');
+          let josa = Josa.c(creats[0].name.split('#')[0], '을/를');
           to_meet += `${josa} 클릭해서 만나 보세요.`;  
         }
         else {
@@ -269,7 +269,9 @@
         }
       }
       
-      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리 있는 『<span class="creat">${res[0].name}</span>』입니다. ${range_meet}m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
+      let name = res[0].name.split('#')[0];
+      
+      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리 있는 『<span class="creat">${name}</span>』입니다. ${range_meet}m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
       
       let bts = el_info.querySelectorAll('.sbutton');
       for(let bt of bts) {
@@ -372,11 +374,11 @@
           author = author[0] + emo + author.slice(2, author.length);  
         }
         
-        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '이/가')}  나타났다! <div class="t-right">- ${author}</div>`;
+        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name.split('#')[0], '이/가')}  나타났다! <div class="t-right">- ${author}</div>`;
         if(name === '개나리반 선생님') {
           name = author;
         }
-        document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
+        document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name.split('#')[0], '은/는')}... <br>${o.desc}`;
       }
       else {
         let o = dic_spots[name];
@@ -387,8 +389,8 @@
         console.log('아직 asset이 없음');
         let fn = 'monster' + (Math.random()*10 + 1 | 0) + '.svg';
         loadsvg('./20_creatures/assets/'+fn);
-        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '은/는')} 아직 준비중! <div class="t-right">- ${author}</div>`;
-        document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
+        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name.split('#')[0], '은/는')} 아직 준비중! <div class="t-right">- ${author}</div>`;
+        document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name.split('#')[0], '은/는')}... <br>${o.desc}`;
       }
       
     }
