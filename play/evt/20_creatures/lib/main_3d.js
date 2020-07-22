@@ -113,6 +113,8 @@ document.querySelector('#webgl').appendChild( renderer.domElement );
 let texture = new THREE.Texture(im0);
 let texture1 = new THREE.Texture(im1);
 
+let last_loaded_url = '';
+
 uniforms = {
   "time": { value: Date.now() / 1000 },
   "base_color": { value: new THREE.Color(1.0, 1.0, 1.0) },
@@ -140,6 +142,13 @@ canvas.height = 512;
 const ctx = canvas.getContext('2d');
 
 function loadsvg(url) {
+  if(last_loaded_url === url) {
+    return;
+  }
+  else {
+    last_loaded_url = url;
+  }
+     
   if(ext) {
     scene.remove(ext);
   }
@@ -272,6 +281,13 @@ function process_png(e) {
 }
   
 function loadpng(url) {
+  if(last_loaded_url === url) {
+    return;
+  }
+  else {
+    last_loaded_url = url;
+  }
+  
   if(ext) {
     scene.remove(ext);
   }
