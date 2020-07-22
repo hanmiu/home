@@ -169,12 +169,17 @@
     position: absolute;
     left: 0px;
     top: 0px;
+    width: 82vw;
     height: 20vh;
     font-family: 'Stylish';
     font-size: 3vh;
     color: white;
     text-shadow: 0px 0px 2px deeppink;
     padding: 4vh 2vh 2vh 5vh;
+  }
+  
+  .t-right {
+    text-align: right;
   }
 </style>
 <body>
@@ -366,7 +371,7 @@
           author = author[0] + emo + author.slice(2, author.length);  
         }
         
-        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '이/가')}  나타났다! - ${author}`;
+        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '이/가')}  나타났다! <div class="t-right">- ${author}</div>`;
         if(name === '개나리반 선생님') {
           name = author;
         }
@@ -381,7 +386,7 @@
         console.log('아직 asset이 없음');
         let fn = 'monster' + (Math.random()*10 + 1 | 0) + '.svg';
         loadsvg('./20_creatures/assets/'+fn);
-        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '은/는')} 아직 준비중! - ${author}`;
+        document.querySelector('#profile').innerHTML = `${name}${Josa.c(name, '은/는')} 아직 준비중! <div class="t-right">- ${author}</div>`;
         document.querySelector('#dialog').innerHTML = `${name}${Josa.c(name, '은/는')}... <br>${o.desc}`;
       }
       
@@ -557,13 +562,13 @@
     
     let params = new URLSearchParams(location.search.slice(1));
     let title = params.get('w');
-    let desc = `시험판: 『현재 위치』 버튼을 눌러 보세요!`;
+    let desc = `시험판: 『현재 위치』 버튼을 눌러 보세요!<br><br>버튼을 누른 후 '위치 정보 사용'과 '카메라 사용'을 수락해 주셔야 작동합니다.`;
     
     //console.log(params.get('w'));
     
     switch(params.get('w')) {
       case 'H1_5l6g':
-        desc = `시험판: 이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. '현재 위치' 버튼을 클릭해 보세요!`;
+        desc = `시험판: 이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. '현재 위치' 버튼을 클릭해 보세요!<br<br>>버튼을 누른 후 '위치 정보 사용'과 '카메라 사용'을 수락해 주셔야 작동합니다`;
         break;
     }
     

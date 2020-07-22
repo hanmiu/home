@@ -124,14 +124,14 @@ let material = new THREE.ShaderMaterial( {
   uniforms: uniforms,
   vertexShader: vs,
   fragmentShader: fs,
-  side: THREE.DoubleSide,
+  //side: THREE.DoubleSide,
 } );
 
 let material1 = new THREE.ShaderMaterial( {
   uniforms: uniforms,
   vertexShader: vs,
   fragmentShader: fs1,
-  side: THREE.DoubleSide,
+  //side: THREE.DoubleSide,
 } );
 
 const canvas = document.createElement('canvas');
@@ -238,6 +238,17 @@ function process_png(e) {
     uniforms['strokeTexture'].value = texture1; 
 
     uniforms['base_color'].value = new THREE.Color(0.5+Math.random()*0.5,0.5+Math.random()*0.5,0.5+Math.random()*0.5);
+    
+    if(material1) {
+      material1.dispose();
+    }
+
+    material1 = new THREE.ShaderMaterial( {
+      uniforms: uniforms,
+      vertexShader: vs,
+      fragmentShader: fs1,
+      //side: THREE.DoubleSide,
+    } );
 
     let obj = {
       depths: [],
