@@ -8,7 +8,7 @@
   }
   
   #title {
-    position: absolute;
+    position: fixed;
     left: 0px;
     top: 0px;
     display: flex;
@@ -22,23 +22,55 @@
     z-index: 100;
   }
   
-  #left-pane {
-    position: absolute;
+  #spots {
+    position: fixed;
     left: 0px;
     top: 10vh;
     box-sizing: border-box;
-    width: 30vw;
+    width: 25vw;
     height: 90vh;
     background-color: #b0ffe7;
     overflow-y: scroll;
+    user-select: none;
+    -webkit-user-select: none;
   }
   
   .spot {
     display: inline-block;
-    width: 20vw;
-    height: 20vw;
-    margin: 4vw 1vw 0vw 5vw;
+    width: 16vw;
+    height: 16vw;
+    margin: 4vw 0.5vw 0vw 3vw;
     background-color: azure;
+    border-radius: 20vw;
+    border: 1.5vw solid #90e5e5;
+    background-size: contain;
+  }
+  
+  #content {
+    position: fixed;
+    left: 25vw;
+    top: 10vh;
+    box-sizing: border-box;
+    width: 75vw;
+    height: 70vh;
+    background-color: #fffcb0;
+    overflow-y: scroll;
+    user-select: none;
+    -webkit-user-select: none;
+    background-image: url(./spots/1.png);
+    background-size: contain;
+  }
+  
+  #control {
+    position: fixed;
+    left: 25vw;
+    bottom: 0vh;
+    box-sizing: border-box;
+    width: 75vw;
+    height: 20vh;
+    background-color: #d1b0ff;
+    user-select: none;
+    -webkit-user-select: none;
   }
   
   #notice {
@@ -59,7 +91,9 @@
 </style>
 <body>
   <div id="title">신기한 여름방학</div>
-  <div id="left-pane"></div>
+  <div id="spots"></div>
+  <div id="content"></div>
+  <div id="control"></div>
   
   <!--
   <button id="roll">주사위 굴리기</button>
@@ -68,12 +102,29 @@
   -->
 </body>
 <script>
-  let el_left_pane = document.querySelector('#left-pane');
+  let el_spots = document.querySelector('#spots');
+  
+  let spots = [];
   
   for(let i = 0; i < 39; i++) {
     let el_spot = document.createElement('div');
     el_spot.className = 'spot';
-    el_left_pane.appendChild(el_spot);
+    el_spot.style['background-image'] = `url(./spots/${i}.png)`;
+    el_spot.onclick = fire;
+    spots.push(el_spot);
+    el_spots.appendChild(el_spot);
+  }
+  
+  function fire(e) {
+    let idx = spots.indexOf(e.target);
+    document.querySelector('#title').textContent = idx;
+    document.querySelector('#content').style['background-image'] = `url(./spots/${idx}.png)`;
+  }
+  
+  function jump_to(n) {
+    if(spots[n]) {
+      spots[n].scrollIntoView(false);
+    }
   }
   /*
   let bt_roll = document.querySelector('#roll');
