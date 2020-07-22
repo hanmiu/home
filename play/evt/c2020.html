@@ -227,7 +227,10 @@
   let spots = [];
   let dic_spots = {};
   let dic_assets = {};
-  let range_meet = 500;
+  let range_meet = {
+    max: 500,
+    now: 500
+  };
   
   class Periodic {
     constructor (seconds, callback) {
@@ -253,7 +256,7 @@
       
       let creats = [];
       for(let r of res) {
-        if(r.dist <= range_meet) {
+        if(r.dist <= range_meet.max) {
           creats.push(r);
         }
       }
@@ -271,7 +274,10 @@
       
       let name = res[0].name.split('#')[0];
       
-      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리 있는 『<span class="creat">${name}</span>』입니다. ${range_meet}m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
+      range_meet.now = Math.min(res[res.length - 1].dist, range_meet.max) | 0;
+      marker_range.setRadius(range_meet.now);
+      
+      el_info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 멀리 있는 『<span class="creat">${name}</span>』입니다. ${range_meet.now}m 안으로 가까이 다가가면 만날 수 있습니다. ${to_meet}`;
       
       let bts = el_info.querySelectorAll('.sbutton');
       for(let bt of bts) {
@@ -479,7 +485,7 @@
       color: 'rgba(255, 255, 0, 0.5)',
       fillColor: '#f03',
       fillOpacity: 0.1,
-      radius: range_meet
+      radius: range_meet.now
     }).addTo(map);
 
     marker_here = L.circleMarker(latlang_here, {
