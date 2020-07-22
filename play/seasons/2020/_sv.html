@@ -1,0 +1,147 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>신기한 여름방학</title>
+<style>
+  body {
+    margin: 0;
+    font-family: sans-serif;
+  }
+  
+  #title {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    display: flex;
+    box-sizing: border-box;
+    width: 100vw;
+    height: 10vh;
+    background-color: bisque;
+    align-items: center;
+    justify-content: center;
+    font-size: 5vh;
+    z-index: 100;
+  }
+  
+  #left-pane {
+    position: absolute;
+    left: 0px;
+    top: 10vh;
+    box-sizing: border-box;
+    width: 30vw;
+    height: 90vh;
+    background-color: #b0ffe7;
+    overflow-y: scroll;
+  }
+  
+  .spot {
+    display: inline-block;
+    width: 20vw;
+    height: 20vw;
+    margin: 4vw 1vw 0vw 5vw;
+    background-color: azure;
+  }
+  
+  #notice {
+    color: aqua;
+    font-size: 10vh;
+  }
+  
+  #dice {
+    width: 200px;
+    height: 200px;
+    font-size: 180px;
+    line-height: 200px;
+  }
+  
+  #info {
+    font-size: 20px;
+  }
+</style>
+<body>
+  <div id="title">신기한 여름방학</div>
+  <div id="left-pane"></div>
+  
+  <!--
+  <button id="roll">주사위 굴리기</button>
+  <div id="dice">⚀</div>
+  <div id="info"></div>
+  -->
+</body>
+<script>
+  let el_left_pane = document.querySelector('#left-pane');
+  
+  for(let i = 0; i < 39; i++) {
+    let el_spot = document.createElement('div');
+    el_spot.className = 'spot';
+    el_left_pane.appendChild(el_spot);
+  }
+  /*
+  let bt_roll = document.querySelector('#roll');
+  let el_dice = document.querySelector('#dice');
+  let el_info = document.querySelector('#info');
+  let dice_states = `⚀ ⚁ ⚂ ⚃ ⚄ ⚅`.split(' ');
+  let frame_count = 0;
+  let n_rolling = 10;
+  let current_face = 0;
+  
+  function roll() {
+    return Math.random() * 6 + 1 | 0;
+  }
+  
+  function roll_the_dice() {
+    current_face = roll() - 1;
+    el_dice.textContent = dice_states[current_face];
+  }
+  
+  bt_roll.onclick = function() {
+    n_rolling = 10 + Math.random() * 5 | 0;  
+  }
+  
+  function update() {
+    if(n_rolling > 0) {
+      if(frame_count % 10 === 0) {
+        el_dice.style['color'] = 'gray';
+        roll_the_dice();
+        n_rolling -= 1;
+        if(n_rolling === 0) {
+          el_dice.style['color'] = 'black';
+        }
+      }
+    }
+    frame_count += 1;
+  }
+  
+  function loop() {
+    update();
+    requestAnimationFrame(loop);
+  }
+  */
+  
+  function init() {
+    
+    let params = new URLSearchParams(location.search.slice(1));
+    let title = params.get('w');
+    let desc = '';
+    
+    switch(params.get('w')) {
+      case 'abc':
+        desc = `어떤 미션`;
+        break;
+      case 'def':
+        desc = `주사위를 굴려 ${dice_states[roll()-1]}이 나오면 샛길로 점프`;
+        break;
+      case 'hij':
+        desc = `설정한 약속 실행하기`;
+        break;
+      case 'G':
+        desc = `Goal`;
+        break;
+    }
+    
+    // el_info.textContent = desc;
+    
+    //loop();
+  }
+  
+  window.onload = init;
+</script>
