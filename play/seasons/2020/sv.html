@@ -227,12 +227,12 @@
     if(i !== 39) {
       el_spot.className = 'spot';
       el_spot.style['background-image'] = `url(./spots/${i}.png)`;
-      el_spot.onclick = fire;  
+      el_spot.onclick = fire;
+      spots.push(el_spot);
     }
     else {
       el_spot.className = 'emptyspot';
     }
-    spots.push(el_spot);
     el_spots.appendChild(el_spot);
   }
   
@@ -451,9 +451,18 @@
   
   function after_roll() {
     if(!on_special_event) {
-      let url = `./spots/${current_face + current_spot_idx}.png`;
-      let img = `<img class="thumb" src="${url}">`;
-      el_roll_info.innerHTML = `<strong>${current_face}</strong>칸 앞으로 이동한 후 그 칸의 그림${img}을 클릭하세요!`;  
+      let idx = current_face + current_spot_idx;
+      if(idx >= spots.length - 1) {
+        idx = spots.length - 1;
+        let url = `./spots/${idx}.png`;
+        let img = `<img class="thumb" src="${url}">`;
+        el_roll_info.innerHTML = `<strong>${current_face}</strong>칸 앞으로 이동하면 도착합니다. 그림${img}을 클릭하세요!`; 
+      }
+      else {
+        let url = `./spots/${idx}.png`;
+        let img = `<img class="thumb" src="${url}">`;
+        el_roll_info.innerHTML = `<strong>${current_face}</strong>칸 앞으로 이동한 후 그 칸의 그림${img}을 클릭하세요!`;
+      }
     }
     else {
       let tn = current_face % 2 === 0 ? '짝수' : '홀수';
