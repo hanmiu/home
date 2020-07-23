@@ -213,6 +213,7 @@
   let current_spot_idx = 0;
   
   let effs = '돌돌~,빙글~,뱅글,딱~'.split(',');
+  let on_special_event = false;
   
   for(let i = 0; i < 40; i++) {
     let el_spot = document.createElement('div');
@@ -272,11 +273,12 @@
         msg += `<strong>+1</strong>이 나왔군요! 한 칸 앞인 ${thumb(idx+1)}로 가야합니다.`;
         break;
       case 4:
+        msg += `<strong>솜꽃</strong>이가 물어봅니다.<br>(솜꽃이는 '목화'의 별명이에요.) <br><br>`;
         if(Math.random() > 0.5) {
-          msg += `<strong>솜꽃</strong>이가 물어봅니다.<br(>솜꽃이는 '목화'의 별명이에요.) <br><br>"오늘 이를 잘 닦았니?" 이를 깨끗하게 잘 닦았으면 🎲를 굴려서 계속 이어가세요.`;
+          msg += `"오늘 이를 잘 닦았니?" 이를 깨끗하게 잘 닦았으면 🎲를 굴려서 계속 이어가세요.`;
         }
         else {
-          msg += `<strong>솜꽃</strong>이가 물어봅니다.<br>(솜꽃이는 '목화'의 별명이에요.) <br><br>"오늘 손을 깨끗하게 닦았니?" 손이 깨끗하면 🎲를 굴려서 계속 이어가세요.`;  
+          msg += `"오늘 손을 깨끗하게 닦았니?" 손이 깨끗하면 🎲를 굴려서 계속 이어가세요.`;  
         }
         break;
       case 5:
@@ -288,8 +290,18 @@
       case 7:
         msg += `이 신기한 생물의 이름은 <strong>하트 괴물</strong>이에요. "사람들에게 사랑을 나누어주는 착한 괴물"이랍니다. 일산역 산책길의 끝자락(<a href="https://www.google.com/maps/place/37%C2%B041'09.6%22N+126%C2%B045'38.2%22E/@37.6859558,126.7600986,18z" target="_blank"><strong>37.685990, 126.760604</strong></a> )에서 만날 수 있어요. 나중에 산책할 때 찾아보세요. 🎲를 굴려서 계속 이어갑니다~`;
         break;
+      case 8:
+        let n = 7 + (Math.random() * 4 | 0);
+        if(Math.random() > 0.5) {
+          msg += `<strong>우주 유</strong>가 블랙 홀을 열었습니다! 🎲를 굴려서 짝수(<strong>2, 4, 6</strong> 중에 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 순간이동합니다. 홀수(1, 3, 5) 중에 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
+        }
+        else {
+          msg += `<strong>우주 유</strong>가 추진기를 작동했습니다! 🎲를 굴려서 홀수(<strong>1, 3, 5</strong> 중에 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 날아갑니다. 짝수(2, 4, 6) 중에 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
+        }
+        on_special_event = true;
+        break;
       default:
-        msg += `... 아직 준비중 입니다.<br><br> 지금은 🎲를 굴려서 계속 이어가세요. 조금 있다가 다시 해보면 내용이 나올거에요.`;
+        msg += `... 아직 준비중 입니다.<br><br> 지금은 🎲를 굴려서 계속 이어가세요. 이따가 다시 해보면 내용이 나올거에요.`;
         break;
     }
     
@@ -312,9 +324,15 @@
   }
   
   function after_roll() {
-    let url = `./spots/${current_face + current_spot_idx}.png`;
-    let img = `<img class="thumb" src="${url}">`;
-    el_roll_info.innerHTML = `<strong>${current_face}</strong>칸 앞으로 이동한 후 그 칸의 그림${img}을 클릭하세요!`;
+    if(!on_special_event) {
+      let url = `./spots/${current_face + current_spot_idx}.png`;
+      let img = `<img class="thumb" src="${url}">`;
+      el_roll_info.innerHTML = `<strong>${current_face}</strong>칸 앞으로 이동한 후 그 칸의 그림${img}을 클릭하세요!`;  
+    }
+    else {
+      el_roll_info.innerHTML = `위 안내를 따라서 이동하세요!`; 
+      on_special_event = false;
+    }
   }
   
   el_dice.onclick = function(e) {
