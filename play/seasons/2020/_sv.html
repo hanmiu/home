@@ -56,8 +56,8 @@
   }
   
   .spot[curr='1'] {
-    border: 1.5vw solid #008dff;
-    box-shadow: 0px 0px 10px #3bf0ff;
+    border: 1.5vw solid #8900ff;
+    box-shadow: 0px 0px 10px #ff3bd9;
   }
   
   .emptyspot {
@@ -80,6 +80,16 @@
     -webkit-user-select: none;
     background-image: url(./spots/1.png);
     background-size: contain;
+    background-repeat: no-repeat;
+  }
+  
+  #message {
+    padding: 2vh;
+    font-size: 3.5vh;
+    font-family: 'Do Hyeon', sans-serif;
+    line-height: 1.5em;
+    color: #c864ed;
+    text-shadow: 0px 0px 3px white;
   }
   
   #control {
@@ -151,7 +161,11 @@
 <body>
   <div id="title"></div>
   <div id="spots"></div>
-  <div id="content"></div>
+  <div id="content">
+    <div id="message">
+      7월 23일 12시 즈음에 업데이트 됩니다~ 조금만 더 기다려 주세요. 아래 주사위를 돌리면서 실험해 보는 것은 가능합니다!
+    </div>
+  </div>
   <div id="control">
     <div id="dice-holder">
       <div id="dice"></div>
