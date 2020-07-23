@@ -288,17 +288,20 @@
         msg += `<strong>+2</strong>가 나왔군요! 두 칸 앞인 ${thumb(idx+2)}로 가야합니다. <br><br>숫자에 관해 궁금하면 ${NB}를 참고하세요. 지금 말고 나중에 엄마 아빠와 약속을 정하고 보기로 해요.`;
         break;
       case 7:
-        msg += `이 신기한 생물의 이름은 <strong>하트 괴물</strong>이에요. "사람들에게 사랑을 나누어주는 착한 괴물"이랍니다. 일산역 산책길의 끝자락(<a href="https://www.google.com/maps/place/37%C2%B041'09.6%22N+126%C2%B045'38.2%22E/@37.6859558,126.7600986,18z" target="_blank"><strong>37.685990, 126.760604</strong></a> )에서 만날 수 있어요. 나중에 산책할 때 찾아보세요. 🎲를 굴려서 계속 이어갑니다~`;
+        msg += `이 신기한 생물의 이름은 <strong>하트 괴물</strong>이에요. "사람들에게 사랑을 나누어주는 착한 괴물"입니다. 일산역 산책길 (<a href="https://www.google.com/maps/place/37%C2%B041'09.6%22N+126%C2%B045'38.2%22E/@37.6859558,126.7600986,18z" target="_blank"><strong>37.685990, 126.760604</strong></a> )에서 만날 수 있어요. 나중에 산책할 때 찾아보세요. 🎲를 굴려서 계속 이어갑니다~`;
         break;
       case 8:
         let n = 7 + (Math.random() * 4 | 0);
         if(Math.random() > 0.5) {
-          msg += `<strong>우주 유</strong>가 블랙 홀을 열었습니다! 🎲를 굴려서 짝수(<strong>2, 4, 6</strong> 중에 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 순간이동합니다. 홀수(1, 3, 5) 중에 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
+          msg += `<strong>우주 유</strong>가 블랙 홀을 열었습니다! 🎲를 굴려서 짝수(<strong>2, 4, 6</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 순간이동합니다. 홀수(1, 3, 5) 중 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
         }
         else {
-          msg += `<strong>우주 유</strong>가 추진기를 작동했습니다! 🎲를 굴려서 홀수(<strong>1, 3, 5</strong> 중에 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 날아갑니다. 짝수(2, 4, 6) 중에 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
+          msg += `<strong>우주 유</strong>가 추진기를 작동했습니다! 🎲를 굴려서 홀수(<strong>1, 3, 5</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 날아갑니다. 짝수(2, 4, 6) 중 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
         }
         on_special_event = true;
+        break;
+      case 9:
+        msg += `이 신기한 생물의 이름은 <strong>프리티 포그 로포 사우르스</strong>이에요. "볏이 달린 귀여운 개구리를 닮은 도마뱀 공룡"입니다. 일산역 근처 ( <a href="https://www.google.com/maps/place/37%C2%B040'57.5%22N+126%C2%B046'03.1%22E/@37.682633,126.7653253,17z" target="_blank"><strong>37.685990, 126.760604</strong></a> )에서 만날 수 있어요. 🎲를 굴려서 계속 이어갑니다~`;
         break;
       default:
         msg += `... 아직 준비중 입니다.<br><br> 지금은 🎲를 굴려서 계속 이어가세요. 이따가 다시 해보면 내용이 나올거에요.`;
