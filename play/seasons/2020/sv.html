@@ -52,6 +52,8 @@
     border-radius: 20vw;
     border: 1.5vw solid #90e5e5;
     background-size: contain;
+    /* background-repeat: no-repeat; */
+    box-shadow: 0px 0px 10px rgba(255, 255, 255, 0);
     transition: 0.5s border, 1s box-shadow;
   }
   
@@ -160,13 +162,14 @@
   .thumb {
     width: 3vh;
     height: 3vh;
-    border-radius: 2vh;
+    border-radius: 3vh;
   }
   
   .thumb-big {
     margin-right: 1vh;
     width: 20vh;
     height: 20vh;
+    border-radius: 20vh;
     float: left;
   }
   
@@ -176,6 +179,8 @@
     width: 5vh;
     height: 5vh;
     transform: translate(0.0, 0.9vh) scale(1.5);
+    background-color: azure;
+    border-radius: 5vh;
   }
   
   
@@ -303,6 +308,8 @@
       case 9:
         msg += `이 신기한 생물의 이름은 <strong>프리티 포그 로포 사우르스</strong>이에요. "볏이 달린 귀여운 개구리를 닮은 도마뱀 공룡"입니다. 일산역 근처 ( <a href="https://www.google.com/maps/place/37%C2%B040'57.5%22N+126%C2%B046'03.1%22E/@37.682633,126.7653253,17z" target="_blank"><strong>37.685990, 126.760604</strong></a> )에서 만날 수 있어요. 🎲를 굴려서 계속 이어갑니다~`;
         break;
+      case 10:
+        msg += `<strong>-2</strong>가 나왔군요! 두 칸 뒤인 ${thumb(idx-2)}로 가야합니다. <br><br>숫자에 관해 궁금하면 ${NB}를 참고하세요. 지금 말고 나중에 엄마 아빠와 약속을 정하고 보기로 해요.`;
       default:
         msg += `... 아직 준비중 입니다.<br><br> 지금은 🎲를 굴려서 계속 이어가세요. 이따가 다시 해보면 내용이 나올거에요.`;
         break;
@@ -333,7 +340,13 @@
       el_roll_info.innerHTML = `<strong>${current_face}</strong>칸 앞으로 이동한 후 그 칸의 그림${img}을 클릭하세요!`;  
     }
     else {
-      el_roll_info.innerHTML = `위 안내를 따라서 이동하세요!`; 
+      let tn = current_face % 2 === 0 ? '짝수' : '홀수';
+      let yi = [1,3,6];
+      let josa = '가';
+      if(yi.indexOf(current_face) !== -1) {
+        josa = '이';
+      }
+      el_roll_info.innerHTML = `${tn} <strong>${current_face}</strong>${josa} 나왔습니다. 위 안내를 따라서 이동하세요!`; 
       on_special_event = false;
     }
   }
