@@ -216,6 +216,8 @@
   let n_rolling = 0;
   let current_face = 0;
   let current_spot_idx = 0;
+  let roll_count = 0;
+  let total_dice_sum = 0;
   
   let effs = '돌돌~,빙글~,뱅글,딱~'.split(',');
   let on_special_event = false;
@@ -263,10 +265,14 @@
     //let next_idx = Math.max(Math.min(idx + current_face, spots.length - 1), 0);
     let NB = `<a href="https://www.youtube.com/channel/UCPlwvN0w4qFSP1FllALB92w" target="_blank">넘버블록스</a>`;
     
+    let n = 0;
+    
     let msg = `<br><strong>${idx}</strong>번째 칸에 <br>도착했습니다.<br><br><br>`;
     switch(idx) {
       case 0:
         msg += `출발 지점입니다. 아래 🎲를 클릭해서 보드게임을 시작해 보세요.`;
+        roll_count = 0;
+        total_dice_sum = 0;
         break;
       case 1:
         msg += `아직 아무일도 일어나지 않았습니다. <br><br>'신기한 생물 사전'에 참여하다보면, 다음에는 뭔가 바뀔지도 몰라요. 🎲를 굴려서 계속 이어가세요.`;
@@ -296,12 +302,12 @@
         msg += `이 신기한 생물의 이름은 <strong>하트 괴물</strong>이에요. "사람들에게 사랑을 나누어주는 착한 괴물"입니다. 일산역 산책길 (<a href="https://www.google.com/maps/place/37%C2%B041'09.6%22N+126%C2%B045'38.2%22E/@37.6859558,126.7600986,18z" target="_blank"><strong>37.685990, 126.760604</strong></a> )에서 만날 수 있어요. 나중에 산책할 때 찾아보세요. 🎲를 굴려서 계속 이어갑니다~`;
         break;
       case 8:
-        let n = 7 + (Math.random() * 4 | 0);
+        n = 7 + (Math.random() * 4 | 0);
         if(Math.random() > 0.5) {
-          msg += `<strong>우주 유</strong>가 블랙 홀을 열었습니다! 🎲를 굴려서 짝수(<strong>2, 4, 6</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 순간이동합니다. 홀수(1, 3, 5) 중 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
+          msg += `<strong>우주 유</strong>가 블랙 홀에 빠졌습니다! 🎲를 굴려서 짝수(<strong>2, 4, 6</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 순간이동합니다. 홀수(1, 3, 5) 중 하나가 나오면 다시 🎲를 굴려서 계속 앞으로 가세요.`;
         }
         else {
-          msg += `<strong>우주 유</strong>가 추진기를 작동했습니다! 🎲를 굴려서 홀수(<strong>1, 3, 5</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 날아갑니다. 짝수(2, 4, 6) 중 하나가 나오면 다시 🎲를 굴려서 계속 이어가세요.`;
+          msg += `<strong>우주 유</strong>가 추진기를 작동했습니다! 🎲를 굴려서 홀수(<strong>1, 3, 5</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 날아갑니다. 짝수(2, 4, 6) 중 하나가 나오면 다시 🎲를 굴려서 계속 앞으로 가세요.`;
         }
         on_special_event = true;
         break;
@@ -322,19 +328,24 @@
         break;
       case 14:
         msg += `<strong>랑새</strong>가족을 만났습니다! <br><br>`;
-        msg += `오늘 하고 싶은 일이 무엇이 있는지 우리 가족도 서로 물어봐 주며 이야기 나눠요. 🎲를 굴려서 계속 이어가세요.`;
+        if(Math.random() > 0.5) {
+          msg += `오늘 하고 싶은 일이 무엇이 있는지 우리 가족도 서로 물어봐 주며 이야기 나눠요. 🎲를 굴려서 계속 이어가세요.`;
+        }
+        else {
+          msg += `오늘 서로 도와주고 싶은 일이 무엇이 있는지 우리 가족도 서로 물어봐 주며 이야기 나눠요. 🎲를 굴려서 계속 이어가세요.`;
+        }
         break;
       case 15:
         msg += `<strong>-1</strong>이 나왔군요! 한 칸 뒤인 ${thumb(idx-1)}로 가야합니다.`;
         break;
       case 16:
-        msg += `아직 아무일도 일어나지 않았습니다. <br><br>여름방학책에 넣을 '호기심 킁킁'에 관해 생각해 보세요. 다음에는 뭔가 바뀔지도 몰라요. 🎲를 굴려서 계속 이어가세요.`;
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>여름방학책에 넣을 <strong>호기심 킁킁</strong>에 관해 생각해 보세요. 다음에는 뭔가 바뀔지도 몰라요. 🎲를 굴려서 계속 이어가세요.`;
         break;
       case 17:
         msg += `<strong>+2</strong>가 나왔군요! 두 칸 앞인 ${thumb(idx+2)}로 가야합니다.`;
         break;
       case 18:
-        msg += `아직 아무일도 일어나지 않았습니다. <br><br>여름방학책에 넣을 '호기심 킁킁'에 관해 생각해 보세요. 다음에는 뭔가 바뀔지도 몰라요. 🎲를 굴려서 계속 이어가세요.`;
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>여름방학책에 넣을 <strong>호기심 킁킁</strong>에 관해 생각해 보세요. 다음에는 뭔가 바뀔지도 몰라요. 🎲를 굴려서 계속 이어가세요.`;
         break;
       case 19:
         msg += `<strong>솜꽃</strong>이가 물어봅니다.<br><br>`;
@@ -344,6 +355,76 @@
         else {
           msg += `"밖에 나갈 땐 마스크 잘 쓰고 거리 두기 잘 하니?" 잘 한다면 🎲를 굴려서 계속 이어가세요.`;
         }
+        break;
+      case 20:
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>이번 여름 방학에 뭘 하고 놀면 좋을지 생각해 봅시다. 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 21:
+        msg += `<strong>+3</strong>가 나왔군요! 세 칸 앞인 ${thumb(idx+3)}로 가야합니다.`;
+        break;
+      case 22:
+        msg += `<strong>-3</strong>가 나왔군요! 세 칸 뒤인 ${thumb(idx-3)}로 가야합니다.`;
+        break;
+      case 23:
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>몇 일 더 기다려 봅시다. 오늘은 얼른 앞으로 가봐요! 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 24:
+        n = 7 + (Math.random() * 4 | 0);
+        if(Math.random() > 0.5) {
+          msg += `<strong>우주 유</strong>가 로켓을 작동했습니다! 🎲를 굴려서 짝수(<strong>2, 4, 6</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 날아갑니다. 홀수(1, 3, 5) 중 하나가 나오면 다시 🎲를 굴려서 계속 앞으로 가세요.`;
+        }
+        else {
+          msg += `<strong>우주 유</strong>가 포털(신기한 문)을 열었습니다! 🎲를 굴려서 홀수(<strong>1, 3, 5</strong> 중 하나가 나오면 <strong>${n}</strong>칸 앞인 ${thumb(idx+n)}로 순간이동합니다. 짝수(2, 4, 6) 중 하나가 나오면 다시 🎲를 굴려서 계속 앞으로 가세요.`;
+        }
+        on_special_event = true;
+        break;
+      case 25:
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>몇 일 더 기다려 봅시다. 오늘은 얼른 앞으로 가봐요! 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 26:
+        msg += `<strong>-2</strong>가 나왔군요! 두 칸 뒤인 ${thumb(idx-2)}로 가야합니다.`;
+        break;
+      case 27:
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>몇 일 더 기다려 봅시다. 오늘은 열심히 앞으로 가봐요! 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 28:
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>몇 일 더 기다려 봅시다. 오늘은 신나게 앞으로 가봐요! 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 29:
+        msg += `<strong>+3</strong>이 나왔군요! 세 칸 앞인 ${thumb(idx+3)}로 가야합니다.`;
+        break;
+      case 30:
+        msg += `아직 아무일도 일어나지 않았습니다. <br><br>몇 일 더 기다려 봅시다. 오늘은 꾸준히 앞으로 가봐요! 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 31:
+        msg += `<strong>+1</strong>이 나왔군요! 한 칸 앞인 ${thumb(idx+1)}로 가야합니다.`;
+        break;
+      case 32:
+        msg += `<strong>랑새</strong>가족을 만났습니다! <br><br>`;
+        if(Math.random() > 0.5) {
+          msg += `이제 도착이 머지 않았습니다. 서로 응원해 줍시다! <strong>"힘내라~ 힘내라~"</strong> 🎲를 굴려서 계속 이어가세요.`;
+        }
+        else {
+          msg += `이제 도착이 머지 않았습니다. <strong>하이파이브</strong>를 하며 서로 응원해 줍시다! 🎲를 굴려서 계속 이어가세요.`;
+        }
+        break;
+      case 33:
+        msg += `<strong>-1</strong>이 나왔군요! 한 칸 뒤인 ${thumb(idx-1)}로 가야합니다. 조금만 더 힘내요!`;
+        break;
+      case 34:
+        msg += `<strong>-2</strong>이 나왔군요! 두 칸 뒤인 ${thumb(idx-2)}로 가야합니다. 조금만 더 힘내요!`;
+        break;
+      case 35:
+        msg += `<strong>-3</strong>이 나왔군요! 세 칸 뒤인 ${thumb(idx-3)}로 가야합니다. 조금만 더 힘내요! <strong>"할 수 있다!"</strong>`;
+        break;
+      case 36:
+        msg += `이제 거의 다 왔습니다. <br><br>오늘은 힘차게 앞으로 가봐요! 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 37:
+        msg += `이제 거의 다 왔습니다! <br><br>마지막 한 번 더 🎲를 굴려서 계속 이어가세요.`;
+        break;
+      case 38:
+        msg += `드디어 도착! <strong>탐험 보고~</strong><br><br>이번 게임에서는 전부 <strong>${roll_count}</strong>번 주사위를 굴렸고, 나온 숫자를 다 합하면 <strong>${total_dice_sum}</strong> 입니다. 다시 하고 싶으면 맨 처음의 QR코드를 클릭하세요.`;
         break;
       default:
         msg += `... 아직 준비중 입니다.<br><br> 지금은 🎲를 굴려서 계속 이어가세요. 이따가 다시 해보면 내용이 나올거에요.`;
@@ -384,6 +465,9 @@
       el_roll_info.innerHTML = `${tn} <strong>${current_face}</strong>${josa} 나왔습니다. 위 안내를 따라서 이동하세요!`; 
       on_special_event = false;
     }
+    
+    roll_count += 1;
+    total_dice_sum += current_face;
   }
   
   el_dice.onclick = function(e) {
@@ -437,7 +521,7 @@
         break;
       case 'G':
         desc = `Goal`;
-        // 탐험보고
+        el_message.innerHTML = `도착 QR코드를 활용한 <strong>탐험보고</strong>는 아직 준비중 입니다. 재미있는 내용 기대해 주세요~`;
         break;
     }
     
