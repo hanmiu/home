@@ -1,11 +1,98 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
 <title>신기한 여름방학</title>
 <style>
   body {
     margin: 0;
-    padding: 10vw;
+    user-select: none;
+    overflow: hidden;
     font-family: sans-serif;
+  }
+  
+  #title {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    display: flex;
+    box-sizing: border-box;
+    width: 100vw;
+    height: 10vh;
+    background-color: #e9fff8;
+    background-image: url(./images/summer_vacation.svg);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    align-items: center;
+    justify-content: center;
+    font-size: 5vh;
+    z-index: 100;
+  }
+  
+  #spots {
+    position: fixed;
+    left: 0px;
+    top: 10vh;
+    box-sizing: border-box;
+    width: 25vw;
+    height: 90vh;
+    background-color: #b0ffe7;
+    overflow-y: scroll;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  .spot {
+    display: inline-block;
+    width: 16vw;
+    height: 16vw;
+    margin: 4vw 0.5vw 0vw 3vw;
+    background-color: azure;
+    border-radius: 20vw;
+    border: 1.5vw solid #90e5e5;
+    background-size: contain;
+    transition: 0.5s border, 1s box-shadow;
+  }
+  
+  .spot[curr='1'] {
+    border: 1.5vw solid #008dff;
+    box-shadow: 0px 0px 10px #3bf0ff;
+  }
+  
+  .emptyspot {
+    display: inline-block;
+    width: 16vw;
+    height: 16vw;
+    margin: 4vw 0.5vw 0vw 3vw;
+  }
+  
+  #content {
+    position: fixed;
+    left: 25vw;
+    top: 10vh;
+    box-sizing: border-box;
+    width: 75vw;
+    height: 70vh;
+    background-color: #fffcb0;
+    overflow-y: scroll;
+    user-select: none;
+    -webkit-user-select: none;
+    background-image: url(./spots/1.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  
+  #control {
+    position: fixed;
+    left: 25vw;
+    bottom: 0vh;
+    box-sizing: border-box;
+    width: 75vw;
+    height: 20vh;
+    background-color: #d1b0ff;
+    user-select: none;
+    -webkit-user-select: none;
   }
   
   #notice {
@@ -13,59 +100,195 @@
     font-size: 10vh;
   }
   
-  #kkk {
-    color: #08d4d4;
-    font-size: 5vh;
+  #dice-holder {
+    position: absolute;
+    left: 0vh;
+    top: 0vh;
+    width: 20vh;
+    height: 20vh;
   }
   
   #dice {
-    width: 200px;
-    height: 200px;
-    font-size: 180px;
-    line-height: 200px;
+    position: absolute;
+    left: 4vh;
+    top: 4vh;
+    width: 12vh;
+    height: 12vh;
+    background-color: beige;
+    background-image: url(./dice/dice.svg);
+    border-radius: 1vh;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 0vh 0vh;
+    border: 1px solid #bdbda7;
+  }
+  
+  #roll-info-holder {
+    position: absolute;
+    left: 20vh;
+    top: 0vh;
+    width: calc(100vw - 20vh - 25vw);
+    height: 20vh;
+    background-color: #b0ffe7;
+  }
+  
+  #roll-info {
+    padding: 2vh;
+    font-family: 'Do Hyeon', sans-serif;
+    font-size: 2.5vh;
+    line-height: 1.5em;
   }
   
   #info {
     font-size: 20px;
   }
+  
+  .thumb {
+    width: 3vh;
+    height: 3vh;
+    border-radius: 2vh;
+  }
 </style>
 <body>
-  <div id="notice">준비 중!</div>
-  <div id="kkk">7월 23일 오전 10시 즈음 부터 플레이 가능합니다. 조금만 기다려 주세요~</div>
+  <div id="title"></div>
+  <div id="spots"></div>
+  <div id="content">7월 23일 12시 즈음에 업데이트 됩니다~ 조금만 더 기다려 주세요.</div>
+  <div id="control">
+    <div id="dice-holder">
+      <div id="dice"></div>
+      <div id="roll-info-holder">
+        <div id="roll-info">주사위를 클릭해서 나온 숫자 만큼 앞으로 갑니다! QR코드에서 출발하세요~</div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!--
   <button id="roll">주사위 굴리기</button>
   <div id="dice">⚀</div>
   <div id="info"></div>
+  -->
 </body>
 <script>
-  let bt_roll = document.querySelector('#roll');
+  let el_spots = document.querySelector('#spots');
+  let el_content = document.querySelector('#content');
   let el_dice = document.querySelector('#dice');
-  let el_info = document.querySelector('#info');
-  let dice_states = `⚀ ⚁ ⚂ ⚃ ⚄ ⚅`.split(' ');
+  let el_roll_info = document.querySelector('#roll-info');
+  
+  let spots = [];
+  
   let frame_count = 0;
-  let n_rolling = 10;
+  let n_rolling = 0;
   let current_face = 0;
+  let current_spot_idx = 0;
+  
+  let effs = '돌돌~,빙글~,딱~'.split(',');
+  
+  for(let i = 0; i < 40; i++) {
+    let el_spot = document.createElement('div');
+    if(i !== 39) {
+      el_spot.className = 'spot';
+      el_spot.style['background-image'] = `url(./spots/${i}.png)`;
+      el_spot.onclick = fire;  
+    }
+    else {
+      el_spot.className = 'emptyspot';
+    }
+    spots.push(el_spot);
+    el_spots.appendChild(el_spot);
+  }
+  
+  function halo(n) {
+    for(let i = 0; i < spots.length; i++) {
+      spots[i].setAttribute('curr', '');
+    }
+    spots[n].setAttribute('curr', '1');
+  }
+  
+  function fire(e) {
+    let idx = spots.indexOf(e.target);
+    halo(idx);
+    current_spot_idx = idx;
+    el_content.style['background-image'] = `url(./spots/${idx}.png)`;
+    el_roll_info.innerHTML = `위 안내를 따른 후, 다시 주사위를 돌려서 진행합니다.`;
+  }
+  
+  function jump_to(n) {
+    if(spots[n]) {
+      spots[n].scrollIntoView(false);
+    }
+  }
   
   function roll() {
     return Math.random() * 6 + 1 | 0;
   }
   
   function roll_the_dice() {
-    current_face = roll() - 1;
-    el_dice.textContent = dice_states[current_face];
+    current_face = roll();
+    el_dice.style["background-position"] = `${-(current_face-1)*12}vh 0vh`;
   }
+  
+  function after_roll() {
+    let url = `./spots/${current_face + current_spot_idx}.png`;
+    let img = `<img class="thumb" src="${url}">`;
+    el_roll_info.innerHTML = `${current_face}칸 앞으로 이동한 후 그 칸의 그림${img}을 클릭하세요!`;
+  }
+  
+  el_dice.onclick = function(e) {
+    el_dice.style['transition'] = `2s transform, 0.5s background-color`;
+    el_dice.style['transform'] = 'rotate(720deg)';
+    n_rolling = 10 + Math.random() * 3 | 0;
+    el_roll_info.innerHTML = '';
+  }
+  
+  function update() {
+    if(n_rolling > 0) {
+      if(frame_count % 10 === 0) {
+        let colors = '#ff3a3a,orange,yellow,yellowgreen,#448afa,#3806a8,#bf00bf'.split(',');
+        el_dice.style['background-color'] = colors[Math.random() * colors.length | 0];
+        el_roll_info.innerHTML += effs[Math.random() * effs.length | 0] + ' ';
+        roll_the_dice();
+        n_rolling -= 1;
+        if(n_rolling === 0) {
+          el_dice.style['background-color'] = 'beige';
+          el_dice.style['transition'] = `0.5s background-color`;
+          setTimeout(() => {
+            el_dice.style['transform'] = 'rotate(0deg)';
+            after_roll();
+          }, 500);
+        }
+      }
+    }
+    frame_count += 1;
+  }
+  
+  function loop() {
+    update();
+    requestAnimationFrame(loop);
+  }
+  /*
+  let bt_roll = document.querySelector('#roll');
+  
+  let el_info = document.querySelector('#info');
+  let dice_states = `⚀ ⚁ ⚂ ⚃ ⚄ ⚅`.split(' ');
+  
+  
+  
+  
+  
   
   bt_roll.onclick = function() {
     n_rolling = 10 + Math.random() * 5 | 0;  
   }
   
+  
+  */
+  
   function init() {
-    //layout();
     
     let params = new URLSearchParams(location.search.slice(1));
     let title = params.get('w');
     let desc = '';
-    
-    //console.log(params.get('w'));
     
     switch(params.get('w')) {
       case 'abc':
@@ -82,28 +305,14 @@
         break;
     }
     
-    el_info.textContent = desc;
+    // el_info.textContent = desc;
+    
+    current_face = roll();
+    el_dice.style["background-position"] = `${-(current_face-1)*12}vh 0vh`;
+    
+    halo(current_spot_idx);
     
     loop();
-  }
-  
-  function update() {
-    if(n_rolling > 0) {
-      if(frame_count % 10 === 0) {
-        el_dice.style['color'] = 'gray';
-        roll_the_dice();
-        n_rolling -= 1;
-        if(n_rolling === 0) {
-          el_dice.style['color'] = 'black';
-        }
-      }
-    }
-    frame_count += 1;
-  }
-  
-  function loop() {
-    update();
-    requestAnimationFrame(loop);
   }
   
   window.onload = init;
