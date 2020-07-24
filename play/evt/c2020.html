@@ -496,13 +496,13 @@
       radius: 5
     }).addTo(map);
     
-    /*
-    fetch('./20_creatures/data/spots.tsv')
+    fetch('./20_creatures/data/spots')
     .then(r => r.text())
     .then(text => {
       parse_data(text.split('\n'));  
     });
-    */
+
+    /*
     fetch('./20_creatures/data/hanmiu.jpg')
     .then(r => r.blob())
     .then(blob => blob.arrayBuffer())
@@ -511,8 +511,9 @@
     .then(tsv => {
       parse_data(tsv.split('\n'));
     });
+    */
     
-    fetch('./20_creatures/data/list.txt')
+    fetch('./20_creatures/data/list')
     .then(r => r.text())
     .then(text => {
       parse_asset_dic(text.split('\n'));  
