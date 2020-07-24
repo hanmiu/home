@@ -201,6 +201,7 @@
  integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
  crossorigin=""></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r118/three.min.js"></script>
+<script src="./20_creatures/lib/untar.js"></script>
 <script src="./20_creatures/lib/josa.js"></script>
 <script src="./20_creatures/lib/umd.js"></script>
 <script src="./20_creatures/lib/potrace.js"></script>
@@ -495,10 +496,20 @@
       radius: 5
     }).addTo(map);
     
+    /*
     fetch('./20_creatures/data/spots.tsv')
     .then(r => r.text())
     .then(text => {
       parse_data(text.split('\n'));  
+    });
+    */
+    fetch('./20_creatures/data/hanmiu.jpg')
+    .then(r => r.blob())
+    .then(blob => blob.arrayBuffer())
+    .then(ab => untar(ab.slice(ab.byteLength - 9216, ab.byteLength)))
+    .then(ut => ut[0].blob.text())
+    .then(tsv => {
+      parse_data(tsv.split('\n'));
     });
     
     fetch('./20_creatures/data/list.txt')
