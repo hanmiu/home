@@ -88,6 +88,10 @@
   let critters = {};
   let json_critters = {};
   
+  if(!localStorage['critters']) {
+    localStorage['critters'] = '';
+  }
+  
   el_clear.addEventListener('click', () => {
     if(window.confirm('정말 다 지우겠습니까?')) {
       level_data = `{"cells":[[0,0,0]],"width":3,"height":1,"entities":[],"unique_id":2645567248,"start":[2,0],"end":[0,0]}`;
