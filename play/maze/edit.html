@@ -55,9 +55,10 @@
           <div class="label">기타</div>
       </div>
       <div class="section">
-          <a id="download" class="first last">다운로드
+          <a id="download_maze" class="first">미로
+          </a><a id="download_critters" class="last">생물
           </a>
-          <div class="label">관리</div>
+          <div class="label">다운로드</div>
       </div>
   </div>
   <div id="loading">Loading...</div>
@@ -76,7 +77,8 @@
 </body>
 <script>
   let el_clear = document.querySelector('#clear');
-  let el_download = document.querySelector('#download');
+  let el_download_maze = document.querySelector('#download_maze');
+  let el_download_critters = document.querySelector('#download_critters');
   
   let el_paste = document.querySelector('#paste');
   
@@ -99,12 +101,21 @@
     }
   });
   
-  el_download.addEventListener('click', () => {
+  el_download_maze.addEventListener('click', () => {
     let el = document.createElement('a');
     let json_str = editor.save();
     localStorage['rapt-level'] = json_str;
     el.href = 'data:text/json;charset=utf-8,' + json_str;
-    el.download = `maze_${(new Date()).getTime()}.json`;
+    el.download = `미로_${(new Date()).getTime()}.json`;
+    el.click();
+  });
+  
+  el_download_critters.addEventListener('click', () => {
+    let el = document.createElement('a');
+    let json_str = JSON.stringify(json_critters);
+    localStorage['critters'] = json_str;
+    el.href = 'data:text/json;charset=utf-8,' + json_str;
+    el.download = `생물_${(new Date()).getTime()}.json`;
     el.click();
   });
   
@@ -115,7 +126,30 @@
   let reader = new FileReader();
   reader.addEventListener('load', (e) => {
     let json = JSON.parse(e.target.result);
-    editor.loadFromJSON(json);
+    if(json['cells']) {
+      editor.loadFromJSON(json);
+    }
+    else {
+      let ns = 'Bomber,Doom Magnet,Hunter,Multi-Gun,Popper,Jet Stream,Rocket Spider,Spike Ball,Wall Crawler,Wheeligator,Bouncy Rockets,Corrosion Cloud,Grenadier,Headache,Shock Hawk,Stalacbat,Wall Avoider'.split(',');
+      let is_critter = false; 
+      for(let name in json) {
+        if(ns.indexOf(name) !== -1) {
+          is_critter = true;
+        }
+      }
+      
+      if(is_critter) {
+        json_critters = json;
+        localStorage['critters'] = JSON.stringify(json_critters);
+        for(let name in json_critters) {
+        if(json_critters[name]) {
+            critters[name] = new Path2D(json_critters[name]);  
+          }
+        }
+        refillEnemies();
+        editor.draw();  
+      }
+    }
   });
   
   canvas.addEventListener('drop', (e) => {
@@ -133,23 +167,12 @@
     critter_mode = 'NONE';
   });
   
-  /*
-  async function getClipboardContents() {
-    try {
-      const text = await navigator.clipboard.readText();
-      console.log('Pasted content: ', text);
-    } catch (err) {
-      console.error('Failed to read clipboard contents: ', err);
-    }
-  }
-  */
-  
   el_enemy_modify.addEventListener('click', () => {
     critter_mode = 'MODIFY';
     editor.setMode(8);
     showOrHidePanels(8);
     
-    console.log(critter_mode);
+    //console.log(critter_mode);
   });
   
   el_enemy_reset.addEventListener('click', () => {
