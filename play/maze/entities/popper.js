@@ -41,6 +41,17 @@ function createPopperSprites() {
   }
 
   sprites[POPPER_BODY].drawGeometry = function(c) {
+    let critter = critters['Popper'];
+    if(critter) {
+      c.fillStyle = 'black';
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+    
     c.strokeStyle = 'black';
     c.fillStyle = 'black';
     c.beginPath();
@@ -147,19 +158,6 @@ export class Popper extends WalkingEnemy {
   }
 
   draw(c) {
-    let critter = critters['Popper'];
-    if(critter) {
-      c.fillStyle = 'black';
-      let pos = this.getCenter();
-      c.save();
-      c.translate(pos.x, pos.y);
-      c.scale(0.005, -0.005);
-      c.translate(-128, -128);
-      c.fill(critter);
-      c.restore();
-      return;
-    }
-    
     this.sprites[POPPER_BODY].draw(c);
   }
 
