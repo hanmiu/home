@@ -121,6 +121,10 @@
   let critters = {};
   let json_critters = {};
   
+  if(!localStorage['critters']) {
+    localStorage['critters'] = '{}';
+  }
+  
   function replace(name, path_str) {
     critters[name] = new Path2D(path_str);
   }

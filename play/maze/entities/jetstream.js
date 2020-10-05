@@ -58,9 +58,6 @@ export class JetStream extends SpawningEnemy {
   }
 
   draw(c) {
-	this.sprites[JET_STREAM_SPRITE_A].draw(c);
-	this.sprites[JET_STREAM_SPRITE_B].draw(c);
-
 	let angle = this.reloadAnimation * (2 * Math.PI / NUM_BARRELS);
 	let targetAngle = this.direction - Math.PI / 2;
 	let position = this.getCenter();
@@ -68,6 +65,22 @@ export class JetStream extends SpawningEnemy {
 
 	c.fillStyle = 'yellow';
 	c.strokeStyle = 'black';
+    
+    let critter = critters['Jet Stream'];
+    if(critter) {
+      c.save();
+      c.translate(position.x, position.y);
+      c.rotate(angle);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.stroke(critter);
+      c.restore();
+      return;
+    }
+    
+    this.sprites[JET_STREAM_SPRITE_A].draw(c);
+	this.sprites[JET_STREAM_SPRITE_B].draw(c);
 
 	for(let side = -1; side <= 1; side += 2)
 	{

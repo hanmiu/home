@@ -57,6 +57,18 @@ export class SpikeBall extends Enemy {
   }
 
   draw(c) {
+    let critter = critters['Spike Ball'];
+    if(critter) {
+      let pos = this.getCenter();
+      c.fillStyle = 'black';
+      c.save();
+      c.translate(pos.x, pos.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+    }
+    
 	this.sprites[0].draw(c);
   }
   

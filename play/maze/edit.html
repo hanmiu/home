@@ -162,7 +162,7 @@
       critters[name] = new Path2D(path_str);
       json_critters[name] = path_str;
       localStorage['critters'] = JSON.stringify(json_critters);
-      console.log(critters[name]);
+      console.log(name, critters[name]);
     }
     editor.draw();
   }
@@ -177,7 +177,9 @@
   function modify_critters() {
     json_critters = JSON.parse(localStorage['critters']);
     for(let name in json_critters) {
-      critters[name] = new Path2D(json_critters[name]);
+      if(json_critters[name]) {
+        critters[name] = new Path2D(json_critters[name]);  
+      }
     }
     fillEnemies();
     editor.draw();

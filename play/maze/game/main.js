@@ -106,7 +106,7 @@ class Menu {
       if (onSuccess) onSuccess();
 	});
     */
-    let json = {"username":"erucipe","levels":[{"title":"playground","difficulty":0,"html_title":"playground"},{"title":"part1","difficulty":0,"html_title":"part1"}]}
+    let json = {"username":"erucipe","levels":[{"title":"미로시작","difficulty":0,"html_title":"playground"},]}
     
     let levels = json['levels'];
     for (let i = 0; i < levels.length; i++) {
@@ -142,12 +142,12 @@ class Menu {
       $('#loadingScreen').hide();
 
       let html = '<h2>';
-      html += (this.username == 'rapt') ? 'Official Levels' : 'Levels made by ' + text2html(this.username);
+      html += (this.username == 'rapt') ? '한미유치원 미로' : 'Levels made by ' + text2html(this.username);
       html += '</h2><div id="levels">';
       let prevDifficulty = null;
       for (let i = 0; i < this.items.length; i++) {
         let item = this.items[i];
-        let difficulty = ['Easy', 'Medium', 'Hard', 'Brutal', 'Demoralizing'][item.difficulty];
+        let difficulty = ['', 'Medium', 'Hard', 'Brutal', 'Demoralizing'][item.difficulty];
         if (difficulty != prevDifficulty) {
           prevDifficulty = difficulty;
           html += '<div class="difficulty">' + difficulty + '</div>';

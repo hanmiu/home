@@ -147,18 +147,20 @@ export class Popper extends WalkingEnemy {
   }
 
   draw(c) {
-    if(!critters['Popper']) {
-      this.sprites[POPPER_BODY].draw(c);  
-    }
-	else {
-      let center = this.getCenter();
+    let critter = critters['Popper'];
+    if(critter) {
+      c.fillStyle = 'black';
+      let pos = this.getCenter();
       c.save();
-      c.translate(center.x, center.y);
-      c.scale(0.008, -0.008);
-      c.translate(-320, -240);
-      c.fill(critters['Popper']);
+      c.translate(pos.x, pos.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
       c.restore();
+      return;
     }
+    
+    this.sprites[POPPER_BODY].draw(c);
   }
 
   avoidsSpawn() {

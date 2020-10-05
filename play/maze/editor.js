@@ -1625,16 +1625,28 @@ Sprites.drawGrenadier = function(c, alpha, isRed) {
 	c.stroke();
 };
 
+function drawClaw(c) {
+    c.beginPath();
+    c.moveTo(0, 0.1);
+    for(var i = 0; i <= 6; i++) {
+        c.lineTo((i & 1) / 24, 0.2 + i * 0.05);
+    }
+    c.arc(0, 0.2, 0.3, 0.5*Math.PI, -0.5*Math.PI, true);
+    c.stroke();
+}
+  
 Sprites.drawHunter = function(c, alpha) {
-	function drawClaw(c) {
-		c.beginPath();
-		c.moveTo(0, 0.1);
-		for(var i = 0; i <= 6; i++) {
-			c.lineTo((i & 1) / 24, 0.2 + i * 0.05);
-		}
-		c.arc(0, 0.2, 0.3, 0.5*Math.PI, -0.5*Math.PI, true);
-		c.stroke();
-	}
+    let critter = critters['Hunter'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 	
 	// Draw the eye
 	c.strokeStyle = rgba(0, 0, 0, alpha);
@@ -1669,6 +1681,18 @@ function drawLeg(c, x, y, angle1, angle2, legLength) {
 }
 
 Sprites.drawPopper = function(c, alpha) {
+    let critter = critters['Popper'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
 	function drawBody(c, x, y) {
 		c.save();
 		c.translate(x, y);
@@ -1815,6 +1839,18 @@ Sprites.drawWallAvoider = function(c, alpha, isRed) {
 };
 
 Sprites.drawWallCrawler = function(c, alpha) {
+    let critter = critters['Wall Crawler'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
 	// Draw arms
 	var space = 0.15;
 	c.fillStyle = c.strokeStyle = rgba(0, 0, 0, alpha);
@@ -1837,6 +1873,18 @@ Sprites.drawWallCrawler = function(c, alpha) {
 };
 
 Sprites.drawWheeligator = function(c, alpha) {
+    let critter = critters['Wheeligator'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
 	// Draw wheel
 	var radius = 0.3;
 	var rim = 0.1;
@@ -1882,6 +1930,17 @@ var spikeDrawFuncs = [
 ];
 
 Sprites.drawSpikeBall = function(c, alpha) {
+    let critter = critters['Spike Ball'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+    }
+  
 	c.strokeStyle = rgba(0, 0, 0, alpha);
 	spikeDrawFuncs[0](c);
 	spikeDrawFuncs[1](c);
@@ -1889,6 +1948,19 @@ Sprites.drawSpikeBall = function(c, alpha) {
 };
 
 Sprites.drawRiotGun = function(c, alpha, reloadAnimation, directionAngle) {
+    let critter = critters['Jet Stream'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(255, 255, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.stroke(critter);
+      c.restore();
+      return;
+    }
+  
 	function drawWheel() {
 		var numBarrels = 3;
 		c.beginPath();
@@ -1941,7 +2013,19 @@ Sprites.drawMultiGun = function(c, alpha) {
 	var h = 0.25;
 	var r = 0.1;
 
-	c.strokeStyle = rgba(0, 0, 0, alpha);
+    let critter = critters['Multi-Gun'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
+    c.strokeStyle = rgba(0, 0, 0, alpha);
 	for (var a = -1; a <= 1; a += 2) {
 		for (var b = -1; b <= 1; b += 2) {
 			// Draw edge
@@ -1961,7 +2045,19 @@ Sprites.drawMultiGun = function(c, alpha) {
 };
 
 Sprites.drawSpider = function(c, alpha) {
-	c.save();
+	let critter = critters['Rocket Spider'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
+    c.save();
 	c.translate(0, 0.51);
 	
 	// Draw body

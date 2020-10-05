@@ -20,6 +20,16 @@ export class Wheeligator extends WalkingEnemy {
 
 	this.bodySprite = new Sprite();
 	this.bodySprite.drawGeometry = function(c) {
+      let critter = critters['Wheeligator'];
+      if(critter) {
+        c.fillStyle = 'black';
+        c.save();
+        c.scale(0.005, -0.005);
+        c.translate(-128, -128);
+        c.fill(critter);
+        c.restore();
+        return;
+      }
       let rim = 0.1;
 
       c.strokeStyle = 'black';
@@ -74,7 +84,6 @@ export class Wheeligator extends WalkingEnemy {
   }
 
   draw(c) {
-	let pos = this.getCenter();
 	this.bodySprite.draw(c);
   }
   

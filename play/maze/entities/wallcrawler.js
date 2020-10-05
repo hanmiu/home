@@ -22,29 +22,29 @@ export class WallCrawler extends WalkingEnemy {
       let space = 0.15;
       c.fillStyle = 'black';
       c.strokeStyle = 'black';
-      if(!critters['Wallcrawler']) {
-        c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 0.25 + space, Math.PI * 0.75 - space, false); c.stroke();
-        c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 0.75 + space, Math.PI * 1.25 - space, false); c.stroke();
-        c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 1.25 + space, Math.PI * 1.75 - space, false); c.stroke();
-        c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 1.75 + space, Math.PI * 2.25 - space, false); c.stroke();
-        c.beginPath(); c.arc(0, 0, 0.15, 0, 2*Math.PI, false); c.stroke();
-        c.beginPath();
-        c.moveTo(0.15, 0); c.lineTo(0.25, 0);
-        c.moveTo(0, 0.15); c.lineTo(0, 0.25);
-        c.moveTo(-0.15, 0); c.lineTo(-0.25, 0);
-        c.moveTo(0, -0.15); c.lineTo(0, -0.25);
-        c.stroke();
-        c.beginPath(); c.arc(0, 0, 0.05, 0, 2*Math.PI, false); c.fill();
-      }
-      else {
-        //let center = this.getCenter();
+      
+      let critter = critters['Wall Crawler'];
+      if(critter) {
         c.save();
-        //c.translate(center.x, center.y);
-        c.scale(0.008, -0.008);
-        c.translate(-320, -240);
-        c.fill(critters['Wallcrawler']);
+        c.scale(0.005, -0.005);
+        c.translate(-128, -128);
+        c.fill(critter);
         c.restore();
+        return;
       }
+      
+      c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 0.25 + space, Math.PI * 0.75 - space, false); c.stroke();
+      c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 0.75 + space, Math.PI * 1.25 - space, false); c.stroke();
+      c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 1.25 + space, Math.PI * 1.75 - space, false); c.stroke();
+      c.beginPath(); c.arc(0, 0, 0.25, Math.PI * 1.75 + space, Math.PI * 2.25 - space, false); c.stroke();
+      c.beginPath(); c.arc(0, 0, 0.15, 0, 2*Math.PI, false); c.stroke();
+      c.beginPath();
+      c.moveTo(0.15, 0); c.lineTo(0.25, 0);
+      c.moveTo(0, 0.15); c.lineTo(0, 0.25);
+      c.moveTo(-0.15, 0); c.lineTo(-0.25, 0);
+      c.moveTo(0, -0.15); c.lineTo(0, -0.25);
+      c.stroke();
+      c.beginPath(); c.arc(0, 0, 0.05, 0, 2*Math.PI, false); c.fill();
 	};
   }
   

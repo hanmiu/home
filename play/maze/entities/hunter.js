@@ -140,6 +140,18 @@ export class Hunter extends RotatingEnemy {
   draw(c) {
 	c.fillStyle = (this.target == gameState.playerA) ? 'red' : 'blue';
 	c.strokeStyle = 'black';
+    
+    let critter = critters['Hunter'];
+    if(critter) {
+      let pos = this.getCenter();
+      c.save();
+      c.translate(pos.x, pos.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 
 	if (this.state != STATE_IDLE)
 	{

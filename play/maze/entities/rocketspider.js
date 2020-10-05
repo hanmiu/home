@@ -52,6 +52,16 @@ const SPIDER_FLOOR_DIST = 1.0;
 const SPIDER_SIGHT_HEIGHT = 10;
 
 function drawSpiderBody(c) {
+  let critter = critters['Rocket Spider'];
+  if(critter) {
+    c.save();
+    c.scale(0.005, -0.005);
+    c.translate(-128, -128);
+    c.fill(critter);
+    c.restore();
+    return;
+  }
+  
   let innerRadius = 0.5;
   c.beginPath();
   for(let i = 0; i <= 21; i++)

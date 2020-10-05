@@ -73,6 +73,26 @@ export class MultiGun extends SpawningEnemy {
   }
 
   draw(c) {
+    let critter = critters['Multi-Gun'];
+    if(critter) {
+      if (!gameState.playerA.isDead() && !gameState.playerB.isDead()) {
+        c.fillStyle = "rgb(205, 0, 255)";
+      }
+      else if (!gameState.playerB.isDead()) {
+        c.fillStyle = "rgb(0, 0, 255)";
+      }
+      else if (!gameState.playerA.isDead()) {
+        c.fillStyle = "rgb(205, 0, 0)";
+      }
+      let pos = this.getCenter();
+      c.save();
+      c.translate(pos.x, pos.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 	// Draw the red and/or blue circles
 	if (this.redGun.eq(this.blueGun) && !gameState.playerA.isDead() && !gameState.playerB.isDead()) {
       let angle = (this.redGun.sub(this.getCenter())).atan2();
