@@ -849,7 +849,8 @@ function ajaxGetLevel(onSuccess) {
     */
     var level_data = localStorage.getItem('rapt-level');
     if(level_data) {
-      onSuccess(JSON.parse(level_data));  
+      onSuccess(JSON.parse(level_data));
+      modify_critters();
     }
     else {
       level_data = `{"cells":[[0,0,0]],"width":3,"height":1,"entities":[],"unique_id":2645567248,"start":[2,0],"end":[0,0]}`;
