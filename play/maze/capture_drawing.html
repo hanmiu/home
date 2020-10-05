@@ -287,7 +287,7 @@
     let step = 20;
     let candis = [];
     let corners = [];
-    ctx.fillStyle = 'red';
+    
     for(let i = 0; i < path.pt.length; i++) {
       let next_i = (i + step) % path.pt.length;
       let prev_i = i - step;
@@ -306,11 +306,6 @@
       let dot = va.x*vb.x + va.y*vb.y;
       pt.adot = Math.abs(dot);
       if(Math.abs(dot) < 0.3) {
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 1, 0, Math.PI * 2);
-        let hue = (i / (path.pt.length - 1)) * 270;
-        //ctx.fillStyle = `hsl(${hue},100%,50%)`;
-        //ctx.fill();
         candis.push(i);
       }
     }
@@ -330,16 +325,18 @@
       }
       if(pt) {
         if(corners.indexOf(pt) == -1) {
+          /*
           ctx.beginPath();
           ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
-          let hue = (i / (path.pt.length - 1)) * 270;
+          ctx.closePath();
           ctx.fill();
+          */
           corners.push(pt);
         }
       }
     }
     
-    return corners.length;
+    return corners;
   }
   
   let score = 0;
@@ -375,9 +372,10 @@
       let cy = ctx.canvas.height / 2;
       let p_count = 0;
       let squares = [];
+      ctx.fillStyle = 'red';
       for(let i = 0; i < pathlist.length; i++) {
         let path = pathlist[i];
-        if(path.area > 150 * 150 && path.area < 300 * 300) {
+        if(path.area > 150 * 150 && path.area < 450 * 450) {
           let center_x = (path.minX + path.maxX) / 2;
           let center_y = (path.minY + path.maxY) / 2;
           let dx = cx - center_x;
@@ -386,8 +384,16 @@
           if(d < 50) {
             p_count++;
             squares.push(path);
-            let corner_count = check_corner(path);
-            if(corner_count === 4) {
+            let corners = check_corner(path);
+            if(corners.length === 4) {
+              for(let j = 0; j < corners.length; j++) {
+                let pt = corners[j];
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+              }
+              
               ctx.beginPath();
               for(let j = 0; j < path.pt.length; j++) {
                 let pt = path.pt[j];
@@ -400,7 +406,7 @@
               }
               ctx.stroke();
             }
-            ctx.fillText(corner_count, path.pt[0].x, path.pt[0].j);  
+            //ctx.fillText(corner_count, path.pt[0].x, path.pt[0].j);  
           }
         }
       }
@@ -423,7 +429,7 @@
       let w0 = 256;
       let r = 30;
       let w1 = w0 + r;
-      ctx.strokeStyle = 'green';
+      ctx.strokeStyle = 'rgba(64, 255, 64, 0.75)';
       ctx.strokeRect(cx - w0/2, cy - w0/2, w0, w0);
       ctx.strokeRect(cx - w1/2, cy - w1/2, w1, w1);
       
