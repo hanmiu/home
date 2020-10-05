@@ -20,6 +20,17 @@ export class BouncyRocketLauncher extends SpawningEnemy {
 	this.bodySprite = new Sprite();
 	if (this.target === gameState.playerA) {
       this.bodySprite.drawGeometry = function(c) {
+        let critter = critters['Bouncy Rockets'];
+        if(critter) {
+          //c.strokeStyle = rgba(0, 0, 0, alpha);
+          c.fillStyle = 'red';
+          c.save();
+          c.scale(0.005, -0.005);
+          c.translate(-128, -128);
+          c.fill(critter);
+          c.restore();
+          return;
+        }
         // End of gun
         c.strokeStyle = 'black';
         c.beginPath();
@@ -51,6 +62,17 @@ export class BouncyRocketLauncher extends SpawningEnemy {
       }
 	} else {
       this.bodySprite.drawGeometry = function(c) {
+        let critter = critters['Bouncy Rockets'];
+        if(critter) {
+          //c.strokeStyle = rgba(0, 0, 0, alpha);
+          c.fillStyle = 'blue';
+          c.save();
+          c.scale(0.005, -0.005);
+          c.translate(-128, -128);
+          c.fill(critter);
+          c.restore();
+          return;
+        }
         // End of gun
         c.strokeStyle = 'black';
         c.beginPath();

@@ -17,6 +17,16 @@ export class ShockHawk extends HoveringEnemy {
 
 	this.bodySprite = new Sprite();
 	this.bodySprite.drawGeometry = function(c) {
+      let critter = critters['Shock Hawk'];
+      if(critter) {
+        c.save();
+        c.scale(0.005, -0.005);
+        c.translate(-128, -128);
+        c.fill(critter);
+        c.restore();
+        return;
+      }
+      
       // draw solid center
       c.beginPath();
       c.moveTo(0, -0.15);
@@ -81,21 +91,10 @@ export class ShockHawk extends HoveringEnemy {
 	}
   }
 
-  draw(c) {
+  draw(c) {    
     c.fillStyle = (this.target == gameState.playerA) ? 'red' : 'blue';
     c.strokeStyle = 'black';
-    if(!critters['Shockhawk']) {
-      this.bodySprite.draw(c);
-    }
-	else {
-      let center = this.getCenter();
-      c.save();
-      c.translate(center.x, center.y);
-      c.scale(0.008, -0.008);
-      c.translate(-320, -240);
-      c.fill(critters['Shockhawk']);
-      c.restore();
-    }
+    this.bodySprite.draw(c);
   }
   
   reactToPlayer(player) {

@@ -52,7 +52,7 @@ export class CorrosionCloud extends RotatingEnemy {
 	let isBlue = (this.target === gameState.playerB) ? 0.3 : 0;
 
 	this.smoothedVelocity = this.smoothedVelocity.mul(0.95).add(this.velocity.mul(0.05));
-	Particle.take().position(center).velocity(this.smoothedVelocity.sub(new Vector(0.1, 0.1)), this.smoothedVelocity.add(new Vector(0.1, 0.1))).radius(0.01, 0.1).bounces(0, 4).elasticity(0.05, 0.9).decay(0.01, 0.5).expand(1, 1.2).color(0.2 + isRed, 0.2, 0.2 + isBlue, 1).mixColor(0.1 + isRed, 0.1, 0.1 + isBlue, 1).circle().gravity(-0.4, 0);
+	Particle.take().position(center).velocity(this.smoothedVelocity.sub(new Vector(0.1, 0.1)), this.smoothedVelocity.add(new Vector(0.1, 0.1))).radius(0.01, 0.1).bounces(0, 4).elasticity(0.05, 0.9).decay(0.01, 0.5).expand(1, 1.2).color(0.2 + isRed, 0.2, 0.2 + isBlue, 0.5).mixColor(0.1 + isRed, 0.1, 0.1 + isBlue, 0.5).circle().gravity(-0.4, 0);
 };
 
   getTarget() {
@@ -61,6 +61,17 @@ export class CorrosionCloud extends RotatingEnemy {
 
   draw(c) {
 	// do nothing, it's all particles!
+    let critter = critters['Corrosion Cloud'];
+    if(critter) {
+      let pos = this.getCenter();
+      c.fillStyle = this.target === gameState.playerA ? 'rgba(255, 0, 0, 0.75)' : 'rgba(0, 0, 255, 0.75)';
+      c.save();
+      c.translate(pos.x, pos.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+    }
   }
   
   reactToPlayer(player) {

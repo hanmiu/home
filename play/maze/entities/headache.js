@@ -166,6 +166,18 @@ export class Headache extends HoveringEnemy {
 	for (let i = 0; i < this.chains.length; i++) {
       this.chains[i].draw(c);
 	}
+    
+    let critter = critters['Headache'];
+    if(critter) {
+      c.fillStyle = (this.target == gameState.playerA) ? 'red' : 'blue';
+      c.save();
+      c.translate(center.x, center.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 	
 	c.fillStyle = (this.target == gameState.playerA) ? 'red' : 'blue';
 	c.beginPath();

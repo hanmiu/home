@@ -377,7 +377,7 @@
       let squares = [];
       for(let i = 0; i < pathlist.length; i++) {
         let path = pathlist[i];
-        if(path.area > 240 * 240 && path.area < 300 * 300) {
+        if(path.area > 150 * 150 && path.area < 300 * 300) {
           let center_x = (path.minX + path.maxX) / 2;
           let center_y = (path.minY + path.maxY) / 2;
           let dx = cx - center_x;

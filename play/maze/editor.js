@@ -530,7 +530,6 @@ Editor.prototype.loadFromJSON = function(json) {
 
 Editor.prototype.setMode = function(mode) {
 	this.mode = mode;
-
 	switch (mode) {
 	case MODE_EMPTY:
 		this.selectedTool = new SetCellTool(this.doc, SETCELL_EMPTY);
@@ -786,11 +785,11 @@ Editor.prototype.setSelectedEnemy = function(index) {
     let name = this.enemies[this.selectedEnemy].name;
     if(critter_mode === 'MODIFY') {
       setCritter(name);
-      fillEnemies();
+      refillEnemies();
     }
     else if(critter_mode === 'RESET') {
       resetCritter(name);
-      fillEnemies();
+      refillEnemies();
     }
 };
 
@@ -899,7 +898,9 @@ var idToModeMap = {
 	'mode_enemies': MODE_ENEMIES,
 	'mode_walls_buttons': MODE_WALLS_BUTTONS,
 	'mode_help': MODE_HELP,
-	'mode_save_exit': MODE_SAVE_AND_EXIT
+	'mode_save_exit': MODE_SAVE_AND_EXIT,
+    'mode_enemy_modify': MODE_ENEMIES,
+    'mode_enemy_reset': MODE_ENEMIES,
 };
 
 var editor = null;
@@ -1027,7 +1028,22 @@ function fillEnemies() {
 		e.preventDefault();
 	});
 }
-window.fillEnemies = fillEnemies;
+  
+function refillEnemies() {
+  // Draw each enemy on its <canvas>
+	for (i = 0; i < editor.enemies.length; i++) {
+		var c = $('#enemy' + i + '-canvas')[0].getContext('2d');
+        c.translate(-40, -30);
+		c.fillStyle = c.strokeStyle = 'green';
+		var sprite = editor.enemies[i].sprite;
+		if (i == SPRITE_ROCKET_SPIDER) sprite = sprite.clone(new Vector(0, -0.2));
+		c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+        c.translate(40, 30);
+		c.lineWidth = 1 / 50;
+        sprite.draw(c);
+	}
+}
+window.refillEnemies = refillEnemies;
 
 function fillWalls() {
 	var gen = new SidebarGenerator();
@@ -1506,36 +1522,49 @@ Sprites.drawBomber = function(c, alpha, reloadPercentage) {
 };
 
 Sprites.drawBouncyRocketLauncher = function(c, alpha, redIsFirst) {
-   // End of gun
+
+    let critter = critters['Bouncy Rockets'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = redIsFirst ? rgba(255, 0, 0, alpha) : rgba(0, 0, 255, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
+    // End of gun
 	var v = Math.sqrt(0.2*0.2 - 0.1*0.1);
 	c.strokeStyle = rgba(0, 0, 0, alpha);
-   c.beginPath();
-   c.moveTo(-v, -0.1);
-   c.lineTo(-0.3, -0.1);
-   c.lineTo(-0.3, 0.1);
-   c.lineTo(-v, 0.1);
-   c.stroke();
+    c.beginPath();
+    c.moveTo(-v, -0.1);
+    c.lineTo(-0.3, -0.1);
+    c.lineTo(-0.3, 0.1);
+    c.lineTo(-v, 0.1);
+    c.stroke();
 
-   // Main body
-   c.fillStyle = rgba(255 * redIsFirst, 0, 255 * !redIsFirst, alpha);
-   c.beginPath();
-   c.arc(0, 0, 0.2, 1.65 * Math.PI, 2.35 * Math.PI, true);
-   c.fill();
-   c.fillStyle = rgba(255 * !redIsFirst, 0, 255 * redIsFirst, alpha);
-   c.beginPath();
-   c.arc(0, 0, 0.2, 1.65 * Math.PI, 2.35 * Math.PI, false);
-   c.fill();
+    // Main body
+    c.fillStyle = rgba(255 * redIsFirst, 0, 255 * !redIsFirst, alpha);
+    c.beginPath();
+    c.arc(0, 0, 0.2, 1.65 * Math.PI, 2.35 * Math.PI, true);
+    c.fill();
+    c.fillStyle = rgba(255 * !redIsFirst, 0, 255 * redIsFirst, alpha);
+    c.beginPath();
+    c.arc(0, 0, 0.2, 1.65 * Math.PI, 2.35 * Math.PI, false);
+    c.fill();
 
-	// Line circling the two colors
-   c.beginPath();
-   c.arc(0, 0, 0.2, 0, 2 * Math.PI, false);
-   c.stroke();
+    // Line circling the two colors
+    c.beginPath();
+    c.arc(0, 0, 0.2, 0, 2 * Math.PI, false);
+    c.stroke();
 
-	// Line separating the two colors
-   c.beginPath();
-   c.moveTo(Math.cos(1.65 * Math.PI) * 0.2, Math.sin(1.65 * Math.PI) * 0.2);
-   c.lineTo(Math.cos(2.35 * Math.PI) * 0.2, Math.sin(2.35 * Math.PI) * 0.2);
-   c.stroke();
+    // Line separating the two colors
+    c.beginPath();
+    c.moveTo(Math.cos(1.65 * Math.PI) * 0.2, Math.sin(1.65 * Math.PI) * 0.2);
+    c.lineTo(Math.cos(2.35 * Math.PI) * 0.2, Math.sin(2.35 * Math.PI) * 0.2);
+    c.stroke();
 };
 
 Sprites.drawDoomMagnet = function(c, alpha) {
@@ -1605,6 +1634,17 @@ Sprites.drawGrenadier = function(c, alpha, isRed) {
 	var barrelLength = 0.25;
 	var outerRadius = 0.25;
 	var innerRadius = 0.175;
+  
+    let critter = critters['Grenadier'];
+    if(critter) {
+      c.fillStyle = isRed ? rgba(255, 0, 0, alpha) : rgba(0, 0, 255, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 
 	// Draw a 'V' shape
 	c.fillStyle = rgba(255 * isRed, 0, 255 * !isRed, alpha);
@@ -1745,6 +1785,16 @@ for (var i = 0; i < 50; i++) {
 }
 
 Sprites.drawCloud = function(c, alpha, isRed) {
+    let critter = critters['Corrosion Cloud'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = isRed ? rgba(255, 0, 0, alpha) : rgba(0, 0, 255, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+    }
 	// Draw particles
 	for (var i = 0; i < 50; i++) {
 		c.fillStyle = rgba(127 * isRed, 0, 127 * !isRed, alpha * cloudCircles[i].alpha);
@@ -1755,6 +1805,16 @@ Sprites.drawCloud = function(c, alpha, isRed) {
 };
 
 Sprites.drawShockHawk = function(c, alpha, isRed) {
+    let critter = critters['Shock Hawk'];
+    if(critter) {
+      c.fillStyle = isRed ? rgba(255, 0, 0, alpha) : rgba(0, 0, 255, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 	// Draw solid center
 	c.fillStyle = rgba(255 * isRed, 0, 255 * !isRed, alpha);
 	c.beginPath();
@@ -1783,6 +1843,17 @@ Sprites.drawShockHawk = function(c, alpha, isRed) {
 };
 
 Sprites.drawStalacbat = function(c, alpha, isRed) {
+    let critter = critters['Stalacbat'];
+    if(critter) {
+      c.fillStyle = rgba(255 * isRed, 0, 255 * !isRed, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
 	function drawWing(c) {
 		var r = Math.sin(Math.PI / 4);
 		c.beginPath();
@@ -1814,6 +1885,16 @@ Sprites.drawStalacbat = function(c, alpha, isRed) {
 };
 
 Sprites.drawWallAvoider = function(c, alpha, isRed) {
+    let critter = critters['Wall Avoider'];
+    if(critter) {
+      c.fillStyle = rgba(255 * isRed, 0, 255 * !isRed, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 	// Draw body
 	c.fillStyle = rgba(255 * isRed, 0, 255 * !isRed, alpha);
 	c.strokeStyle = rgba(0, 0, 0, alpha);
@@ -2129,6 +2210,16 @@ Sprites.drawHeadache = function(c, alpha, isRed) {
 	}
 	c.stroke();
 	
+    let critter = critters['Headache'];
+    if(critter) {
+      c.fillStyle = isRed ? rgba(255, 0, 0, alpha) : rgba(0, 0, 255, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 	// draw the head
 	c.fillStyle = rgba(255 * isRed, 0, 255 * !isRed, alpha);
 	c.beginPath();

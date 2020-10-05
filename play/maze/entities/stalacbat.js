@@ -102,6 +102,18 @@ export class Stalacbat extends FreefallEnemy {
 	else {
       c.fillStyle = 'blue';
 	}
+    
+    let critter = critters['Stalacbat'];
+    if(critter) {
+      let pos = this.getCenter();
+      c.save();
+      c.translate(pos.x, pos.y);
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
 
 	// Draw the black wings
 	this.sprites[STALACBAT_SPRITE_BODY].draw(c);

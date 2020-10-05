@@ -26,6 +26,16 @@ export class Grenadier extends SpawningEnemy {
       let barrelLength = 0.25;
       let outerRadius = 0.25;
       let innerRadius = 0.175;
+      
+      let critter = critters['Grenadier'];
+      if(critter) {
+        c.save();
+        c.scale(0.005, -0.005);
+        c.translate(-128, -128);
+        c.fill(critter);
+        c.restore();
+        return;
+      }
 
       c.beginPath();
       c.moveTo(-outerRadius, -barrelLength);

@@ -148,12 +148,16 @@
     critter_mode = 'MODIFY';
     editor.setMode(8);
     showOrHidePanels(8);
+    
+    console.log(critter_mode);
   });
   
   el_enemy_reset.addEventListener('click', () => {
     critter_mode = 'RESET';
     editor.setMode(8);
     showOrHidePanels(8);
+    
+    console.log(critter_mode);
   });
   
   function setCritter(name) {
@@ -181,7 +185,7 @@
         critters[name] = new Path2D(json_critters[name]);  
       }
     }
-    fillEnemies();
+    refillEnemies();
     editor.draw();
   }
   

@@ -20,6 +20,15 @@ export class WallAvoider extends RotatingEnemy {
 
 	this.bodySprite = new Sprite();
 	this.bodySprite.drawGeometry = function(c) {
+      let critter = critters['Wall Avoider'];
+      if(critter) {
+        c.save();
+        c.scale(0.005, -0.005);
+        c.translate(-128, -128);
+        c.fill(critter);
+        c.restore();
+        return;
+      }
       c.beginPath(); c.arc(0, 0, 0.1, 0, 2*Math.PI, false); c.fill(); c.stroke();
       c.beginPath();
       for(let i = 0; i < 4; i++)
@@ -95,7 +104,8 @@ export class WallAvoider extends RotatingEnemy {
   draw(c) {
 	c.fillStyle = (this.target == gameState.playerA) ? 'red' : 'blue';
 	c.strokeStyle = 'black';
-	this.bodySprite.draw(c);
+    
+    this.bodySprite.draw(c);
   }
   
   reactToPlayer(player) {
