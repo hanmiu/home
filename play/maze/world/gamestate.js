@@ -18,7 +18,7 @@ import { RocketSpider } from '../entities/rocketspider.js';
 import { ShockHawk } from '../entities/shockhawk.js';
 import { SpikeBall } from '../entities/spikeball.js';
 import { Stalacbat  } from '../entities/stalacbat.js';
-import { WallAvoider } from '../entities/wallAvoider.js';
+import { WallAvoider } from '../entities/wallavoider.js';
 import { WallCrawler } from '../entities/wallcrawler.js';
 import { Wheeligator } from '../entities/wheeligator.js';
 import { Vector } from '../util/vector.js';
