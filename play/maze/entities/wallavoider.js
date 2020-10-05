@@ -8,7 +8,7 @@ import { ENEMY_WALL_AVOIDER } from './enemy.js';
 import { RotatingEnemy } from './rotatingenemy.js';
 
 const WALL_AVOIDER_RADIUS = 0.3;
-const WALL_AVOIDER_ACCEL = 3.3;
+const WALL_AVOIDER_ACCEL = 3.3; 
 
 export class WallAvoider extends RotatingEnemy {
   constructor(center, target) {
