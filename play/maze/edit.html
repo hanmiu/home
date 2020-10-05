@@ -170,6 +170,7 @@
   function resetCritter(name) {
     critters[name] = null;
     json_critters[name] = '';
+    localStorage['critters'] = JSON.stringify(json_critters);
     editor.draw();
   }
   
