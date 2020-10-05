@@ -128,7 +128,13 @@
   function modify_critters() {
     json_critters = JSON.parse(localStorage['critters']);
     for(let name in json_critters) {
-      critters[name] = new Path2D(json_critters[name]);
+      let path_str = json_critters[name];
+      if(path_str) {
+        critters[name] = new Path2D(path_str);  
+      }
+      else {
+        critters[name] = null;
+      }
     }
   }
   
