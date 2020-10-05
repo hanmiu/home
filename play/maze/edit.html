@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<title>Editor - Robots Are People Too</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
+<script src="jquery.mousewheel.min.js" type="text/javascript"></script>
+<script src="editor.js" type="text/javascript"></script>
+<link type="text/css" rel="stylesheet" href="style-editor.css" />
+
+<!-- this is just for testing, TODO: remove this -->
+<script type="text/javascript">
+
+  var username = "rapt";
+  var levelname = "foo";
+
+</script>
+<style>
+</style>
+<body>
+  <div id="toolbar">
+      <div class="section">
+          <a id="clear" class="first last">다 지우기</a>
+          <div class="label">주의</div>
+      </div>
+      <div class="section">
+          <a id="mode_empty" class="first toolbar-current">비움
+          </a><a id="mode_solid">채움
+          </a><a id="mode_diagonal" class="last">대각
+          </a>
+          <div class="label">타일</div>
+      </div>
+      <div class="section">
+          <a id="mode_start" class="first">출발
+          </a><a id="mode_goal" class="last">도착
+          </a>
+          <div class="label">이정표</div>
+      </div>
+      <div class="section">
+          <a id="mode_enemies" class="first">생물
+          </a><a id="mode_enemy_modify">가져오기
+          </a><a id="mode_enemy_reset" class="last">원래대로
+          </a>
+          <div class="label">생물 편집</div>
+      </div>
+      <div class="section">
+          <a id="mode_walls_buttons" class="first">벽 / 스위치
+          </a><a id="mode_cog">별
+          </a><a id="mode_sign" class="last">메시지
+          </a>
+          <div class="label">물체</div>
+      </div>
+      <div class="section">
+          <a id="mode_select" class="first">선택
+          </a><a id="mode_help">도움
+          </a><a id="mode_save_exit" class="last">저장
+          </a>
+          <div class="label">기타</div>
+      </div>
+      <div class="section">
+          <a id="download" class="first last">다운로드
+          </a>
+          <div class="label">관리</div>
+      </div>
+  </div>
+  <div id="loading">Loading...</div>
+  <canvas id="canvas"></canvas>
+  <div id="help" class="sidebar"></div>
+  <div id="enemies" class="sidebar"></div>
+  <div id="walls" class="sidebar"></div>
+  <div id="darken"></div>
+  <div id="sign-text-modal">
+      <div>Text for help sign:</div>
+      <input type="text" id="sign-text">
+      <button id="sign-text-change">Change</button>
+      <button id="sign-text-cancel">Cancel</button>
+  </div>
+  <div id="overlay"></div>
+</body>
+<script>
+  let el_clear = document.querySelector('#clear');
+  let el_download = document.querySelector('#download');
+  
+  let el_paste = document.querySelector('#paste');
+  
+  let el_enemies = document.querySelector('#mode_enemies');
+  let el_enemy_modify = document.querySelector('#mode_enemy_modify');
+  let el_enemy_reset = document.querySelector('#mode_enemy_reset');
+  let canvas = document.querySelector('#canvas');
+  
+  let critters = {};
+  let json_critters = {};
+  
+  el_clear.addEventListener('click', () => {
+    if(window.confirm('정말 다 지우겠습니까?')) {
+      level_data = `{"cells":[[0,0,0]],"width":3,"height":1,"entities":[],"unique_id":2645567248,"start":[2,0],"end":[0,0]}`;
+      editor.loadFromJSON(JSON.parse(level_data));  
+    }
+  });
+  
+  el_download.addEventListener('click', () => {
+    let el = document.createElement('a');
+    let json_str = editor.save();
+    localStorage['rapt-level'] = json_str;
+    el.href = 'data:text/json;charset=utf-8,' + json_str;
+    el.download = `maze_${(new Date()).getTime()}.json`;
+    el.click();
+  });
+  
+  canvas.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+  
+  let reader = new FileReader();
+  reader.addEventListener('load', (e) => {
+    let json = JSON.parse(e.target.result);
+    editor.loadFromJSON(json);
+  });
+  
+  canvas.addEventListener('drop', (e) => {
+    e.preventDefault();
+    for(let file of e.dataTransfer.files) {
+      if(file.type === 'application/json') {
+        reader.readAsText(file);  
+      }
+    }
+  });
+  
+  // Editor.prototype.setSelectedEnemy 관련 코드
+  let critter_mode = 'NONE';
+  el_enemies.addEventListener('click', () => {
+    critter_mode = 'NONE';
+  });
+  
+  /*
+  async function getClipboardContents() {
+    try {
+      const text = await navigator.clipboard.readText();
+      console.log('Pasted content: ', text);
+    } catch (err) {
+      console.error('Failed to read clipboard contents: ', err);
+    }
+  }
+  */
+  
+  el_enemy_modify.addEventListener('click', () => {
+    critter_mode = 'MODIFY';
+    editor.setMode(8);
+    showOrHidePanels(8);
+  });
+  
+  el_enemy_reset.addEventListener('click', () => {
+    critter_mode = 'RESET';
+    editor.setMode(8);
+    showOrHidePanels(8);
+  });
+  
+  function setCritter(name) {
+    let path_str = localStorage['critter-path'];
+    if(path_str) {
+      critters[name] = new Path2D(path_str);
+      json_critters[name] = path_str;
+      localStorage['critters'] = JSON.stringify(json_critters);
+      console.log(critters[name]);
+    }
+    editor.draw();
+  }
+  
+  function resetCritter(name) {
+    critters[name] = null;
+    json_critters[name] = '';
+    editor.draw();
+  }
+  
+  function modify_critters() {
+    json_critters = JSON.parse(localStorage['critters']);
+    for(let name in json_critters) {
+      critters[name] = new Path2D(json_critters[name]);
+    }
+    fillEnemies();
+    editor.draw();
+  }
+  
+  setTimeout(() => {
+    modify_critters();
+  }, 2000);
+</script>

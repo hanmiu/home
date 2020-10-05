@@ -1,0 +1,144 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background-color: rgb(127, 127, 127);
+  }
+  
+  #game {
+    display: inline-block;
+    float: left;
+    /* background: #a5f57b; */
+  }
+  
+  #info {
+    float: left;
+    width: 300px;
+    display: inline-block;
+    padding-top: 20px;
+    padding-left: 10px;
+    overflow-y: scroll;
+  }
+  
+  .text {
+    color: white;
+    padding: 5px;
+    font-family: Sunflower;
+    font-size: 20px;
+    line-height: 1.5em;
+  }
+  
+  .message {
+    color: #fdfd63;
+    padding: 5px;
+    font-family: Sunflower;
+    font-size: 20px;
+    line-height: 1.5em;
+    cursor: pointer;
+  }
+  
+  .message .link {
+    text-decoration: none;
+    color: #fdfd63;
+    border-bottom: 1px solid #fdfd63;
+    padding-bottom: 3px;
+    transition: color 0.2s;
+  }
+  
+  .message .link:hover {
+    color: #63fddf;
+    border-bottom: 1px solid #63fddf;
+  }
+  
+  .message .link:visited {
+    text-decoration: none;
+    color: #fdfd63;
+  }
+  
+  #blocks {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    width: 180px;
+    color: white;
+    font-size: 25px;
+    padding: 3px 3px 3px 8px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  #blocks .player1 {
+    color: red;
+  }
+  
+  #blocks .player2 {
+    color: blue;
+  }
+</style>
+<body>
+  <div id="game">
+    <canvas id="canvas" width="800" height="600" style="display: inline; width: 800px; height: 600px;">Your browser does not support the HTML5 canvas element.</canvas>
+    <div id="levelScreen" style="display: none;"><h2>Levels made by hanmi</h2></div>
+    <div id="loadingScreen" style="display: none;">Loading...</div>
+  </div>
+  <canvas id="background-cache-a" width="800" height="600" style="display: none;"></canvas><canvas id="background-cache-b" style="display: none;"></canvas>
+  <div id="blocks"></div>
+  <div id="info"></div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
+<script>
+  let username = "hanmi";  
+  let gameState;
+  let el_game = document.querySelector('#game');
+  let el_info = document.querySelector('#info');
+  el_info.style.height = innerHeight + 'px';
+  let el_blocks = document.querySelector('#blocks');
+  
+  //let utter = new SpeechSynthesisUtterance();
+  //utter.lang = 'ko';
+  
+  let links = {
+    'SDF와 모델링': 'https://iquilezles.org/www/articles/distfunctions/distfunctions.htm',
+    'SDF Edit': 'https://twitter.com/ephtracy/status/1214327748048642048',
+    'Clayxels를 발견': 'https://twitter.com/clayxels',
+    'Andre Int의 블로그에서': 'https://medium.com/@ainterguglielmi/clayxels-my-journey-into-making-a-game-designer-friendly-creation-tool-a6a1a622c854',
+    'Learning From Failure 발견': 'https://www.youtube.com/watch?v=u9KNtnCZDMI',
+    'LFF-pdf': 'http://media.lolrus.mediamolecule.com/AlexEvans_SIGGRAPH-2015.pdf',
+    'Dreams는 무엇?': 'http://dreams.mediamolecule.com',
+    '최근의 놀라운 데모1': 'https://www.youtube.com/watch?v=5PcRjRZr15c',
+    '데모2': 'https://www.youtube.com/watch?v=2HBBh8O1xpk',
+    '더 많은 데모': 'https://www.youtube.com/channel/UCPKDevN5mfxIrpyhfMsXWvQ',
+    'Little Big Planet(2008)의': 'https://en.wikipedia.org/wiki/LittleBigPlanet_(2008_video_game)',
+    'Media Molecule': 'https://en.wikipedia.org/wiki/Media_Molecule',
+    'Lion Head와 Bullfrog': 'https://en.wikipedia.org/wiki/Lionhead_Studios',
+    '플레이어가 만드는 세계': '',
+  };
+  
+  let critters = {};
+  let json_critters = {};
+  
+  function replace(name, path_str) {
+    critters[name] = new Path2D(path_str);
+  }
+  
+  function modify_critters() {
+    json_critters = JSON.parse(localStorage['critters']);
+    for(let name in json_critters) {
+      critters[name] = new Path2D(json_critters[name]);
+    }
+  }
+  
+</script>
+<script type="module">
+  import { play } from './game/main.js';
+  
+  window.addEventListener('load', () => {
+    modify_critters();
+    play();
+  });
+  
+</script>
