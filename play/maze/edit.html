@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<title>Editor - Robots Are People Too</title>
+<title>만들기 (미로)</title>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
 <script src="jquery.mousewheel.min.js" type="text/javascript"></script>
 <script src="editor.js" type="text/javascript"></script>
@@ -185,7 +185,7 @@
       critters[name] = new Path2D(path_str);
       json_critters[name] = path_str;
       localStorage['critters'] = JSON.stringify(json_critters);
-      console.log(name, critters[name]);
+      //console.log(name, critters[name]);
     }
     editor.draw();
   }

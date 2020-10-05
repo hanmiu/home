@@ -243,7 +243,7 @@ class Level {
       //this.canvas.style.height = this.height + 'px';
       this.canvas.style.width = parseInt(this.width / this.height * window.innerHeight) + 'px';
       this.canvas.style.height = window.innerHeight + 'px';
-		this.context.scale(ratio, ratio);
+      this.context.scale(ratio, ratio);
 	}
 
 	if (this.game != null) {
@@ -278,6 +278,7 @@ class Level {
     
     show_breakable_info();
     el_game.style.backgroundColor = '#a5f57b';
+    //el_game.style.backgroundColor = 'white';
   }
 
   load(username, levelname, onSuccess) {
