@@ -21,14 +21,15 @@
     margin-left: 20px;
   }
   
-  #ui {
+  .ui {
     display: flex;
     justify-content: center;
     margin-top: 20px;
     margin-bottom: 20px;
   }
   
-  #ui button {
+  .ui button {
+    margin-left: 10px;
     margin-right: 10px;
   }
   
@@ -56,9 +57,19 @@
     </div>
     <div id="captured">
       <div id="message">그림을 기다리는 중...</div>
-      <div id="ui">
+      <div class="ui">
         <button id="copy">가져가기</button>
         <button id="download">다운로드</button>
+      </div>
+      <div id="capture-panel">
+      </div>
+      <div class="ui">
+        <input type="radio" name="size" value="0" checked="true"><label>미로 아님</label>
+        <input type="radio" name="size" value="20"><label>20x20</label>
+        <input type="radio" name="size" value="30"><label>30x30</label>
+        <input type="radio" name="size" value="40"><label>40x40</label>
+        <input type="radio" name="size" value="50"><label>50x50</label>
+        <button id="maze-copy">미로 가져가기</button>
       </div>
     </div>
   </div>
@@ -70,6 +81,8 @@
   let video = document.createElement('video');
   let ctx = document.createElement('canvas').getContext('2d');
   document.querySelector('#video-canvas').appendChild(ctx.canvas);
+  
+  let el_capture_panel = document.querySelector('#capture-panel');
   
   let el_message = document.querySelector('#message');
   let el_text_for_copy = document.querySelector('#text-for-copy');
@@ -422,6 +435,7 @@
       
       if(score === 60 && p_count === 2) {
         let square = squares[0].area > squares[1].area ? squares[1] : squares[0];
+        captured_im = im;
         prepare(video, square);
         score = 0;
       }
@@ -444,7 +458,7 @@
   c.canvas.height = 256;
   
   let captured_ctx = document.createElement('canvas').getContext('2d');
-  document.querySelector('#captured').appendChild(captured_ctx.canvas);
+  el_capture_panel.appendChild(captured_ctx.canvas);
   captured_ctx.canvas.width = 480;
   captured_ctx.canvas.height = 480;
   
@@ -498,6 +512,7 @@
   }
   
   let d_str = '';
+  let captured_im = null;
   function displaySVG(size, type){
     let path_str = Potrace.getSVG(size, type).trim();
     d_str = path_str;
@@ -512,6 +527,8 @@
     g.scale(ratio, ratio);
     g.fill(p);
     g.restore();
+    
+    captured_im = captured_ctx.getImageData(0, 0, g.canvas.width, g.canvas.height);
     
     el_message.innerHTML = '잡았다!';
     el_text_for_copy.value = d_str;
@@ -539,5 +556,70 @@
     el.href = 'data:image/svg+xml,' + svg_str;
     el.download = `그림_${(new Date()).getTime()}.svg`;
     el.click();
+  });
+  
+  let maze_ctx = document.createElement('canvas').getContext('2d');
+  function take_maze(size) {
+    let c = captured_ctx;
+    let im = captured_im;
+    if(size === 0) {
+      c.clearRect(0, 0, im.width, im.height);
+      c.putImageData(im, 0, 0);
+      return;
+    }
+    let sw = parseInt(c.canvas.width / size + 0.5);
+    let sh = parseInt(c.canvas.height / size + 0.5);
+    c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+    if(im) {
+      //c.putImageData(im, 0, 0); 
+    }
+    else {
+      return;
+    }
+    
+    let maze = Array(size*size).fill(0);
+    for(let y = 0; y < c.canvas.height; y++) {
+      for(let x = 0; x < c.canvas.width; x++) {
+        let i = y * c.canvas.height + x;
+        let r = im.data[4 * i + 3] > 128 ? 1 : 0;
+        let iy = parseInt(y / sh);
+        let ix = parseInt(x / sw);
+        maze[iy * size + ix] += r;
+      }
+    }
+    
+    for(let i = 0; i < maze.length; i++) {
+      maze[i] = maze[i] / (sw*sh) > 0.1 ? 1 : 0;
+    }
+    
+    c.fillStyle = 'black';
+    for(let y = 0; y < size; y++) {
+      for(let x = 0; x < size; x++) {
+        let i = y * size + x;
+        let m = maze[i];
+        if(m > 0) {
+          let tx = x / size;
+          let ty = y / size;
+          c.fillRect(c.canvas.width * tx, c.canvas.height * ty, sw, sh);
+        }
+      }
+    }
+    
+    c.strokeStyle = 'rgb(200, 200, 200)';
+    for(let i = 0; i < size + 1; i++) {
+      let t = i / size;
+      c.beginPath();
+      c.moveTo(0, c.canvas.height * t);
+      c.lineTo(c.canvas.width, c.canvas.height * t);
+      c.moveTo(c.canvas.width * t, 0);
+      c.lineTo(c.canvas.width * t, c.canvas.height);
+      c.stroke();
+    }
+  }
+  
+  document.getElementsByName('size').forEach((el) => {
+    el.addEventListener('input', (e) => {
+      take_maze(parseInt(e.target.value));
+    });
   });
 </script>
