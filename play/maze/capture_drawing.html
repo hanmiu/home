@@ -64,11 +64,11 @@
       <div id="capture-panel">
       </div>
       <div class="ui">
-        <input type="radio" name="size" value="0" checked="true"><label>미로 아님</label>
-        <input type="radio" name="size" value="20"><label>20x20</label>
-        <input type="radio" name="size" value="30"><label>30x30</label>
-        <input type="radio" name="size" value="40"><label>40x40</label>
-        <input type="radio" name="size" value="50"><label>50x50</label>
+        <input type="radio" name="size" value="0" checked="true"><label name="size-label" id="0">미로 아님</label>
+        <input type="radio" name="size" value="20"><label name="size-label" id="1">20x20</label>
+        <input type="radio" name="size" value="30"><label name="size-label" id="2">30x30</label>
+        <input type="radio" name="size" value="40"><label name="size-label" id="3">40x40</label>
+        <input type="radio" name="size" value="50"><label name="size-label" id="4">50x50</label>
         <button id="maze-copy">미로 가져가기</button>
       </div>
     </div>
@@ -377,7 +377,7 @@
         im.data[i + 2] = (1-bin) * 255;
         bm.data[j] = bin;
       }
-      ctx.putImageData(im, 0, 0);
+      //ctx.putImageData(im, 0, 0);
       ctx.strokeStyle = 'cyan';
       ctx.fillStyle = 'magenta';
       bmToPathlist();
@@ -570,6 +570,11 @@
   function take_maze(size) {
     let c = captured_ctx;
     let im = captured_im;
+    
+    if(!im) {
+      return;
+    }
+    
     if(size === 0) {
       c.clearRect(0, 0, im.width, im.height);
       c.putImageData(im, 0, 0);
@@ -578,12 +583,6 @@
     let sw = parseInt(c.canvas.width / size + 0.5);
     let sh = parseInt(c.canvas.height / size + 0.5);
     c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-    if(im) {
-      //c.putImageData(im, 0, 0); 
-    }
-    else {
-      return;
-    }
     
     let maze = Array(size*size).fill(0);
     for(let y = 0; y < c.canvas.height; y++) {
@@ -657,6 +656,15 @@
   document.getElementsByName('size').forEach((el) => {
     el.addEventListener('input', (e) => {
       take_maze(parseInt(e.target.value));
+    });
+  });
+  
+  document.getElementsByName('size-label').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      let idx = parseInt(e.target.id);
+      let elem = document.getElementsByName('size')[idx];
+      elem.checked = true;
+      take_maze(parseInt(parseInt(elem.value)));
     });
   });
   
