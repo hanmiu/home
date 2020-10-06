@@ -88,7 +88,18 @@ function drawPlayerQuad(c, x1, x2, y1, y2) {
   c.stroke();
 }
 
-function drawPlayerHead(c, x1, x2, y1, y2, y3) {
+function drawPlayerHead(c, x1, x2, y1, y2, y3, color) {
+  let critter = color === 1 ? critters['Player-A'] : critters['Player-B'];
+  if(critter) {
+    c.fillStyle = 'black';
+    c.save();
+    c.scale(0.005, -0.005);
+    c.translate(-128, -128);
+    c.fill(critter);
+    c.restore();
+    return;
+  }
+  
   drawPlayerQuad(c, x1, x2, y1, y2);
   y2 /= 50;
   y3 /= 50;
@@ -99,14 +110,14 @@ function drawPlayerHead(c, x1, x2, y1, y2, y3) {
   c.stroke();
 }
 
-function createPlayerSprites() {
+function createPlayerSprites(color) {
   let sprites = [];
 
   for(let i = 0; i < PLAYER_NUM_SPRITES; i++) {
       sprites.push(new Sprite());
   }
 
-  sprites[PLAYER_HEAD].drawGeometry = function(c) { drawPlayerHead(c, 2.5, 2.5, 1, 10, 18); };
+  sprites[PLAYER_HEAD].drawGeometry = function(c) { drawPlayerHead(c, 2.5, 2.5, 1, 10, 18, color); };
   sprites[PLAYER_TORSO].drawGeometry = function(c) { drawPlayerQuad(c, 1.5, 1.5, 0, 15); };
   sprites[PLAYER_LEFT_UPPER_LEG].drawGeometry = sprites[PLAYER_RIGHT_UPPER_LEG].drawGeometry = function(c) { drawPlayerQuad(c, 1.5, 1, 0, -10); };
   sprites[PLAYER_LEFT_LOWER_LEG].drawGeometry = sprites[PLAYER_RIGHT_LOWER_LEG].drawGeometry = function(c) { drawPlayerQuad(c, 1, 1.5, 0, -10); };
@@ -173,7 +184,7 @@ export class Player extends Entity {
     this.prevState = PLAYER_STATE_FLOOR;
 
     // animation stuff
-    this.sprites = createPlayerSprites();
+    this.sprites = createPlayerSprites(color);
     this.facingRight = false;
     this.runningFrame = 0;
     this.fallingFrame = 0;

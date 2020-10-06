@@ -520,6 +520,23 @@ function Editor(canvas) {
 			sprite: spriteTemplates[i].sprite.clone(new Vector(0, 0), COLOR_BLUE)
 		});
 	}
+  
+    /*
+    this.players = [
+      {name: 'Player-A', sprite: new Sprite(SPRITE_PLAYER, 0.3, Sprites.drawPlayerA)},
+      {name: 'Player-B', sprite: new Sprite(SPRITE_PLAYER, 0.3, function(c, alpha) { Sprites.drawPlayerB(c, alpha); })},
+    ];
+    */
+    this.players = [
+      {
+        name: 'Player-A',
+        sprite: spriteTemplates[SPRITE_PLAYER_A].sprite
+      },
+      {
+        name: 'Player-B',
+        sprite: spriteTemplates[SPRITE_PLAYER_B].sprite
+      },
+    ];
 }
 
 Editor.prototype.loadFromJSON = function(json) {
@@ -792,6 +809,20 @@ Editor.prototype.setSelectedEnemy = function(index) {
       refillEnemies();
     }
 };
+  
+Editor.prototype.setSelectedPlayer = function(index) {
+	this.setSidePanelTool();
+
+    let name = this.players[index].name;
+    if(critter_mode === 'MODIFY') {
+      setCritter(name);
+      refillEnemies();
+    }
+    else if(critter_mode === 'RESET') {
+      resetCritter(name);
+      refillEnemies();
+    }
+};
 
 Editor.prototype.setSelectedWall = function(index) {
 	this.selectedWall = index;
@@ -1000,9 +1031,13 @@ function fillEnemies() {
 
 	// Create a <canvas> for each enemy
 	var i;
-	gen.addHeader('Color-neutral enemies');
+    gen.addHeader('플레이어');
+    gen.addCell('<div class="cell-player" id="player-A"><canvas id="player-A-canvas" width="80" height="60"></canvas>' + '플레이어A' + '</div>');
+    gen.addCell('<div class="cell-player" id="player-B"><canvas id="player-B-canvas" width="80" height="60"></canvas>' + '플레이어B' + '</div>');
+  
+	gen.addHeader('한 색 생물');
 	for (i = 0; i < editor.enemies.length; i++) {
-		if (i == 10) gen.addHeader('Color-specific enemies');
+		if (i == 10) gen.addHeader('두 색 생물');
 		gen.addCell('<div class="cell" id="enemy' + i + '"><canvas id="enemy' + i + '-canvas" width="80" height="60"></canvas>' + editor.enemies[i].name + '</div>');
 	}
 	$('#enemies').html(gen.getHTML());
@@ -1019,8 +1054,8 @@ function fillEnemies() {
 		if (i == SPRITE_ROCKET_SPIDER) sprite = sprite.clone(new Vector(0, -0.2));
 		sprite.draw(c);
 	}
-
-	// Add an action to each enemy button
+  
+    // Add an action to each enemy button
 	$('#enemies .cell').mousedown(function(e) {
 		var selectedEnemy = parseInt(/\d+$/.exec(this.id), 10);
 		editor.setSelectedEnemy(selectedEnemy);
@@ -1028,10 +1063,48 @@ function fillEnemies() {
 		$(this).addClass('enemy-current');
 		e.preventDefault();
 	});
+  
+    // Draw each player on its <canvas>
+    let p_ids = ['A', 'B'];
+	for (i = 0; i < editor.players.length; i++) {
+		var c = $('#player-' + p_ids[i] + '-canvas')[0].getContext('2d');
+		c.translate(40, 30);
+		c.scale(50, -50);
+		c.lineWidth = 1 / 50;
+		c.fillStyle = c.strokeStyle = 'black';
+		var sprite = editor.players[i].sprite;
+		sprite.draw(c);
+	}
+  
+    // Add an action to each player button
+	$('#enemies .cell-player').mousedown(function(e) {
+        //editor.setMode(MODE_SOLID);
+        //var selectedEnemy = parseInt(/\d+$/.exec(this.id), 10);
+        let index = 0;
+        if(this.id === 'player-A') index = 0;
+        else if(this.id === 'player-B') index = 1;
+		editor.setSelectedPlayer(index);
+		$('.enemy-current').removeClass('enemy-current');
+		$(this).addClass('enemy-current');
+		e.preventDefault();
+	});
 }
   
 function refillEnemies() {
-  // Draw each enemy on its <canvas>
+    // Draw each player on its <canvas>
+    let p_ids = ['A', 'B'];
+	for (i = 0; i < editor.players.length; i++) {
+		var c = $('#player-' + p_ids[i] + '-canvas')[0].getContext('2d');
+		c.translate(-40, -30);
+		c.fillStyle = c.strokeStyle = 'black';
+		var sprite = editor.players[i].sprite;
+        c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+        c.translate(40, 30);
+		c.lineWidth = 1 / 50;
+        sprite.draw(c);
+	}
+  
+    // Draw each enemy on its <canvas>
 	for (i = 0; i < editor.enemies.length; i++) {
 		var c = $('#enemy' + i + '-canvas')[0].getContext('2d');
         c.translate(-40, -30);
@@ -2252,6 +2325,76 @@ Sprites.drawSign = function(c, alpha, text) {
 	
 	c.restore();
 };
+  
+function drawPlayerQuad(c, x1, x2, y1, y2) {
+  x1 /= 50;
+  x2 /= 50;
+  y1 /= 50;
+  y2 /= 50;
+  c.beginPath();
+  c.moveTo(x1, y1);
+  c.lineTo(x2, y2);
+  c.lineTo(-x2, y2);
+  c.lineTo(-x1, y1);
+  c.closePath();
+  c.fill();
+  c.stroke();
+}
+
+function drawPlayerHead(c, x1, x2, y1, y2, y3) {
+  drawPlayerQuad(c, x1, x2, y1, y2);
+  y2 /= 50;
+  y3 /= 50;
+  c.beginPath();
+  c.moveTo(0, y2);
+  c.lineTo(0, y3 - 0.02);
+  c.arc(0, y3, 0.02, -Math.PI / 2, Math.PI * 3 / 2, false);
+  c.stroke();
+}
+  
+Sprites.drawPlayerA = function(c, alpha) {
+    let critter = critters['Player-A'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
+    c.fillStyle = 'red';
+    c.save();
+    c.translate(0, -0.4);
+    c.scale(2, 2);
+    c.lineWidth /= 2;
+    drawPlayerHead(c, 2.5, 2.5, 1, 10, 18);
+    c.restore();
+};
+  
+Sprites.drawPlayerB = function(c, alpha) {
+	let critter = critters['Player-B'];
+    if(critter) {
+      c.strokeStyle = rgba(0, 0, 0, alpha);
+      c.fillStyle = rgba(0, 0, 0, alpha);
+      c.save();
+      c.scale(0.005, -0.005);
+      c.translate(-128, -128);
+      c.fill(critter);
+      c.restore();
+      return;
+    }
+  
+    c.fillStyle = 'blue';
+    c.save();
+    c.translate(0, -0.4);
+    c.scale(2, 2);
+    c.lineWidth /= 2;
+    drawPlayerHead(c, 2.5, 2.5, 1, 10, 18);
+    c.restore();
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // class CameraPanTool
@@ -3231,6 +3374,8 @@ var SPRITE_STALACBAT = 15;
 var SPRITE_WALL_AVOIDER = 16;
 var SPRITE_COG = 17;
 var SPRITE_SIGN = 18;
+var SPRITE_PLAYER_A = 19;
+var SPRITE_PLAYER_B = 20;
 
 function Sprite(id, radius, drawFunc, anchor, color, angle) {
 	this.id = id;
@@ -3361,7 +3506,11 @@ var spriteTemplates = [
 	
 	// game objects
 	{ name: 'Cog', sprite: new Sprite(SPRITE_COG, 0.25, function(c, alpha) { Sprites.drawCog(c, alpha, 0.25); }) },
-	{ name: 'Sign', sprite: new Sprite(SPRITE_SIGN, 0.25, function(c, alpha) { Sprites.drawSign(c, alpha, this.text); }) }
+	{ name: 'Sign', sprite: new Sprite(SPRITE_SIGN, 0.25, function(c, alpha) { Sprites.drawSign(c, alpha, this.text); }) },
+  
+    // players
+    { name: 'Player-A', sprite: new Sprite(SPRITE_PLAYER_A, 0.3, function(c, alpha) { Sprites.drawPlayerA(c, alpha); }) },
+    { name: 'Player-B', sprite: new Sprite(SPRITE_PLAYER_B, 0.3, function(c, alpha) { Sprites.drawPlayerB(c, alpha); }) },
 ];
 
 
