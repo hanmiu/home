@@ -88,6 +88,7 @@
   let el_text_for_copy = document.querySelector('#text-for-copy');
   let el_copy = document.querySelector('#copy');
   let el_download = document.querySelector('#download');
+  let el_maze_copy = document.querySelector('#maze-copy');
   
   const times = [];
   
@@ -376,7 +377,7 @@
         im.data[i + 2] = (1-bin) * 255;
         bm.data[j] = bin;
       }
-      //ctx.putImageData(im, 0, 0);
+      ctx.putImageData(im, 0, 0);
       ctx.strokeStyle = 'cyan';
       ctx.fillStyle = 'magenta';
       bmToPathlist();
@@ -530,6 +531,9 @@
     
     captured_im = captured_ctx.getImageData(0, 0, g.canvas.width, g.canvas.height);
     
+    //document.querySelector('input[name=size').value
+    document.getElementsByName('size')[0].checked = true;
+    
     el_message.innerHTML = '잡았다!';
     el_text_for_copy.value = d_str;
     el_message.style.opacity = 1;
@@ -559,6 +563,10 @@
   });
   
   let maze_ctx = document.createElement('canvas').getContext('2d');
+  let for_json = [];
+  let pos_list = [];
+  let maze_width = 0;
+  let maze_height = 0;
   function take_maze(size) {
     let c = captured_ctx;
     let im = captured_im;
@@ -582,27 +590,56 @@
       for(let x = 0; x < c.canvas.width; x++) {
         let i = y * c.canvas.height + x;
         let r = im.data[4 * i + 3] > 128 ? 1 : 0;
-        let iy = parseInt(y / sh);
-        let ix = parseInt(x / sw);
+        let iy = Math.max(Math.min(parseInt(y / sh), size - 1), 0);
+        let ix = Math.max(Math.min(parseInt(x / sw), size - 1), 0);
         maze[iy * size + ix] += r;
       }
     }
     
+    let k = 0.1 + 0.2 * (size - 20) / (50 - 20);
     for(let i = 0; i < maze.length; i++) {
-      maze[i] = maze[i] / (sw*sh) > 0.1 ? 1 : 0;
+      maze[i] = maze[i] / (sw*sh) > k ? 1 : 0;
     }
     
     c.fillStyle = 'black';
+    let min_x = Number.MAX_VALUE;
+    let min_y = Number.MAX_VALUE;
+    let max_x = Number.MIN_VALUE;
+    let max_y = Number.MIN_VALUE;
     for(let y = 0; y < size; y++) {
       for(let x = 0; x < size; x++) {
         let i = y * size + x;
         let m = maze[i];
         if(m > 0) {
+          if(x < min_x) min_x = x;
+          if(y < min_y) min_y = y;
+          if(x > max_x) max_x = x;
+          if(y > max_y) max_y = y;
           let tx = x / size;
           let ty = y / size;
           c.fillRect(c.canvas.width * tx, c.canvas.height * ty, sw, sh);
         }
       }
+    }
+    let iw = max_x - min_x + 1;
+    let ih = max_y - min_y + 1;
+    
+    maze_width = iw;
+    maze_height = ih;
+    
+    for_json = [];
+    pos_list = [];
+    for(let y = min_y; y <= max_y; y++) {
+      let row = [];
+      for(let x = min_x; x <= max_x; x++) {
+        let i = y * size + x;
+        let m = maze[i];
+        row.push(1 - m);
+        if(m > 0) {
+          pos_list.push([x - min_x, ih - 1 - (y - min_y)]);  
+        }
+      }
+      for_json.unshift(row);
     }
     
     c.strokeStyle = 'rgb(200, 200, 200)';
@@ -621,5 +658,18 @@
     el.addEventListener('input', (e) => {
       take_maze(parseInt(e.target.value));
     });
+  });
+  
+  el_maze_copy.addEventListener('click', (e) => {
+    if(for_json.length > 0 && localStorage['rapt-level']) {
+      let json = JSON.parse(localStorage['rapt-level']);
+      json['cells'] = for_json;
+      json['width'] = maze_width;
+      json['height'] = maze_height;
+      json['entities'] = [];
+      json['start'] = pos_list.splice(Math.random() * pos_list.length | 0, 1)[0];
+      json['end'] = pos_list.splice(Math.random() * pos_list.length | 0, 1)[0];
+      localStorage['rapt-level'] = JSON.stringify(json);
+    }
   });
 </script>

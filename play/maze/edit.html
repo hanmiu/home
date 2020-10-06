@@ -207,4 +207,11 @@
     refillEnemies();
     editor.draw();
   }
+  
+  window.addEventListener('storage', (e) => {
+    if(e.key === 'rapt-level') {
+      let json = JSON.parse(localStorage['rapt-level']);
+      editor.loadFromJSON(json);
+    }  
+  });
 </script>
