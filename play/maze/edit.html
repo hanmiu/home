@@ -101,21 +101,31 @@
     }
   });
   
+  function getDateString(dt) {
+    let days = '일,월,화,수,목,금,토'.split(',');
+    return `${dt.getFullYear()}년 ${dt.getMonth()+1}월 ${dt.getDate()}일 ${days[dt.getDay()]}요일`;
+  }
+  
+  let default_names = '한미,환상,멋짐,쿵,쾅,펄쩍,딩동,우주,지구,숲,에너지,곤충,괴물,우정,노래'.split(',');
   el_download_maze.addEventListener('click', () => {
+    let name = window.prompt('이름은?', default_names[default_names.length * Math.random() | 0]);
+    let name_ = name.length > 0 ? name + '_' : '';
     let el = document.createElement('a');
     let json_str = editor.save();
     localStorage['rapt-level'] = json_str;
     el.href = 'data:text/json;charset=utf-8,' + json_str;
-    el.download = `미로_${(new Date()).getTime()}.json`;
+    el.download = `미로_${name_}${getDateString(new Date())}.json`;
     el.click();
   });
   
   el_download_critters.addEventListener('click', () => {
+    let name = window.prompt('이름은?', default_names[default_names.length * Math.random() | 0]);
+    let name_ = name.length > 0 ? name + '_' : '';
     let el = document.createElement('a');
     let json_str = JSON.stringify(json_critters);
     localStorage['critters'] = json_str;
     el.href = 'data:text/json;charset=utf-8,' + json_str;
-    el.download = `생물_${(new Date()).getTime()}.json`;
+    el.download = `생물_${name_}${getDateString(new Date())}.json`;
     el.click();
   });
   
