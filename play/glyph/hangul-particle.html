@@ -274,18 +274,15 @@
     e.stopPropagation();
   });
   
-  function layout() {
+  window.addEventListener('resize', (e) => {
     g.canvas.width = innerWidth;
     g.canvas.height = innerHeight;
-  }
-  
-  window.addEventListener('size', (e) => {
-    layout();
   });
   
   window.addEventListener("orientationchange", function(e) {
     setTimeout(() => {
-      layout();
+      g.canvas.width = innerWidth;
+      g.canvas.height = innerHeight;
       for(let i = 0; i < jamos.length; i++) {
         let p = jamos[i];
         p.x = g.canvas.width * Math.random();
