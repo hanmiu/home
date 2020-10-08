@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="user-scalable=no" />
+<title>한글슬라임 (한미유치원)</title>
 <style>
   body {
     margin: 0;
@@ -19,6 +20,7 @@
     position: fixed;
     left: 0px;
     top: 0px;
+    cursor: pointer;
   }
   
   #back {
@@ -95,7 +97,9 @@
       if(this.path_str) {
         this.path = new Path2D(this.path_str);    
       }
-      this.hue = 60 + Math.random() * 100 | 0;
+      this.fix_hue = 60 + (Math.random() < 0.3 ? Math.random() * 30 : Math.random() * 5) | 0;
+      this.hue = this.fix_hue;
+      this.to_hue = this.fix_hue;
       this.color = `hsl(${this.hue}deg, 10%, 50%)`;
       this.wait = 1;
       this.conn = [];
@@ -134,6 +138,12 @@
     }
     
     draw(bg, c) {
+      if(this !== selected_jamo) {
+        this.to_hue += (this.fix_hue - this.to_hue) * 0.01;
+      }
+      this.hue += (this.to_hue - this.hue) * 0.1;
+      this.color = `hsl(${this.hue}deg, 10%, 50%)`;
+      
       //bg.fillStyle = '#ffffb4';
       bg.fillStyle = this.color;
       bg.save();
@@ -155,16 +165,21 @@
   }
   
   function init() {
-    let n = 40;
+    let n = 24;
     for(let i = 0; i < n; i++) {
       let name = Math.random() > 0.5 ? ja[Math.random()*ja.length|0] : mo[Math.random()*mo.length|0]; 
       let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
       jamos.push(jamo);
     }
     
-    let must_have = 'ᄒ,ᅡ,ᄂ,ᄆ,ᅵ'.split(',');
-    for(let i = 0; i < must_have.length; i++) {
-      let name = must_have[i]; 
+    for(let i = 0; i < ja.length; i++) {
+      let name = ja[i]; 
+      let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
+      jamos.push(jamo);
+    }
+    
+    for(let i = 0; i < mo.length; i++) {
+      let name = mo[i]; 
       let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
       jamos.push(jamo);
     }
@@ -180,6 +195,7 @@
         if(d < jamo.r * 5) {
           jamo.vx += dx / d * 10;
           jamo.vy += dy / d * 10;
+          jamo.to_hue = Math.random() * 360 | 0;
         }
       }
     }
@@ -260,12 +276,6 @@
         let dy = p.y - o.y;
         let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
         if(d < (p.r + o.r) * 2) {
-          /*
-          let grad = bg.createLinearGradient(p.x|0, p.y|0, o.x|0, o.y|0);
-          bg.strokeStyle = grad;
-          grad.addColorStop(0, p.color);
-          grad.addColorStop(1, o.color);
-          */
           let mx = (p.x + o.x) / 2;
           let my = (p.y + o.y) / 2;
           bg.beginPath();
@@ -298,7 +308,6 @@
   
   init();
   loop();
-  //draw();
 
   function touchstart(e) {
     let eX, eY;
@@ -323,6 +332,7 @@
         selected_jamo = jamo;
         jamo.vx = 0;
         jamo.vy = 0;
+        jamo.to_hue = Math.random() < 0.2 ? Math.random() * 30 | 0 : 100 + Math.random() * 260 | 0;
       }
     }
   }
