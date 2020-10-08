@@ -1,5 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no" />
 <style>
   body {
     margin: 0;
@@ -141,11 +142,13 @@
       let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
       jamos.push(jamo);
     }
-    /*
-    let name = Math.random() > 0.5 ? ja[Math.random()*ja.length|0] : mo[Math.random()*mo.length|0]; 
-    let jamo = new Jamo('ᄀ', 50, 50);
-    jamos.push(jamo);
-    */
+    
+    let must_have = 'ᄒ,ᅡ,ᄂ,ᄆ,ᅵ'.split(',');
+    for(let i = 0; i < must_have.length; i++) {
+      let name = must_have[i]; 
+      let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
+      jamos.push(jamo);
+    }
   }
   
   function update() {
@@ -242,6 +245,7 @@
     let eX, eY;
     if(e.targetTouches) {
       //e.preventDefault();
+      window.scrollTo(0, 0);
       eX = e.targetTouches[0].pageX;
       eY = e.targetTouches[0].pageY;
 	}
