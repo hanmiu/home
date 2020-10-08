@@ -1,0 +1,296 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  #info {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 100;
+  }
+  
+  canvas {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    touch-action: none;
+  }
+</style>
+<body>
+  <div id="info"></div>
+</body>
+<script>
+  let charset = {
+    hangul: {
+      'ᄀ': 'm -25,-25 50,0 0,50',
+      'ᄂ': 'm -25,-25 0,50 50,0',
+      'ᄃ': 'm 25,-25 -50,0 0,50 50,0',
+      'ᄅ': 'm -25,-25 50,0 0,25 -50,0 0,25 50,0',
+      'ᄆ': 'm -25,-25 50,0 0,50 -50,0 z',
+      'ᄇ': 'm -25,0 50,0 m -50,-25 0,50 50,0 0,-50',
+      'ᄉ': 'M 0,0 25,25 M 0,-25 0,0 -25,25',
+      'ᄋ': 'M 25,0 A 25,25 0 1 1 -25,0 25,25 0 1 1 25,0 z',
+      'ᄌ': 'm -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+      'ᄎ': 'm 0,-40 0,10 m -25,5 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+      'ᄏ': 'm -25,0 50,0 m -50,-25 50,0 0,50',
+      'ᄐ': 'm -25,0 50,0 m 0,-25 -50,0 0,50 50,0',
+      'ᄑ': 'm 15,-25 0,50 m -30,-50 0,50 m -10,0 50,0 m -50,-50 50,0',
+      'ᄒ': 'm 20,5 c 0,11 -9,20 -20,20 -11,0 -20,-9 -20,-20 0,-11 9,-20 20,-20 11,0 20,9 20,20 z M 0,-40 0,-30 m -25,5 50,0',
+      'ᅡ': 'M 0,0 20,0 M 0,-40 0,40',	
+      'ᅣ': 'm 0,15 20,0 M 0,-15 20,-15 M 0,-40 0,40',
+      'ᅥ': 'M -20,0 0,0 m 0,-40 0,80',
+      'ᅧ': 'm -20,15 20,0 m -20,-30 20,0 m 0,-25 0,80',
+      'ᅩ': 'M 0,-20 0,0 m -40,0 80,0',
+      'ᅭ': 'm 15,-20 0,20 m -30,-20 0,20 m -25,0 80,0',
+      'ᅮ': 'M 0,0 0,20 M -40,0 40,0',
+      'ᅲ': 'm 15,0 0,20 M -15,0 -15,20 M -40,0 40,0',
+      'ᅳ': 'M -40,0 40,0',
+      'ᅵ': 'M 0,-40 0,40' 
+    },
+  };
+  
+  let ja = 'ᄀ,ᄂ,ᄃ,ᄅ,ᄆ,ᄇ,ᄉ,ᄋ,ᄌ,ᄎ,ᄏ,ᄐ,ᄑ,ᄒ'.split(',');
+  //let mo = 'ᅡ,ᅣ,ᅥ,ᅧ,ᅵ'.split(',');
+  let mo = 'ᅡ,ᅣ,ᅥ,ᅧ,ᅵ,ᅩ,ᅭ,ᅮ,ᅲ,ᅳ'.split(',');
+  
+  let g = document.createElement('canvas').getContext('2d');
+  g.canvas.width = innerWidth;
+  g.canvas.height = innerHeight;
+  document.body.appendChild(g.canvas);
+  
+  let jamos = [];
+  let selected_jamo = null;
+  
+  class Jamo {
+    constructor(name, x, y) {
+      this.name = name;
+      this.type = ja.includes(name) ? 'JA' : mo.includes(name) ? 'MO' : null;
+      this.path_str = ja.includes(name) ? charset.hangul[name] : mo.includes(name) ? charset.hangul[name] : null;
+      this.x = x;
+      this.y = y;
+      this.r = 35;
+      this.vx = 0;
+      this.vy = 0;
+      this.rot = 0;
+      this.to_rot = this.rot;
+      this.path = null;
+      if(this.path_str) {
+        this.path = new Path2D(this.path_str);    
+      }
+      //console.log(this.name, this.path_str,this.path);
+      this.wait = 1;
+    }
+    
+    update() {
+      this.x += this.vx * 0.05;
+      this.y += this.vy * 0.05;
+      this.vx *= 0.95;
+      this.vy *= 0.95;
+      
+      this.rot += (this.to_rot - this.rot) * 0.05;
+      let R = (innerWidth / innerHeight) > 1 ? 35 : 50;
+      this.r += (R - this.r) * 0.1;
+      
+      if(this.x + this.r*2 < 0) { 
+        this.x = g.canvas.width + this.r*2;
+      }
+      else if(this.y + this.r*2 < 0) {
+        this.y = g.canvas.height + this.r*2;
+      } 
+      else if(this.x - this.r*2 > g.canvas.width) {
+        this.x = 0 - this.r*2;
+      }
+      else if(this.y - this.r*2 > g.canvas.height) {
+        this.y = 0 - this.r*2;
+      }
+      
+      if(this.wait > 0) {
+        this.wait -= 1;
+        if(this.wait === 0) {
+          this.wait = (60 + Math.random() * 120) | 0;
+          if(this.type === 'MO' && Math.random() < 0.2) {
+            this.to_rot = ((Math.random() * 2 - 1) * 4 | 0) * Math.PI / 2;  
+          }
+        }
+      }
+    }
+    
+    draw(c) {
+      c.fillStyle = '#ffffb4';
+      c.lineWidth = 8 * 2;
+      c.save();
+      c.translate(this.x, this.y);
+      c.rotate(this.rot);
+      c.scale(0.4, 0.4);
+      c.beginPath();
+      c.arc(0, 0, this.r * 2, 0, Math.PI * 2);
+      c.fill();
+      c.stroke(this.path);
+      c.restore();
+    }
+  }
+  
+  function init() {
+    let n = 40;
+    for(let i = 0; i < n; i++) {
+      let name = Math.random() > 0.5 ? ja[Math.random()*ja.length|0] : mo[Math.random()*mo.length|0]; 
+      let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
+      jamos.push(jamo);
+    }
+    /*
+    let name = Math.random() > 0.5 ? ja[Math.random()*ja.length|0] : mo[Math.random()*mo.length|0]; 
+    let jamo = new Jamo('ᄀ', 50, 50);
+    jamos.push(jamo);
+    */
+  }
+  
+  function update() {
+    for(let i = 0; i < jamos.length; i++) {
+      let o = jamos[i];
+      for(let j = 0; j < jamos.length; j++) {
+        let p = jamos[j];
+        if(p !== o && p !== selected_jamo) {
+          let dx = p.x - o.x;
+          let dy = p.y - o.y;
+          let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+          let ux = dx / d;
+          let uy = dy / d;
+          let R = p.r + o.r;
+          let dR = R - d;
+          if(d < R) {
+            p.x += dR * ux * 0.5;
+            p.y += dR * uy * 0.5;
+          }
+          else if(d < R * 1.5 && Math.random() < 0.5) {
+            if(p.type !== o.type) {
+              p.vx += -ux * 10;
+              p.vy += -uy * 10;  
+            }
+            else {
+              //p.vx += ux * 0.2;
+              //p.vy += uy * 0.2;
+            }
+          }
+        }
+      }
+    }
+    
+    for(let i = 0; i < jamos.length; i++) {
+      let p = jamos[i];
+      let dv = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+      p.vx = p.vx / (dv + 1e-6) * 30;
+      p.vy = p.vy / (dv + 1e-6) * 30;
+      if(p !== selected_jamo) {
+        p.update();  
+      }
+    }
+  }
+  
+  function draw() {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    for(let i = 0; i < jamos.length; i++) {
+      let jamo = jamos[i];
+      jamo.draw(g);
+    }
+  }
+  
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  
+  init();
+  loop();
+  //draw();
+  
+  let mdown = false;
+  function touchstart(e) {
+    let eX, eY;
+    if(e.targetTouches) {
+      //e.preventDefault();
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    
+    mdown = true;
+    for(let i = 0; i < jamos.length; i++) {
+      let jamo = jamos[i];
+      let dx = eX - jamo.x;
+      let dy = eY - jamo.y;
+      let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+      if(d < jamo.r) {
+        selected_jamo = jamo;
+        jamo.vx = 0;
+        jamo.vy = 0;
+      }
+    }
+  }
+  
+  function touchmove(e) {
+    let eX, eY;
+    if(e.targetTouches) {
+      //e.preventDefault();
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    if(selected_jamo && mdown) {
+      selected_jamo.x = eX;
+      selected_jamo.y = eY;
+    }
+    //document.querySelector('#info').textContent = `${e.pageX}, ${e.pageY}`; 
+  }
+  
+  function touchend(e) {
+    mdown = false;
+    selected_jamo = null;
+  }
+  
+  g.canvas.addEventListener('mousedown', touchstart);
+  g.canvas.addEventListener('mouseup', touchend); 
+  g.canvas.addEventListener('mousemove', touchmove);
+  
+  g.canvas.addEventListener('touchstart', touchstart);
+  g.canvas.addEventListener('touchend', touchend);
+  g.canvas.addEventListener('touchmove', touchmove);
+  
+  g.canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  
+  function layout() {
+    g.canvas.width = innerWidth;
+    g.canvas.height = innerHeight;
+  }
+  
+  window.addEventListener('size', (e) => {
+    layout();
+  });
+  
+  window.addEventListener("orientationchange", function(e) {
+    setTimeout(() => {
+      layout();
+      for(let i = 0; i < jamos.length; i++) {
+        let p = jamos[i];
+        p.x = g.canvas.width * Math.random();
+        p.y = g.canvas.height * Math.random();
+      }
+    }, 100);
+  });
+</script>
