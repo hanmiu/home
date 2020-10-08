@@ -65,6 +65,9 @@
   
   let jamos = [];
   let selected_jamo = null;
+  let mdown = false;
+  let touchX = 0;
+  let touchY = 0;
   
   class Jamo {
     constructor(name, x, y) {
@@ -84,13 +87,12 @@
       }
       //console.log(this.name, this.path_str,this.path);
       this.wait = 1;
+      this.conn = [];
     }
     
     update() {
       this.x += this.vx * 0.05;
       this.y += this.vy * 0.05;
-      this.vx *= 0.95;
-      this.vy *= 0.95;
       
       this.rot += (this.to_rot - this.rot) * 0.05;
       let R = (innerWidth / innerHeight) > 1 ? 35 : 50;
@@ -152,6 +154,24 @@
   }
   
   function update() {
+    if(!selected_jamo && mdown) {
+      for(let i = 0; i < jamos.length; i++) {
+        let jamo = jamos[i];
+        let dx = touchX - jamo.x;
+        let dy = touchY - jamo.y;
+        let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+        if(d < jamo.r * 5) {
+          jamo.vx += dx / d * 10;
+          jamo.vy += dy / d * 10;
+        }
+      }
+    }
+    
+    for(let i = 0; i < jamos.length; i++) {
+      let p = jamos[i];
+      p.conn = [];
+    }
+    
     for(let i = 0; i < jamos.length; i++) {
       let o = jamos[i];
       for(let j = 0; j < jamos.length; j++) {
@@ -167,15 +187,21 @@
           if(d < R) {
             p.x += dR * ux * 0.5;
             p.y += dR * uy * 0.5;
+            if(p.conn.length < 6) {
+              p.conn.push(o);
+            }
           }
-          else if(d < R * 1.5 && Math.random() < 0.5) {
+          else if(d < R * 1.5 /*&& Math.random() < 0.5*/) {
             if(p.type !== o.type) {
-              p.vx += -ux * 10;
-              p.vy += -uy * 10;  
+              if(p.conn.length < 6) {
+                p.conn.push(o);
+                p.vx += -ux * 1;
+                p.vy += -uy * 1;  
+              }     
             }
             else {
-              //p.vx += ux * 0.2;
-              //p.vy += uy * 0.2;
+              //p.vx += ux * 2;
+              //p.vy -= uy * 2;
             }
           }
         }
@@ -185,8 +211,10 @@
     for(let i = 0; i < jamos.length; i++) {
       let p = jamos[i];
       let dv = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-      p.vx = p.vx / (dv + 1e-6) * 30;
-      p.vy = p.vy / (dv + 1e-6) * 30;
+      p.vx += p.vx / (dv + 1e-6);
+      p.vy += p.vy / (dv + 1e-6);
+      p.vx *= 0.9;
+      p.vy *= 0.9;
       if(p !== selected_jamo) {
         p.update();  
       }
@@ -198,6 +226,28 @@
     
     g.lineCap = 'round';
     g.lineJoin = 'round';
+    
+    //g.strokeStyle = 'yellowgreen';
+    g.strokeStyle = '#ffffb4';
+    //g.lineWidth = 40;
+    g.lineWidth = (innerWidth / innerHeight) > 1 ? 40 : 50;
+    for(let i = 0; i < jamos.length; i++) {
+      let p = jamos[i];
+      for(let j = 0; j < p.conn.length; j++) {
+        let o = p.conn[j];
+        let dx = p.x - o.x;
+        let dy = p.y - o.y;
+        let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+        if(d < (p.r + o.r) * 2) {
+          g.beginPath();
+          g.moveTo(p.x, p.y);
+          g.lineTo(o.x, o.y);
+          g.stroke();  
+        }
+      }
+    }
+    
+    g.strokeStyle = 'black';
     for(let i = 0; i < jamos.length; i++) {
       let jamo = jamos[i];
       jamo.draw(g);
@@ -213,12 +263,10 @@
   init();
   loop();
   //draw();
-  
-  let mdown = false;
+
   function touchstart(e) {
     let eX, eY;
     if(e.targetTouches) {
-      //e.preventDefault();
       eX = e.targetTouches[0].pageX;
       eY = e.targetTouches[0].pageY;
 	}
@@ -226,6 +274,8 @@
       eX = e.pageX;
       eY = e.pageY;
     }
+    touchX = eX;
+    touchY = eY;
     
     mdown = true;
     for(let i = 0; i < jamos.length; i++) {
@@ -252,11 +302,14 @@
       eX = e.pageX;
       eY = e.pageY;
     }
+    touchX = eX;
+    touchY = eY;
+    
     if(selected_jamo && mdown) {
       selected_jamo.x = eX;
       selected_jamo.y = eY;
     }
-    //document.querySelector('#info').textContent = `${e.pageX}, ${e.pageY}`; 
+    //document.querySelector('#info').textContent = `${e.pageX}, ${e.pageY}`;
   }
   
   function touchend(e) {
