@@ -8,20 +8,26 @@
   }
   
   #info {
+    display: none;
     position: absolute;
     left: 0px;
     top: 0px;
     z-index: 100;
   }
   
-  canvas {
+  .layer {
     position: fixed;
     left: 0px;
     top: 0px;
-    touch-action: none;
+  }
+  
+  #back {
+    filter: blur(10px) saturate(4.0) brightness(1.75)
   }
 </style>
 <body>
+  <canvas id="back" class="layer"></canvas>
+  <canvas id="front" class="layer"></canvas>
   <div id="info"></div>
 </body>
 <script>
@@ -58,9 +64,13 @@
   //let mo = 'ᅡ,ᅣ,ᅥ,ᅧ,ᅵ'.split(',');
   let mo = 'ᅡ,ᅣ,ᅥ,ᅧ,ᅵ,ᅩ,ᅭ,ᅮ,ᅲ,ᅳ'.split(',');
   
-  let g = document.createElement('canvas').getContext('2d');
+  let bg = document.querySelector('#back').getContext('2d');
+  bg.canvas.width = innerWidth;
+  bg.canvas.height = innerHeight;
+  let g = document.querySelector('#front').getContext('2d');
   g.canvas.width = innerWidth;
   g.canvas.height = innerHeight;
+  document.body.appendChild(bg.canvas);
   document.body.appendChild(g.canvas);
   
   let jamos = [];
@@ -85,7 +95,8 @@
       if(this.path_str) {
         this.path = new Path2D(this.path_str);    
       }
-      //console.log(this.name, this.path_str,this.path);
+      this.hue = 60 + Math.random() * 100 | 0;
+      this.color = `hsl(${this.hue}deg, 10%, 50%)`;
       this.wait = 1;
       this.conn = [];
     }
@@ -122,16 +133,22 @@
       }
     }
     
-    draw(c) {
-      c.fillStyle = '#ffffb4';
+    draw(bg, c) {
+      //bg.fillStyle = '#ffffb4';
+      bg.fillStyle = this.color;
+      bg.save();
+      bg.translate(this.x, this.y);
+      bg.scale(0.4, 0.4);
+      bg.beginPath();
+      bg.arc(0, 0, this.r * 2.25, 0, Math.PI * 2);
+      bg.fill();
+      bg.restore();
+      
       c.lineWidth = 8 * 2;
       c.save();
       c.translate(this.x, this.y);
       c.rotate(this.rot);
       c.scale(0.4, 0.4);
-      c.beginPath();
-      c.arc(0, 0, this.r * 2, 0, Math.PI * 2);
-      c.fill();
       c.stroke(this.path);
       c.restore();
     }
@@ -222,15 +239,19 @@
   }
   
   function draw() {
+    bg.fillStyle = 'white';
+    bg.fillRect(0, 0, bg.canvas.width, bg.canvas.height);
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     
+    bg.lineCap = 'round';
+    bg.lineJoin = 'round';
     g.lineCap = 'round';
     g.lineJoin = 'round';
     
     //g.strokeStyle = 'yellowgreen';
-    g.strokeStyle = '#ffffb4';
-    //g.lineWidth = 40;
-    g.lineWidth = (innerWidth / innerHeight) > 1 ? 40 : 50;
+    //bg.strokeStyle = '#ffffb4';
+    //bg.strokeStyle = '#fafa13';
+    bg.lineWidth = (innerWidth / innerHeight) > 1 ? 40 : 50;
     for(let i = 0; i < jamos.length; i++) {
       let p = jamos[i];
       for(let j = 0; j < p.conn.length; j++) {
@@ -239,10 +260,25 @@
         let dy = p.y - o.y;
         let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
         if(d < (p.r + o.r) * 2) {
-          g.beginPath();
-          g.moveTo(p.x, p.y);
-          g.lineTo(o.x, o.y);
-          g.stroke();  
+          /*
+          let grad = bg.createLinearGradient(p.x|0, p.y|0, o.x|0, o.y|0);
+          bg.strokeStyle = grad;
+          grad.addColorStop(0, p.color);
+          grad.addColorStop(1, o.color);
+          */
+          let mx = (p.x + o.x) / 2;
+          let my = (p.y + o.y) / 2;
+          bg.beginPath();
+          bg.moveTo(p.x, p.y);
+          bg.lineTo(mx, my);
+          bg.strokeStyle = p.color;
+          bg.stroke();
+          
+          bg.beginPath();
+          bg.moveTo(mx, my);
+          bg.lineTo(o.x, o.y);
+          bg.strokeStyle = o.color;
+          bg.stroke();
         }
       }
     }
@@ -250,7 +286,7 @@
     g.strokeStyle = 'black';
     for(let i = 0; i < jamos.length; i++) {
       let jamo = jamos[i];
-      jamo.draw(g);
+      jamo.draw(bg, g);
     }
   }
   
@@ -330,15 +366,20 @@
     e.stopPropagation();
   });
   
-  window.addEventListener('resize', (e) => {
+  function layout() {
+    bg.canvas.width = innerWidth;
+    bg.canvas.height = innerHeight;
     g.canvas.width = innerWidth;
     g.canvas.height = innerHeight;
+  }
+  
+  window.addEventListener('resize', (e) => {
+    layout();
   });
   
   window.addEventListener("orientationchange", function(e) {
     setTimeout(() => {
-      g.canvas.width = innerWidth;
-      g.canvas.height = innerHeight;
+      layout();
       for(let i = 0; i < jamos.length; i++) {
         let p = jamos[i];
         p.x = g.canvas.width * Math.random();
