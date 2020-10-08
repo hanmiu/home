@@ -244,8 +244,7 @@
   function touchmove(e) {
     let eX, eY;
     if(e.targetTouches) {
-      //e.preventDefault();
-      window.scrollTo(0, 0);
+      e.preventDefault();
       eX = e.targetTouches[0].pageX;
       eY = e.targetTouches[0].pageY;
 	}
