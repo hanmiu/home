@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="user-scalable=no" />
+<title>한글슬라임 (한미유치원)</title>
 <style>
   body {
     margin: 0;
@@ -8,20 +9,27 @@
   }
   
   #info {
+    display: none;
     position: absolute;
     left: 0px;
     top: 0px;
     z-index: 100;
   }
   
-  canvas {
+  .layer {
     position: fixed;
     left: 0px;
     top: 0px;
-    touch-action: none;
+    cursor: pointer;
+  }
+  
+  #back {
+    filter: blur(10px) saturate(4.0) brightness(1.75)
   }
 </style>
 <body>
+  <canvas id="back" class="layer"></canvas>
+  <canvas id="front" class="layer"></canvas>
   <div id="info"></div>
 </body>
 <script>
@@ -58,13 +66,20 @@
   //let mo = 'ᅡ,ᅣ,ᅥ,ᅧ,ᅵ'.split(',');
   let mo = 'ᅡ,ᅣ,ᅥ,ᅧ,ᅵ,ᅩ,ᅭ,ᅮ,ᅲ,ᅳ'.split(',');
   
-  let g = document.createElement('canvas').getContext('2d');
+  let bg = document.querySelector('#back').getContext('2d');
+  bg.canvas.width = innerWidth;
+  bg.canvas.height = innerHeight;
+  let g = document.querySelector('#front').getContext('2d');
   g.canvas.width = innerWidth;
   g.canvas.height = innerHeight;
+  document.body.appendChild(bg.canvas);
   document.body.appendChild(g.canvas);
   
   let jamos = [];
   let selected_jamo = null;
+  let mdown = false;
+  let touchX = 0;
+  let touchY = 0;
   
   class Jamo {
     constructor(name, x, y) {
@@ -82,15 +97,17 @@
       if(this.path_str) {
         this.path = new Path2D(this.path_str);    
       }
-      //console.log(this.name, this.path_str,this.path);
+      this.fix_hue = 60 + (Math.random() < 0.3 ? Math.random() * 30 : Math.random() * 5) | 0;
+      this.hue = this.fix_hue;
+      this.to_hue = this.fix_hue;
+      this.color = `hsl(${this.hue}deg, 10%, 50%)`;
       this.wait = 1;
+      this.conn = [];
     }
     
     update() {
       this.x += this.vx * 0.05;
       this.y += this.vy * 0.05;
-      this.vx *= 0.95;
-      this.vy *= 0.95;
       
       this.rot += (this.to_rot - this.rot) * 0.05;
       let R = (innerWidth / innerHeight) > 1 ? 35 : 50;
@@ -120,38 +137,74 @@
       }
     }
     
-    draw(c) {
-      c.fillStyle = '#ffffb4';
+    draw(bg, c) {
+      if(this !== selected_jamo) {
+        this.to_hue += (this.fix_hue - this.to_hue) * 0.01;
+      }
+      this.hue += (this.to_hue - this.hue) * 0.1;
+      this.color = `hsl(${this.hue}deg, 10%, 50%)`;
+      
+      //bg.fillStyle = '#ffffb4';
+      bg.fillStyle = this.color;
+      bg.save();
+      bg.translate(this.x, this.y);
+      bg.scale(0.4, 0.4);
+      bg.beginPath();
+      bg.arc(0, 0, this.r * 2.25, 0, Math.PI * 2);
+      bg.fill();
+      bg.restore();
+      
       c.lineWidth = 8 * 2;
       c.save();
       c.translate(this.x, this.y);
       c.rotate(this.rot);
       c.scale(0.4, 0.4);
-      c.beginPath();
-      c.arc(0, 0, this.r * 2, 0, Math.PI * 2);
-      c.fill();
       c.stroke(this.path);
       c.restore();
     }
   }
   
   function init() {
-    let n = 40;
+    let n = 24;
     for(let i = 0; i < n; i++) {
       let name = Math.random() > 0.5 ? ja[Math.random()*ja.length|0] : mo[Math.random()*mo.length|0]; 
       let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
       jamos.push(jamo);
     }
     
-    let must_have = 'ᄒ,ᅡ,ᄂ,ᄆ,ᅵ'.split(',');
-    for(let i = 0; i < must_have.length; i++) {
-      let name = must_have[i]; 
+    for(let i = 0; i < ja.length; i++) {
+      let name = ja[i]; 
+      let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
+      jamos.push(jamo);
+    }
+    
+    for(let i = 0; i < mo.length; i++) {
+      let name = mo[i]; 
       let jamo = new Jamo(name, Math.random() * g.canvas.width, Math.random() * g.canvas.height);
       jamos.push(jamo);
     }
   }
   
   function update() {
+    if(!selected_jamo && mdown) {
+      for(let i = 0; i < jamos.length; i++) {
+        let jamo = jamos[i];
+        let dx = touchX - jamo.x;
+        let dy = touchY - jamo.y;
+        let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+        if(d < jamo.r * 5) {
+          jamo.vx += dx / d * 10;
+          jamo.vy += dy / d * 10;
+          jamo.to_hue = Math.random() * 360 | 0;
+        }
+      }
+    }
+    
+    for(let i = 0; i < jamos.length; i++) {
+      let p = jamos[i];
+      p.conn = [];
+    }
+    
     for(let i = 0; i < jamos.length; i++) {
       let o = jamos[i];
       for(let j = 0; j < jamos.length; j++) {
@@ -167,15 +220,21 @@
           if(d < R) {
             p.x += dR * ux * 0.5;
             p.y += dR * uy * 0.5;
+            if(p.conn.length < 6) {
+              p.conn.push(o);
+            }
           }
-          else if(d < R * 1.5 && Math.random() < 0.5) {
+          else if(d < R * 1.5 /*&& Math.random() < 0.5*/) {
             if(p.type !== o.type) {
-              p.vx += -ux * 10;
-              p.vy += -uy * 10;  
+              if(p.conn.length < 6) {
+                p.conn.push(o);
+                p.vx += -ux * 1;
+                p.vy += -uy * 1;  
+              }     
             }
             else {
-              //p.vx += ux * 0.2;
-              //p.vy += uy * 0.2;
+              //p.vx += ux * 2;
+              //p.vy -= uy * 2;
             }
           }
         }
@@ -185,8 +244,10 @@
     for(let i = 0; i < jamos.length; i++) {
       let p = jamos[i];
       let dv = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-      p.vx = p.vx / (dv + 1e-6) * 30;
-      p.vy = p.vy / (dv + 1e-6) * 30;
+      p.vx += p.vx / (dv + 1e-6);
+      p.vy += p.vy / (dv + 1e-6);
+      p.vx *= 0.9;
+      p.vy *= 0.9;
       if(p !== selected_jamo) {
         p.update();  
       }
@@ -194,13 +255,48 @@
   }
   
   function draw() {
+    bg.fillStyle = 'white';
+    bg.fillRect(0, 0, bg.canvas.width, bg.canvas.height);
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     
+    bg.lineCap = 'round';
+    bg.lineJoin = 'round';
     g.lineCap = 'round';
     g.lineJoin = 'round';
+    
+    //g.strokeStyle = 'yellowgreen';
+    //bg.strokeStyle = '#ffffb4';
+    //bg.strokeStyle = '#fafa13';
+    bg.lineWidth = (innerWidth / innerHeight) > 1 ? 40 : 50;
+    for(let i = 0; i < jamos.length; i++) {
+      let p = jamos[i];
+      for(let j = 0; j < p.conn.length; j++) {
+        let o = p.conn[j];
+        let dx = p.x - o.x;
+        let dy = p.y - o.y;
+        let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+        if(d < (p.r + o.r) * 2) {
+          let mx = (p.x + o.x) / 2;
+          let my = (p.y + o.y) / 2;
+          bg.beginPath();
+          bg.moveTo(p.x, p.y);
+          bg.lineTo(mx, my);
+          bg.strokeStyle = p.color;
+          bg.stroke();
+          
+          bg.beginPath();
+          bg.moveTo(mx, my);
+          bg.lineTo(o.x, o.y);
+          bg.strokeStyle = o.color;
+          bg.stroke();
+        }
+      }
+    }
+    
+    g.strokeStyle = 'black';
     for(let i = 0; i < jamos.length; i++) {
       let jamo = jamos[i];
-      jamo.draw(g);
+      jamo.draw(bg, g);
     }
   }
   
@@ -212,13 +308,10 @@
   
   init();
   loop();
-  //draw();
-  
-  let mdown = false;
+
   function touchstart(e) {
     let eX, eY;
     if(e.targetTouches) {
-      //e.preventDefault();
       eX = e.targetTouches[0].pageX;
       eY = e.targetTouches[0].pageY;
 	}
@@ -226,6 +319,8 @@
       eX = e.pageX;
       eY = e.pageY;
     }
+    touchX = eX;
+    touchY = eY;
     
     mdown = true;
     for(let i = 0; i < jamos.length; i++) {
@@ -237,6 +332,7 @@
         selected_jamo = jamo;
         jamo.vx = 0;
         jamo.vy = 0;
+        jamo.to_hue = Math.random() < 0.2 ? Math.random() * 30 | 0 : 100 + Math.random() * 260 | 0;
       }
     }
   }
@@ -252,11 +348,14 @@
       eX = e.pageX;
       eY = e.pageY;
     }
+    touchX = eX;
+    touchY = eY;
+    
     if(selected_jamo && mdown) {
       selected_jamo.x = eX;
       selected_jamo.y = eY;
     }
-    //document.querySelector('#info').textContent = `${e.pageX}, ${e.pageY}`; 
+    //document.querySelector('#info').textContent = `${e.pageX}, ${e.pageY}`;
   }
   
   function touchend(e) {
@@ -277,15 +376,20 @@
     e.stopPropagation();
   });
   
-  window.addEventListener('resize', (e) => {
+  function layout() {
+    bg.canvas.width = innerWidth;
+    bg.canvas.height = innerHeight;
     g.canvas.width = innerWidth;
     g.canvas.height = innerHeight;
+  }
+  
+  window.addEventListener('resize', (e) => {
+    layout();
   });
   
   window.addEventListener("orientationchange", function(e) {
     setTimeout(() => {
-      g.canvas.width = innerWidth;
-      g.canvas.height = innerHeight;
+      layout();
       for(let i = 0; i < jamos.length; i++) {
         let p = jamos[i];
         p.x = g.canvas.width * Math.random();
