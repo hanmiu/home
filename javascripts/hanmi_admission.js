@@ -1,5 +1,57 @@
 html['admission'] = `
 <div>2021학년도 입학 안내</div>
+<br>
+
+<div class="subtle">
+한미유치원은 <strong><a href="https://blog.naver.com/go-firstschool" target="_blank">유치원입학관리스템-처음학교로</a></strong>를 통하여 유아모집을 실시합니다.
+</div>
+<br>
+
+<div>입학 대상 연령</div>
+<div class="subtle">
+  <ul class="flower">
+    <li>2017년생 (만3세) 3학급</li>
+    <li>2016년생 (만4세) 약간명</li>
+    <li>2015년생 (만5세) 약간명</li>
+  </ul>
+</div>
+<br>
+
+<div>처음학교로 시스템</div>
+<div class="subtle">
+  <ul class="musical">
+    <li>2020년 11월 2일 월요일 ~ 12월 31일 목요일</li>
+    <li>우선모집 선발 후 일반모집과 대기자 선발</li>
+    <li><a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로 사이트</a> 참고</li>
+  </ul>
+</div>
+<br>
+
+<div>설명회</div>
+<div class="subtle">
+  <strong>비대면: Zoom, 대면: 소그룹</strong><br>
+  코로나19로 인하여 단체설명회는 생략하며 비대면(Zoom)과 소그룹(대면) 설명회를 병행합니다.
+  <ol>
+    <li>비대면(Zoom) 설명회:<br>10월 29일 목요일 11시, 10월 30일 금요일 11시</li>
+    <li>대면(소그룹) 설명회:<br>11월 9일 토요일 11시, 1시<br>성인만 참석가능하며, 방역기준을 준수합니다.</li>
+  </ul>
+</div>
+<br>
+
+<div class="subtle">
+좀 더 자세한 내용은 곧 업데이트 될 &lt;모집요강&gt;을 참고해 주시고, 궁금한 사항은 전화로 문의해 주시면 상세히 답변 드리겠습니다.<br><br>
+<a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>
+</div>
+<br>
+
+<div>더 살펴보기</div>
+<div class="subtle">
+  <ul class="leaf">
+    <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
+    <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
+    <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
+  </ul>
+</div>
 `;
 
 class HanmiAdmission {
