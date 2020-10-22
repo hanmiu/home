@@ -47,6 +47,8 @@ html['admission'] = `
 <div>더 살펴보기</div>
 <div class="subtle">
   <ul class="leaf">
+    <li><a href="https://trello.com/b/sFYg60Ly" target="_blank">한미유치원의 1년</a></li>
+    <li><a href="http://www.youtube.com/watch?v=JJtlmzplcWA" target="_blank">한미유치원 하루 일과 (영상)</a></li>
     <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>

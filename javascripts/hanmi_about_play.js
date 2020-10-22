@@ -37,8 +37,9 @@ html['about_play'] = `
 <div>더 살펴보기</div>
 <div class="subtle">
   <ul class="leaf">
+    <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
-    <li><a href="/?page=playground">한미유치원의 디지털 놀이터</a> →</li>
+    <!--<li><a href="/?page=playground">한미유치원의 디지털 놀이터</a> →</li>-->
   </ul>
 </div>
 <!--
