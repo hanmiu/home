@@ -7,11 +7,11 @@ html['admission'] = `
 </div>
 <br>
 
-<div>입학 대상 연령</div>
+<div>모집 대상</div>
 <div class="subtle">
   <ul class="flower">
     <li>2017년생 (만3세) 3학급</li>
-    <li>2016년생 (만4세) 약간명</li>
+    <li>2016년생 (만4세) 1학급</li>
     <li>2015년생 (만5세) 약간명</li>
   </ul>
 </div>
