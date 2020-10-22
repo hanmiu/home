@@ -52,6 +52,8 @@ html['admission'] = `
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
   </ul>
 </div>
+
+<img style="display: block; height: 100px; margin: auto;" src="./images/logotype/hanmi_runner.svg">
 `;
 
 class HanmiAdmission {
