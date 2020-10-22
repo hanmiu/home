@@ -35,7 +35,7 @@ html['admission'] = `
     <li>비대면(Zoom) 설명회:<br>10월 29일 목요일 11시<br>10월 30일 금요일 11시</li>
     <li>대면(소그룹) 설명회:<br>11월 7일 토요일 11시, 1시<br>성인만 참석가능하며, 방역기준을 준수합니다.</li>
   </ol>
-  <div><a href="https://zoom.us/download" target="_blank">교육설명회 신청</a> (링크 클릭)</div>
+  <div><a href="https://forms.gle/eeZWtCEQn47Y1mtTA" target="_blank">교육설명회 신청</a> (링크 클릭)</div>
 </div>
 <br>
 
