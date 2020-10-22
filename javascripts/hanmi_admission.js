@@ -3,7 +3,7 @@ html['admission'] = `
 <br>
 
 <div class="subtle">
-한미유치원은 <strong><a href="https://blog.naver.com/go-firstschool" target="_blank">유치원입학관리스템-처음학교로</a></strong>를 통하여 유아모집을 실시합니다.
+한미유치원은 <a href="https://blog.naver.com/go-firstschool" target="_blank">유치원입학관리스템-처음학교로</a></strong>를 통하여 유아모집을 실시합니다. 아래는 <strong><a href="https://drive.google.com/file/d/1g8rct91YMkrzah5O2npGblYBbdM0ruGT/view?usp=sharing" target="_blank">&lt;모집요강&gt;</a></strong>의 간추린 내용입니다.
 </div>
 <br>
 
@@ -34,12 +34,13 @@ html['admission'] = `
   <ol>
     <li>비대면(Zoom) 설명회:<br>10월 29일 목요일 11시<br>10월 30일 금요일 11시</li>
     <li>대면(소그룹) 설명회:<br>11월 7일 토요일 11시, 1시<br>성인만 참석가능하며, 방역기준을 준수합니다.</li>
-  </ul>
+  </ol>
+  <div><a href="https://zoom.us/download" target="_blank">교육설명회 신청</a> (링크 클릭)</div>
 </div>
 <br>
 
 <div class="subtle">
-좀 더 자세한 내용은 곧 업데이트 될 &lt;모집요강&gt;을 참고해 주시고, 궁금한 사항은 전화로 문의해 주시면 상세히 답변 드리겠습니다.<br><br>
+더 자세한 내용은 <strong><a href="https://drive.google.com/file/d/1g8rct91YMkrzah5O2npGblYBbdM0ruGT/view?usp=sharing" target="_blank">&lt;모집요강&gt;</a></strong>을 참고해 주시고, 궁금한 사항은 전화로 문의해 주시면 상세히 답변 드리겠습니다.<br><br>
 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>
 </div>
 <br>
