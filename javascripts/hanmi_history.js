@@ -55,7 +55,7 @@ html['hanmi'] = `
 <div class="subtle">
   <ul class="leaf">
     <li><a href="https://docs.google.com/document/d/1y0eWpakT_k0jztMM092pN_1vTu-ii6Ot7T8vpWP49Ak/edit?usp=sharing" target="_blank">감동이 있는 알나무 동네(1997) 후일담</a></li>
-    <li><a href="https://drive.google.com/file/d/1mfuc-oR_Ga11l0bEbfq5pVuGTZAooGSJ/view?usp=sharing" target="_blank">한국의 유아교육과 보육정책에 대한 총괄적 진단과 분석: OECD의 관점 (2004)</a> - 2019 개정누리과정까지 이어지는 맥락 속의 한미유치원</li>
+    <li><a href="https://drive.google.com/file/d/1mfuc-oR_Ga11l0bEbfq5pVuGTZAooGSJ/view?usp=sharing" target="_blank">한국의 유아교육과 보육정책에 대한 총괄적 진단과 분석: OECD의 관점 (2004)</a> - 2019 개정누리과정까지 이어지는 맥락 속의 한미유치원 (127p)</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
   </ul>
