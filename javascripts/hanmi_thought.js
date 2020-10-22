@@ -23,7 +23,7 @@ html['thought'] = `
 <div class="subtle">
   한미유치원은 짜여진대로 앞으로 나아가기만 하는 것이 아니라 멈춤이나 후퇴를 인정하고 함께 이야기 나누며 어린이의 다양한 성향과 리듬을 존중하는 교육을 <a href="/?page=hanmi" target="_blank">오랫동안</a> 해왔습니다.<br><br>
 
-  이 여정을 가다보면 놀라운 일(<span style="background-color: yellow;">어린이가 자신의 호기심을 따라 즐겁게 세상을 알아가는</span> 등)이 일어난다는 것을 매해 새롭게 확인하고 있습니다.<br><br>
+  이 여정을 함께 따라가다 보면 놀라운 일(<span style="background-color: yellow;">어린이가 자신의 호기심을 따라 즐겁게 세상을 알아가는</span> 등)이 일어난다는 것을 매해 새롭게 확인하고 있습니다. 특히 그렇게 알아가는 것이 가능하다는 것을 인식한 어린이들이 자신의 <span style="background-color: yellow">생각에 관해 생각</span>하며 그러한 일이 더 일어날 수 있는 방향을 교사와 친구들과 함께 찾아가는 모습을 보면 무척 놀라게 됩니다.<br><br>
 
   이러한 접근을 건강하게 해내기 위해 앞으로 어디로 나아갈지는 몰라도 지나온 방향을 성찰할 수 있는 ‘기록 작업<sup>documentation</sup>’을 중요한 도움계단 삼습니다.<br><br>또한 그 과정에서 <span style="background-color: yellow">놀이를 통해 배움</span>이 일어날 것을 기대하며 어린이를 지원합니다.
 </div>
@@ -33,14 +33,17 @@ html['thought'] = `
 <br>
 
 <div class="subtle">
-  위 그림은 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt; - 프로젝트, 열정, 동료, 놀이를 통해서 창의성을 키우기</a>에 나오는 도식으로 한미유치원이 참고하고 있는 또 하나의 생각입니다. 레지오 에밀리아와 MIT 미디어랩은 1990년대 부터 협업을 하고 있는데, 이 둘의 흥미로운 관계를 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=240888163" target="_blank">&lt;마인드스톰&gt; - 어린이, 컴퓨터, 배움 그리고 강력한 아이디어</a>의 부록 <a href="https://drive.google.com/file/d/1f_sxbkl9gVWzKvwt_6OIRfFkcOmrL6D1/view" target="_blank">&lt;마인드스톰에 얽혀있는 줄기&gt;</a>에서 살펴볼 수 있습니다.
+  위 그림은 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt; - 프로젝트, 열정, 동료, 놀이를 통해서 창의성을 키우기</a>에 나오는 도식으로 한미유치원이 참고하고 있는 또 하나의 생각입니다. <span style="background-color: yellow;">배움이 어떻게 일어나는지 배우게</span> 하는 그림입니다.<br><br>
 </div>
-<br>
 
 <div style="display: flex; justify-content: center">
   <img style="height: 200px" src="./images/2020/thinker.svg">
 </div>
 <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em">생각하는 사람 (5세)</div>
+
+<div class="subtle">
+  레지오 에밀리아와 MIT 미디어랩은 1990년대 부터 협업을 하고 있는데, 이 둘의 흥미로운 관계를 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=240888163" target="_blank">&lt;마인드스톰&gt; - 어린이, 컴퓨터, 배움 그리고 강력한 아이디어</a>의 부록 <a href="https://drive.google.com/file/d/1f_sxbkl9gVWzKvwt_6OIRfFkcOmrL6D1/view" target="_blank">&lt;마인드스톰에 얽혀있는 줄기&gt;</a>에서 살펴볼 수 있습니다.
+</div>
 <br>
 
 <div class="subtle">
@@ -52,7 +55,7 @@ html['thought'] = `
 <div class="subtle">
   이 중 한미유치원의 놀이운영사례는 다음과 같습니다.
   <ul>
-    <li><a href="https://i-nuri.go.kr/ebook/2020030358a/index.html" target="_blank">12.컵의 다양한 변신 (3세)</a></li>
+    <li><a href="https://i-nuri.go.kr/ebook/2020030358a/index.html" target="_blank">12. 컵의 다양한 변신 (3세)</a></li>
     <li><a href="https://i-nuri.go.kr/ebook/20200303hlV/index.html" target="_blank">13. 미로는 지그재그야 (3세)</li>
     <li><a href="https://i-nuri.go.kr/ebook/202003032U/index.html" target="_blank">14. 하루에 일어난 놀이 (4세)</li>
     <li><a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">15. 공연은 움직여야 해! (4세)</li>
@@ -65,7 +68,7 @@ html['thought'] = `
 </div>
 
 <div class="subtle">
-&lt;유아 주도 놀이와 섬세한 교사 지원이 어우러진 놀이운영사례&gt;는 학계의 다양한 연구원과 현장의 교사들이 참여했습니다. 놀이에 어떤 힘이 있는지 알아보면서 한미유치원의 교육에 관한 생각도 읽을 수 있습니다. 그 외에도 많은 현장의 자료를 공유하고 있으니, 관심있는 분들은 아래의 링크를 살펴봐 주시기 바랍니다.
+이 &lt;유아 주도 놀이와 섬세한 교사 지원이 어우러진 놀이운영사례&gt;는 학계의 다양한 연구원과 현장의 교사들이 참여했습니다. 놀이에 어떤 힘이 있는지 알아보면서 한미유치원의 교육에 관한 생각도 읽을 수 있습니다. 그 외에도 많은 현장의 자료를 공유하고 있으니, 관심있는 분들은 아래의 링크를 살펴봐 주시기 바랍니다.
 </div>
 <br>
 
