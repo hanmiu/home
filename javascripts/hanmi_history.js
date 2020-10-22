@@ -84,7 +84,7 @@ class LogoParticle {
     this.speed = 0.01 + Math.random() * 0.09;
     this.to_hue = hues[0] + (hues[1] - hues[0]) * Math.random();
     this.hue = Math.random() * 360;
-    this.trail = buildRandomCurve([this.x, this.y], [x, y], 4 + Math.random()*3 | 0);
+    this.trail = buildRandomCurve([this.x, this.y], [x, y], 4 + Math.random()*3 | 0, 50);
     this.frame_count = 0;
   }
   
