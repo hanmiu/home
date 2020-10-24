@@ -28,7 +28,14 @@ class HanmiBase {
       this.vy *= 0.9;
     }
     
-    this.scale += (this.to_scale - this.scale) * 0.05;
+    let ds = this.to_scale - this.scale;
+    if(Math.abs(ds) < 0.1) {
+      this.scale += (this.to_scale - this.scale) * 0.01;  
+    }
+    else {
+      this.scale += Math.sign(ds) * 0.005;
+    }
+    
     
     this.frame_count += 1;
     
