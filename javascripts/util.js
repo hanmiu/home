@@ -17,7 +17,7 @@ function pointInQuadraticBezier(a, b, c, t) {
   ];
 }
 
-function buildRandomCurve(start, end, n, steps = 50) {
+function buildRandomCurve(start, end, n, steps = 50, radius = 200) {
   let hull, hull2, pts, trail;
   hull = [];
   for(let i = 0; i < n; i++) {
@@ -25,8 +25,8 @@ function buildRandomCurve(start, end, n, steps = 50) {
     let dx = 0;
     let dy = 0;
     if(i > 0 && i < n - 1) {
-      dx = (Math.random()*2-1) * 200;
-      dy = (Math.random()*2-1) * 200;
+      dx = (Math.random()*2-1) * radius;
+      dy = (Math.random()*2-1) * radius;
     }
     let p = [
       mix(start[0], end[0], t) + dx,

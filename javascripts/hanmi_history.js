@@ -114,6 +114,7 @@ class HanmiHistory {
     
     let for_svg = [];
     this.ptcls = [];
+    this.coords = [];
     let hue0 = 120 * Math.random() + 120 * Math.random();
     let hue1 = hue0 + 60 + Math.random() * 60;
     for(let i = 0; i < this.commands.length; i++) {
@@ -134,7 +135,6 @@ class HanmiHistory {
       }
       
       if(cmd.f !== 'closePath') {
-        let coords = [];
         for(let j = 0; j < cmd.coords.length / 2; j++) {
           let p = new LogoParticle(
             cmd.coords[2 * j + 0], 
@@ -142,6 +142,7 @@ class HanmiHistory {
             [hue0, hue1]
           );
           this.ptcls.push(p);
+          this.coords.push([cmd.coords[2 * j + 0], cmd.coords[2 * j + 1]]);
         }
       }
     }
@@ -151,7 +152,16 @@ class HanmiHistory {
     this.frame_count = 0;
   }
   
-  update() {
+  respawn() {
+    let hue0 = 120 * Math.random() + 120 * Math.random();
+    let hue1 = hue0 + 60 + Math.random() * 60;
+    for(let i = 0; i < this.ptcls.length; i++) {
+      this.ptcls[i].spawn(this.coords[i][0], this.coords[i][1], [hue0, hue1]);
+    }
+    this.frame_count = 0;
+  }
+  
+  update(c) {
     for(let i = 0; i < this.ptcls.length; i++) {
       this.ptcls[i].update();
     }

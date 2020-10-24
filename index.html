@@ -351,10 +351,15 @@
   let html = {};
 </script>
 <script src="./javascripts/util.js"></script>
+<script src="./javascripts/d.js"></script>
+<script src="./javascripts/hanmi_base.js"></script>
 <script src="./javascripts/hanmi_history.js"></script>
 <script src="./javascripts/hanmi_admission.js"></script>
 <script src="./javascripts/hanmi_thought.js"></script>
 <script src="./javascripts/hanmi_about_play.js"></script>
+<script src="./javascripts/hanmi_playground.js"></script>
+<script src="./javascripts/hanmi_covid19.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
 <script>
   function css() {
     let domStyle = document.getElementById('domStylee');
@@ -395,6 +400,10 @@
   let ctx_playground = document.querySelector('#c-playground').getContext('2d');
   let ctx_covid19 = document.querySelector('#c-covid19').getContext('2d');
   
+  let eX = 300;
+  let eY = 100;
+  let is_showing_detail = false;
+  
   let page_titles = {
     'hanmi': '역사 문화 환경',
     'admission': '입학',
@@ -411,7 +420,6 @@
   let params = new URLSearchParams(location.search.slice(1));
   
   function touchstart(e) {
-    let eX, eY;
     if(e.targetTouches) {
       eX = e.targetTouches[0].pageX;
       eY = e.targetTouches[0].pageY;
@@ -429,30 +437,20 @@
       case 't-admission':
         current_loop = loop_admission;
         break;
+      case 't-thought':
+        current_loop = loop_thought;
+        break;
+      case 't-about_play':
+        current_loop = loop_about_play;
+        break;
     }
-    /*
-    touchX = eX;
-    touchY = eY;
     
-    mdown = true;
-    for(let i = 0; i < jamos.length; i++) {
-      let jamo = jamos[i];
-      let dx = eX - jamo.x;
-      let dy = eY - jamo.y;
-      let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
-      if(d < jamo.r) {
-        selected_jamo = jamo;
-        jamo.vx = 0;
-        jamo.vy = 0;
-        jamo.to_hue = Math.random() < 0.2 ? Math.random() * 30 | 0 : 100 + Math.random() * 260 | 0;
-      }
-    }
-    */
-    //console.log(e.target.parentElement.style.height = '400px');
+    hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, eY - 200], 3, 200, 100);
+    hanmi_base.wait = 120;
+    hanmi_base.wait_dur = hanmi_base.wait;
   }
   
   function touchmove(e) {
-    let eX, eY;
     if(e.targetTouches) {
       e.preventDefault();
       eX = e.targetTouches[0].pageX;
@@ -470,16 +468,23 @@
       case 't-admission':
         current_loop = loop_admission;
         break;
+      case 't-thought':
+        current_loop = loop_thought;
+        break;
+      case 't-about_play':
+        current_loop = loop_about_play;
+        break;
+      case 't-playground':
+        current_loop = loop_playground;
+        break;
+      case 't-covid19':
+        current_loop = loop_covid19;
+        break;
     }
-    /*
-    touchX = eX;
-    touchY = eY;
+  }
+  
+  function touchend(e) {
     
-    if(selected_jamo && mdown) {
-      selected_jamo.x = eX;
-      selected_jamo.y = eY;
-    }
-    */
   }
   
   /*
@@ -499,6 +504,7 @@
   `;
   
   function show_detail(b, title) {
+    is_showing_detail = b;
     let rect = el_pebbles.getBoundingClientRect();
     if(b) {
       el_detail_header_title.innerHTML = page_titles[title];
@@ -532,20 +538,23 @@
         el_pebbles.style.visibility = 'unset';
         el_pebbles.style.height = 'unset';
         window.scrollTo(0, last_scrollY);
+        hanmi_history.respawn();
       }, 250);
     }
   }
   
-  function touchend(e) {
-    /*
-    mdown = false;
-    selected_jamo = null;
-    */
-  }
+
   
+  let hanmi_base = new HanmiBase();
   let hanmi_history = new HanmiHistory();
   let hanmi_admission = new HanmiAdmission();
+  let hanmi_thought = new HanmiThought();
+  let hanmi_about_play = new HanmiAboutPlay();
+  let hanmi_playground = new HanmiPlayground();
+  let hanmi_covid19 = new HanmiCovid19();
+  
   let current_loop = null;
+  let scroll_wait = 30;
   let last_scrollY = 0;
   let last_width = 0;
   
@@ -572,31 +581,139 @@
       last_width = rect_pebbles.width;
     }
     
+    renderer.setSize(rect_pebbles.width, 200);
+    camera.aspect = rect_pebbles.width / 200;
+    camera.updateProjectionMatrix();
     
     hanmi_history.draw(ctx_hanmi);
     hanmi_admission.draw(ctx_admission);
   }
   
+  function on_scroll_end() {
+    if(!is_showing_detail) {
+      let y = scrollY + innerHeight / 2 - 200;
+      let iY = Math.max(y / 200 | 0, 1);
+      let sY = iY;
+      if(iY === 1) {
+        if(Math.random() < 0.5) {
+          sY = iY - 1;
+        }
+      }
+      
+      hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, sY * 200 + 100], 3, 150, 100);
+      hanmi_base.wait = 120;
+      hanmi_base.wait_dur = hanmi_base.wait;
+      if(Math.abs(hanmi_base.scale - hanmi_base.to_scale) < 0.01) {
+        hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
+      }
+      
+      switch(iY) {
+        case 1:
+          current_loop = loop_admission;
+          break;
+        case 2:
+          current_loop = loop_thought;
+          break;
+        case 3:
+          current_loop = loop_about_play;
+          break;
+        case 4:
+          current_loop = loop_playground;
+          break;
+        case 5:
+          current_loop = loop_covid19;
+          break;
+      }  
+    }
+  }
+  
   function loop_hanmi() {
-    hanmi_history.update();
+    hanmi_history.update(ctx_hanmi);
     hanmi_history.draw(ctx_hanmi);
   }
   
   function loop_admission() {
-    hanmi_admission.update();
+    hanmi_admission.update(ctx_admission);
     hanmi_admission.draw(ctx_admission);
+    
+    hanmi_thought.update(ctx_thought);
+    hanmi_thought.draw(ctx_thought);
+  }
+  
+  function loop_thought() {
+    hanmi_thought.update(ctx_thought);
+    hanmi_thought.draw(ctx_thought);
+    
+    hanmi_admission.update(ctx_admission);
+    hanmi_admission.draw(ctx_admission);
+    hanmi_about_play.update(ctx_about_play);
+    hanmi_about_play.draw(ctx_about_play);
+  }
+  
+  function loop_about_play() {
+    hanmi_about_play.update(ctx_about_play);
+    hanmi_about_play.draw(ctx_about_play);
+    
+    hanmi_thought.update(ctx_thought);
+    hanmi_thought.draw(ctx_thought);
+    hanmi_playground.update(ctx_playground);
+    hanmi_playground.draw(ctx_playground);
+  }
+  
+  function loop_playground() {
+    hanmi_playground.update(ctx_playground);
+    hanmi_playground.draw(ctx_playground);
+    
+    hanmi_about_play.update(ctx_about_play);
+    hanmi_about_play.draw(ctx_about_play);
+    hanmi_covid19.update(ctx_covid19);
+    hanmi_covid19.draw(ctx_covid19);
+  }
+  
+  function loop_covid19() {
+    hanmi_covid19.update(ctx_covid19);
+    hanmi_covid19.draw(ctx_covid19);
+    
+    hanmi_playground.update(ctx_playground);
+    hanmi_playground.draw(ctx_playground);
   }
   
   function loop(timestamp) {
-    if(hanmi_history.frame_count < 1000 && current_loop !== loop_hanmi) {
-      loop_hanmi();
+    if(!is_showing_detail) {
+      if(hanmi_history.frame_count < 1000) {
+        loop_hanmi();
+      }
+    
+      hanmi_base.update(ctx_hanmi);
+      if(current_loop) {
+        current_loop();
+      }
+
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      renderer.render( scene, camera );
+      
+      if(scroll_wait > 0) {
+        scroll_wait -= 1;
+        if(scroll_wait === 0) {
+          on_scroll_end();
+        }
+      }
     }
     
-    if(current_loop) {
-      current_loop();
-    }
     requestAnimationFrame(loop);
   }
+  
+  let scene = new THREE.Scene();
+  let camera = new THREE.PerspectiveCamera( 75, 1, 0.1, 1000 );
+  let renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+  
+  let geometry = new THREE.BoxGeometry();
+  let material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+  let cube = new THREE.Mesh( geometry, material );
+  scene.add( cube );
+
+  camera.position.z = 5;
   
   function init() {
     let chars = '가,가,겨,겨,<br>'.split(',');
@@ -618,6 +735,10 @@
     window.addEventListener('touchstart', touchstart);
     window.addEventListener('touchend', touchend);
     window.addEventListener('touchmove', touchmove);
+    
+    window.addEventListener('scroll', (e) => {
+      scroll_wait = 10;
+    });
 
     window.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -639,7 +760,7 @@
       show_detail(false, '');
     });
     
-    current_loop = loop_hanmi;
+    current_loop = loop_admission;
     
     //show_detail(true, 'admission');
     
