@@ -16,7 +16,7 @@ class HanmiCovid19 {
     let dx = hanmi_base.x - this.x;
     let dy = hanmi_base.y - this.y;
     let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
-    if(d > 50) {
+    if(d > 100) {
       let ux = dx / d;
       let uy = dy / d;
       this.x += ux * 10; 
