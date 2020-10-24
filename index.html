@@ -451,14 +451,23 @@
   }
   
   function touchmove(e) {
+    let rect = e.target.getBoundingClientRect();
     if(e.targetTouches) {
       e.preventDefault();
-      eX = e.targetTouches[0].pageX;
+      eX = e.targetTouches[0].pageX - rect.x;
       eY = e.targetTouches[0].pageY;
 	}
     else {
-      eX = e.pageX;
+      eX = e.pageX - rect.x;
       eY = e.pageY;
+    }
+    eX = Math.min(eX, 1024 - 150);
+    
+    hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, eY - 200], 3, 150, 100);
+    hanmi_base.wait = 120;
+    hanmi_base.wait_dur = hanmi_base.wait;
+    if(Math.abs(hanmi_base.scale - hanmi_base.to_scale) < 0.01) {
+      hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
     }
     
     switch(e.target.id) {

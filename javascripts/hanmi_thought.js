@@ -91,18 +91,9 @@ class HanmiThought {
     let d = d_mon;
     this.path = new Path2D(d);
     
-    /*
-    this.coords = [];
-    for(let i = 0; i < 100; i++) {
-      this.coords.push([
-        Math.random() * 400,
-        Math.random() * 400
-      ]);
-    }
-    */
     this.frame_count = 0;
-    this.x = 0;
-    this.y = 0;
+    this.x = 400 + Math.random() * 400;
+    this.y = 100 + (1-Math.random()*2) * 50;
   }
   
   update(c) {
@@ -123,16 +114,6 @@ class HanmiThought {
   
   draw(c) {
     c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-    //c.drawImage(renderer.domElement, 0, 0);
-    
-    /*
-    for(let i = 0; i < this.coords.length; i++) {
-      c.beginPath();
-      c.arc(this.coords[i][0], this.coords[i][1], 20, 0, Math.PI * 2);
-      c.fillStyle = 'cyan';
-      c.fill();
-    }
-    */
     
     c.save();
     c.translate(this.x, this.y - 200);

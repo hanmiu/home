@@ -65,7 +65,7 @@ class HanmiAdmission {
     
     this.path = new Path2D(d);
     this.x = 400 + Math.random() * 400;
-    this.y = 100;
+    this.y = 100 + (1-Math.random()*2) * 50;
   }
   
   update(c) {
