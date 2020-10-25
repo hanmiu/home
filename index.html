@@ -49,14 +49,25 @@
   }
   
   #pebbles {
+    position: relative;
     width: 100%;
     background-color: white;
     opacity: 1;
     transition: opacity 0.5s;
   }
   
+  #bg3d {
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    opacity: 0;
+    transition: opacity 1s ease-in-out, left 5s ease-in-out;
+  }
+  
   .pebble {
     position: relative;
+    box-sizing: border-box;
     font-family: 'Noto Serif KR', serif;
     height: 200px;
     overflow: hidden;
@@ -295,6 +306,7 @@
 <body>
   <div id="stage">
     <div id="pebbles">
+      <div id="bg3d"></div>
       <div class="pebble">
         <canvas class="layer" id="c-hanmi" ></canvas>
         <div id="description-logo"><div id="phrase">‘놀이는 어린이의 삶’이라고<br>말해온 역사 · 문화 · 환경</div></div>
@@ -346,12 +358,14 @@
     </div>
   </div>
   <div id="info">:-)</div>
+  <audio id="hanmi_song" style="width: 100%; display: none;" src="./music/hanmi_song.mp3" controls></audio>
 </body>
 <script>
   let html = {};
 </script>
 <script src="./javascripts/util.js"></script>
 <script src="./javascripts/d.js"></script>
+<script src="./javascripts/critter_racing.js"></script>
 <script src="./javascripts/hanmi_base.js"></script>
 <script src="./javascripts/hanmi_history.js"></script>
 <script src="./javascripts/hanmi_admission.js"></script>
@@ -384,6 +398,7 @@
   }
   //css();
   
+  let el_bg3d = document.querySelector('#bg3d');
   let el_pebbles = document.querySelector('#pebbles');
   let el_detail = document.querySelector('#detail');
   let el_detail_header = document.querySelector('#detail #header');
@@ -404,6 +419,8 @@
   let eY = 100;
   let is_showing_detail = false;
   
+  let world_tempo = 1;
+  
   let page_titles = {
     'hanmi': '역사 문화 환경',
     'admission': '입학',
@@ -419,6 +436,58 @@
   
   let params = new URLSearchParams(location.search.slice(1));
   
+  let last_focused_id = '';
+  let timeout_id = 0;
+  let current_hanmi = null;
+  
+  function focus_by(id) {
+    if(id) {
+      let iY = 0;
+      switch(id) {
+        case 't-admission':
+          current_loop = loop_admission;
+          current_hanmi = hanmi_admission;
+          iY = 1;
+          break;
+        case 't-thought':
+          current_loop = loop_thought;
+          current_hanmi = hanmi_thought;
+          iY = 2;
+          break;
+        case 't-about_play':
+          current_loop = loop_about_play;
+          current_hanmi = hanmi_about_play;
+          iY = 3;
+          break;
+        case 't-playground':
+          current_loop = loop_playground;
+          current_hanmi = hanmi_playground;
+          iY = 4;
+          break;
+        case 't-covid19':
+          current_loop = loop_covid19;
+          current_hanmi = hanmi_covid19;
+          iY = 5;
+          break;
+      }
+      if(current_hanmi) {
+        current_hanmi.wait = 120;  
+      }
+
+      if(id !== last_focused_id) {
+        el_bg3d.style.opacity = 0;
+        el_bg3d.style.left = last_width + 'px';
+        clearTimeout(timeout_id);
+        timeout_id = setTimeout(() => {
+          el_bg3d.style.left = 0 + 'px';
+          el_bg3d.style.top = iY * 200 + 'px';
+          el_bg3d.style.opacity = 1;
+        }, 5000);
+      }
+      last_focused_id = id;  
+    }
+  }
+  
   function touchstart(e) {
     if(e.targetTouches) {
       eX = e.targetTouches[0].pageX;
@@ -429,21 +498,7 @@
       eY = e.pageY;
     }
     
-    //el_info.textContent = e.target.id;
-    switch(e.target.id) {
-      case 't-hanmi':
-        current_loop = loop_hanmi;
-        break;
-      case 't-admission':
-        current_loop = loop_admission;
-        break;
-      case 't-thought':
-        current_loop = loop_thought;
-        break;
-      case 't-about_play':
-        current_loop = loop_about_play;
-        break;
-    }
+    focus_by(e.target.id);
     
     hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, eY - 200], 3, 200, 100);
     hanmi_base.wait = 120;
@@ -470,26 +525,7 @@
       hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
     }
     
-    switch(e.target.id) {
-      case 't-hanmi':
-        current_loop = loop_hanmi;
-        break;
-      case 't-admission':
-        current_loop = loop_admission;
-        break;
-      case 't-thought':
-        current_loop = loop_thought;
-        break;
-      case 't-about_play':
-        current_loop = loop_about_play;
-        break;
-      case 't-playground':
-        current_loop = loop_playground;
-        break;
-      case 't-covid19':
-        current_loop = loop_covid19;
-        break;
-    }
+    focus_by(e.target.id);
   }
   
   function touchend(e) {
@@ -533,8 +569,11 @@
       }, 250);
       
       if(title === 'about_play') {
+        document.querySelector('#hanmi_song').style.display = 'block';
+        document.querySelector('#song_container').appendChild(document.querySelector('#hanmi_song'));
         document.querySelector('#play_as_life').addEventListener('click', (e) => {
           document.querySelector('#hanmi_song').play();
+          ac.resume();
         });
       }
     }
@@ -563,9 +602,23 @@
   let hanmi_covid19 = new HanmiCovid19();
   
   let current_loop = null;
+  let current_ctx = null;
   let scroll_wait = 30;
   let last_scrollY = 0;
   let last_width = 0;
+  
+
+  /*
+  let ac = new (window.AudioContext || window.webkitAudioContext)();
+  let song_source = ac.createMediaElementSource(document.querySelector('#hanmi_song'));
+  let analyser = ac.createAnalyser();
+  song_source.connect(analyser);
+  analyser.connect(ac.destination);
+  analyser.fftSize = 2048;
+  let bufferLength = analyser.frequencyBinCount;
+  let dataArray = new Uint8Array(bufferLength);
+  analyser.getByteTimeDomainData(dataArray);
+  */
   
   function layout() {
     let rect_pebbles = el_pebbles.getBoundingClientRect();
@@ -580,17 +633,11 @@
         canvas.width = rect.width;
         canvas.height = rect.height;
       }
-
-      for(let ctx of ctxs) {
-        let hue = Math.random() * 360 | 0;
-        //ctx.fillStyle = `hsl(${hue}deg, 30%, 80%)`;
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      }
       last_width = rect_pebbles.width;
     }
     
     renderer.setSize(rect_pebbles.width, 200);
+    uniforms.resolution.value = new THREE.Vector2(rect_pebbles.width, 200);
     camera.aspect = rect_pebbles.width / 200;
     camera.updateProjectionMatrix();
     
@@ -601,38 +648,17 @@
   function on_scroll_end() {
     if(!is_showing_detail) {
       let y = scrollY + innerHeight / 2 - 200;
-      let iY = Math.max(y / 200 | 0, 1);
-      let sY = iY;
-      if(iY === 1) {
-        if(Math.random() < 0.5) {
-          sY = iY - 1;
-        }
-      }
+      let iY = Math.max(y / 200 | 0, 0);
       
-      hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, sY * 200 + 100], 3, 150, 100);
+      hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, iY * 200 + 100], 3, 150, 100);
       hanmi_base.wait = 120;
       hanmi_base.wait_dur = hanmi_base.wait;
       if(Math.abs(hanmi_base.scale - hanmi_base.to_scale) < 0.01) {
         hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
       }
       
-      switch(iY) {
-        case 1:
-          current_loop = loop_admission;
-          break;
-        case 2:
-          current_loop = loop_thought;
-          break;
-        case 3:
-          current_loop = loop_about_play;
-          break;
-        case 4:
-          current_loop = loop_playground;
-          break;
-        case 5:
-          current_loop = loop_covid19;
-          break;
-      }  
+      let ids = Array.prototype.slice.call(el_pebbles.querySelectorAll('.touch')).slice(1, 6).map(el => el.id);
+      focus_by(ids[iY]);
     }
   }
   
@@ -644,51 +670,99 @@
   function loop_admission() {
     hanmi_admission.update(ctx_admission);
     hanmi_admission.draw(ctx_admission);
+    current_ctx = ctx_admission;
     
-    hanmi_thought.update(ctx_thought);
-    hanmi_thought.draw(ctx_thought);
+    if(hanmi_admission.wait > 0) {
+      hanmi_thought.update(ctx_thought);
+      hanmi_thought.draw(ctx_thought);  
+    }
+    
+    /*
+    let canvasCtx = ctx_admission;
+    let WIDTH = canvasCtx.canvas.width;
+    let HEIGHT = canvasCtx.canvas.height;
+    analyser.getByteTimeDomainData(dataArray);
+    
+    canvasCtx.lineWidth = 2;
+    canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
+
+    canvasCtx.beginPath();
+
+    var sliceWidth = WIDTH * 1.0 / bufferLength;
+    var x = 0;
+
+    for(var i = 0; i < bufferLength; i++) {
+
+      var v = dataArray[i] / 128.0;
+      var y = v * HEIGHT/2;
+
+      if(i === 0) {
+        canvasCtx.moveTo(x, y);
+      } else {
+        canvasCtx.lineTo(x, y);
+      }
+
+      x += sliceWidth;
+    }
+
+    canvasCtx.lineTo(WIDTH, HEIGHT/2);
+    canvasCtx.stroke();
+    */
   }
   
   function loop_thought() {
     hanmi_thought.update(ctx_thought);
     hanmi_thought.draw(ctx_thought);
+    current_ctx = ctx_thought;
     
-    hanmi_admission.update(ctx_admission);
-    hanmi_admission.draw(ctx_admission);
-    hanmi_about_play.update(ctx_about_play);
-    hanmi_about_play.draw(ctx_about_play);
+    if(hanmi_thought.wait > 0) {
+      hanmi_admission.update(ctx_admission);
+      hanmi_admission.draw(ctx_admission);
+      hanmi_about_play.update(ctx_about_play);
+      hanmi_about_play.draw(ctx_about_play);
+    }
   }
   
   function loop_about_play() {
     hanmi_about_play.update(ctx_about_play);
     hanmi_about_play.draw(ctx_about_play);
+    current_ctx = ctx_about_play;
     
-    hanmi_thought.update(ctx_thought);
-    hanmi_thought.draw(ctx_thought);
-    hanmi_playground.update(ctx_playground);
-    hanmi_playground.draw(ctx_playground);
+    if(hanmi_about_play.wait > 0) {
+      hanmi_thought.update(ctx_thought);
+      hanmi_thought.draw(ctx_thought);
+      hanmi_playground.update(ctx_playground);
+      hanmi_playground.draw(ctx_playground);
+    }
   }
   
   function loop_playground() {
     hanmi_playground.update(ctx_playground);
     hanmi_playground.draw(ctx_playground);
+    current_ctx = ctx_playground;
     
-    hanmi_about_play.update(ctx_about_play);
-    hanmi_about_play.draw(ctx_about_play);
-    hanmi_covid19.update(ctx_covid19);
-    hanmi_covid19.draw(ctx_covid19);
+    if(hanmi_playground.wait > 0) {
+      hanmi_about_play.update(ctx_about_play);
+      hanmi_about_play.draw(ctx_about_play);
+      hanmi_covid19.update(ctx_covid19);
+      hanmi_covid19.draw(ctx_covid19);
+    }
   }
   
   function loop_covid19() {
     hanmi_covid19.update(ctx_covid19);
     hanmi_covid19.draw(ctx_covid19);
+    current_ctx = ctx_covid19;
     
-    hanmi_playground.update(ctx_playground);
-    hanmi_playground.draw(ctx_playground);
+    if(hanmi_covid19.wait > 0) {
+      hanmi_playground.update(ctx_playground);
+      hanmi_playground.draw(ctx_playground);
+    }
   }
   
   function loop(timestamp) {
     if(!is_showing_detail) {
+      uniforms.time.value = timestamp / 1000;
       if(hanmi_history.frame_count < 1000) {
         loop_hanmi();
       }
@@ -698,8 +772,9 @@
         current_loop();
       }
 
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+      //renderer.render( scene_bg, camera_bg );
+      //thing.rotation.x += 0.01;
+      //thing.rotation.z += 0.01;
       renderer.render( scene, camera );
       
       if(scroll_wait > 0) {
@@ -713,16 +788,81 @@
     requestAnimationFrame(loop);
   }
   
+  let vertex_shader = `
+varying vec2 vUv;
+
+void main()	{
+
+    vUv = uv;
+
+    gl_Position = vec4( position, 1.0 );
+
+}
+  `;
+  let fragment_shader = `
+varying vec2 vUv;
+
+uniform float time;
+uniform vec2 resolution;
+
+void main()	{
+
+    vec2 p = - 1.0 + 2.0 * vUv;
+    p.x *= resolution.x / resolution.y;
+    float d = length(p + vec2(resolution.x / resolution.y, 0.0));
+    float d2 = 1.0 / d + (0.5 + 0.5*sin(d * 3.141592 * 3.0 - time)) * 0.2;
+
+    vec3 c0 = vec3(0.0, 1.0, 0.4);
+    vec3 c1 = vec3(1.0, 0.4, 0.1);
+
+    //d2 = step(d2, 0.5);
+
+    vec3 c = mix(c0, c1, d * vUv.x);
+    gl_FragColor = vec4(c, 0.5);
+}
+  `;
+  
+  let scene_bg = new THREE.Scene();
+  let camera_bg = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
   let scene = new THREE.Scene();
   let camera = new THREE.PerspectiveCamera( 75, 1, 0.1, 1000 );
-  let renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
-  
-  let geometry = new THREE.BoxGeometry();
-  let material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-  let cube = new THREE.Mesh( geometry, material );
-  scene.add( cube );
-
   camera.position.z = 5;
+  
+  let geometry = new THREE.PlaneBufferGeometry( 2, 2 );
+  let renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+  el_bg3d.appendChild(renderer.domElement);
+  let uniforms = {
+    time: { value: 1.0 },
+    resolution: { value: new THREE.Vector2(1024, 200) },
+  };
+  let material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: vertex_shader,
+    fragmentShader: fragment_shader
+  });
+  let mesh = new THREE.Mesh( geometry, material );
+  scene_bg.add( mesh );
+  
+  /*
+  let light = new THREE.PointLight( 0xffffff, 1, 100 );
+  light.position.set( 50, 50, 50 );
+  scene.add( light );
+  */
+  let ambientLight = new THREE.AmbientLight( 0xb7b7b7 ); // soft white light
+  scene.add( ambientLight );
+  
+  let directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+  directionalLight.position.set(0, 5, 5);
+  scene.add( directionalLight );
+
+  //let icosahedron = new THREE.IcosahedronBufferGeometry(1, 2);
+  let cone = new THREE.ConeBufferGeometry( 1, 2, 32 );
+  let mat = new THREE.MeshPhongMaterial( { color: 0xfaa55d } );
+  let thing = new THREE.Mesh( cone, mat );
+  scene.add( thing );
+  
+  camera.lookAt(new THREE.Vector3(0, 4, 0));
+  thing.position.y = 1;
   
   function init() {
     let chars = '가,가,겨,겨,<br>'.split(',');

@@ -8,7 +8,9 @@ html['about_play'] = `
 <div class="subtle">
   <strong>어린이들의 노래</strong>를 소개합니다.
 </div>
-<audio id="hanmi_song" style="width: 100%" src="./music/hanmi_song.mp3" controls></audio>
+<div id="song_container">
+<!--<audio id="hanmi_song" style="width: 100%" src="./music/hanmi_song.mp3" controls></audio>-->
+</div>
 
 <div class="subtle">
   <ul class="musical">
@@ -66,6 +68,18 @@ class HanmiAboutPlay {
     
     this.x = 400 + Math.random() * 400;
     this.y = 100 + (1-Math.random()*2) * 50;
+    
+    this.wait = 120;
+    
+    this.bipeds = [];
+    this.bipeds.push(new Biped());
+    this.bipeds.push(new Quadruped());
+    this.bipeds.push(new Snake());
+    this.biped = this.bipeds[this.bipeds.length * Math.random() | 0];
+    this.biped_x = -100;
+    for(let i = 0; i < this.bipeds.length; i++) {
+      this.bipeds[i].x = this.biped_x;
+    }
   }
   
   update(c) {
@@ -81,20 +95,27 @@ class HanmiAboutPlay {
     else {
       this.x += dx * 0.25; 
       this.y += dy * 0.25; 
-    } 
+    }
+    
+    if(this.wait > 0) {
+      this.wait -= 1;
+    }
+    
+    if(c === current_ctx) {
+      this.frame_count += 1;
+      this.biped_x += 1;
+      this.biped.update(this.frame_count / 60);
+      this.biped.x = this.biped_x;
+      if(this.biped.x > c.canvas.width + 200) {
+        this.biped = this.bipeds[this.bipeds.length * Math.random() | 0];
+        this.biped_x = -100;
+        this.biped.reform();
+      }  
+    }
   }
   
   draw(c) {
     c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-    //c.drawImage(renderer.domElement, 0, 0);
-    /*
-    for(let i = 0; i < this.coords.length; i++) {
-      c.beginPath();
-      c.arc(this.coords[i][0], this.coords[i][1], 20, 0, Math.PI * 2);
-      c.fillStyle = 'cyan';
-      c.fill();
-    }
-    */
     
     c.save();
     c.translate(this.x, this.y - 200 * 2);
@@ -102,6 +123,8 @@ class HanmiAboutPlay {
     c.translate(-256, -256);
     c.fillStyle = 'hsla(320deg, 100%, 50%, 0.5)';
     c.fill(this.path);
-    c.restore(); 
+    c.restore();
+    
+    this.biped.draw(c, this);
   }
 }

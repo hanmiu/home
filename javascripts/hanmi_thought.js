@@ -94,6 +94,18 @@ class HanmiThought {
     this.frame_count = 0;
     this.x = 400 + Math.random() * 400;
     this.y = 100 + (1-Math.random()*2) * 50;
+    
+    this.wait = 120;
+    
+    this.bipeds = [];
+    this.bipeds.push(new Biped());
+    this.bipeds.push(new Quadruped());
+    this.bipeds.push(new Snake());
+    this.biped = this.bipeds[this.bipeds.length * Math.random() | 0];
+    this.biped_x = -100;
+    for(let i = 0; i < this.bipeds.length; i++) {
+      this.bipeds[i].x = this.biped_x;
+    }
   }
   
   update(c) {
@@ -110,6 +122,22 @@ class HanmiThought {
       this.x += dx * 0.25; 
       this.y += dy * 0.25; 
     }
+    
+    if(c === current_ctx) {
+      this.frame_count += 1;
+      this.biped_x += 1;
+      this.biped.update(this.frame_count / 60);
+      this.biped.x = this.biped_x;
+      if(this.biped.x > c.canvas.width + 200) {
+        this.biped = this.bipeds[this.bipeds.length * Math.random() | 0];
+        this.biped_x = -100;
+        this.biped.reform();
+      }  
+    }
+    
+    if(this.wait > 0) {
+      this.wait -= 1;
+    }
   }
   
   draw(c) {
@@ -121,6 +149,8 @@ class HanmiThought {
     c.translate(-256, -256);
     c.fillStyle = 'hsla(20deg, 100%, 50%, 0.5)';
     c.fill(this.path);
-    c.restore(); 
+    c.restore();
+    
+    this.biped.draw(c, this);
   }
 }
