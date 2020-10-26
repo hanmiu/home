@@ -39,6 +39,12 @@ class HanmiMusical {
     this.frame_count = 0;
     this.last_vol = 0;
     this.mode = 1;
+    
+    // hsl(57, 99, 50) , hsl(183, 59, 49)
+    this.hsl = [57, 99, 50];
+    this.to_hsl = [57, 99, 50];
+    
+    this.slot = Array(19).fill(true);
   }
   
   update(c) {
@@ -87,8 +93,12 @@ class HanmiMusical {
       }
     }
     vol = vol / this.bufferLength;
-    c.strokeStyle = 'rgb(254, 240, 1)';
+    //c.strokeStyle = 'rgb(254, 240, 1)';
     c.lineWidth = 5;
+    this.hsl[0] += (this.to_hsl[0] - this.hsl[0]) * 0.05;
+    this.hsl[1] += (this.to_hsl[1] - this.hsl[1]) * 0.05;
+    this.hsl[2] += (this.to_hsl[2] - this.hsl[2]) * 0.05;
+    c.strokeStyle = `hsl(${this.hsl[0]},${this.hsl[1]}%,${this.hsl[2]}%)`;
     c.stroke();
     
     for(let i = 0; i < this.ptcls.length; i++) {
@@ -111,6 +121,204 @@ class HanmiMusical {
       c.restore();
     }
     
+    let pt = audio_hanmi_song.currentTime;
+    if(pt < 8.43) { // 띵~
+      if(this.slot[0]) {
+        this.slot[0] = false;
+        this.mode = 1;
+        this.to_hsl = [57, 99, 50];
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = 0;
+        }
+      }  
+    }
+    else if(pt < 17.31) { // 친
+      if(this.slot[1]) {
+        this.slot[1] = false;
+        this.mode = 2;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.25;
+        }
+      }      
+    }
+    else if(pt < 24.4) { // 마법~
+      if(this.slot[2]) {
+        this.slot[2] = false;
+        this.mode = 2;
+        this.x_period = 1.5 * 3;
+        this.y_period = 1 * 3;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.25;
+        }
+      }      
+    }
+    else if(pt < 26.8) { // 놀~
+      if(this.slot[3]) {
+        this.slot[3] = false;
+        this.mode = 2;
+        this.ptcls.unshift(this.ptcls.pop());
+      }       
+    }
+    else if(pt < 30.6) { // 친~
+      if(this.slot[4]) {
+        this.slot[4] = false;
+        this.mode = 1;
+        this.x_period = 1;
+        this.y_period = 1;
+      }      
+    }
+    else if(pt < 34.4) { // 찰~
+      if(this.slot[5]) {
+        this.slot[5] = false;
+        this.mode = 3;
+        this.x_period = 1;
+        this.y_period = 1;
+      }      
+    }
+    else if(pt < 42) { // 내~
+      if(this.slot[6]) {
+        this.slot[6] = false;
+        this.mode = 2;
+        this.x_period = 1.25 * 10;
+        this.y_period = 1 * 10;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI;
+        }
+      }       
+    }
+    else if(pt < 49.77) { // 친~
+      if(this.slot[7]) {
+        this.slot[7] = false;
+        this.mode = 1;
+        this.x_period = 1;
+        this.y_period = 1;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = 0;
+        }
+      }       
+    }
+    else if(pt < 56.5) { // 놀~ (후)
+      if(this.slot[8]) {
+        this.slot[8] = false;
+        this.ptcls.unshift(this.ptcls.pop());
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI;
+        }
+      }      
+    }
+    else if(pt < 70.79) { // 마~
+      if(this.slot[9]) {
+        this.slot[9] = false;
+        this.mode = 3;
+        this.x_period = 1;
+        this.y_period = 1;
+        this.to_hsl = [183, 59, 100];
+      }       
+    }
+    else if(pt < 76.62) { // 놀~ (그냥)
+      if(this.slot[10]) {
+        this.slot[10] = false;
+        this.to_hsl = [57, 99, 50];
+      }       
+    }
+    else if(pt < 80.27) { // 친~
+      if(this.slot[11]) {
+        this.slot[11] = false;
+        this.mode = 2;
+        this.x_period = 1.5 * 3;
+        this.y_period = 1 * 3;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.25;
+        }
+      }       
+    }
+    else if(pt < 83.95) { // 찰~
+      if(this.slot[12]) {
+        this.slot[12] = false;
+        this.mode = 3;
+        this.x_period = 1;
+        this.y_period = 1;
+        this.ptcls.unshift(this.ptcls.pop());
+      }       
+    }
+    else if(pt < 91.68) { // 내~
+      if(this.slot[13]) {
+        this.slot[13] = false;
+        this.mode = 2;
+        this.x_period = 1.5 * 3;
+        this.y_period = 1 * 3;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.1;
+        }
+      }      
+    }
+    else if(pt < 98.84) { // 친~
+      if(this.slot[14]) {
+        this.slot[14] = false;
+        this.x_period = 1;
+        this.y_period = 1;
+        this.mode = 3;
+      }       
+    }
+    else if(pt < 105.88) { // 놀~ (후)
+      if(this.slot[15]) {
+        this.slot[15] = false;
+        this.ptcls.unshift(this.ptcls.pop());
+      }       
+    }
+    else if(pt < 117.31) { // 마~(음)
+      if(this.slot[16]) {
+        this.slot[16] = false;
+        this.to_hsl = [183, 59, 49];
+        this.mode = 1;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.1;
+        }
+        shuffle(this.ptcls);
+      }      
+    }
+    else if(pt < 119.92) { // 마~(법)
+      if(this.slot[17]) {
+        this.slot[17] = false;
+        this.to_hsl = [57, 99, 50];
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI;
+        }
+      }       
+    }
+    else if(pt < 121.01) { // 놀이~
+      if(this.slot[18]) {
+        this.slot[18] = false;
+        this.mode = 2;
+        this.ptcls.unshift(this.ptcls.pop());
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = 0;
+        }
+        this.slot = Array(19).fill(true);
+      }       
+    }
+    
+    /*
+    8.43 // 띵~
+    24.4 // 마법~
+    26.8 // 놀~
+    30.6 // 친~
+    34.44 // ?
+    42 // 내~
+    49.77 // 친~
+    56.5 // 놀~ (후)
+    70.79 // 마~
+    76.62 // 놀~ (그냥)
+    80.27 // 친~
+    83.95 // 찰~
+    91.68 // 내~
+    98.84 // 친~
+    105.88 // 놀~
+    117.31 // 마~(음)
+    119.92 // 마~(법)
+    */
+    
+    /*
     if(vol - this.last_vol > 0.03) {
       this.ptcls.unshift(this.ptcls.pop());
       if(Math.random() > 0.5) {
@@ -133,6 +341,14 @@ class HanmiMusical {
         }
       }
     }
+    
+    if(audio_hanmi_song.currentTime > 105.8) {
+      this.mode = 4;
+      this.x_period = 1;
+      this.y_period = 1;
+      this.to_line_color = 0x33c1c8;
+    }
+    */
     
     this.last_vol = vol;
   }
