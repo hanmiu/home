@@ -31,6 +31,8 @@ class HanmiMusical {
     }
     shuffle(this.ptcls);
     
+    this.x_period = 1;
+    this.y_period = 1;
     this.frame_count = 0;
     this.last_vol = 0;
   }
@@ -38,12 +40,15 @@ class HanmiMusical {
   update(c) {
     this.analyser.getByteTimeDomainData(this.dataArray);
     this.analyser.getByteFrequencyData(this.freqArray);
+    this.frame_count += 1;
+  }
+  
+  draw(c) {
     let time = this.frame_count / 60;
     let r = c.canvas.height * 0.5 * 0.5;
     let dr = (c.canvas.height * 0.5 - r) * 0.75;
     let cx = c.canvas.width * 0.5 - 20;
     let cy = c.canvas.height * 0.5;
-    
     
     c.clearRect(0, 0, c.canvas.width, c.canvas.height);
     c.beginPath();
@@ -55,14 +60,20 @@ class HanmiMusical {
       vol += f;
       let rr = (r + 1.5 * dr * v) * 0.6;
       
-      let x = cx + rr * Math.cos(t * Math.PI * 2 - time * 0.1);
-      let y = cy + rr * Math.sin(t * Math.PI * 2 - time * 0.1);
-      if(i === 0) {
-        c.moveTo(x, y);
-      } else {
-        c.lineTo(x, y);
+      let x = cx + rr * Math.cos(t * Math.PI * 2 * this.x_period - time * 0.1);
+      let y = cy + rr * Math.sin(t * Math.PI * 2 * this.y_period - time * 0.1);
+      if(this.x_period === 1) {
+        if(i === 0) {
+          c.moveTo(x, y);
+        } else {
+          c.lineTo(x, y);
+        }  
       }
+      
       let j = t * (this.ptcls.length - 1) | 0;
+      let tt = j / this.ptcls.length;
+      x = cx + rr * Math.cos(tt * Math.PI * 2 * this.x_period - time * 0.1);
+      y = cy + rr * Math.sin(tt * Math.PI * 2 * this.y_period - time * 0.1);
       let p = this.ptcls[j];
       p.to_x = x;
       p.to_y = y;
@@ -71,6 +82,7 @@ class HanmiMusical {
     }
     vol = vol / this.bufferLength;
     c.strokeStyle = 'rgb(254, 240, 1)';
+    c.lineWidth = 5;
     c.stroke();
     
     for(let i = 0; i < this.ptcls.length; i++) {
@@ -90,44 +102,17 @@ class HanmiMusical {
     }
     
     if(vol - this.last_vol > 0.03) {
-      shuffle(this.ptcls);
+      this.ptcls.unshift(this.ptcls.pop());
+      if(Math.random() > 0.5) {
+        this.x_period = 1.5 * 3;
+        this.y_period = 1 * 3;
+      }
+      else {
+        this.x_period = 1;
+        this.y_period = 1;
+      }
     }
     
     this.last_vol = vol;
-    this.frame_count += 1;
-  }
-  
-  draw(c) {
-    /*
-    c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-    
-    let WIDTH = c.canvas.width;
-    let HEIGHT = c.canvas.height;
-    
-    c.lineWidth = 2;
-    c.strokeStyle = 'rgb(0, 0, 0)';
-
-    c.beginPath();
-
-    let sliceWidth = WIDTH * 1.0 / hanmi_musical.bufferLength;
-    let x = 0;
-
-    for(let i = 0; i < this.bufferLength; i++) {
-
-      let v = this.dataArray[i] / 128.0;
-      var y = v * HEIGHT/2;
-
-      if(i === 0) {
-        c.moveTo(x, y);
-      } else {
-        c.lineTo(x, y);
-      }
-
-      x += sliceWidth;
-    }
-
-    c.lineTo(WIDTH, HEIGHT/2);
-    c.stroke();
-    */
   }
 }

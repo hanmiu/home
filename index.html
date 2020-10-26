@@ -261,6 +261,7 @@
     width: 75%;
     cursor: pointer;
     image-rendering: pixelated;
+    transition: opacity 1s;
   }
   
   #footer {
@@ -588,13 +589,15 @@
         document.querySelector('#play_as_life').addEventListener('click', (e) => {
           audio_hanmi_song.play();
           if(hanmi_musical.audio_ctx.state === 'suspended') {
-            hanmi_musical.audio_ctx.resume();  
+            hanmi_musical.audio_ctx.resume();
+            shuffle(hanmi_musical.ptcls);
           }
         });
         ctx_musical.canvas.addEventListener('click', (e) => {
           audio_hanmi_song.play();
           if(hanmi_musical.audio_ctx.state === 'suspended') {
-            hanmi_musical.audio_ctx.resume();  
+            hanmi_musical.audio_ctx.resume();
+            shuffle(hanmi_musical.ptcls);
           }
         });
       }
@@ -771,6 +774,10 @@
     if(!audio_hanmi_song.paused) {
       hanmi_musical.update(ctx_musical);
       hanmi_musical.draw(ctx_musical);
+      ctx_musical.canvas.style.opacity = 1;
+    }
+    else {
+      ctx_musical.canvas.style.opacity = 0;
     }
     
     requestAnimationFrame(loop);
@@ -899,13 +906,15 @@ void main()	{
     
     audio_hanmi_song.addEventListener('play', (e) => {
       if(hanmi_musical.audio_ctx.state === 'suspended') {
-        hanmi_musical.audio_ctx.resume();  
+        hanmi_musical.audio_ctx.resume();
+        shuffle(hanmi_musical.ptcls);
       }
     });
     
     audio_hanmi_song.addEventListener('touchstart', (e) => {
       if(hanmi_musical.audio_ctx.state === 'suspended') {
-        hanmi_musical.audio_ctx.resume();  
+        hanmi_musical.audio_ctx.resume();
+        shuffle(hanmi_musical.ptcls);
       }
     });
     
