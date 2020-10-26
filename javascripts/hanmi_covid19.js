@@ -71,7 +71,7 @@ class HanmiCovid19 {
     c.translate(this.x, this.y - 200 * 4);
     c.scale(hanmi_base.scale, hanmi_base.scale);
     c.translate(-256, -256);
-    c.fillStyle = 'hsla(300deg, 100%, 50%, 0.5)';
+    c.fillStyle = 'hsla(300, 100%, 50%, 0.5)';
     c.fill(this.path);
     c.restore(); 
     

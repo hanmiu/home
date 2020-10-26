@@ -71,7 +71,7 @@ class HanmiPlayground {
     c.translate(this.x, this.y - 200 * 3);
     c.scale(hanmi_base.scale, hanmi_base.scale);
     c.translate(-256, -256);
-    c.fillStyle = 'hsla(90deg, 100%, 50%, 0.5)';
+    c.fillStyle = 'hsla(90, 100%, 50%, 0.5)';
     c.fill(this.path);
     c.restore();
     

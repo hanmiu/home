@@ -45,10 +45,10 @@ class Biped {
     let sat = 100;
     let d_lig = Math.random() * 20 | 0;
     let lig = 50 + d_lig;
-    scope.color_front = `hsl(${hue}deg, ${sat}%, ${lig}%)`;
-    scope.color_middle = `hsl(${hue}deg, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
-    scope.color_back = `hsl(${hue}deg, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
-    scope.color_eye = `hsl(${Math.random() * 360 | 0}deg, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
+    scope.color_front = `hsl(${hue}, ${sat}%, ${lig}%)`;
+    scope.color_middle = `hsl(${hue}, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
+    scope.color_back = `hsl(${hue}, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
+    scope.color_eye = `hsl(${Math.random() * 360 | 0}, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
     scope.lineWidth = 0.25;
 
     scope.t = 0;
@@ -65,10 +65,10 @@ class Biped {
     let sat = 100;
     let d_lig = Math.random() * 20 | 0;
     let lig = 50 + d_lig;
-    scope.color_front = `hsl(${hue}deg, ${sat}%, ${lig}%)`;
-    scope.color_middle = `hsl(${hue}deg, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
-    scope.color_back = `hsl(${hue}deg, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
-    scope.color_eye = `hsl(${Math.random() * 360 | 0}deg, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
+    scope.color_front = `hsl(${hue}, ${sat}%, ${lig}%)`;
+    scope.color_middle = `hsl(${hue}, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
+    scope.color_back = `hsl(${hue}, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
+    scope.color_eye = `hsl(${Math.random() * 360 | 0}, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
   }
   
   update(time) {
@@ -254,10 +254,10 @@ class Quadruped {
     let sat = 100;
     let d_lig = Math.random() * 20 | 0;
     let lig = 50 + d_lig;
-    scope.color_front = `hsl(${hue}deg, ${sat}%, ${lig}%)`;
-    scope.color_middle = `hsl(${hue}deg, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
-    scope.color_back = `hsl(${hue}deg, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
-    scope.color_eye = `hsl(${Math.random() * 360 | 0}deg, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
+    scope.color_front = `hsl(${hue}, ${sat}%, ${lig}%)`;
+    scope.color_middle = `hsl(${hue}, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
+    scope.color_back = `hsl(${hue}, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
+    scope.color_eye = `hsl(${Math.random() * 360 | 0}, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
     scope.lineWidth = 0.25;
 
     scope.t = 0;
@@ -274,10 +274,10 @@ class Quadruped {
     let sat = 100;
     let d_lig = Math.random() * 20 | 0;
     let lig = 50 + d_lig;
-    scope.color_front = `hsl(${hue}deg, ${sat}%, ${lig}%)`;
-    scope.color_middle = `hsl(${hue}deg, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
-    scope.color_back = `hsl(${hue}deg, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
-    scope.color_eye = `hsl(${Math.random() * 360 | 0}deg, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
+    scope.color_front = `hsl(${hue}, ${sat}%, ${lig}%)`;
+    scope.color_middle = `hsl(${hue}, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
+    scope.color_back = `hsl(${hue}, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
+    scope.color_eye = `hsl(${Math.random() * 360 | 0}, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
   }
   
   update(time) {
@@ -440,10 +440,10 @@ class Worm {
     let sat = 100;
     let d_lig = Math.random() * 20 | 0;
     let lig = 50 + d_lig;
-    scope.color_front = `hsl(${hue}deg, ${sat}%, ${lig}%)`;
-    scope.color_middle = `hsl(${hue}deg, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
-    scope.color_back = `hsl(${hue}deg, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
-    scope.color_eye = `hsl(${Math.random() * 360 | 0}deg, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
+    scope.color_front = `hsl(${hue}, ${sat}%, ${lig}%)`;
+    scope.color_middle = `hsl(${hue}, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
+    scope.color_back = `hsl(${hue}, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
+    scope.color_eye = `hsl(${Math.random() * 360 | 0}, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
     scope.lineWidth = 0.3;
 
     scope.t = 0;
@@ -460,10 +460,10 @@ class Worm {
     let sat = 100;
     let d_lig = Math.random() * 20 | 0;
     let lig = 50 + d_lig;
-    scope.color_front = `hsl(${hue}deg, ${sat}%, ${lig}%)`;
-    scope.color_middle = `hsl(${hue}deg, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
-    scope.color_back = `hsl(${hue}deg, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
-    scope.color_eye = `hsl(${Math.random() * 360 | 0}deg, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
+    scope.color_front = `hsl(${hue}, ${sat}%, ${lig}%)`;
+    scope.color_middle = `hsl(${hue}, ${sat}%, ${lig - 5 - (d_lig/3 | 0)}%)`;
+    scope.color_back = `hsl(${hue}, ${sat}%, ${lig - 10 - (d_lig/3 | 0)}%)`;
+    scope.color_eye = `hsl(${Math.random() * 360 | 0}, ${sat}%, ${lig - 20 - (d_lig/3 | 0)}%)`;
   }
   
   update(time) {

@@ -206,13 +206,22 @@ class HanmiMusical {
         }
       }      
     }
+    else if(pt < 60.58) { // 놀~ (후)
+      this.to_hsl = [171, 100, 80];     
+    }
+    else if(pt < 64.56) { // 놀~ (후)
+      this.to_hsl = [201, 100, 66];       
+    }
+    else if(pt < 68.42) { // 놀~ (후)
+      this.to_hsl = [284, 100, 67];    
+    }
     else if(pt < 70.79) { // 마~
       if(this.slot[9]) {
         this.slot[9] = false;
         this.mode = 3;
         this.x_period = 1;
         this.y_period = 1;
-        this.to_hsl = [183, 59, 100];
+        this.to_hsl = [32, 100, 62]; 
       }       
     }
     else if(pt < 76.62) { // 놀~ (그냥)
@@ -266,6 +275,12 @@ class HanmiMusical {
         this.ptcls.unshift(this.ptcls.pop());
       }       
     }
+    else if(pt < 109.75) { // 놀~ (후)
+      this.to_hsl = [323, 100, 50];        
+    }
+    else if(pt < 113.57) { // 놀~ (후)
+      this.to_hsl = [268, 100, 50];       
+    }
     else if(pt < 117.31) { // 마~(음)
       if(this.slot[16]) {
         this.slot[16] = false;
@@ -318,37 +333,7 @@ class HanmiMusical {
     119.92 // 마~(법)
     */
     
-    /*
-    if(vol - this.last_vol > 0.03) {
-      this.ptcls.unshift(this.ptcls.pop());
-      if(Math.random() > 0.5) {
-        this.x_period = 1.5 * 3;
-        this.y_period = 1 * 3;
-        this.mode = 2;
-        for(let i = 0; i < this.ptcls.length; i++) {
-          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.25;
-        }
-      }
-      else {
-        this.x_period = 1;
-        this.y_period = 1;
-        this.mode = 1;
-        if(Math.random() > 0.5) {
-          this.mode = 3;
-        }
-        for(let i = 0; i < this.ptcls.length; i++) {
-          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.1;
-        }
-      }
-    }
-    
-    if(audio_hanmi_song.currentTime > 105.8) {
-      this.mode = 4;
-      this.x_period = 1;
-      this.y_period = 1;
-      this.to_line_color = 0x33c1c8;
-    }
-    */
+    //if(vol - this.last_vol > 0.03) { }
     
     this.last_vol = vol;
   }

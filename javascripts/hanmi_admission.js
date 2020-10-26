@@ -128,7 +128,7 @@ class HanmiAdmission {
     c.translate(this.x, this.y);
     c.scale(hanmi_base.scale, hanmi_base.scale);
     c.translate(-256, -256);
-    c.fillStyle = 'hsla(220deg, 100%, 50%, 0.5)';
+    c.fillStyle = 'hsla(220, 100%, 50%, 0.5)';
     c.fill(this.path);
     c.restore();
     

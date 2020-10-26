@@ -153,7 +153,7 @@ class HanmiThought {
     c.translate(this.x, this.y - 200);
     c.scale(hanmi_base.scale, hanmi_base.scale);
     c.translate(-256, -256);
-    c.fillStyle = 'hsla(20deg, 100%, 50%, 0.5)';
+    c.fillStyle = 'hsla(20, 100%, 50%, 0.5)';
     c.fill(this.path);
     c.restore();
     
