@@ -2,14 +2,16 @@ html['about_play'] = `
 <div>한미유치원 어린이들의<br>풍요롭고 재미있는 놀이</div>
 <br>
 
-<img id="play_as_life" style="display: block; width: 75%; margin: auto;" src="./images/2020/play_as_life.svg">
+<div style="position: relative;">
+  <div id="musical_container" style="position: absolute; width: 100%"></div>
+  <img id="play_as_life" style="display: block; width: 75%; margin: auto;" src="./images/2020/play_as_life.svg">
+</div>
 
 <br>
 <div class="subtle">
   <strong>어린이들의 노래</strong>를 소개합니다.
 </div>
 <div id="song_container">
-<!--<audio id="hanmi_song" style="width: 100%" src="./music/hanmi_song.mp3" controls></audio>-->
 </div>
 
 <div class="subtle">

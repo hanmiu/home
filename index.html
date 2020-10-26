@@ -244,15 +244,6 @@
     font-family: 'Song Myung', serif;
   }
   
-  /*
-  #detail #content li::before {
-    position: absolute;
-    content: '■';
-    top: -0.8em; 
-    font-size: 2em;
-  }
-  */
-  
   #detail #content .full {
     width: 100%;
     margin-top: 0.5rem;
@@ -262,6 +253,14 @@
   #detail #content audio {
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
+  }
+  
+  #musical {
+    display: block;
+    margin: auto;
+    width: 75%;
+    cursor: pointer;
+    image-rendering: pixelated;
   }
   
   #footer {
@@ -380,6 +379,7 @@
 <script src="./javascripts/hanmi_about_play.js"></script>
 <script src="./javascripts/hanmi_playground.js"></script>
 <script src="./javascripts/hanmi_covid19.js"></script>
+<script src="./javascripts/hanmi_musical.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
 <script>
   function css() {
@@ -412,6 +412,7 @@
   let el_detail_header_title = document.querySelector('#detail #header #title');
   let el_detail_content = document.querySelector('#detail #content');
   let el_footer = document.querySelector('#footer');
+  let audio_hanmi_song = document.querySelector('#hanmi_song');
 
   let el_info = document.querySelector('#info');
   
@@ -581,11 +582,20 @@
       }, 250);
       
       if(title === 'about_play') {
-        document.querySelector('#hanmi_song').style.display = 'block';
-        document.querySelector('#song_container').appendChild(document.querySelector('#hanmi_song'));
+        audio_hanmi_song.style.display = 'block';
+        document.querySelector('#musical_container').appendChild(ctx_musical.canvas);
+        document.querySelector('#song_container').appendChild(audio_hanmi_song);
         document.querySelector('#play_as_life').addEventListener('click', (e) => {
-          document.querySelector('#hanmi_song').play();
-          ac.resume();
+          audio_hanmi_song.play();
+          if(hanmi_musical.audio_ctx.state === 'suspended') {
+            hanmi_musical.audio_ctx.resume();  
+          }
+        });
+        ctx_musical.canvas.addEventListener('click', (e) => {
+          audio_hanmi_song.play();
+          if(hanmi_musical.audio_ctx.state === 'suspended') {
+            hanmi_musical.audio_ctx.resume();  
+          }
         });
       }
     }
@@ -612,6 +622,7 @@
   let hanmi_about_play = new HanmiAboutPlay();
   let hanmi_playground = new HanmiPlayground();
   let hanmi_covid19 = new HanmiCovid19();
+  let hanmi_musical = new HanmiMusical();
   
   let current_loop = null;
   let current_ctx = null;
@@ -620,17 +631,10 @@
   let last_width = 0;
   
 
-  /*
-  let ac = new (window.AudioContext || window.webkitAudioContext)();
-  let song_source = ac.createMediaElementSource(document.querySelector('#hanmi_song'));
-  let analyser = ac.createAnalyser();
-  song_source.connect(analyser);
-  analyser.connect(ac.destination);
-  analyser.fftSize = 2048;
-  let bufferLength = analyser.frequencyBinCount;
-  let dataArray = new Uint8Array(bufferLength);
-  analyser.getByteTimeDomainData(dataArray);
-  */
+  let ctx_musical = document.createElement('canvas').getContext('2d');
+  ctx_musical.canvas.id = 'musical';
+  ctx_musical.canvas.width = 512;
+  ctx_musical.canvas.height = 512;
   
   function layout() {
     let rect_pebbles = el_pebbles.getBoundingClientRect();
@@ -688,38 +692,6 @@
       hanmi_thought.update(ctx_thought);
       hanmi_thought.draw(ctx_thought);  
     }
-    
-    /*
-    let canvasCtx = ctx_admission;
-    let WIDTH = canvasCtx.canvas.width;
-    let HEIGHT = canvasCtx.canvas.height;
-    analyser.getByteTimeDomainData(dataArray);
-    
-    canvasCtx.lineWidth = 2;
-    canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
-
-    canvasCtx.beginPath();
-
-    var sliceWidth = WIDTH * 1.0 / bufferLength;
-    var x = 0;
-
-    for(var i = 0; i < bufferLength; i++) {
-
-      var v = dataArray[i] / 128.0;
-      var y = v * HEIGHT/2;
-
-      if(i === 0) {
-        canvasCtx.moveTo(x, y);
-      } else {
-        canvasCtx.lineTo(x, y);
-      }
-
-      x += sliceWidth;
-    }
-
-    canvasCtx.lineTo(WIDTH, HEIGHT/2);
-    canvasCtx.stroke();
-    */
   }
   
   function loop_thought() {
@@ -783,7 +755,6 @@
       if(current_loop) {
         current_loop();
       }
-
       //renderer.render( scene_bg, camera_bg );
       //thing.rotation.x += 0.01;
       //thing.rotation.z += 0.01;
@@ -795,6 +766,11 @@
           on_scroll_end();
         }
       }
+    }
+    
+    if(!audio_hanmi_song.paused) {
+      hanmi_musical.update(ctx_musical);
+      hanmi_musical.draw(ctx_musical);
     }
     
     requestAnimationFrame(loop);
@@ -919,6 +895,18 @@ void main()	{
     
     el_detail_header.addEventListener('click', (e) => {
       show_detail(false, '');
+    });
+    
+    audio_hanmi_song.addEventListener('play', (e) => {
+      if(hanmi_musical.audio_ctx.state === 'suspended') {
+        hanmi_musical.audio_ctx.resume();  
+      }
+    });
+    
+    audio_hanmi_song.addEventListener('touchstart', (e) => {
+      if(hanmi_musical.audio_ctx.state === 'suspended') {
+        hanmi_musical.audio_ctx.resume();  
+      }
     });
     
     current_loop = loop_admission;
