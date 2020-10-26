@@ -14,13 +14,17 @@ class HanmiPlayground {
     this.wait = 120;
     
     this.bipeds = [];
-    this.bipeds.push(new Biped());
-    this.bipeds.push(new Quadruped());
-    this.bipeds.push(new Snake());
-    this.biped = this.bipeds[this.bipeds.length * Math.random() | 0];
+    for(let i = 0; i < biped_classes.length; i++) {
+      this.bipeds.push(new biped_classes[i]);
+    }
+    let bc = biped_classes_for_shuffle.shift();
+    if(biped_classes_for_shuffle.length === 0) {
+      biped_classes_for_shuffle = biped_classes.map(x => x);
+    }
+    this.biped = this.bipeds[this.bipeds.map(x => x.constructor).indexOf(bc)];
     this.biped_x = -100;
     for(let i = 0; i < this.bipeds.length; i++) {
-      this.bipeds[i].x = this.biped_x;  
+      this.bipeds[i].x = this.biped_x;
     }
   }
   
@@ -49,7 +53,11 @@ class HanmiPlayground {
       this.biped.update(this.frame_count / 60);
       this.biped.x = this.biped_x;
       if(this.biped.x > c.canvas.width + 200) {
-        this.biped = this.bipeds[this.bipeds.length * Math.random() | 0];
+        let bc = biped_classes_for_shuffle.shift();
+        if(biped_classes_for_shuffle.length === 0) {
+          biped_classes_for_shuffle = biped_classes.map(x => x);
+        }
+        this.biped = this.bipeds[this.bipeds.map(x => x.constructor).indexOf(bc)];
         this.biped_x = -100;
         this.biped.reform();
       }  

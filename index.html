@@ -447,6 +447,11 @@
   let timeout_id = 0;
   let current_hanmi = null;
   
+  let biped_classes = [Biped, Quadruped, Worm];
+  let biped_classes_for_shuffle = biped_classes.map(x => x);
+  shuffle(biped_classes_for_shuffle);
+  let current_biped_class = biped_classes_for_shuffle[0];
+  
   function focus_by(id) {
     if(id) {
       let iY = 0;
