@@ -35,9 +35,7 @@ html['thought'] = `
   위 그림은 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt; - 프로젝트, 열정, 동료, 놀이를 통해서 창의성을 키우기</a>에 나오는 도식으로 한미유치원이 참고하고 있는 또 하나의 생각입니다. <strong>배움이 어떻게 일어나는지 배우게</strong> 하는 생각입니다.<br><br>
 </div>
 
-<div style="display: flex; justify-content: center">
-  <img style="height: 200px" src="./images/2020/thinker.svg">
-</div>
+<img style="display: block; width: 200px; margin: auto;" src="./images/2020/thinker.svg">
 <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em">생각하는 사람 (5세)</div>
 
 <div class="subtle">

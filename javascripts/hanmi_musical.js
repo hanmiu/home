@@ -26,6 +26,9 @@ class HanmiMusical {
         vy: 0,
         scale: 1,
         to_scale: 1,
+        rot: 0,
+        v_rot: 0,
+        to_rot: 0
       }
       this.ptcls.push(p);
     }
@@ -35,6 +38,7 @@ class HanmiMusical {
     this.y_period = 1;
     this.frame_count = 0;
     this.last_vol = 0;
+    this.mode = 1;
   }
   
   update(c) {
@@ -62,7 +66,7 @@ class HanmiMusical {
       
       let x = cx + rr * Math.cos(t * Math.PI * 2 * this.x_period - time * 0.1);
       let y = cy + rr * Math.sin(t * Math.PI * 2 * this.y_period - time * 0.1);
-      if(this.x_period === 1) {
+      if(this.mode !== 2) {
         if(i === 0) {
           c.moveTo(x, y);
         } else {
@@ -78,7 +82,9 @@ class HanmiMusical {
       p.to_x = x;
       p.to_y = y;
       p.to_scale = 0.9 + f;
-      
+      if(this.mode === 3) {
+        p.to_rot = (tt * Math.PI * 2 * this.x_period - time * 0.1) % (2 * Math.PI) + Math.PI*0.5;  
+      }
     }
     vol = vol / this.bufferLength;
     c.strokeStyle = 'rgb(254, 240, 1)';
@@ -94,8 +100,12 @@ class HanmiMusical {
       p.vx *= 0.8;
       p.vy *= 0.8;
       p.scale += (p.to_scale - p.scale) * 0.25;
+      p.v_rot += (p.to_rot - p.rot) * 0.1;
+      p.rot += p.v_rot * 0.1;
+      p.v_rot *= 0.9;
       c.save();
       c.translate(p.x, p.y);
+      c.rotate(p.rot);
       c.scale(0.25 * p.scale, 0.25 * p.scale);
       c.drawImage(p.img, -64, -64);
       c.restore();
@@ -106,10 +116,21 @@ class HanmiMusical {
       if(Math.random() > 0.5) {
         this.x_period = 1.5 * 3;
         this.y_period = 1 * 3;
+        this.mode = 2;
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.25;
+        }
       }
       else {
         this.x_period = 1;
         this.y_period = 1;
+        this.mode = 1;
+        if(Math.random() > 0.5) {
+          this.mode = 3;
+        }
+        for(let i = 0; i < this.ptcls.length; i++) {
+          this.ptcls[i].to_rot = (Math.random() * 2 - 1) * Math.PI * 0.1;
+        }
       }
     }
     
