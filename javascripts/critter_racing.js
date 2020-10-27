@@ -30,6 +30,7 @@ class Biped {
     p[13] = { x: cx - 1.2, y: cy + 1.6 };
 
     let scope = this;
+    scope.type = 0;
     scope.head = p[11];
     scope.p = p;
     scope.x = 0;
@@ -39,6 +40,10 @@ class Biped {
     scope.stride_b = 1;
     scope.leg_angle = -Math.PI * 0.4;
     scope.arm_angle = -Math.PI * 0.6;
+    if(Math.random() < 0.3) {
+      scope.arm_angle = Math.PI * 0.2 + Math.random() * Math.PI * 0.2;   // 팔 들고 뛰기
+      scope.type = 1;
+    }
     scope.scale = 30;
     scope.strokeStyle = '#eb7c62';
     let hue = Math.random() * 360 | 0;
@@ -132,7 +137,7 @@ class Biped {
     g.translate(scope.x, scope.y + g.canvas.height);
     g.scale(scope.scale, -scope.scale);
 
-    // back legs
+    // back leg, back arm
     g.lineWidth = scope.lineWidth;
     g.beginPath();
     g.moveTo(p[0].x, p[0].y);
@@ -159,15 +164,15 @@ class Biped {
     g.strokeStyle = scope.color_front;
     g.stroke();
     
-    // front legs
+    // front leg
     g.lineWidth = scope.lineWidth * 1;
+    g.strokeStyle = scope.color_front;
     g.beginPath();
     g.moveTo(p[0].x, p[0].y);
     g.bezierCurveTo(p[3].x, p[3].y, p[3].x, p[3].y, p[4].x, p[4].y);
-    g.moveTo(p[5].x, p[5].y);
-    g.bezierCurveTo(p[8].x, p[8].y, p[8].x, p[8].y, p[9].x, p[9].y);
-    g.strokeStyle = scope.color_front;
     g.stroke();
+    
+    
 
     // head
     //g.drawImage(scope.gh.canvas, p[11].x - 0.1, p[11].y - 0.2, scope.gh.canvas.width / scope.gh.canvas.height * 0.5, 0.5);
@@ -205,6 +210,12 @@ class Biped {
       g.fill();  
     }
     
+    // front arm (right)
+    g.beginPath();
+    g.moveTo(p[5].x, p[5].y);
+    g.bezierCurveTo(p[8].x, p[8].y, p[8].x, p[8].y, p[9].x, p[9].y);
+    g.stroke();
+    
     g.restore();
   }
 }
@@ -239,6 +250,12 @@ class Quadruped {
     p[13] = { x: cx - 1.2, y: cy + 1.6 };
 
     let scope = this;
+    scope.type = 0;
+    scope.leg_width = 1;
+    if(Math.random() < 0.3) {
+      scope.type = 1;
+      scope.leg_width = 1.5;
+    }
     scope.head = p[11];
     scope.p = p;
     scope.x = 0;
@@ -341,37 +358,48 @@ class Quadruped {
     g.scale(scope.scale, -scope.scale);
 
     // back legs
-    g.lineWidth = scope.lineWidth * 1;
+    g.lineWidth = scope.lineWidth * scope.leg_width;
     g.beginPath();
-    g.moveTo(p[0].x, p[0].y);
-    g.bezierCurveTo(p[1].x, p[1].y, p[1].x, p[1].y, p[2].x, p[2].y);
+    if(scope.type === 0) {
+      g.moveTo(p[0].x, p[0].y);
+      g.bezierCurveTo(p[1].x, p[1].y, p[1].x, p[1].y, p[2].x, p[2].y);   
+    }
     g.moveTo(p[5].x, p[5].y);  
-    g.bezierCurveTo(p[6].x, p[6].y, p[6].x, p[6].y, p[7].x, p[7].y);
+    g.bezierCurveTo(p[6].x, p[6].y, p[6].x, p[6].y, p[7].x, p[7].y); 
     g.strokeStyle = scope.color_back;
     g.stroke();
     
     // tail
-    g.lineWidth = scope.lineWidth * 0.5;
-    g.beginPath();
-    g.moveTo(p[0].x, p[0].y);
-    g.bezierCurveTo(p[0].x, p[0].y, p[12].x, p[12].y, p[13].x, p[13].y);
-    g.strokeStyle = scope.color_middle;
-    g.stroke();
+    if(scope.type === 0) {
+      g.lineWidth = scope.lineWidth * 0.5;
+      g.beginPath();
+      g.moveTo(p[0].x, p[0].y);
+      g.bezierCurveTo(p[0].x, p[0].y, p[12].x, p[12].y, p[13].x, p[13].y);
+      g.strokeStyle = scope.color_middle;
+      g.stroke();
+    }
     
     // body + neck
     g.lineWidth = scope.lineWidth * 1.5;
     g.beginPath();
-    g.moveTo(p[0].x, p[0].y);
-    g.bezierCurveTo(p[10].x, p[10].y, p[10].x, p[10].y, p[5].x, p[5].y);
+    if(scope.type === 0) {
+      g.moveTo(p[0].x, p[0].y);
+      g.bezierCurveTo(p[10].x, p[10].y, p[10].x, p[10].y, p[5].x, p[5].y);  
+    }
+    else {
+      g.moveTo(p[5].x, p[5].y);
+    }
     g.lineTo(p[11].x, p[11].y);
     g.strokeStyle = scope.color_front;
     g.stroke();
     
     // front legs
-    g.lineWidth = scope.lineWidth * 1;
+    g.lineWidth = scope.lineWidth * scope.leg_width;
     g.beginPath();
-    g.moveTo(p[0].x, p[0].y);
-    g.bezierCurveTo(p[3].x, p[3].y, p[3].x, p[3].y, p[4].x, p[4].y);
+    if(scope.type === 0) {
+      g.moveTo(p[0].x, p[0].y);
+      g.bezierCurveTo(p[3].x, p[3].y, p[3].x, p[3].y, p[4].x, p[4].y);
+    }
     g.moveTo(p[5].x, p[5].y);
     g.bezierCurveTo(p[8].x, p[8].y, p[8].x, p[8].y, p[9].x, p[9].y);
     g.strokeStyle = scope.color_front;
@@ -423,12 +451,17 @@ class Worm {
     let cx = 0;
     let cy = 0;
 
+    let scope = this;
+    scope.type = 0;
+    let n = 9;
+    if(Math.random() < 0.3) {
+      scope.type = 1;
+      n = 3;
+    }
     // body
-    for(var i = 0; i <= 9; i++) {
+    for(var i = 0; i <= n; i++) {
       p[i] = { x: cx - 0.3 * i, y: cy};
     }
-
-    let scope = this;
     scope.head = p[0];
     scope.p = p;
     scope.x = 0;
