@@ -107,13 +107,20 @@ html['covid19'] = `
   <br>
 
   <div class="subtle">원격 수업의 상황일지라도 한미유치원이 해낼 수 있는 대안을 고민하며 실천하고 있습니다.</div>
-
-  <!--
   <br>
+
+  <div>더 살펴보기</div>
   <div class="subtle">
-  계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요. 어린이들이 졸업한 후 공개하는 놀이와 그 의미에 관한 영상입니다.  
+    <ul class="leaf">
+      <li><a href="https://trello.com/b/sFYg60Ly" target="_blank">한미유치원의 1년</a></li>
+      <li><a href="http://www.youtube.com/watch?v=JJtlmzplcWA" target="_blank">한미유치원 하루 일과 (영상)</a></li>
+      <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
+      <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
+      <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
+    </ul>
   </div>
-  -->
+
+  <img style="display: block; height: 100px; margin: auto;" src="./images/logotype/hanmi_runner.svg">
 `;
 
 class HanmiCovid19 {
