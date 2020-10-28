@@ -13,13 +13,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Song+Myung&display=swap" rel="stylesheet">
 
 <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0K0RGPVKK5"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SQRZJBQ06L"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-0K0RGPVKK5');
+  gtag('config', 'G-SQRZJBQ06L');
 </script>
 
 <style>
@@ -876,12 +876,6 @@ void main()	{
   thing.position.y = 1;
   
   function init() {
-    let chars = '가,가,겨,겨,<br>'.split(',');
-    let html = '';
-    for(let i = 0; i < 200; i++) {
-      html += chars[Math.random() * chars.length | 0];
-    }
-    el_detail_content.innerHTML = html;
     
     let title = params.get('page');
     if(title) {
@@ -936,7 +930,7 @@ void main()	{
     
     current_loop = loop_admission;
     
-    //show_detail(true, 'admission');
+    //show_detail(true, 'about_play');
     
     layout();
     loop();
