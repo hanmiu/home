@@ -32,7 +32,7 @@ html['about_play'] = `
 
 <div>도전하는 도미노</div>
 <br>
-<div class="youtube-container">
+<div class="iframe-container">
   <iframe class="video" src="https://www.youtube.com/embed/hrxF_ik4Pk4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">2015 종달새반 어린이들</div>
@@ -43,7 +43,7 @@ html['about_play'] = `
 <br>
 
 <div class="subtle">
-계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요.
+계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요. 어린이들이 졸업한 후 공개하는 놀이와 그 의미에 관한 영상입니다.  
 <ul class="flower">
   <li><a href="https://www.youtube.com/c/hanmiu/videos" target="_blank">한미유치원 놀이 영상 모음</a></li>
 </ul>

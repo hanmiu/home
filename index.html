@@ -279,14 +279,13 @@
     transition: opacity 1s;
   }
   
-  .youtube-container {
+  .iframe-container {
     position: relative;
     width: 100%;
-    height: 0;
-    padding-bottom: 56.25%;
+    height: 250px;
   }
   
-  .youtube-container .video {
+  .iframe-container .video {
     position: absolute;
     top: 0;
     left: 0;
@@ -580,22 +579,6 @@
   function touchend(e) {
     
   }
-  
-  /*
-  'admission': '입학',
-    'thought': '생각',
-    'about_play': '놀이',
-    'playground': '디지털 놀이터',
-    'covid19': '코로나19 대응',
-  */
-  
-  html['playground'] = `
-    <div class="subtle">홈페이지 개편으로 준비중입니다.<br><br>한미유치원에서 만든 다양한 작업을 소개하며 건강한 미디어 활용을 다룰 예정입니다.</div>
-  `;
-  
-  html['covid19'] = `
-    <div class="subtle">홈페이지 개편으로 준비중입니다.<br><br>코로나19 상황의 학사운영과 행사운영 및 지난 8월 26일 부터 9월 18일까지 줌을 활용한 원격 수업 사례를 소개할 예정입니다.</div>
-  `;
   
   function show_detail(b, title) {
     is_showing_detail = b;

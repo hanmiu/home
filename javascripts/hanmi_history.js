@@ -197,7 +197,7 @@ class HanmiHistory {
         let p = this.ptcls[i];
         c.beginPath();
         c.arc(p.x, p.y, Math.abs(p.r), 0, Math.PI * 2);
-        c.fillStyle = `hsla(${p.hue}deg, 100%, ${90 * t}%, ${0.9 + 0.1 * (1 - t)})`;
+        c.fillStyle = `hsla(${p.hue}, 100%, ${90 * t}%, ${0.9 + 0.1 * (1 - t)})`;
         c.fill();  
       }
     }
@@ -215,10 +215,10 @@ class HanmiHistory {
         let p = this.ptcls[i];
         c.beginPath();
         c.arc(p.x, p.y, Math.abs(p.r) * 0.5, 0, Math.PI * 2);
-        //c.fillStyle = `hsla(${p.hue}deg, 100%, ${90 * t}%, ${0.9 + 0.1 * (1 - t)})`;
-        //c.fillStyle = `hsla(${p.hue}deg, 100%, ${85 * t}%, ${0.5 + 0.5 * (1 - t)})`;
-        c.fillStyle = `hsla(${p.to_hue}deg, 100%, ${(85 * t)}%, 1)`;
-        //c.fillStyle = `hsla(${p.to_hue}deg, 100%, 85%, 1)`;
+        //c.fillStyle = `hsla(${p.hue}, 100%, ${90 * t}%, ${0.9 + 0.1 * (1 - t)})`;
+        //c.fillStyle = `hsla(${p.hue}, 100%, ${85 * t}%, ${0.5 + 0.5 * (1 - t)})`;
+        c.fillStyle = `hsla(${p.to_hue}, 100%, ${(85 * t)}%, 1)`;
+        //c.fillStyle = `hsla(${p.to_hue}, 100%, 85%, 1)`;
         c.fill();
       }
     }
