@@ -30,8 +30,20 @@ html['about_play'] = `
 <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">작곡·작사: 박서희, 황보선<br>노래: 2019 개나리반 어린이들</div>
 <br>
 
+<div>도전하는 도미노</div>
+<br>
+<div class="youtube-container">
+  <iframe class="video" src="https://www.youtube.com/embed/hrxF_ik4Pk4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">2015 종달새반 어린이들</div>
+<br>
 <div class="subtle">
-준비중 입니다. 그동안 아래 자료를 살펴봐 주세요.
+  <a href="/?page=hanmi" target="_blank">어린이들이 한미유치원에서 경험할 수 있는 것</a>에 나오는 <span class="bambini">“노력하면 <strong>할 수 있다</strong>. 시행착오를 인정하고 다시 도전하는 방법 터득하기. 즐겁게 놀았던 경험 쌓기. 마음의 힘을 키우기.”</span> 등을 잘 보여주는 한미유치원 놀이 속 한 장면입니다.
+</div>
+<br>
+
+<div class="subtle">
+계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요.
 <ul class="flower">
   <li><a href="https://www.youtube.com/c/hanmiu/videos" target="_blank">한미유치원 놀이 영상 모음</a></li>
 </ul>
