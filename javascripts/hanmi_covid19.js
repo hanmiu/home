@@ -106,7 +106,7 @@ html['covid19'] = `
   <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">호기심 킁킁~ 슬라이드 예시</div>
   <br>
 
-  <div class="subtle">원격 수업의 상황일지라도 <strong>한미유치원이 해낼 수 있는 대안</strong>을 고민하며 실천하고 있습니다.</div>
+  <div class="subtle">이렇게 원격 수업의 상황일지라도 <strong>한미유치원이 해낼 수 있는 대안</strong>을 고민하며 실천하고 있습니다.</div>
   <br>
 
   <div>더 살펴보기</div>
