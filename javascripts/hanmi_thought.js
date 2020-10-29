@@ -4,7 +4,7 @@ html['thought'] = `
 <img class="full" src="./images/2020/hourglass.svg">
 <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">모래시계 보기 (5세)</div>
 <div class="subtle">
-  <span>한미유치원은 이탈리아의 <a href="http://reggiochildren.it/en" target="_blank">레지오 에밀리아 접근</a>으로부터 얻은 영감을 바탕으로 나름의 교육을 펼쳐왔습니다.<br><br><a href="https://docs.google.com/document/d/1K3B6X5Pt9JvOOYmnHjMR4P8HeJ6HdyeUMjLtKINLQ_Q/edit?usp=sharing">한미유치원의 교육과 레지오 에밀리아 접근에 관한 안내</a></span>에 그 내용을 자세하게 적어두었는데, 그 중 일부를 인용합니다.
+  <span>한미유치원은 이탈리아의 <a href="http://reggiochildren.it/en" target="_blank">레지오 에밀리아 접근</a>으로부터 얻은 영감을 바탕으로 나름의 교육을 펼쳐왔습니다.<br><br><a href="https://docs.google.com/document/d/1K3B6X5Pt9JvOOYmnHjMR4P8HeJ6HdyeUMjLtKINLQ_Q/edit?usp=sharing" target="_blank">한미유치원의 교육과 레지오 에밀리아 접근에 관한 안내</a></span>에 그 내용을 자세하게 적어두었는데, 그 중 일부를 인용합니다.
 </div>
 <div class="quote">
 레지오의 교육자들 사이에서 주로 사용되는 명사 <strong>프로제타지오네(progettazione)</strong>는 단어 자체가 특별한 의미를 갖는데, 프로그램마지오네 (programmazione)라는 용어의 반대말로 정의된다.<br><br>레지오에서 프로그램마지오네(programmazione)는 사전 정의된 교육과정, 프로그램, 단계 등의 뜻을 함축하는 용어로 사용된다. 그러므로 프로제타지오네는 보다 포괄적이고 유동적인 접근법의 개념을 함축한다. 교직원의 발전 및 학부모와의 관계와 마찬가지로 교실 활동에 대한 <strong>초기 추측들이 실제 수업 활동이 진행되면서 실제와 다르며 결국 새로운 접근법으로 변화</strong>를 시도하게 된다는 것이 프로제타지오네의 개념이다. (중략)<br><br>
