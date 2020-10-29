@@ -94,16 +94,16 @@ html['covid19'] = `
   <br>
 
   <img style="display: block; width: 100%; margin: auto;" src="./images/2020/remote_3.jpg">
-  <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">카메라의 그림을 캡쳐하여<br>실시간으로 콜라주를 만들며 이야기 나누기</div>
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">카메라의 그림을 캡쳐하여<br>실시간으로 콜라주를 만들며 이야기 나누기</div>
   <div class="quote">
-  보통 30분 정도 이루어지는 오후 원격 수업에서는 설문을 통해 받은 어린이들의 호기심 어린 질문 “날씨가 흐린 날 해는 어디로 사라지나요?”, “울면 왜 눈물과 콧물이 흐르나요?”, “공주가 있는 나라도 있나요?”, “괴물과 유령은 어떤 물질로 만들어졌나요?” 등의 질문에 답하는 ‘호기심 킁킁~’ 시간을 줌으로 운영합니다. 이 때 어린이들이 그린 ‘신기한 생물’을 돌아가며 소개하고, 그 신기한 생물이 등장하는 간단한 창작 동화를 소개하기도 합니다. 실시간으로 어린이들이 가정에서 그린 그림을 캡쳐해서 바로 즉석에서 새로운 ‘신기한 생물'을 콜라주로 만들거나 이야기에 등장하게 하는 접근을 하기도 했습니다. 또한 외부의 전문가를 초청해서 함께 춤과 움직임을 배워 보거나, 어린이들의 호기심에 다양한 관점의 의견을 들을 수 있었습니다. <strong>원격이기 때문에 오히려 수월하게 할 수 있는 지점</strong>들이 있다는 것을 탐색하고 배울 수 있었습니다. 
+  보통 30분 정도 이루어지는 오후 원격 수업에서는 설문을 통해 받은 어린이들의 호기심 어린 질문 “날씨가 흐린 날 해는 어디로 사라지나요?”, <a href="https://docs.google.com/presentation/d/1KsYN_Z7IwoqjkO3mC2Lss71zxKEYJDHsi2FM00YeaNQ/edit?usp=sharing" target="_blank">“울면 왜 눈물과 콧물이 흐르나요?”</a>, <a href="https://docs.google.com/presentation/d/1ur2wCFOhLbVUJG12LVCiloZgF2_tvvzQ8RY5EEm-h0k/edit?usp=sharing">“공주가 있는 나라도 있나요?”</a>, “괴물과 유령은 어떤 물질로 만들어졌나요?” 등의 질문에 답하는 ‘호기심 킁킁~’ 시간을 줌으로 운영했습니다. 이 때 어린이들이 그린 ‘신기한 생물’을 돌아가며 소개하고, 그 신기한 생물이 등장하는 간단한 창작 동화를 소개하기도 했죠. 실시간으로 어린이들이 가정에서 그린 그림을 캡쳐해서 바로 즉석에서 새로운 ‘신기한 생물'을 콜라주로 만들거나 이야기에 등장하게 하는 접근을 하기도 했습니다. 또한 외부의 전문가를 초청해서 함께 춤과 움직임을 배워 보거나(<a hfef="https://www.instagram.com/abclab.kr" target="_blank">ABC랩</a>과 함께), 어린이들의 호기심에 다양한 관점의 의견(<a href="http://hojunsong.com" target="_blank">송호준 작가</a>, <a href="http://protoroom.kr" target="_blank">김승범 작가</a>, <a href="http://bitbrick.cc/tiktak" target="_blank">강병수 작가</a>, <a href="https://ct.kaist.ac.kr" target="_blank">문화기술대학원의 연구원</a>들과 함께)을 들을 수 있었습니다. <strong>원격이기 때문에 오히려 수월하게 할 수 있는 지점</strong>들이 있다는 것을 탐색하고 배울 수 있었습니다. 
   </div>
   <br>
 
   <div class="iframe-container">
   <iframe class="video" src="https://docs.google.com/presentation/d/e/2PACX-1vRti8y7i92Zdq5ZDiPCxy-_HROrZaUKV6F5_Y-XSgo-chVXOaw65tZ6xuEKNVAcykmeTbqLyyjvZ6dR/embed?start=false&loop=false&delayms=3000" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
   </div>
-  <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">호기심 킁킁~ 슬라이드 예시</div>
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">호기심 킁킁~ 슬라이드 예시</div>
   <br>
 
   <div class="subtle">원격 수업의 상황일지라도 <strong>한미유치원이 해낼 수 있는 대안</strong>을 고민하며 실천하고 있습니다.</div>
