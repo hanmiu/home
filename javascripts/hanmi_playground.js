@@ -1,5 +1,23 @@
 html['playground'] = `
+  <div>어린이의 동시대 환경인 디지털</div>
+  <br>
+  
+  <div class="subtle">
+  
+  </div>
+  
   <div class="subtle">홈페이지 개편으로 준비중입니다.<br><br>한미유치원에서 만든 다양한 작업을 소개하며 건강한 미디어 활용을 다룰 예정입니다.</div>
+
+  <div>더 살펴보기</div>
+  <div class="subtle">
+    <ul class="leaf">
+      <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
+      <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
+      <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
+    </ul>
+  </div>
+
+  <img style="display: block; height: 100px; margin: auto;" src="./images/logotype/hanmi_runner.svg">
 `;
 
 class HanmiPlayground {
