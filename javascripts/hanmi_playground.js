@@ -14,7 +14,7 @@ html['playground'] = `
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/hangul-slime.html" target="_blank"><strong>
   몸문자
   </strong></div>
-  <a class="no-underline" href="https://www.hanmiu.cc/play/glyph/mmj.html">
+  <a class="no-underline" target="_blank" href="https://www.hanmiu.cc/play/glyph/mmj.html">
     <img class="full" src="./play/glyph/mmj.jpg">
   </a>
   <div class="subtle"><a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 놀이를 지원하기 위해 만들었습니다. 만5세 어린이들의 호기심과 제안을 따라가며 문자 체계를 고안해 갔던 이야기입니다. 자세한 내용은 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 영상을 살펴봐 주세요. (데스크탑+모바일 지원)</div>
@@ -23,7 +23,7 @@ html['playground'] = `
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/snowflower.html" target="_blank"><strong>
   눈꽃
   </strong></div>
-  <a class="no-underline" href="https://www.hanmiu.cc/play/glyph/snowflower.html">
+  <a class="no-underline"  target="_blank" href="https://www.hanmiu.cc/play/glyph/snowflower.html">
     <img class="full" src="./play/glyph/snowflower.jpg">
   </a>
   <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 만4세의 한글에 관한 탐색을 지원하기 위한 여러 접근 중에 하나로 활용되었습니다. 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상을 살펴봐 주세요. (데스크탑 지원)</div>
@@ -32,7 +32,7 @@ html['playground'] = `
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/drawing.html" target="_blank"><strong>
   글자 드로잉
   </strong></div>
-  <a class="no-underline" href="https://www.hanmiu.cc/play/glyph/drawing.html">
+  <a class="no-underline" target="_blank" href="https://www.hanmiu.cc/play/glyph/drawing.html">
     <img class="full" src="./play/glyph/drawing.jpg">
   </a>
   <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 글자 디자인은 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">&lt;일상 속의 호기심 탐구 창의성&gt;</a>이란 큰 흐름과 연결되어 있던 교실의 다양한 접근 중 하나였습니다. 더 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상과 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">'일상 속의 호기심 탐구 창의성'</a>을 살펴봐 주세요. (데스크탑 지원)</div>
