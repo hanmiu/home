@@ -2,11 +2,26 @@ html['playground'] = `
   <div>어린이의 동시대 환경인 디지털</div>
   <br>
   
-  <div class="subtle">
-  
-  </div>
-  
-  <div class="subtle">홈페이지 개편으로 준비중입니다.<br><br>한미유치원에서 만든 다양한 작업을 소개하며 건강한 미디어 활용을 다룰 예정입니다.</div>
+  <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/hangul-slime.html" target="_blank"><strong>
+  한글 슬라임
+  </strong></div>
+  <a class="no-underline" href="https://www.hanmiu.cc/play/glyph/hangul-slime.html">
+    <img class="full" src="./play/glyph/hangul-slime.jpg">
+  </a>
+  <div class="subtle">모음과 자음 사이에 인력이 작용합니다. 빈 공간을 터치(클릭)하면 그 쪽으로 한글 자모가 모입니다.<br>데스크탑+모바일 지원합니다. 위 링크 또는 이미지를 클릭하여 어린이와 함께 놀아보세요.</div>
+  <br>
+
+  <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/hangul-slime.html" target="_blank"><strong>
+  몸문자
+  </strong></div>
+  <a class="no-underline" href="https://www.hanmiu.cc/play/glyph/mmj.html">
+    <img class="full" src="./play/glyph/mmj.jpg">
+  </a>
+  <div class="subtle">2018학년도 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 놀이를 지원하기 위해 만들었습니다. 어린이들의 호기심과 제안을 따라가며 문자 체계를 고안해 갔던 이야기입니다. 자세한 내용은 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 영상을 살펴봐 주세요.<br>데스크탑+모바일 지원합니다.</div>
+  <br>
+
+  <div class="subtle">한미유치원의 교실 놀이를 지원하기 위해 만들었던 다양한 작업을 소개하며 건강한 미디어 활용을 다룹니다. 계속 업데이트 됩니다.</div>
+  <br>
 
   <div>더 살펴보기</div>
   <div class="subtle">
