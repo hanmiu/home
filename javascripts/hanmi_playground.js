@@ -17,7 +17,7 @@ html['playground'] = `
   <a class="no-underline" href="https://www.hanmiu.cc/play/glyph/mmj.html">
     <img class="full" src="./play/glyph/mmj.jpg">
   </a>
-  <div class="subtle"><a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 놀이를 지원하기 위해 만들었습니다. 어린이들의 호기심과 제안을 따라가며 문자 체계를 고안해 갔던 이야기입니다. 자세한 내용은 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 영상을 살펴봐 주세요. (데스크탑+모바일 지원)</div>
+  <div class="subtle"><a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 놀이를 지원하기 위해 만들었습니다. 만5세 어린이들의 호기심과 제안을 따라가며 문자 체계를 고안해 갔던 이야기입니다. 자세한 내용은 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 영상을 살펴봐 주세요. (데스크탑+모바일 지원)</div>
   <br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/snowflower.html" target="_blank"><strong>
