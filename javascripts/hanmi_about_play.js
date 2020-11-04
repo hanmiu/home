@@ -79,7 +79,7 @@ html['about_play'] = `
   <a href="https://youtu.be/veB984EF3dE?t=1860" target="_blank">파스타면으로 만드는 에펠탑</a>, 
   <a href="https://www.youtube.com/watch?v=sguUgo09LJY" target="_blank">빛</a>, 
   <a href="https://www.youtube.com/watch?v=dysgAzMCwiI" target="_blank">나 만의 새로운 공룡 만들기</a>,
-  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 발견하게 되는 놀잇감</strong>을 계속 함께 만들어 가고 있습니다. 이러한 경험을 한 어린이는 얼마든지 주어진 상황에서 흥미로운 일들을 펼치며 그 상황을 변화하게 합니다. <a href="/?page=hanmi" target="_blank">어린이들이 한미유치원에서 경험할 수 있는 것</a>에서 소개했던 <span class="bambini">“<strong>자유롭게 놀이하며 자기의 길을 찾아가고 만들기</strong>”</span>에 해당하는 예시입니다.
+  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 인식하게 되는 놀잇감</strong>을 계속 찾아내며 함께 만들어 가고 있습니다. 이러한 경험을 한 어린이는 얼마든지 주어진 상황에서 흥미로운 일들을 펼치며 그 상황을 변화하게 합니다. <a href="/?page=hanmi" target="_blank">어린이들이 한미유치원에서 경험할 수 있는 것</a>에서 소개했던 <span class="bambini">“<strong>자유롭게 놀이하며 자기의 길을 찾아가고 만들기</strong>”</span>에 해당하는 예시입니다.
 </div>
 <br>
 
