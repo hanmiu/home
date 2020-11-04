@@ -44,7 +44,7 @@ html['about_play'] = `
 
 <div>함께 만들어가는 놀잇감</div>
 <br>
-<div class="subtle">이미 완성된 교구를 활용하여 놀이를 하기 보다는, 일상에서 경험할 수 있는 다양한 자료를 가지고 어린이들이 스스로 놀잇감을 만들어 갑니다. 여기에 관한 한미유치원의 이야기가 
+<div class="subtle">이미 완성된 교구를 활용하여 놀이를 하기 보다는, 일상에서 경험할 수 있는 다양한 자료를 가지고 교사의 지원과 함께 어린이들이 스스로 놀잇감을 만들어 갑니다. 여기에 관한 한미유치원의 이야기가 
 <a href="https://i-nuri.go.kr/main/board/view.do?menu_idx=105&manage_idx=31&board_idx=701" target="_blank">&lt;놀이, 유아가 세상을 만나고 살아가는 힘&gt;</a> 중 다양한 자료와의 만남을 다룬
 <img class="full" src="./images/2020/toys_1.jpg">
 <ul class="musical">
