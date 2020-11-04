@@ -42,7 +42,7 @@ html['playground'] = `
   <a class="no-underline" href="https://youtu.be/GhHWJIfQtWc?t=661">
     <img class="full" src="./images/2020/media_play_1.jpg">
   </a>
-  <div class="subtle"><a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 놀이를 통해 배움으로 확장되는지 살펴보실 수 있습니다.</div>
+  놀이를 지원하기 위해 개발한 소프트웨어만 아니라 <div class="subtle"><a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 교실의 놀이를 통해 배움으로 확장되는지 살펴보실 수 있습니다.</div>
   <br>
 
   <div>더 살펴보기</div>
