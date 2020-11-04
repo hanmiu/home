@@ -50,23 +50,23 @@ html['about_play'] = `
 <ul class="musical">
   <li class="bambini">
     <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank">나도 색이 나와</a>
-    <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_18.jpg"></a>
+    <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 100%; margin: auto;" src="./images/2020/toys_18.jpg"></a>
   </li>
   <li class="bambini">
     <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank">딱지로 찾는 즐거움!</a>
-    <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_19.jpg"></a>
+    <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 100%; margin: auto;" src="./images/2020/toys_19.jpg"></a>
   </li>
   <li class="bambini">
     <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank">재미있는 놀이 만들자</a>
-    <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_20.jpg"></a>
+    <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 100%; margin: auto;" src="./images/2020/toys_20.jpg"></a>
   </li>
   <li class="bambini">
     <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank">머리 속에 물음표가 가득해!</a>
-    <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_22.jpg"></a>
+    <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 100%; margin: auto;" src="./images/2020/toys_22.jpg"></a>
   </li>
   <li class="bambini">
     <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank">그런 옷이 세상에 어디있어?</a>
-    <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_23.jpg"></a>
+    <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 100%; margin: auto;" src="./images/2020/toys_23.jpg"></a>
   </li>
 </ul>
 에 일목요연하게 소개되어 있습니다.</div>
@@ -78,7 +78,7 @@ html['about_play'] = `
   <a href="https://youtu.be/veB984EF3dE?t=1860" target="_blank">파스타면으로 만드는 에펠탑</a>, 
   <a href="https://www.youtube.com/watch?v=sguUgo09LJY" target="_blank">빛</a>, 
   <a href="https://www.youtube.com/watch?v=dysgAzMCwiI" target="_blank">나 만의 새로운 공룡 만들기</a>,
-  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 발견하게 되는 놀잇감</strong>을 계속 함께 만들어 가고 있습니다. 이러한 경험을 한 어린이들은 얼마든지 주어진 상황에서 흥미로운 일들을 펼치며 그 상황을 변화하게 합니다. <a href="/?page=hanmi" target="_blank">역사·문화·환경</a>에서 소개했던 <strong>자유롭게 놀이하며 자기의 길을 찾아가고 만들기 (부모나 교사가 만들어주는 길이 아닌)</strong>에 해당하는 예시입니다.
+  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 발견하게 되는 놀잇감</strong>을 계속 함께 만들어 가고 있습니다. 이러한 경험을 한 어린이들은 얼마든지 주어진 상황에서 흥미로운 일들을 펼치며 그 상황을 변화하게 합니다. <a href="/?page=hanmi" target="_blank">어린이들이 한미유치원에서 경험할 수 있는 것</a>에서 소개했던 <span class="bambini">“<strong>자유롭게 놀이하며 자기의 길을 찾아가고 만들기</strong> (부모나 교사가 만들어주는 길이 아닌)”</span>에 해당하는 예시입니다.
 </div>
 <br>
 
