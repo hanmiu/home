@@ -45,7 +45,7 @@ html['thought'] = `
 
 <div>어린이의 힘을 믿는 교육</div>
 <br>
-<div class="subtle">MIT의 연구원 데브 로이의 테드 강연, <a href="https://www.ted.com/talks/deb_roy_the_birth_of_a_word?language=ko" target="_blank">&lt;단어의 탄생&gt;</a>을 보면 어린이가 어떻게 걷고 말을 배우는 여정을 거치는지 알 수 있습니다. 자녀를 양육하면서 부모가 경험하게 되는 놀라운 일이기도 하죠. 2019 개정누리과정이 시행됐지만 아직도 현장의 유아교육에는 여러가지 형태가 존재합니다. 한미유치원이 영감을 얻은 &lt;레지오 접근&gt;은 <strong>&lt;프로그램&gt;의 반대</strong>라고 자신들의 교육에 관한 생각을 소개합니다.</div>
+<div class="subtle">MIT의 연구원 데브 로이의 테드 강연 <a href="https://www.ted.com/talks/deb_roy_the_birth_of_a_word?language=ko" target="_blank">&lt;단어의 탄생&gt;</a>을 보면 어린이가 어떻게 걷고 말을 배우는 여정을 거치는지 알 수 있습니다. 자녀를 양육하면서 부모가 경험하게 되는 놀라운 일이기도 하죠. 2019 개정누리과정이 시행됐지만 아직도 현장의 유아교육에는 여러가지 형태가 존재합니다. 한미유치원이 영감을 얻은 &lt;레지오 접근&gt;은 <strong>&lt;프로그램&gt;의 반대</strong>라고 자신들의 교육에 관한 생각을 소개합니다.</div>
 <br>
 
 <div class="subtle">결국 어른의 교육에 관한 믿음과 태도가 어린이의 경험에 큰 영향을 줍니다. <strong>놀이를 통해 진정한 배움이 일어난다고 믿으시나요?</strong> 앞서 소개한 데브 로이의 영상에서처럼 어른의 지원과 적절한 환경 속에서 어린이는 <strong>스스로 걷기를 터득하고</strong>, <strong>말하기를 터득하고</strong>, (비록 나중에 수정할 가설이지만) <strong>자신만의 수 체계를 발명</strong>합니다. 매우 놀라운 일이죠. 한미유치원은 교육이 미리 짜여진 &lt;프로그램&gt;을 숙련하는 방식이 아니라 이 어린이의 힘을 믿는 방식으로 가능하다고 생각합니다.</div>
