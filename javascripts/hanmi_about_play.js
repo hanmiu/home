@@ -43,7 +43,7 @@ html['about_play'] = `
 <br>
 
 <div class="subtle">
-계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요. 어린이들이 졸업한 후 공개하는 놀이와 그 의미에 관한 영상입니다.  
+계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요. 어린이들이 졸업한 후 공개하는 놀이와 그 의미에 관한 영상입니다. 꽃 이름의 반이 만3세, 나무 이름의 반이 만4세, 새 이름의 반이 만5세 이야기입니다.  
 <ul class="flower">
   <li><a href="https://www.youtube.com/c/hanmiu/videos" target="_blank">한미유치원 놀이 영상 모음</a></li>
 </ul>
