@@ -38,7 +38,11 @@ html['playground'] = `
   <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 글자 디자인은 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">&lt;일상 속의 호기심 탐구 창의성&gt;</a>이란 큰 흐름과 연결되어 있던 교실의 다양한 접근 중 하나였습니다. 더 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상과 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">'일상 속의 호기심 탐구 창의성'</a>을 살펴봐 주세요. (데스크탑+모바일 지원)</div>
   <br>
 
-  <div class="subtle">먼저 한글(또는 문자)에 관한 어린이의 호기심을 지원하기 위해 만들었던 작업들을 소개드리고 있습니다. 그 외에도 수, 음악, <a href="https://youtu.be/GhHWJIfQtWc?t=661" target="_blank">움직임 등과 연결되어 있는 한미유치원의 교실 놀이를 지원하기 위해 만들었던 다양한 작업을 소개하며 건강한 미디어 활용을 다룰 계획입니다. (계속 업데이트 됩니다.)</div>
+  <div class="subtle">먼저 한글(또는 문자)에 관한 어린이의 호기심을 지원하기 위해 만들었던 작업들을 소개드리고 있습니다. 그 외에도 수, 음악, <a href="https://youtu.be/GhHWJIfQtWc?t=661" target="_blank">움직임</a> 등과 연결되어 있는 한미유치원의 교실 놀이를 지원하기 위해 만들었던 다양한 작업을 소개하며 건강한 미디어 활용을 다룰 계획입니다. (계속 업데이트 됩니다.)</div>
+  <a class="no-underline" href="https://youtu.be/GhHWJIfQtWc?t=661">
+    <img class="full" src="./images/2020/media_play_1.jpg">
+  </a>
+  <div class="subtle"><a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 놀이를 통해 배움으로 확장되는지 살펴보실 수 있습니다.</div>
   <br>
 
   <div>더 살펴보기</div>

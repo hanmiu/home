@@ -58,6 +58,7 @@ html['hanmi'] = `
     <li><a href="https://drive.google.com/file/d/1mfuc-oR_Ga11l0bEbfq5pVuGTZAooGSJ/view?usp=sharing" target="_blank">한국의 유아교육과 보육정책에 대한 총괄적 진단과 분석: OECD의 관점 (2004)</a> - 2019 개정누리과정까지 이어지는 맥락 속의 한미유치원 (127p)</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
+    <li><a href="/?page=playground">한미유치원의 디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a> →</li>
   </ul>
 </div>
 

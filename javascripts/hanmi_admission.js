@@ -60,6 +60,13 @@ html['admission'] = `
 </div>
 <br>
 
+<div class="iframe-container">
+  <iframe class="video" src="https://www.youtube.com/embed/T7XMDoV7WUU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">만3세 놀이, 한미유치원 마을</div>
+<div class="subtle">어린이들이 입학 후 1년의 시간을 걸쳐 놀이를 통해 어떤 경험을 하게 되는지를 보여주는 영상 중 하나입니다. <a href="https://www.youtube.com/c/hanmiu/videos" target="_blank">영상으로 보는 한미유치원의 놀이</a> 중 꽃 이름의 반이 만3세, 나무 이름의 반이 만4세, 새 이름의 반이 만5세 이야기입니다.</div>
+<br>
+
 <div class="subtle">
 더 자세한 내용은 <strong><a href="https://drive.google.com/file/d/1g8rct91YMkrzah5O2npGblYBbdM0ruGT/view?usp=sharing" target="_blank">&lt;모집요강&gt;</a></strong>을 참고해 주시고, 궁금한 사항은 전화로 문의해 주시면 상세히 답변 드리겠습니다.<br><br>
 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>
@@ -74,6 +81,7 @@ html['admission'] = `
     <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
+    <li><a href="/?page=playground">한미유치원의 디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a> →</li>
   </ul>
 </div>
 

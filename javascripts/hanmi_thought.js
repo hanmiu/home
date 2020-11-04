@@ -78,6 +78,7 @@ html['thought'] = `
     <li><a href="https://21erick.org/column/871" target="_blank">참고 칼럼: 누리과정 교사용 지도서, 내년부터는 볼 수 없다</li>
     <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
+    <li><a href="/?page=playground">한미유치원의 디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a> →</li>
   </ul>
 </div>
 

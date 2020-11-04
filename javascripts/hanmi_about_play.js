@@ -55,7 +55,7 @@ html['about_play'] = `
   <ul class="leaf">
     <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
-    <!--<li><a href="/?page=playground">한미유치원의 디지털 놀이터</a> →</li>-->
+    <li><a href="/?page=playground">한미유치원의 디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a> →</li>
   </ul>
 </div>
 <!--
