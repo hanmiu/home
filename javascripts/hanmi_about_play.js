@@ -104,11 +104,7 @@ html['about_play'] = `
     <li><a href="/?page=playground">한미유치원의 디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a> →</li>
   </ul>
 </div>
-<!--
-<div style="display: flex; justify-content: center">
-  <img style="height: 100px" src="./images/logotype/hanmi_runner.svg">
-</div>
--->
+
 <img style="display: block; height: 100px; margin: auto;" src="./images/logotype/hanmi_runner.svg">
 `;
 

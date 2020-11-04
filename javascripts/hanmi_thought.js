@@ -43,6 +43,38 @@ html['thought'] = `
 </div>
 <br>
 
+<div>어린이의 힘을 믿는 교육</div>
+<br>
+<div class="subtle">MIT의 연구원 데브 로이의 테드 강연, <a href="https://www.ted.com/talks/deb_roy_the_birth_of_a_word?language=ko" target="_blank">&lt;단어의 탄생&gt;</a>을 보면 어린이가 어떻게 걷고 말을 배우는 여정을 거치는지 알 수 있습니다. 자녀를 양육하면서 부모가 경험하게 되는 놀라운 일이기도 하죠. 2019 개정누리과정이 시행됐지만 아직도 현장의 유아교육에는 여러가지 형태가 존재합니다. 한미유치원이 영감을 얻은 &lt;레지오 접근&gt;은 <strong>&lt;프로그램&gt;의 반대 말</strong>이라고 자신들의 교육에 관한 생각을 소개합니다.</div>
+<br>
+
+<div class="subtle">결국 어른의 교육에 관한 믿음과 태도가 어린이의 경험에 큰 영향을 줍니다. <strong>놀이를 통해 진정한 배움이 일어난다고 믿으시나요?</strong> 앞서 소개한 데브 로이의 영상에서처럼 어른의 지원과 적절한 환경 속에서 어린이는 <strong>스스로 걷기를 터득하고</strong>, <strong>말하기를 터득하고</strong>, (비록 나중에 수정할 가설이지만) <strong>자신만의 수 체계를 발명</strong>합니다. 매우 놀라운 일이죠. 한미유치원은 교육이 미리 짜여진 &lt;프로그램&gt;을 숙련하는 방식이 아니라 이 어린이의 힘을 믿는 방식으로 가능하다고 생각합니다.</div>
+<br>
+
+<div class="subtle"><a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=240888163" target="_blank">시모어 패퍼트</a>는 만약 프랑스라는 나라가 있듯이 &lt;수학나라&gt;가 존재한다면 프랑스에 사는 어린이가 프랑스어를 배우는 것이 당연하듯 어린이가 수학을 배우는 것 또한 당연해질 것이라고 말했습니다. 그런 수학나라 같은 환경이 존재하려면 어떤 도전을 해야하는지를 고민하며 실천했죠. 한미유치원은 어린이가 생각에 관해 생각하고 배움에 관해 배울 수 있는 환경이 되기 위해 고민하며 실천하고 있습니다. 이를 위한 <strong>놀이</strong>입니다.</div>
+<br>
+
+<div class="subtle">관련해서 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt;</a>과 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;호기심의 두 얼굴&gt;</a>의 내용을 인용해 봅니다.
+<ul class="flower">
+  <li>
+    <strong>아이들이 자기의 관심을 좇아서, 자기 아이디어를 탐구하고, 자기 목소리를 내는 기회를 제공하는 것이다.</strong>
+    <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">- 평생유치원 6장, 창의적 사회</div>
+  </li>
+  <li>
+    <strong>지적 주도성의 가장 원초적인 표현은 뭔가를 궁금해하는 아이가 자신이 그것을 궁금해한다는 사실을 깨닫고 그 호기심을 어떻게 충족할지 고민하는 것이다.</strong>
+    <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">- 호기심의 두 얼굴, 9장, 호기심을 키워주는 교사란</div>
+  </li>
+  <li>
+    요즘 유치원은 점점 더 일반 학교와 비슷해지고 있다. 하지만 나는 이 책에서 정반대를 주장한다. 나는 <strong>오히려 모든 학교, 그리고 모든 생활의 터전이 진정한 유치원처럼 변해야 한다고 생각한다.</strong>
+    <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">- 평생유치원, 1장, 창의적 학습</div>
+  </li>
+</ul>
+</div>
+<br>
+
+<div class="subtle">이러한 맥락에서 &lt;어린이의 백 가지 언어&gt;라는 로리스 말라구찌의 시를 이해할 수 있습니다.
+<img class="full" src="./images/2020/100_languages.svg">
+
 <div class="subtle">
   한미유치원의 놀이 운영에 관한 노하우는 2019 개정 누리과정 놀이운영사례집 <a href="https://i-nuri.go.kr/main/board/view.do?menu_idx=105&manage_idx=31&board_idx=701" target="_blank">&lt;놀이, 유아가 세상을 만나고 살아가는 힘&gt;</a>을 통해서도 만나볼 수 있습니다.
 </div>
