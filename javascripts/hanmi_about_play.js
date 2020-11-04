@@ -44,7 +44,7 @@ html['about_play'] = `
 
 <div>함께 만들어가는 놀잇감</div>
 <br>
-<div class="subtle">이미 완성된 교구를 활용하여 놀이를 하기 보다는, 일상에서 경험할 수 있는 다양한 자료를 가지고 교사의 지원과 함께 어린이들이 놀잇감을 만들어 갑니다. 여기에 관한 한미유치원의 이야기가 
+<div class="subtle">이미 완성된 교구를 활용하여 놀이를 하기 보다는, 일상에서 경험할 수 있는 다양한 자료를 가지고 교사의 지원과 함께 어린이가 놀잇감을 만들어 갑니다. 여기에 관한 한미유치원의 이야기가 
 <a href="https://i-nuri.go.kr/main/board/view.do?menu_idx=105&manage_idx=31&board_idx=701" target="_blank">&lt;놀이, 유아가 세상을 만나고 살아가는 힘&gt;</a> 중 다양한 자료와의 만남을 다룬
 <img class="full" src="./images/2020/toys_1.jpg">
 <ul class="musical">
@@ -79,12 +79,12 @@ html['about_play'] = `
   <a href="https://youtu.be/veB984EF3dE?t=1860" target="_blank">파스타면으로 만드는 에펠탑</a>, 
   <a href="https://www.youtube.com/watch?v=sguUgo09LJY" target="_blank">빛</a>, 
   <a href="https://www.youtube.com/watch?v=dysgAzMCwiI" target="_blank">나 만의 새로운 공룡 만들기</a>,
-  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 발견하게 되는 놀잇감</strong>을 계속 함께 만들어 가고 있습니다. 이러한 경험을 한 어린이들은 얼마든지 주어진 상황에서 흥미로운 일들을 펼치며 그 상황을 변화하게 합니다. <a href="/?page=hanmi" target="_blank">어린이들이 한미유치원에서 경험할 수 있는 것</a>에서 소개했던 <span class="bambini">“<strong>자유롭게 놀이하며 자기의 길을 찾아가고 만들기</strong>”</span>에 해당하는 예시입니다.
+  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 발견하게 되는 놀잇감</strong>을 계속 함께 만들어 가고 있습니다. 이러한 경험을 한 어린이는 얼마든지 주어진 상황에서 흥미로운 일들을 펼치며 그 상황을 변화하게 합니다. <a href="/?page=hanmi" target="_blank">어린이들이 한미유치원에서 경험할 수 있는 것</a>에서 소개했던 <span class="bambini">“<strong>자유롭게 놀이하며 자기의 길을 찾아가고 만들기</strong>”</span>에 해당하는 예시입니다.
 </div>
 <br>
 
 <div class="subtle">
-또한 이미 어린이들의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 이야기는 <a href="/?page=playground">디지털 놀이터</a>에 소개한 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a>, <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a>, <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등을 참고해 주시기 바랍니다.
+또한 이미 어린이의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 이야기는 <a href="/?page=playground">디지털 놀이터</a>에 소개한 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a>, <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a>, <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등을 참고해 주시기 바랍니다.
 </div>
 <br>
 
