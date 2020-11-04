@@ -75,6 +75,7 @@ html['about_play'] = `
 <div class="subtle">
 그 외에도
   <a href="https://www.youtube.com/watch?v=BzjHawQ8CiI" target="_blank">이건 도토리 소리야</a>, 
+  <a href="https://i-nuri.go.kr/ebook/2020030358a/index.html" target="_blank">컵의 다양한 변신</a>, 
   <a href="https://youtu.be/veB984EF3dE?t=1860" target="_blank">파스타면으로 만드는 에펠탑</a>, 
   <a href="https://www.youtube.com/watch?v=sguUgo09LJY" target="_blank">빛</a>, 
   <a href="https://www.youtube.com/watch?v=dysgAzMCwiI" target="_blank">나 만의 새로운 공룡 만들기</a>,
