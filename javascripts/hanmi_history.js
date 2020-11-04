@@ -51,6 +51,10 @@ html['hanmi'] = `
   <a class="no-underline" href="./images/2020/2020_space_1.jpg"><img class="full" src="./images/2020/2020_space_1.jpg"></a>
 </div>
 <br>
+
+<img class="full" src="./images/2020/hanmi_map.svg">
+<div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">2019 고니반, 한미산책과 보물지도</div>
+
 <div>더 살펴보기</div>
 <div class="subtle">
   <ul class="leaf">
