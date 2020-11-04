@@ -52,7 +52,7 @@ html['hanmi'] = `
 </div>
 <br>
 
-<img class="full" src="./images/2020/hanmi_map.svg">
+<img style="display: block; width: 75%; margin: auto;" src="./images/2020/hanmi_map.svg">
 <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">2019 고니반, 한미산책과 보물지도</div>
 
 <div>더 살펴보기</div>
