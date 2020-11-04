@@ -84,7 +84,7 @@ html['about_play'] = `
 <br>
 
 <div class="subtle">
-또한 이미 어린이의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 이야기는 <a href="/?page=playground">디지털 놀이터</a>에 소개한 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a>, <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a>, <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등을 참고해 주시기 바랍니다.
+또한 이미 어린이의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 내용은 <a href="/?page=playground">디지털 놀이터</a>에 소개한 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a>, <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a>, <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등을 참고해 주시기 바랍니다.
 </div>
 <br>
 
