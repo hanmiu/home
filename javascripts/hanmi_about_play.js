@@ -49,27 +49,27 @@ html['about_play'] = `
 <img class="full" src="./images/2020/toys_1.jpg">
 <ul class="musical">
   <li class="bambini">
-    <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank">나도 색이 나와 (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank">나도 색이 나와</a>
     <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_18.jpg"></a>
   </li>
   <li class="bambini">
-    <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank">딱지로 찾는 즐거움! (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank">딱지로 찾는 즐거움!</a>
     <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_19.jpg"></a>
   </li>
   <li class="bambini">
-    <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank">재미있는 놀이 만들자 (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank">재미있는 놀이 만들자</a>
     <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_20.jpg"></a>
   </li>
   <li class="bambini">
-    <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank">머리 속에 물음표가 가득해! (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank">머리 속에 물음표가 가득해!</a>
     <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_22.jpg"></a>
   </li>
   <li class="bambini">
-    <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank">그런 옷이 세상에 어디있어? (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank">그런 옷이 세상에 어디있어?</a>
     <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_23.jpg"></a>
   </li>
 </ul>
-에 일목요연하게 소개되어 있습니다.
+에 일목요연하게 소개되어 있습니다.<br><br>또한 이미 어린이들의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 이야기는 <a href="/?page=playground">디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a>를 참고해 주시기 바랍니다.
 </div>
 <br>
 
