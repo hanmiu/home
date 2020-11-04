@@ -61,6 +61,13 @@ html['admission'] = `
 <br>
 
 <div class="iframe-container">
+  <iframe class="video" src="https://www.youtube.com/embed/YJaZa7rP5HA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">2015 진달래반, 적응</div>
+<div class="subtle">어린이들이 학년 초에 어떻게 새로운 환경에 적응하는지에 관한 이야기입니다.</div>
+<br>
+
+<div class="iframe-container">
   <iframe class="video" src="https://www.youtube.com/embed/T7XMDoV7WUU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">2015 개나리반, 한미유치원 마을</div>
@@ -68,7 +75,12 @@ html['admission'] = `
 <br>
 
 <div class="subtle">
-더 자세한 내용은 <strong><a href="https://drive.google.com/file/d/1g8rct91YMkrzah5O2npGblYBbdM0ruGT/view?usp=sharing" target="_blank">&lt;모집요강&gt;</a></strong>을 참고해 주시고, 궁금한 사항은 전화로 문의해 주시면 상세히 답변 드리겠습니다.<br><br>
+  교실 공간과 환경은 <a href="/?page=hanmi" target="_blank">&lt;한미유치원의 역사·문화·환경&gt;</a> 페이지를, 어린이들이 사용하는 놀잇감은 <a href="/?page=about_play" target="_blank">&lt;놀이&gt;</a> 페이지를 살펴봐 주세요.
+</div>
+<br>
+
+<div class="subtle">
+입학에 관한 더 자세한 내용은 <strong><a href="https://drive.google.com/file/d/1g8rct91YMkrzah5O2npGblYBbdM0ruGT/view?usp=sharing" target="_blank">&lt;모집요강&gt;</a></strong>을 참고해 주시고, 궁금한 사항은 전화로 문의해 주시면 상세히 답변 드리겠습니다.<br><br>
 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>
 </div>
 <br>

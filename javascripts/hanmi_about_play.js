@@ -42,6 +42,37 @@ html['about_play'] = `
 </div>
 <br>
 
+<div>함께 만들어가는 놀잇감</div>
+<br>
+<div class="subtle">이미 완성된 교구를 활용하여 놀이를 하기 보다는, 일상에서 경험할 수 있는 다양한 자료를 가지고 어린이들이 스스로 놀잇감을 만들어 갑니다. 여기에 관한 한미유치원의 이야기가 
+<a href="https://i-nuri.go.kr/main/board/view.do?menu_idx=105&manage_idx=31&board_idx=701" target="_blank">&lt;놀이, 유아가 세상을 만나고 살아가는 힘&gt;</a> 중 다양한 자료와의 만남을 다룬
+<img class="full" src="./images/2020/toys_1.jpg">
+<ul class="musical">
+  <li class="bambini">
+    <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank">나도 색이 나와 (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_18.jpg"></a>
+  </li>
+  <li class="bambini">
+    <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank">딱지로 찾는 즐거움! (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_19.jpg"></a>
+  </li>
+  <li class="bambini">
+    <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank">재미있는 놀이 만들자 (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_20.jpg"></a>
+  </li>
+  <li class="bambini">
+    <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank">머리 속에 물음표가 가득해! (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_22.jpg"></a>
+  </li>
+  <li class="bambini">
+    <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank">그런 옷이 세상에 어디있어? (5세)</a>
+    <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_23.jpg"></a>
+  </li>
+</ul>
+에 일목요연하게 소개되어 있습니다.
+</div>
+<br>
+
 <div class="subtle">
 계속 준비중 입니다. 그동안 아래 자료를 살펴봐 주세요. 어린이들이 졸업한 후 공개하는 놀이와 그 의미에 관한 영상입니다. 꽃 이름의 반이 만3세, 나무 이름의 반이 만4세, 새 이름의 반이 만5세 이야기입니다.  
 <ul class="flower">

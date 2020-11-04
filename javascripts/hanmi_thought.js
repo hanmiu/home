@@ -53,14 +53,14 @@ html['thought'] = `
   이 중 한미유치원의 놀이운영사례는 다음과 같습니다.
   <ul class="flower">
     <li class="bambini"><a href="https://i-nuri.go.kr/ebook/2020030358a/index.html" target="_blank">컵의 다양한 변신 (3세)</a></li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303hlV/index.html" target="_blank">미로는 지그재그야 (3세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/202003032U/index.html" target="_blank">하루에 일어난 놀이 (4세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해! (4세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank">나도 색이 나와 (5세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank">딱지로 찾는 즐거움! (5세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank">재미있는 놀이 만들자 (5세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank">머리 속에 물음표가 가득해! (5세)</li>
-    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank">그런 옷이 세상에 어디있어? (5세)</li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303hlV/index.html" target="_blank">미로는 지그재그야 (3세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/202003032U/index.html" target="_blank">하루에 일어난 놀이 (4세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해! (4세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303jCh/index.html" target="_blank">나도 색이 나와 (5세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303VNf/index.html" target="_blank">딱지로 찾는 즐거움! (5세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303WNQ/index.html" target="_blank">재미있는 놀이 만들자 (5세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/20200303iUJ/index.html" target="_blank">머리 속에 물음표가 가득해! (5세)</a></li>
+    <li class="bambini"><a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank">그런 옷이 세상에 어디있어? (5세)</a></li>
   </ul>
 </div>
 
