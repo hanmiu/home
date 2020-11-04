@@ -69,7 +69,21 @@ html['about_play'] = `
     <a href="https://i-nuri.go.kr/ebook/2020030334b/index.html" target="_blank" class="no-underline" ><img style="display: block; width: 80%; margin: auto;" src="./images/2020/toys_23.jpg"></a>
   </li>
 </ul>
-에 일목요연하게 소개되어 있습니다.<br><br>또한 이미 어린이들의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 이야기는 <a href="/?page=playground">디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a>를 참고해 주시기 바랍니다.
+에 일목요연하게 소개되어 있습니다.</div>
+<br>
+
+<div class="subtle">
+그 외에도
+  <a href="https://www.youtube.com/watch?v=BzjHawQ8CiI" target="_blank">이건 도토리 소리야</a>, 
+  <a href="https://youtu.be/veB984EF3dE?t=1860" target="_blank">파스타면으로 만드는 에펠탑</a>, 
+  <a href="https://www.youtube.com/watch?v=sguUgo09LJY" target="_blank">빛</a>, 
+  <a href="https://www.youtube.com/watch?v=dysgAzMCwiI" target="_blank">나 만의 새로운 공룡 만들기</a>,
+  <a href="https://www.youtube.com/watch?v=c58FM8qmMSo" target="_blank">테이프 주인공이 되다</a> 등 <strong>일상 속의 익숙한 자료를 새롭게 볼 때 비로소 발견하게 되는 놀잇감</strong>이 있습니다.
+</div>
+<br>
+
+<div class="subtle">
+또한 이미 어린이들의 일상 속 환경이 된 디지털 매체를 놀잇감으로 활용하여 이야기가 펼쳐지는 경우도 많이 있습니다. 여기에 관한 더 자세한 이야기는 <a href="/?page=playground">디지털 놀이터</a>에 소개한 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a>, <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a>, <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등을 참고해 주시기 바랍니다.
 </div>
 <br>
 

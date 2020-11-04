@@ -11,7 +11,7 @@ html['playground'] = `
   <div class="subtle">모음과 자음 사이에 인력이 작용합니다. 빈 공간을 터치(클릭)하면 그 쪽으로 한글 자모가 모입니다. 데스크탑과 모바일을 지원하며 크롬, 엣지, 사파리, 파이어폭스 등의 요즘 브라우저에서 작동합니다. 위 링크 또는 이미지를 클릭하여 어린이와 함께 놀아보세요.</div>
   <br>
 
-  <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/hangul-slime.html" target="_blank"><strong>
+  <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/mmj.html" target="_blank"><strong>
   몸문자
   </strong></div>
   <a class="no-underline" target="_blank" href="https://www.hanmiu.cc/play/glyph/mmj.html">
@@ -44,7 +44,7 @@ html['playground'] = `
   </a>
   <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">2019 종달새반, 미디어 매체를 활용한 즐거움 만들기</div>
   <br>
-  <div class="subtle">놀이를 지원하기 위해 개발한 소프트웨어만 아니라 <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 교실의 놀이와 연결되어 배움의 도움계단이 되어주는지 살펴보실 수 있습니다.</div>
+  <div class="subtle">놀이를 지원하기 위해 개발한 소프트웨어만 아니라 <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 교실의 놀이와 연결되어 배움의 도움계단이 되어주는지 살펴보실 수 있습니다.</div>
   <br>
 
   <div>더 살펴보기</div>
