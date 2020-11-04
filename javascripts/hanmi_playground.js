@@ -35,7 +35,7 @@ html['playground'] = `
   <a class="no-underline" target="_blank" href="https://www.hanmiu.cc/play/glyph/drawing.html">
     <img class="full" src="./play/glyph/drawing.jpg">
   </a>
-  <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 글자 디자인은 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">&lt;일상 속의 호기심 탐구 창의성&gt;</a>이란 큰 흐름과 연결되어 있던 교실의 다양한 접근 중 하나였습니다. 더 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상과 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">'일상 속의 호기심 탐구 창의성'</a>을 살펴봐 주세요.</div>
+  <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 글자 디자인은 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">&lt;일상 속의 호기심 탐구 창의성&gt;</a>이란 큰 흐름과 연결되어 있던 교실의 다양한 접근 중 하나였습니다. 더 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상과 <a href="https://docs.google.com/document/d/1yZu8Pt3nYTMR1Zs17U5BEG83POhI7FT3OGwvEHcniME/view" target="_blank">&lt;일상 속의 호기심 탐구 창의성&gt;</a>을 살펴봐 주세요.</div>
   <br>
 
   <div class="subtle">먼저 한글(또는 문자)에 관한 어린이의 호기심을 지원하기 위해 만들었던 작업들을 소개드리고 있습니다. 그 외에도 <a href="https://www.youtube.com/watch?v=GiAq3iRZ-8g" target="_blnak">수</a>, <a href="https://youtu.be/jMHs2lyRP3M?t=2649" target="_blank">음악</a>, <a href="https://youtu.be/GhHWJIfQtWc?t=661" target="_blank">움직임</a> 등과 연결되어 있는 한미유치원의 교실 놀이를 지원하기 위해 만들었던 다양한 작업을 소개하며 건강한 미디어 활용을 다룰 계획입니다. (계속 업데이트 됩니다.)</div>
