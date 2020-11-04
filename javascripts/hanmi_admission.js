@@ -63,7 +63,7 @@ html['admission'] = `
 <div class="iframe-container">
   <iframe class="video" src="https://www.youtube.com/embed/T7XMDoV7WUU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
-<div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">만3세 놀이, 한미유치원 마을</div>
+<div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">2015 개나리반, 한미유치원 마을</div>
 <div class="subtle">어린이들이 입학 후 1년의 시간을 걸쳐 놀이를 통해 어떤 경험을 하게 되는지를 보여주는 영상 중 하나입니다. <a href="https://www.youtube.com/c/hanmiu/videos" target="_blank">영상으로 보는 한미유치원의 놀이</a> 중 꽃 이름의 반이 만3세, 나무 이름의 반이 만4세, 새 이름의 반이 만5세 이야기입니다.</div>
 <br>
 
