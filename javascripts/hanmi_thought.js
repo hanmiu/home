@@ -125,7 +125,7 @@ html['thought'] = `
 <div class="subtle">
   <ul class="leaf">
     <li><a href="https://docs.google.com/document/d/1YLRmPx4Tz2ygOSzqlqeBZwOuY6169fp5zi3Wj2SpZPA/edit?usp=sharing" target="_blank">한미유치원 교육과정 상세</a></li>
-    <li><a href="https://docs.google.com/document/d/1YLRmPx4Tz2ygOSzqlqeBZwOuY6169fp5zi3Wj2SpZPA/edit?usp=sharing" target="_blank">한미유치원 교육의 의미를 다룬 더 많은 글</a></li>
+    <li><a href="https://docs.google.com/document/d/15RmSmJbB7ToP0huDxOsYtfebU5VoyzCIP0TXyuj-6C8/edit?usp=sharing" target="_blank">불확실함에 대응하는 태도, 강건함과 창의성</a></li>
     <li><a href="https://21erick.org/column/840" target="_blank">참고 칼럼: 교사의 역할</li>
     <li><a href="https://21erick.org/column/871" target="_blank">참고 칼럼: 누리과정 교사용 지도서, 내년부터는 볼 수 없다</li>
     <li><a href="/?page=hanmi">한미유치원의 역사·문화·환경</a> →</li>
