@@ -56,10 +56,25 @@ html['thought'] = `
 <div class="subtle">위 데브 로이의 영상에서처럼 어른의 지원과 적절한 환경 속에서 어린이는 <strong>스스로 걷기를 터득하고</strong>, <strong>말하기를 터득하고</strong>, (비록 나중에 수정할 가설이지만) <strong>자신만의 수 체계를 발명</strong>합니다. 당연하게 여겨지기도 하지만 사실 매우 놀라운 일이죠. 한미유치원은 교육이 미리 짜여진 &lt;프로그램&gt;을 숙련하는 방식이 아니라 이 어린이의 힘을 믿는 방식으로 가능하다고 생각합니다.</div>
 <br>
 
-<div class="subtle"><a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=240888163" target="_blank">시모어 패퍼트</a>는 프랑스라는 나라가 있듯이 만약 &lt;수학나라&gt;가 존재한다면 프랑스에 사는 어린이가 프랑스어를 배우는 것이 당연하듯 어린이가 수학을 배우는 것 또한 당연해질 것이라고 말했습니다. 평생동안 그런 수학나라 같은 환경이 존재하려면 어떤 도전을 해야하는지를 고민하며 실천했죠. 한미유치원은 어린이가 생각에 관해 생각하고 배움에 관해 배울 수 있는 환경이 되기 위해 고민하며 실천하고 있습니다. 이를 위한 <strong>놀이</strong>입니다.</div>
+<div class="subtle"><a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=240888163" target="_blank">시모어 패퍼트</a>는 프랑스라는 나라가 있듯이 만약 &lt;수학나라&gt;가 존재한다면 프랑스에 사는 어린이가 프랑스어를 배우는 것이 당연하듯 어린이가 수학을 배우는 것 또한 당연해질 것이라고 말했습니다. 수학(mathematics)의 어원에는 배움(máthēma)이 있습니다. 그는 평생동안 그런 수학나라 같은 환경이 존재하려면 어떤 도전을 해야하는지를 고민하며 실천했죠. 한미유치원은 어린이가 생각에 관해 생각하고 배움에 관해 배울 수 있는 환경이 되기 위해 고민하며 실천하고 있습니다. 이를 위한 <strong>놀이</strong>입니다.</div>
 <br>
 
-<div class="subtle">관련해서 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt;</a>과 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;호기심의 두 얼굴&gt;</a>의 내용을 인용해 봅니다.
+<div class="subtle"><a href="/?page=hanmi" target="_blank">어린이가 한미유치원에서 경험하고 배울 수 있는 것</a></div>
+<ul class="subtle leaf">
+  <li class="bambini">노력하면 할 수 있다. 내가 못했던 것을 포기하지 않고 끊임없이 노력하면 할 수 있다는 것을 경험하기</li>
+  <li class="bambini">시행착오를 인정하고 다시 도전하는 방법 터득하기</li>
+  <li class="bambini">즐거움-즐겁게 놀았던 경험 쌓기. 더 성장해서 돌이켜 봤을 때 ‘그때 참 즐거웠는데~’라고 추억할 수 있는 경험</li>
+  <li class="bambini">갈등을 포함한 다양한 감정을 스스럼없이 드러내기</li>
+  <li class="bambini">마음의 힘을 키우기 (마음의 면역력, 나만의 백 가지 언어를 지킬 수 있을 정도로)</li>
+  <li class="bambini">내 생각을 말하면 실행으로 이어지는 경험</li>
+  <li class="bambini">자유롭게 놀이하며 자기의 길을 찾아가고 만들기 (부모나 교사가 만들어주는 길이 아닌)</li>
+  <li class="bambini">이러한 일이 일어날 수 있도록 기다려 주는 성인을 만나는 것</li>
+  <li class="bambini">그 탐험의 여정을 함께 할 친구를 사귀는 방법을 배우기</li>
+  <li class="bambini">풍요로운 놀이 속에서 삶의 질 높이기</li>
+</ul>
+<br>
+
+<div class="subtle">관련해서 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt;</a>과 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;호기심의 두 얼굴&gt;</a>의 내용도 인용해 봅니다.
 <ul class="flower">
   <li>
     <strong>아이들이 자기의 관심을 좇아서, 자기 아이디어를 탐구하고, 자기 목소리를 내는 기회를 제공하는 것이다.</strong>
