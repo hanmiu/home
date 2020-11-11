@@ -49,8 +49,12 @@ html['covid19'] = `
   </div>
   <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">한미 라디오, 이야기가 있는 보물 찾기</div>
   <div class="quote">
-  인근 공원에 QR코드를 숨겨두고 이야기 조각을 찾아 수수께끼를 푸는 행사를 진행했습니다. 자세한 내용은 <a href="https://docs.google.com/document/d/1hyyccUu0hgz5H3s97FZ1kDHv4c_OrzTIe7MNuC3h1r4/edit?usp=sharing" target="_blank">참여 안내문과 <a href="https://www.hanmiu.cc/play/evt/v2020.html?w=A2_c50y" target="_blank">예시</a>를 살펴봐 주세요.
+  인근 공원에 QR코드를 숨겨두고 이야기 조각을 찾아 수수께끼를 푸는 행사를 진행했습니다. 자세한 내용은 <a href="https://docs.google.com/document/d/1hyyccUu0hgz5H3s97FZ1kDHv4c_OrzTIe7MNuC3h1r4/edit?usp=sharing" target="_blank">참여 안내문</a>과 <a href="https://www.hanmiu.cc/play/evt/v2020.html?w=A2_c50y" target="_blank">이야기 조각 예시</a>를 살펴봐 주세요.
   </div>
+  <br>
+
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2020/qr_treasure.jpg">
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">공원에 숨겨진 QR코드를 찾는 어린이들의 손</div>
   <br>
 
   <div class="subtle">신기한 생물 사전</div>
