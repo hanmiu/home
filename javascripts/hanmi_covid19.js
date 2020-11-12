@@ -66,6 +66,10 @@ html['covid19'] = `
   </div>
   <br>
 
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2020/summer_vacation.jpg">
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">스마트폰과 함께 플레이할 수 있는 보드게임이 표지인 <a href="https://docs.google.com/document/d/1kMibmqIN5GOWNf3q3F2U36r1BUsBfS1O4zXdlp2Egzc/edit?usp=sharing" target="_blank">신기한 여름방학</a> 책</div>
+  <br>
+
   <div>오전 원격 수업</div>
   <br>
   <div class="subtle">
