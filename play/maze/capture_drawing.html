@@ -354,7 +354,7 @@
   }
   
   let score = 0;
-  let bna = false;
+  let bnw = false;
   function loop() {
     if(!is_video_ready) {
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -378,7 +378,7 @@
         im.data[i + 2] = (1-bin) * 255;
         bm.data[j] = bin;
       }
-      if(bna) {
+      if(bnw) {
         ctx.putImageData(im, 0, 0);  
       }
       ctx.strokeStyle = 'cyan';
