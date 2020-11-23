@@ -379,10 +379,22 @@
         <div class="touch" id="t-playground"></div>
       </div>
       <div class="pebble">
+        <canvas class="layer" id="c-parent"></canvas>
+        <div class="subject">부모 참여</div>
+        <div class="description">공유 모임, 참여 수업</div>
+        <div class="touch" id="t-parent"></div>
+      </div>
+      <div class="pebble">
         <canvas class="layer" id="c-covid19"></canvas>
         <div class="subject">코로나19 대응</div>
         <div class="description">현 상황의 대안, 원격 수업 경험</div>
         <div class="touch" id="t-covid19"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-research"></canvas>
+        <div class="subject">연구</div>
+        <div class="description">현장 연구, 교사 연수</div>
+        <div class="touch" id="t-research"></div>
       </div>
       <div id="footer">
         <div class="subject">문의</div>
@@ -414,7 +426,9 @@
 <script src="./javascripts/hanmi_thought.js"></script>
 <script src="./javascripts/hanmi_about_play.js"></script>
 <script src="./javascripts/hanmi_playground.js"></script>
+<script src="./javascripts/hanmi_parent.js"></script>
 <script src="./javascripts/hanmi_covid19.js"></script>
+<script src="./javascripts/hanmi_research.js"></script>
 <script src="./javascripts/hanmi_musical.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
 <script>
@@ -457,7 +471,9 @@
   let ctx_thought = document.querySelector('#c-thought').getContext('2d');
   let ctx_about_play = document.querySelector('#c-about_play').getContext('2d');
   let ctx_playground = document.querySelector('#c-playground').getContext('2d');
+  let ctx_parent = document.querySelector('#c-parent').getContext('2d');
   let ctx_covid19 = document.querySelector('#c-covid19').getContext('2d');
+  let ctx_research = document.querySelector('#c-research').getContext('2d');
   
   let eX = 300;
   let eY = 100;
@@ -471,11 +487,13 @@
     'thought': '생각',
     'about_play': '놀이',
     'playground': '디지털 놀이터',
+    'parent': '부모 참여',
     'covid19': '코로나19 대응',
+    'research': '연구',
   };
   
   let ctxs = [
-    ctx_hanmi, ctx_admission, ctx_thought, ctx_about_play, ctx_playground, ctx_covid19
+    ctx_hanmi, ctx_admission, ctx_thought, ctx_about_play, ctx_playground, ctx_parent, ctx_covid19, ctx_research
   ];
   
   let params = new URLSearchParams(location.search.slice(1));
@@ -513,10 +531,20 @@
           current_hanmi = hanmi_playground;
           iY = 4;
           break;
+        case 't-parent':
+          current_loop = loop_parent;
+          current_hanmi = hanmi_parent;
+          iY = 5;
+          break;
         case 't-covid19':
           current_loop = loop_covid19;
           current_hanmi = hanmi_covid19;
-          iY = 5;
+          iY = 6;
+          break;
+        case 't-research':
+          current_loop = loop_research;
+          current_hanmi = hanmi_research;
+          iY = 7;
           break;
       }
       if(current_hanmi) {
@@ -643,7 +671,9 @@
   let hanmi_thought = new HanmiThought();
   let hanmi_about_play = new HanmiAboutPlay();
   let hanmi_playground = new HanmiPlayground();
+  let hanmi_parent = new HanmiParent();
   let hanmi_covid19 = new HanmiCovid19();
+  let hanmi_research = new HanmiResearch();
   let hanmi_musical = new HanmiMusical();
   
   let current_loop = null;
@@ -652,7 +682,6 @@
   let last_scrollY = 0;
   let last_width = 0;
   
-
   let ctx_musical = document.createElement('canvas').getContext('2d');
   ctx_musical.canvas.id = 'musical';
   ctx_musical.canvas.width = 512;
@@ -695,7 +724,7 @@
         hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
       }
       
-      let ids = Array.prototype.slice.call(el_pebbles.querySelectorAll('.touch')).slice(1, 6).map(el => el.id);
+      let ids = Array.prototype.slice.call(el_pebbles.querySelectorAll('.touch')).slice(1, 8).map(el => el.id);
       focus_by(ids[iY]);
     }
   }
@@ -750,6 +779,19 @@
     if(hanmi_playground.wait > 0) {
       hanmi_about_play.update(ctx_about_play);
       hanmi_about_play.draw(ctx_about_play);
+      hanmi_parent.update(ctx_parent);
+      hanmi_parent.draw(ctx_parent);
+    }
+  }
+  
+  function loop_parent() {
+    hanmi_parent.update(ctx_parent);
+    hanmi_parent.draw(ctx_parent);
+    current_ctx = ctx_parent;
+    
+    if(hanmi_parent.wait > 0) {
+      hanmi_playground.update(ctx_playground);
+      hanmi_playground.draw(ctx_playground);
       hanmi_covid19.update(ctx_covid19);
       hanmi_covid19.draw(ctx_covid19);
     }
@@ -761,8 +803,21 @@
     current_ctx = ctx_covid19;
     
     if(hanmi_covid19.wait > 0) {
-      hanmi_playground.update(ctx_playground);
-      hanmi_playground.draw(ctx_playground);
+      hanmi_parent.update(ctx_parent);
+      hanmi_parent.draw(ctx_parent);
+      hanmi_research.update(ctx_research);
+      hanmi_research.draw(ctx_research);
+    }
+  }
+  
+  function loop_research() {
+    hanmi_research.update(ctx_research);
+    hanmi_research.draw(ctx_research);
+    current_ctx = ctx_research;
+    
+    if(hanmi_research.wait > 0) {
+      hanmi_covid19.update(ctx_covid19);
+      hanmi_covid19.draw(ctx_covid19);
     }
   }
   

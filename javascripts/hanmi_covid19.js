@@ -196,7 +196,7 @@ class HanmiCovid19 {
     c.clearRect(0, 0, c.canvas.width, c.canvas.height);
     
     c.save();
-    c.translate(this.x, this.y - 200 * 4);
+    c.translate(this.x, this.y - 200 * 5);
     c.scale(hanmi_base.scale, hanmi_base.scale);
     c.translate(-256, -256);
     c.fillStyle = 'hsla(300, 100%, 50%, 0.5)';
