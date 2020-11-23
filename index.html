@@ -391,10 +391,10 @@
         <div class="touch" id="t-covid19"></div>
       </div>
       <div class="pebble">
-        <canvas class="layer" id="c-research"></canvas>
+        <canvas class="layer" id="c-study"></canvas>
         <div class="subject">연구</div>
         <div class="description">현장 연구, 교사 연수</div>
-        <div class="touch" id="t-research"></div>
+        <div class="touch" id="t-study"></div>
       </div>
       <div id="footer">
         <div class="subject">문의</div>
@@ -428,7 +428,7 @@
 <script src="./javascripts/hanmi_playground.js"></script>
 <script src="./javascripts/hanmi_parent.js"></script>
 <script src="./javascripts/hanmi_covid19.js"></script>
-<script src="./javascripts/hanmi_research.js"></script>
+<script src="./javascripts/hanmi_study.js"></script>
 <script src="./javascripts/hanmi_musical.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
 <script>
@@ -473,7 +473,7 @@
   let ctx_playground = document.querySelector('#c-playground').getContext('2d');
   let ctx_parent = document.querySelector('#c-parent').getContext('2d');
   let ctx_covid19 = document.querySelector('#c-covid19').getContext('2d');
-  let ctx_research = document.querySelector('#c-research').getContext('2d');
+  let ctx_study = document.querySelector('#c-study').getContext('2d');
   
   let eX = 300;
   let eY = 100;
@@ -489,11 +489,11 @@
     'playground': '디지털 놀이터',
     'parent': '부모 참여',
     'covid19': '코로나19 대응',
-    'research': '연구',
+    'study': '연구',
   };
   
   let ctxs = [
-    ctx_hanmi, ctx_admission, ctx_thought, ctx_about_play, ctx_playground, ctx_parent, ctx_covid19, ctx_research
+    ctx_hanmi, ctx_admission, ctx_thought, ctx_about_play, ctx_playground, ctx_parent, ctx_covid19, ctx_study
   ];
   
   let params = new URLSearchParams(location.search.slice(1));
@@ -541,9 +541,9 @@
           current_hanmi = hanmi_covid19;
           iY = 6;
           break;
-        case 't-research':
-          current_loop = loop_research;
-          current_hanmi = hanmi_research;
+        case 't-study':
+          current_loop = loop_study;
+          current_hanmi = hanmi_study;
           iY = 7;
           break;
       }
@@ -673,7 +673,7 @@
   let hanmi_playground = new HanmiPlayground();
   let hanmi_parent = new HanmiParent();
   let hanmi_covid19 = new HanmiCovid19();
-  let hanmi_research = new HanmiResearch();
+  let hanmi_study = new HanmiStudy();
   let hanmi_musical = new HanmiMusical();
   
   let current_loop = null;
@@ -805,17 +805,17 @@
     if(hanmi_covid19.wait > 0) {
       hanmi_parent.update(ctx_parent);
       hanmi_parent.draw(ctx_parent);
-      hanmi_research.update(ctx_research);
-      hanmi_research.draw(ctx_research);
+      hanmi_study.update(ctx_study);
+      hanmi_study.draw(ctx_study);
     }
   }
   
-  function loop_research() {
-    hanmi_research.update(ctx_research);
-    hanmi_research.draw(ctx_research);
-    current_ctx = ctx_research;
+  function loop_study() {
+    hanmi_study.update(ctx_study);
+    hanmi_study.draw(ctx_study);
+    current_ctx = ctx_study;
     
-    if(hanmi_research.wait > 0) {
+    if(hanmi_study.wait > 0) {
       hanmi_covid19.update(ctx_covid19);
       hanmi_covid19.draw(ctx_covid19);
     }

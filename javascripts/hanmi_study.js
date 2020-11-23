@@ -1,4 +1,4 @@
-html['research'] = `
+html['study'] = `
   <div>현장 연구, 교사 연수</div>
   <br>
   
@@ -42,7 +42,7 @@ html['research'] = `
   <img style="display: block; height: 100px; margin: auto;" src="./images/logotype/hanmi_runner.svg">
 `;
 
-class HanmiResearch {
+class HanmiStudy {
   constructor() {
     let d = d_mon4;
     this.path = new Path2D(d);
