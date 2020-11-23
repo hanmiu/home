@@ -26,7 +26,7 @@ html['research'] = `
   <div class="subtle"><a href="http://kcct.net" target="_blank">KCCT</a>, <a href="https://kscice.jams.or.kr/co/main/jmMain.kci" target="_blank">어린이교육문화비평확회</a> 등의 의뢰를 받은 교사 연수나, 자체 교사 연수를 기획하고 운영합니다. 그 중에는 해외의 유아교육기관이 한미유치원을 방문하는 연수도 있습니다.</div> 
   <div class="subtle">
     <ul class="flower">
-    <li><a href="https://www.notion.so/2020-af348ba4e67c4cceb682f14b646c7379" target="_blank">2020 한미유치원 놀이 연수 (<strong>2020년 11월 30일 ~ 12월 7일</strong>)</a></li>
+    <li><a href="https://www.notion.so/2020-af348ba4e67c4cceb682f14b646c7379" target="_blank">2020 한미유치원 놀이 연수 (<strong>2020년 11월 30일 ~ 12월 7일</strong>, 비대면)</a></li>
     </ul>
   <br>
 
