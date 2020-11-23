@@ -7,6 +7,11 @@ html['admission'] = `
 </div>
 <br>
 
+<div class="subtle">
+처음학교로의 일반 모집을 통해 신청하지 못했으나 입학에 관해 문의하시려는 경우는 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>로 전화 주시길 바랍니다. 처음학교로의 일반 모집 등록이 마무리 된 후 <a href="https://www.youtube.com/watch?v=02LY83RHhGI" target="_blank">추가 모집</a> 기간에 입학이 가능할 수 있습니다. 12월 1일 부터의 추가 모집은 온라인으로 지원하더라도 온라인으로 선발 결과가 통보되지 않으며 유치원에서 자체적으로 선발하는 방식입니다.
+</div>
+<br>
+
 <div>모집 대상</div>
 <div class="subtle">
   <ul class="flower">
