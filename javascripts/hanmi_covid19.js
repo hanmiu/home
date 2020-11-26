@@ -67,7 +67,7 @@ html['covid19'] = `
   <br>
 
   <img style="display: block; width: 100%; margin: auto;" src="./images/2020/summer_vacation.jpg">
-  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">스마트폰과 함께 플레이할 수 있는 보드게임이 표지인 <a href="https://docs.google.com/document/d/1kMibmqIN5GOWNf3q3F2U36r1BUsBfS1O4zXdlp2Egzc/edit?usp=sharing" target="_blank">신기한 여름방학</a> 책</div>
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">스마트폰과 함께 플레이할 수 있는 <a href="https://www.hanmiu.cc/play/seasons/2020/sv.html" target="_blank">보드게임</a>이 표지인 <a href="https://docs.google.com/document/d/1kMibmqIN5GOWNf3q3F2U36r1BUsBfS1O4zXdlp2Egzc/edit?usp=sharing" target="_blank">신기한 여름방학</a> 책</div>
   <br>
 
   <div>오전 원격 수업</div>
@@ -111,7 +111,7 @@ html['covid19'] = `
   <div class="iframe-container">
   <iframe class="video" src="https://docs.google.com/presentation/d/e/2PACX-1vRti8y7i92Zdq5ZDiPCxy-_HROrZaUKV6F5_Y-XSgo-chVXOaw65tZ6xuEKNVAcykmeTbqLyyjvZ6dR/embed?start=false&loop=false&delayms=3000" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
   </div>
-  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem">호기심 킁킁~ 슬라이드 예시</div>
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em; line-height: 1.5rem"><a href="https://docs.google.com/presentation/d/e/2PACX-1vRti8y7i92Zdq5ZDiPCxy-_HROrZaUKV6F5_Y-XSgo-chVXOaw65tZ6xuEKNVAcykmeTbqLyyjvZ6dR/embed?start=false&loop=false&delayms=3000&slide=id.g9447b8d219_0_0" target="_blank">호기심 킁킁~ 슬라이드 예시</a></div>
   <br>
 
   <div class="subtle">이렇게 원격 수업의 상황일지라도 <strong>한미유치원이 해낼 수 있는 대안</strong>을 고민하며 실천하고 있습니다.</div>
