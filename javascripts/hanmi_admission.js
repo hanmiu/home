@@ -3,20 +3,20 @@ html['admission'] = `
 <br>
 
 <div class="subtle">
-한미유치원은 <a href="https://blog.naver.com/go-firstschool" target="_blank">유치원입학관리스템-처음학교로</a></strong>를 통하여 유아모집을 실시합니다. 아래는 <strong><a href="https://drive.google.com/file/d/1g8rct91YMkrzah5O2npGblYBbdM0ruGT/view?usp=sharing" target="_blank">&lt;모집요강&gt;</a></strong>의 간추린 내용입니다.
+처음학교로의 일반 모집 기간이 종료되었습니다.
 </div>
 <br>
 
 <div class="subtle">
-처음학교로의 일반 모집을 통해 신청하지 못했으나 입학에 관해 문의하시려는 경우는 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>로 전화 주시길 바랍니다. 처음학교로의 일반 모집 등록이 마무리 된 후 12월 1일 부터의 <a href="https://www.youtube.com/watch?v=02LY83RHhGI" target="_blank">추가 모집</a> 기간에 입학이 가능할 수 있습니다. 추가 모집은 온라인으로 지원하더라도 온라인으로 선발 결과가 통보되지 않으며 유치원에서 자체적으로 선발하는 방식이므로 전화 문의를 하시는 편이 빠르게 입학 가능 여부를 확인하실 수 있습니다.
+현재 각 연령 모두 약간의 자리가 있습니다. 처음학교로의 일반 모집을 통해 신청하지 못했으나 입학에 관해 문의하시려는 경우는 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>로 전화 주시길 바랍니다. <strong>추가 모집</strong>은 유치원에서 자체적으로 선발하는 방식입니다.
 </div>
 <br>
 
 <div>모집 대상</div>
 <div class="subtle">
   <ul class="flower">
-    <li>2017년생 (만3세) 3학급</li>
-    <li>2016년생 (만4세) 1학급</li>
+    <li>2017년생 (만3세) 약간명</li>
+    <li>2016년생 (만4세) 약간명</li>
     <li>2015년생 (만5세) 약간명</li>
   </ul>
 </div>
