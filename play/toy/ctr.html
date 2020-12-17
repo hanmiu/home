@@ -1,6 +1,9 @@
 <!doctype html>
 <meta charset="utf-8">
+<!--
 <meta name="viewport" content="width=device-width; initial-scale=1; user-scalable=no" />
+-->
+<meta name="viewport" content="user-scalable=no" />
 <!--
 <meta property="og:url" content="https://www.hanmiu.cc/play/toy/ctr.html" />
 <meta property="og:type" content="article" />
@@ -65,5 +68,73 @@
   </div>
 </body>
 <script>
+  let g = document.querySelector('#canvas').getContext('2d');
+  g.canvas.width = innerWidth;
+  g.canvas.height = innerHeight;
   
+  
+  function touchstart(e) {
+    /*
+    let eX, eY;
+    if(e.targetTouches) {
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    touchX = eX;
+    touchY = eY;
+    
+    mdown = true;
+    for(let i = 0; i < jamos.length; i++) {
+      let jamo = jamos[i];
+      let dx = eX - jamo.x;
+      let dy = eY - jamo.y;
+      let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+      if(d < jamo.r) {
+        selected_jamo = jamo;
+        jamo.vx = 0;
+        jamo.vy = 0;
+        jamo.to_hue = Math.random() < 0.2 ? Math.random() * 30 | 0 : 100 + Math.random() * 260 | 0;
+      }
+    }
+    */
+  }
+  
+  function touchmove(e) {
+    /*
+    let eX, eY;
+    if(e.targetTouches) {
+      e.preventDefault();
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    touchX = eX;
+    touchY = eY;
+    
+    if(selected_jamo && mdown) {
+      selected_jamo.x = eX;
+      selected_jamo.y = eY;
+    }
+    */
+  }
+  
+  function touchend(e) {
+    //mdown = false;
+    //selected_jamo = null;
+  }
+  
+  g.addEventListener('mousedown', touchstart);
+  g.canvas.addEventListener('mouseup', touchend); 
+  g.canvas.addEventListener('mousemove', touchmove);
+  
+  g.canvas.addEventListener('touchstart', touchstart);
+  g.canvas.addEventListener('touchend', touchend);
+  g.canvas.addEventListener('touchmove', touchmove);
 </script>
