@@ -107,7 +107,6 @@
   }
   
   function touchmove(e) {
-    /*
     let eX, eY;
     if(e.targetTouches) {
       e.preventDefault();
@@ -118,6 +117,7 @@
       eX = e.pageX;
       eY = e.pageY;
     }
+    /*
     touchX = eX;
     touchY = eY;
     
@@ -133,7 +133,7 @@
     //selected_jamo = null;
   }
   
-  g.addEventListener('mousedown', touchstart);
+  g.canvas.addEventListener('mousedown', touchstart);
   g.canvas.addEventListener('mouseup', touchend); 
   g.canvas.addEventListener('mousemove', touchmove);
   
