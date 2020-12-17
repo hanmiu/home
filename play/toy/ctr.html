@@ -72,9 +72,6 @@
 </body>
 <script>
   let g = document.querySelector('#canvas').getContext('2d');
-  g.canvas.width = innerWidth;
-  g.canvas.height = innerHeight;
-  
   
   function touchstart(e) {
     /*
@@ -133,6 +130,16 @@
     //selected_jamo = null;
   }
   
+  function layout() {
+    g.canvas.width = innerWidth;
+    g.canvas.height = innerHeight;
+    document.querySelector('#ui-down').style.bottom = '0px';
+  }
+  
+  function init() {
+    layout();
+  }
+  
   g.canvas.addEventListener('mousedown', touchstart);
   g.canvas.addEventListener('mouseup', touchend); 
   g.canvas.addEventListener('mousemove', touchmove);
@@ -140,4 +147,8 @@
   g.canvas.addEventListener('touchstart', touchstart);
   g.canvas.addEventListener('touchend', touchend);
   g.canvas.addEventListener('touchmove', touchmove);
+  
+  window.addEventListener('resize', layout);
+  
+  init();
 </script>
