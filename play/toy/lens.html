@@ -143,7 +143,8 @@
   
   function stop_video() {
     if(video_stream && is_camera_on) {
-      video_stream.getTracks().forEach(track => track.stop())  
+      video_stream.getTracks().forEach(track => track.stop());
+      video_stream = null;
     }
     is_camera_on = false;
   }
@@ -280,6 +281,9 @@
     
     g.globalCompositeOperation = 'source-over';
     
+    if(video_stream) {
+      el_video.play();  
+    }
     g.save();
     g.translate(innerWidth/2, innerHeight/2);
     g.translate(-el_video.videoWidth/2, -el_video.videoHeight/2);
@@ -417,11 +421,13 @@
   
   window.addEventListener('resize', layout);
   
+  /*
   window.addEventListener("orientationchange", function(e) {
     setTimeout(() => {
       layout();
     }, 100);
   });
+  */
   
   init();
 </script>
