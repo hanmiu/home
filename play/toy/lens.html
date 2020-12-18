@@ -210,7 +210,7 @@
       }
     }
     
-    if(e.target === g_front.canvas) {
+    if(e.target === g_front.canvas && touch.down) {
       let cx = innerWidth / 2;
       let cy = innerHeight / 2;
       touch.sx = (0.25 + 1.25 * Math.abs(touch.x - cx) / cx); 
