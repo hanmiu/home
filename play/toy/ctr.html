@@ -242,5 +242,11 @@
   
   window.addEventListener('resize', layout);
   
+  window.addEventListener("orientationchange", function(e) {
+    setTimeout(() => {
+      layout();
+    }, 100);
+  });
+  
   init();
 </script>
