@@ -57,7 +57,7 @@
   }
 </style>
 <body>
-  <canvas class="canvas" id="canvas"></canvas>
+  <canvas class="canvas" id="main"></canvas>
   <canvas class="canvas" id="front"></canvas>
   <div class="ui" id="ui-up">
     <div class="bt" id="camera">📷</div>
@@ -72,7 +72,7 @@
   </div>
 </body>
 <script>
-  let g = document.querySelector('#canvas').getContext('2d');
+  let g_main = document.querySelector('#main').getContext('2d');
   let g_front = document.querySelector('#front').getContext('2d');
   let g_mask = document.createElement('canvas').getContext('2d');
   
@@ -84,6 +84,8 @@
   el_video.autoplay = true;
   el_video.playsInline = true;
   let video_stream = null;
+  
+  let sprites = [];
   
   function connect_video() {
     let constraints = {
@@ -169,13 +171,55 @@
   }
   
   function layout() {
-    g.canvas.width = innerWidth;
-    g.canvas.height = innerHeight;
+    g_main.canvas.width = innerWidth;
+    g_main.canvas.height = innerHeight;
     g_front.canvas.width = innerWidth;
     g_front.canvas.height = innerHeight;
     g_mask.canvas.width = innerWidth;
     g_mask.canvas.height = innerHeight;
     document.querySelector('#ui-down').style.bottom = '-50px';
+  }
+  
+  function take_photo() {
+    let mask_im = g_mask.getImageData(0, 0, g_mask.canvas.width, g_mask.canvas.height);
+    let [min_x, min_y, max_x, max_y] = [Number.MAX_VALUE, Number.MAX_VALUE, Number.MIN_VALUE, Number.MIN_VALUE];
+    for(let y = 0; y < mask_im.height; y++) {
+      for(let x = 0; x < mask_im.width; x++) {
+        let i = mask_im.width * y + x;
+        let a = (mask_im.data[4 * i + 0] + mask_im.data[4 * i + 1] + mask_im.data[4 * i + 2]) / 3 | 0;
+        if(a > 0) {
+          min_x = Math.min(min_x, x);
+          max_x = Math.max(max_x, x);
+          min_y = Math.min(min_y, y);
+          max_y = Math.max(max_y, y);
+        }
+      }
+    }
+    let front_im = g_front.getImageData(0, 0, g_front.canvas.width, g_front.canvas.height);
+    min_x -= 1;
+    min_y -= 1;
+    max_x += 1;
+    max_y += 1;
+    let w = max_x - min_x;
+    let h = max_y - min_y;
+    let ctx = document.createElement('canvas').getContext('2d');
+    ctx.canvas.width = w;
+    ctx.canvas.height = h;
+    let im = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    for(let y = 0; y < im.height; y++) {
+      for(let x = 0; x < im.width; x++) {
+        let oi = mask_im.width * (y + min_y) + (x + min_x);
+        let i = im.width * y + x;
+        let a = (mask_im.data[4 * oi + 0] + mask_im.data[4 * oi + 1] + mask_im.data[4 * oi + 2]) / 3 | 0;
+        im.data[4 * i + 0] = front_im.data[4 * oi + 0];
+        im.data[4 * i + 1] = front_im.data[4 * oi + 1];
+        im.data[4 * i + 2] = front_im.data[4 * oi + 2];
+        im.data[4 * i + 3] = a;
+      }
+    }
+    ctx.putImageData(im, 0, 0);
+    
+    sprites.push(ctx.canvas);
   }
   
   function draw_front(g) {
@@ -207,9 +251,18 @@
     g.restore();
   }
   
+  function draw_stage(g) {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    
+    for(let i = 0; i < sprites.length; i++) {
+      g.drawImage(sprites[i], 100, 100);
+    }
+  }
+  
   function draw() {
     draw_mask(g_mask);
     draw_front(g_front);
+    draw_stage(g_main);
   }
   
   function loop() {
@@ -229,16 +282,18 @@
   
   bt_take_photo.addEventListener('click', (E) => {
     el_ui_down.style.bottom = '-50px';
+    take_photo();
     stop_video();
+    g_front.canvas.style.display = 'none';
   });
   
-  g.canvas.addEventListener('mousedown', touchstart);
-  g.canvas.addEventListener('mouseup', touchend); 
-  g.canvas.addEventListener('mousemove', touchmove);
+  g_main.canvas.addEventListener('mousedown', touchstart);
+  g_main.canvas.addEventListener('mouseup', touchend); 
+  g_main.canvas.addEventListener('mousemove', touchmove);
   
-  g.canvas.addEventListener('touchstart', touchstart);
-  g.canvas.addEventListener('touchend', touchend);
-  g.canvas.addEventListener('touchmove', touchmove);
+  g_main.canvas.addEventListener('touchstart', touchstart);
+  g_main.canvas.addEventListener('touchend', touchend);
+  g_main.canvas.addEventListener('touchmove', touchmove);
   
   window.addEventListener('resize', layout);
   
