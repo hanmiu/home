@@ -58,7 +58,7 @@
 </style>
 <body>
   <canvas class="canvas" id="canvas"></canvas>
-  <canvas class="canvas" id="mask"></canvas>
+  <canvas class="canvas" id="front"></canvas>
   <div class="ui" id="ui-up">
     <div class="bt" id="camera">📷</div>
     <div class="bt" id="circle">●</div>
@@ -73,7 +73,8 @@
 </body>
 <script>
   let g = document.querySelector('#canvas').getContext('2d');
-  let g_mask = document.querySelector('#mask').getContext('2d');
+  let g_front = document.querySelector('#front').getContext('2d');
+  let g_mask = document.createElement('canvas').getContext('2d');
   
   let el_ui_down = document.querySelector('#ui-down');
   let bt_camera = document.querySelector('#camera');
@@ -170,22 +171,45 @@
   function layout() {
     g.canvas.width = innerWidth;
     g.canvas.height = innerHeight;
+    g_front.canvas.width = innerWidth;
+    g_front.canvas.height = innerHeight;
     g_mask.canvas.width = innerWidth;
     g_mask.canvas.height = innerHeight;
     document.querySelector('#ui-down').style.bottom = '-50px';
   }
   
-  function draw_mask(g) {
+  function draw_front(g) {
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    
+    g.globalCompositeOperation = 'source-over';
+    
     g.save();
     g.translate(innerWidth/2, innerHeight/2);
     g.translate(-el_video.videoWidth/2, -el_video.videoHeight/2);
     g.drawImage(el_video, 0, 0, el_video.videoWidth, el_video.videoHeight);
     g.restore();
+  
+    g.globalCompositeOperation = 'multiply';
+    g.drawImage(g_mask.canvas, 0, 0);
+  }
+  
+  function draw_mask(g) {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+  
+    g.fillStyle = 'black';
+    g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+    g.save();
+    g.translate(innerWidth/2, innerHeight/2);
+    g.beginPath();
+    g.arc(0, 0, 100, 0, Math.PI * 2);
+    g.fillStyle = 'white';
+    g.fill();
+    g.restore();
   }
   
   function draw() {
     draw_mask(g_mask);
+    draw_front(g_front);
   }
   
   function loop() {
@@ -194,7 +218,6 @@
   }
   
   function init() {
-    //connect_video();
     layout();
     loop();
   }
