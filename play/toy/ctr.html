@@ -65,7 +65,7 @@
     <div class="bt" id="triangle">▲</div>
     <div class="bt" id="rectangle">■</div>
     <div class="bt" id="pen">🖍️</div>
-    <div class="bt">💾</div>
+    <div class="bt" id="save">💾</div>
   </div>
   <div class="ui" id="ui-down">
     <div class="bt" id="take-photo">◎</div>
@@ -79,13 +79,41 @@
   let el_ui_down = document.querySelector('#ui-down');
   let bt_camera = document.querySelector('#camera');
   let bt_take_photo = document.querySelector('#take-photo');
+  let bt_mask_circle = document.querySelector('#circle');
+  let bt_mask_triangle = document.querySelector('#triangle');
+  let bt_mask_rectangle = document.querySelector('#rectangle');
+  let bt_mask_pen = document.querySelector('#pen');
+  let bt_save = document.querySelector('#save');
   
   let el_video = document.createElement('video');
   el_video.autoplay = true;
   el_video.playsInline = true;
   let video_stream = null;
   
+  let mask_mode = 'circle';
+  
   let sprites = [];
+  
+  class Sprite {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.x = (Math.random() * 2 - 1) * 20 + innerWidth/2;
+      this.y = (Math.random() * 2 - 1) * 20 + innerHeight/2;
+      this.w = canvas.width;
+      this.h = canvas.height;
+      this.scale = 0.5;
+      this.r = Math.sqrt(this.w*this.w + this.h*this.h);
+    }
+    
+    draw(g) {
+      g.save();
+      g.translate(this.x, this.y);
+      g.scale(this.scale, this.scale);
+      g.translate(-this.w/2, -this.h/2);
+      g.drawImage(this.canvas, 0, 0);
+      g.restore();
+    }
+  }
   
   function connect_video() {
     let constraints = {
@@ -113,8 +141,14 @@
     }
   }
   
+  let touch = {
+    x: 0,
+    y: 0,
+    down: false,
+    selected: null,
+  }
+  
   function touchstart(e) {
-    /*
     let eX, eY;
     if(e.targetTouches) {
       eX = e.targetTouches[0].pageX;
@@ -124,23 +158,23 @@
       eX = e.pageX;
       eY = e.pageY;
     }
-    touchX = eX;
-    touchY = eY;
-    
-    mdown = true;
-    for(let i = 0; i < jamos.length; i++) {
-      let jamo = jamos[i];
-      let dx = eX - jamo.x;
-      let dy = eY - jamo.y;
+    touch.x = eX;
+    touch.y = eY;
+    touch.down = true;
+
+    let min_d = Number.MAX_VALUE;
+    for(let i = 0; i < sprites.length; i++) {
+      let sprite = sprites[i];
+      let dx = eX - sprite.x;
+      let dy = eY - sprite.y;
       let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
-      if(d < jamo.r) {
-        selected_jamo = jamo;
-        jamo.vx = 0;
-        jamo.vy = 0;
-        jamo.to_hue = Math.random() < 0.2 ? Math.random() * 30 | 0 : 100 + Math.random() * 260 | 0;
+      if(d < sprite.r * sprite.scale) {
+        if(d < min_d) {
+          min_d = d;
+          touch.selected = sprite;  
+        }
       }
     }
-    */
   }
   
   function touchmove(e) {
@@ -154,20 +188,18 @@
       eX = e.pageX;
       eY = e.pageY;
     }
-    /*
-    touchX = eX;
-    touchY = eY;
+    touch.x = eX;
+    touch.y = eY;
     
-    if(selected_jamo && mdown) {
-      selected_jamo.x = eX;
-      selected_jamo.y = eY;
+    if(touch.selected && touch.down) {
+      touch.selected.x = eX;
+      touch.selected.y = eY;
     }
-    */
   }
   
   function touchend(e) {
-    //mdown = false;
-    //selected_jamo = null;
+    touch.down = false;
+    touch.selected = null;
   }
   
   function layout() {
@@ -219,33 +251,62 @@
     }
     ctx.putImageData(im, 0, 0);
     
-    sprites.push(ctx.canvas);
+    let sprite = new Sprite(ctx.canvas);
+    sprites.push(sprite);
   }
   
   function draw_front(g) {
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     
-    g.globalCompositeOperation = 'source-over';
+    if(video_stream) {
+      g.globalCompositeOperation = 'source-over';
     
-    g.save();
-    g.translate(innerWidth/2, innerHeight/2);
-    g.translate(-el_video.videoWidth/2, -el_video.videoHeight/2);
-    g.drawImage(el_video, 0, 0, el_video.videoWidth, el_video.videoHeight);
-    g.restore();
-  
-    g.globalCompositeOperation = 'multiply';
+      g.save();
+      g.translate(innerWidth/2, innerHeight/2);
+      g.translate(-el_video.videoWidth/2, -el_video.videoHeight/2);
+      g.drawImage(el_video, 0, 0, el_video.videoWidth, el_video.videoHeight);
+      g.restore();
+
+      g.globalCompositeOperation = 'multiply';  
+    }
+    
     g.drawImage(g_mask.canvas, 0, 0);
   }
   
   function draw_mask(g) {
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
   
+    let cx = innerWidth/2;
+    let cy = innerHeight/2;
+    
     g.fillStyle = 'black';
     g.fillRect(0, 0, g.canvas.width, g.canvas.height);
     g.save();
-    g.translate(innerWidth/2, innerHeight/2);
+    g.translate(cx, cy);
     g.beginPath();
-    g.arc(0, 0, 100, 0, Math.PI * 2);
+    if(mask_mode === 'circle') {
+      g.arc(0, 0, 100, 0, Math.PI * 2);  
+    }
+    
+    if(mask_mode === 'triangle') {
+      g.moveTo(0, -100); 
+      g.lineTo(100, 100); 
+      g.lineTo(-100, 100); 
+      g.closePath();
+    }
+    
+    if(mask_mode === 'rectangle') {
+      g.moveTo(-100, -100);
+      g.lineTo(100, -100);
+      g.lineTo(100, 100);
+      g.lineTo(-100, 100);
+      g.closePath();
+    }
+    
+    if(mask_mode === 'pen') {
+      g.arc(0, 0, 100, 0, Math.PI * 2);  
+    }
+    
     g.fillStyle = 'white';
     g.fill();
     g.restore();
@@ -255,7 +316,7 @@
     g.clearRect(0, 0, g.canvas.width, g.canvas.height);
     
     for(let i = 0; i < sprites.length; i++) {
-      g.drawImage(sprites[i], 100, 100);
+      sprites[i].draw(g);
     }
   }
   
@@ -275,16 +336,38 @@
     loop();
   }
   
-  bt_camera.addEventListener('click', (E) => {
+  bt_camera.addEventListener('click', (e) => {
     connect_video();
     el_ui_down.style.bottom = '0px';
+    g_front.canvas.style.display = '';
   });
   
-  bt_take_photo.addEventListener('click', (E) => {
+  bt_take_photo.addEventListener('click', (e) => {
     el_ui_down.style.bottom = '-50px';
     take_photo();
     stop_video();
     g_front.canvas.style.display = 'none';
+    video_stream = null;
+  });
+  
+  bt_mask_circle.addEventListener('click', (e) => {
+    mask_mode = 'circle';
+    g_front.canvas.style.display = '';
+  });
+  
+  bt_mask_triangle.addEventListener('click', (e) => {
+    mask_mode = 'triangle';
+    g_front.canvas.style.display = '';
+  });
+  
+  bt_mask_rectangle.addEventListener('click', (e) => {
+    mask_mode = 'rectangle';
+    g_front.canvas.style.display = '';
+  });
+  
+  bt_mask_pen.addEventListener('click', (e) => {
+    mask_mode = 'pen';
+    g_front.canvas.style.display = '';
   });
   
   g_main.canvas.addEventListener('mousedown', touchstart);
