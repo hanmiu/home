@@ -36,8 +36,9 @@
   
   #ui-down {
     left: 0px;
-    bottom: 0px;
+    bottom: -50px;
     background-color: aquamarine;
+    transition: bottom 0.5s ease-in-out;
   }
   
   .bt {
@@ -49,29 +50,65 @@
     cursor: pointer;
   }
   
-  #canvas {
+  .canvas {
     position: fixed;
     left: 0px;
     top: 0px;
   }
 </style>
 <body>
-  <canvas id="canvas"></canvas>
+  <canvas class="canvas" id="canvas"></canvas>
+  <canvas class="canvas" id="mask"></canvas>
   <div class="ui" id="ui-up">
-    <div class="bt">📷</div>
-    <div class="bt">●</div>
-    <div class="bt">▲</div>
-    <div class="bt">■</div>
-    <div class="bt">✏️</div>
+    <div class="bt" id="camera">📷</div>
+    <div class="bt" id="circle">●</div>
+    <div class="bt" id="triangle">▲</div>
+    <div class="bt" id="rectangle">■</div>
+    <div class="bt" id="pen">🖍️</div>
+    <div class="bt">💾</div>
   </div>
   <div class="ui" id="ui-down">
-    <div class="bt">💾</div>
-    <div class="bt">한</div>
-    <div class="bt">❌</div>
+    <div class="bt" id="take-photo">◎</div>
   </div>
 </body>
 <script>
   let g = document.querySelector('#canvas').getContext('2d');
+  let g_mask = document.querySelector('#mask').getContext('2d');
+  
+  let el_ui_down = document.querySelector('#ui-down');
+  let bt_camera = document.querySelector('#camera');
+  let bt_take_photo = document.querySelector('#take-photo');
+  
+  let el_video = document.createElement('video');
+  el_video.autoplay = true;
+  el_video.playsInline = true;
+  let video_stream = null;
+  
+  function connect_video() {
+    let constraints = {
+      audio: false,
+      video: { facingMode: 'environment' }
+    };
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(stream) {
+      el_video.srcObject = stream;
+      video_stream = stream;
+      el_video.onloadedmetadata = function(e) {
+        el_video.play();
+      };
+    })
+    .catch(function(err) {
+      /* handle the error */
+      console.log(err.name + ": " + err.message);
+    });
+  }
+  
+  function stop_video() {
+    if(video_stream) {
+      video_stream.getTracks().forEach(track => track.stop())  
+    }
+  }
   
   function touchstart(e) {
     /*
@@ -133,12 +170,44 @@
   function layout() {
     g.canvas.width = innerWidth;
     g.canvas.height = innerHeight;
-    document.querySelector('#ui-down').style.bottom = '0px';
+    g_mask.canvas.width = innerWidth;
+    g_mask.canvas.height = innerHeight;
+    document.querySelector('#ui-down').style.bottom = '-50px';
+  }
+  
+  function draw_mask(g) {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    g.save();
+    g.translate(innerWidth/2, innerHeight/2);
+    g.translate(-el_video.videoWidth/2, -el_video.videoHeight/2);
+    g.drawImage(el_video, 0, 0, el_video.videoWidth, el_video.videoHeight);
+    g.restore();
+  }
+  
+  function draw() {
+    draw_mask(g_mask);
+  }
+  
+  function loop() {
+    draw();
+    requestAnimationFrame(loop);
   }
   
   function init() {
+    //connect_video();
     layout();
+    loop();
   }
+  
+  bt_camera.addEventListener('click', (E) => {
+    connect_video();
+    el_ui_down.style.bottom = '0px';
+  });
+  
+  bt_take_photo.addEventListener('click', (E) => {
+    el_ui_down.style.bottom = '-50px';
+    stop_video();
+  });
   
   g.canvas.addEventListener('mousedown', touchstart);
   g.canvas.addEventListener('mouseup', touchend); 
