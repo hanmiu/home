@@ -60,7 +60,6 @@
   <canvas class="canvas" id="main"></canvas>
   <canvas class="canvas" id="front"></canvas>
   <div class="ui" id="ui-up">
-    <div class="bt" id="camera">📷</div>
     <div class="bt" id="circle">●</div>
     <div class="bt" id="triangle">▲</div>
     <div class="bt" id="rectangle">■</div>
@@ -89,6 +88,7 @@
   el_video.autoplay = true;
   el_video.playsInline = true;
   let video_stream = null;
+  let is_camera_on = false;
   
   let mask_mode = 'circle';
   
@@ -116,29 +116,36 @@
   }
   
   function connect_video() {
-    let constraints = {
-      audio: false,
-      video: { facingMode: 'environment' }
-    };
+    el_ui_down.style.bottom = '0px';
+    g_front.canvas.style.display = '';
     
-    navigator.mediaDevices.getUserMedia(constraints)
-    .then(function(stream) {
-      el_video.srcObject = stream;
-      video_stream = stream;
-      el_video.onloadedmetadata = function(e) {
-        el_video.play();
+    if(!is_camera_on) {
+      let constraints = {
+        audio: false,
+        video: { facingMode: 'environment' }
       };
-    })
-    .catch(function(err) {
-      /* handle the error */
-      console.log(err.name + ": " + err.message);
-    });
+
+      navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream) {
+        el_video.srcObject = stream;
+        video_stream = stream;
+        el_video.onloadedmetadata = function(e) {
+          el_video.play();
+        };
+      })
+      .catch(function(err) {
+        /* handle the error */
+        console.log(err.name + ": " + err.message);
+      });
+    }
+    is_camera_on = true;
   }
   
   function stop_video() {
-    if(video_stream) {
+    if(video_stream && is_camera_on) {
       video_stream.getTracks().forEach(track => track.stop())  
     }
+    is_camera_on = false;
   }
   
   let touch = {
@@ -146,6 +153,8 @@
     y: 0,
     down: false,
     selected: null,
+    sx: 1,
+    sy: 1,
   }
   
   function touchstart(e) {
@@ -162,18 +171,20 @@
     touch.y = eY;
     touch.down = true;
 
-    let min_d = Number.MAX_VALUE;
-    for(let i = 0; i < sprites.length; i++) {
-      let sprite = sprites[i];
-      let dx = eX - sprite.x;
-      let dy = eY - sprite.y;
-      let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
-      if(d < sprite.r * sprite.scale) {
-        if(d < min_d) {
-          min_d = d;
-          touch.selected = sprite;  
+    if(e.target === g_main.canvas) {
+      let min_d = Number.MAX_VALUE;
+      for(let i = 0; i < sprites.length; i++) {
+        let sprite = sprites[i];
+        let dx = eX - sprite.x;
+        let dy = eY - sprite.y;
+        let d = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+        if(d < sprite.r * sprite.scale) {
+          if(d < min_d) {
+            min_d = d;
+            touch.selected = sprite;  
+          }
         }
-      }
+      }  
     }
   }
   
@@ -191,9 +202,18 @@
     touch.x = eX;
     touch.y = eY;
     
-    if(touch.selected && touch.down) {
-      touch.selected.x = eX;
-      touch.selected.y = eY;
+    if(e.target === g_main.canvas) {
+      if(touch.selected && touch.down) {
+        touch.selected.x = eX;
+        touch.selected.y = eY;
+      }
+    }
+    
+    if(e.target === g_front.canvas) {
+      let cx = innerWidth / 2;
+      let cy = innerHeight / 2;
+      touch.sx = (0.25 + 1.25 * Math.abs(touch.x - cx) / cx); 
+      touch.sy = (0.25 + 1.75 * Math.abs(touch.y - cy) / cy);
     }
   }
   
@@ -283,6 +303,9 @@
     g.fillRect(0, 0, g.canvas.width, g.canvas.height);
     g.save();
     g.translate(cx, cy);
+    if(is_camera_on && mask_mode !== 'pen') {
+      g.scale(touch.sx, touch.sy);
+    }
     g.beginPath();
     if(mask_mode === 'circle') {
       g.arc(0, 0, 100, 0, Math.PI * 2);  
@@ -334,13 +357,8 @@
   function init() {
     layout();
     loop();
-  }
-  
-  bt_camera.addEventListener('click', (e) => {
     connect_video();
-    el_ui_down.style.bottom = '0px';
-    g_front.canvas.style.display = '';
-  });
+  }
   
   bt_take_photo.addEventListener('click', (e) => {
     el_ui_down.style.bottom = '-50px';
@@ -351,23 +369,36 @@
   });
   
   bt_mask_circle.addEventListener('click', (e) => {
+    connect_video();
     mask_mode = 'circle';
     g_front.canvas.style.display = '';
+    touch.sx = 1;
+    touch.sy = 1;
   });
   
   bt_mask_triangle.addEventListener('click', (e) => {
+    connect_video();
     mask_mode = 'triangle';
     g_front.canvas.style.display = '';
+    touch.sx = 1;
+    touch.sy = 1;
   });
   
   bt_mask_rectangle.addEventListener('click', (e) => {
+    connect_video();
     mask_mode = 'rectangle';
     g_front.canvas.style.display = '';
+    touch.sx = 1;
+    touch.sy = 1;
+    
   });
   
   bt_mask_pen.addEventListener('click', (e) => {
+    connect_video();
     mask_mode = 'pen';
     g_front.canvas.style.display = '';
+    touch.sx = 1;
+    touch.sy = 1;
   });
   
   g_main.canvas.addEventListener('mousedown', touchstart);
@@ -377,6 +408,14 @@
   g_main.canvas.addEventListener('touchstart', touchstart);
   g_main.canvas.addEventListener('touchend', touchend);
   g_main.canvas.addEventListener('touchmove', touchmove);
+  
+  g_front.canvas.addEventListener('mousedown', touchstart);
+  g_front.canvas.addEventListener('mouseup', touchend); 
+  g_front.canvas.addEventListener('mousemove', touchmove);
+  
+  g_front.canvas.addEventListener('touchstart', touchstart);
+  g_front.canvas.addEventListener('touchend', touchend);
+  g_front.canvas.addEventListener('touchmove', touchmove);
   
   window.addEventListener('resize', layout);
   
