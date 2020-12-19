@@ -137,11 +137,9 @@
       .then(function(stream) {
         el_video.srcObject = stream;
         video_stream = stream;
-        /*
         el_video.onloadedmetadata = function(e) {
-          el_video.play();
+          el_video.play(); 
         };
-        */
       })
       .catch(function(err) {
         /* handle the error */
