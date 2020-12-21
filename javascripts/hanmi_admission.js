@@ -3,7 +3,8 @@ html['admission'] = `
 <br>
 
 <div class="subtle">
-처음학교로의 일반 모집 기간이 종료되었습니다.
+등록하신 가정에서는 아래의 링크에서 입학원서를 작성하실 수 있습니다.<br>
+<strong><a href="https://forms.gle/4szxkWqKtawpUPYo9" target="_blank">입학원서 작성</a></strong>
 </div>
 <br>
 
