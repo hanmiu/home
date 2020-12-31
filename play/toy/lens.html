@@ -306,7 +306,7 @@
       touch.sy = (0.25 + 1.75 * Math.abs(touch.y - cy) / cy);
     }
     
-    if(mask_mode === 'pen') {
+    if(mask_mode === 'pen' && touch.down) {
       g_pen.save();
       g_pen.translate(eX, eY);
       g_pen.beginPath();
