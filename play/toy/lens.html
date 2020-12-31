@@ -55,12 +55,27 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    transition: 0.5s transform;
+  }
+  
+  .bt:active {
+    display: inline-flex;
+    width: 50px;
+    height: 50px;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transform: scale(1.5, 1.5);
   }
   
   .canvas {
     position: fixed;
     left: 0px;
     top: 0px;
+  }
+  
+  #take-photo {
+    transform: scale(2, 2);
   }
 </style>
 <body>
