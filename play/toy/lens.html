@@ -41,9 +41,16 @@
     background-color: aquamarine;
   }
   
+  #ui-control {
+    left: 0px;
+    bottom: -100px;
+    background-color: aquamarine;
+    transition: bottom 0.5s ease-in-out;
+  }
+  
   #ui-down {
     left: 0px;
-    bottom: -50px;
+    bottom: -100px;
     background-color: aquamarine;
     transition: bottom 0.5s ease-in-out;
   }
@@ -75,7 +82,18 @@
   }
   
   #take-photo {
-    transform: scale(2, 2);
+    /*transform: scale(2, 2);*/
+    font-size: 2em;
+  }
+  
+  #rotate-left {
+    /*transform: scale(2, 2);*/
+    font-size: 2em;
+  }
+  
+  #rotate-right {
+    /*transform: scale(2, 2);*/
+    font-size: 2em;
   }
 </style>
 <body>
@@ -88,6 +106,10 @@
     <div class="bt" id="rectangle">■</div>
     <div class="bt" id="pen">🖍️</div>
     <div class="bt" id="save">💾</div>
+  </div>
+  <div class="ui" id="ui-control">
+    <div class="bt" id="rotate-left">↺</div>
+    <div class="bt" id="rotate-right">↻</div>
   </div>
   <div class="ui" id="ui-down">
     <div class="bt" id="take-photo">◎</div>
@@ -107,6 +129,10 @@
   let bt_mask_rectangle = document.querySelector('#rectangle');
   let bt_mask_pen = document.querySelector('#pen');
   let bt_save = document.querySelector('#save');
+  
+  let el_ui_control = document.querySelector('#ui-control');
+  let bt_rotate_left = document.querySelector('#rotate-left');
+  let bt_rotate_right = document.querySelector('#rotate-right');
   
   let sound_camera_shutter = document.createElement('audio');
   sound_camera_shutter.src = 'camera-shutter.mp3';
@@ -132,11 +158,13 @@
       this.h = canvas.height;
       this.scale = 0.5;
       this.r = Math.sqrt(this.w*this.w + this.h*this.h);
+      this.rot = 0;
     }
     
     draw(g) {
       g.save();
       g.translate(this.x, this.y);
+      g.rotate(this.rot);
       g.scale(this.scale, this.scale);
       g.translate(-this.w/2, -this.h/2);
       g.drawImage(this.canvas, 0, 0);
@@ -224,9 +252,11 @@
       
       if(touch.selected === null) {
         touch.last_selected = null;
+        el_ui_control.style.bottom = '-100px';
       }
       else {
         touch.last_selected = touch.selected;
+        el_ui_control.style.bottom = '0px';
       }
     }
   }
@@ -291,7 +321,7 @@
     g_mask.canvas.height = innerHeight;
     g_pen.canvas.width = innerWidth;
     g_pen.canvas.height = innerHeight;
-    document.querySelector('#ui-down').style.bottom = '-50px';
+    document.querySelector('#ui-down').style.bottom = '-100px';
   }
   
   function take_photo() {
@@ -429,7 +459,7 @@
   
   bt_take_photo.addEventListener('click', (e) => {
     sound_camera_shutter.play();
-    el_ui_down.style.bottom = '-50px';
+    el_ui_down.style.bottom = '-100px';
     take_photo();
     stop_video();
     g_front.canvas.style.display = 'none';
@@ -474,6 +504,18 @@
     link.download = "lens.jpg";
     link.href = g_main.canvas.toDataURL('image/jpeg', 1.0);
     link.click();
+  });
+  
+  bt_rotate_left.addEventListener('click', (e) => {
+    if(touch.last_selected) {
+      touch.last_selected.rot -= Math.PI / 12;
+    }
+  });
+  
+  bt_rotate_right.addEventListener('click', (e) => {
+    if(touch.last_selected) {
+      touch.last_selected.rot += Math.PI / 12;
+    }
   });
   
   g_main.canvas.addEventListener('mousedown', touchstart);
