@@ -413,11 +413,11 @@
   }
   
   bt_take_photo.addEventListener('click', (e) => {
+    sound_camera_shutter.play();
     el_ui_down.style.bottom = '-50px';
     take_photo();
     stop_video();
     g_front.canvas.style.display = 'none';
-    sound_camera_shutter.play();
   });
   
   bt_mask_circle.addEventListener('click', (e) => {
@@ -479,13 +479,11 @@
   
   window.addEventListener('resize', layout);
   
-  /*
   window.addEventListener("orientationchange", function(e) {
     setTimeout(() => {
       layout();
-    }, 100);
+    }, 500);
   });
-  */
   
   init();
 </script>
