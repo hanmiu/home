@@ -93,6 +93,8 @@
   let bt_mask_pen = document.querySelector('#pen');
   let bt_save = document.querySelector('#save');
   
+  let sound_camera_shutter = document.createElement('audio');
+  sound_camera_shutter.src = 'camera-shutter.mp3';
   /*
   let el_video = document.createElement('video');
   el_video.autoplay = true;
@@ -415,7 +417,7 @@
     take_photo();
     stop_video();
     g_front.canvas.style.display = 'none';
-    //video_stream = null;
+    sound_camera_shutter.play();
   });
   
   bt_mask_circle.addEventListener('click', (e) => {
