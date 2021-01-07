@@ -7,7 +7,7 @@
   }
   
   #content {
-    position: absolute;
+    position: fixed;
     width: 512px;
     height: 512px;
     overflow: hidden;
@@ -313,7 +313,7 @@ void main() {
   
   function layout() {
     el_content.style.left = `${innerWidth / 2 - 512 / 2}px`;
-    el_content.style.top = `100px`;
+    el_content.style.top = `80px`;
     rect_content = el_content.getBoundingClientRect();  
   }
   
