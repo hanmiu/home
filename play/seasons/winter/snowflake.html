@@ -1,7 +1,5 @@
 <!doctype html>
 <meta charset="utf-8">
-<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1" />
-<title>눈송이</title>
 <style>
   body {
     margin: 0;
@@ -9,10 +7,7 @@
   }
   
   #content {
-    position: fixed;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 50px;
+    position: absolute;
     width: 512px;
     height: 512px;
     overflow: hidden;
@@ -28,8 +23,28 @@
   #canvas {
     display: none;
   }
+  
+  #ui {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    width: 512px;
+    text-align: center;
+  }
+  
+  #info {
+    color: white;
+    margin: 10px;
+  }
 </style>
 <body>
+  <div id="ui">
+    <div id="info">화면을 터치해서 눈송이를 그려보세요</div>
+    <div>
+      <button id="clear">새로 그리기</button>
+      <button id="download" style="display: none;">다운로드</button>
+    </div>
+  </div>
   <div id="content"></div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
@@ -170,6 +185,9 @@ void main() {
   let el_content = document.querySelector('#content');
   let rect_content = el_content.getBoundingClientRect();
   
+  let bt_clear = document.querySelector('#clear');
+  let bt_download = document.querySelector('#download');
+  
   let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
   renderer.setPixelRatio(1);
   renderer.setSize(width, height);
@@ -293,19 +311,11 @@ void main() {
     //plane_material.needsUpdate = true;
   }
   
-  /*
-  window.onmousedown = function(e) {
-    touchdown(e.pageX, e.pageY);
-  };
-  
-  window.onmouseup = function(e) {
-    touchup(e.pageX, e.pageY);
-  };
-  
-  window.onmousemove = function(e) {
-    touchmove(e.pageX, e.pageY);
-  };
-  */
+  function layout() {
+    el_content.style.left = `${innerWidth / 2 - 512 / 2}px`;
+    el_content.style.top = `100px`;
+    rect_content = el_content.getBoundingClientRect();  
+  }
   
   el_content.addEventListener('mousedown', touchstart);
   el_content.addEventListener('mouseup', touchend); 
@@ -315,9 +325,21 @@ void main() {
   el_content.addEventListener('touchend', touchend);
   el_content.addEventListener('touchmove', touchmove);
   
-  window.onresize = function() {
-    rect_content = el_content.getBoundingClientRect();  
-  };
+  window.addEventListener('resize', layout);
+  
+  bt_clear.addEventListener('click', (e) => {
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    distance_transform();
+  });
+  
+  bt_download.addEventListener('click', (e) => {
+    let link = document.createElement('a');
+    link.download = "snowflake.png";
+    //g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    //g.drawImage(renderer.domElement, 0, 0);
+    link.href = renderer.domElement.toDataURL('image/png', 1.0);
+    link.click();
+  });
   
   function distance_transform() {
     let bi = booleanImageFromCanvas(g.canvas, 0.5);
@@ -344,5 +366,6 @@ void main() {
     texture.needsUpdate = true;
   }
   
+  layout();
   loop();
 </script>
