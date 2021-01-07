@@ -1,0 +1,348 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1" />
+<title>눈송이</title>
+<style>
+  body {
+    margin: 0;
+    background-color: #000000;
+  }
+  
+  #content {
+    position: fixed;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50px;
+    width: 512px;
+    height: 512px;
+    overflow: hidden;
+    background: linear-gradient(rgb(111,126,245), rgb(201,215,252));
+  }
+  
+  .layer {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  #canvas {
+    display: none;
+  }
+</style>
+<body>
+  <div id="content"></div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
+<script src="dt.js"></script>
+<script>
+  let vertex_shader = `
+void main() {
+    gl_Position = vec4( position, 1.0 );
+}
+  `;
+  
+  let fragment_shader = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform float time;
+uniform vec2 mouse;
+uniform vec2 resolution;
+uniform sampler2D map;
+
+vec3 hash( vec3 p ) { 
+  p = vec3(
+    dot(p,vec3(63.8,127.1,311.7)),
+    dot(p,vec3(125.2,269.5,183.3)),
+    dot(p,vec3(234.2,513.5,176.2)));
+  return fract(sin(p)*18.5453);
+}
+
+float voronoi( in vec3 x ) {
+  vec3 n = floor( x );
+  vec3 f = fract( x );
+
+  vec3 m = vec3( 8.0 );
+  for( int k=-1; k<=1; k++ )
+  for( int j=-1; j<=1; j++ )
+  for( int i=-1; i<=1; i++ ) {
+    vec3  g = vec3( float(i), float(j), float(k) );
+    vec3  o = hash( n + g );
+    //vec3  r = g - f + o;
+    vec3  r = g - f + (0.5+0.5*sin(time*0.5+6.2831*o));
+    float d = dot( r, r );
+    if( d < m.x ) {
+      m = vec3( d, o );
+    }
+  }
+  return sqrt(m.x);
+}
+
+float hash11(float p) {
+  return fract(sin(p * 727.1)*435.545);
+}
+float hash12(vec2 p) {
+  float h = dot(p,vec2(127.1,311.7));	
+  return fract(sin(h)*437.545);
+}
+vec3 hash31(float p) {
+  vec3 h = vec3(127.231,491.7,718.423) * p;	
+  return fract(sin(h)*435.543);
+}
+
+// 3d noise
+float noise_3(in vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);	
+  vec3 u = f*f*(3.0-2.0*f);
+
+  vec2 ii = i.xy + i.z * vec2(5.0);
+  float a = hash12( ii + vec2(0.0,0.0) );
+  float b = hash12( ii + vec2(1.0,0.0) );    
+  float c = hash12( ii + vec2(0.0,1.0) );
+  float d = hash12( ii + vec2(1.0,1.0) ); 
+  float v1 = mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+
+  ii += vec2(5.0);
+  a = hash12( ii + vec2(0.0,0.0) );
+  b = hash12( ii + vec2(1.0,0.0) );    
+  c = hash12( ii + vec2(0.0,1.0) );
+  d = hash12( ii + vec2(1.0,1.0) );
+  float v2 = mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+
+  return max(mix(v1,v2,u.z),0.0);
+}
+
+float fbm3_high(vec3 p, float a, float f) {
+  float ret = 0.0;    
+  float amp = 1.0;
+  float frq = 1.0;
+  for(int i = 0; i < 4; i++) {
+    float n = pow(noise_3(p * frq),2.0);
+    ret += n * amp;
+    frq *= f;
+    amp *= a * (pow(n,0.2));
+  }
+  return ret;
+}
+
+vec3 tri(in vec3 x){return abs(fract(x)-.5);}
+float tri_surf(in vec3 p){
+  return dot(tri(p*0.5 + tri(p*0.25).yzx), vec3(0.666));
+}
+
+vec3 calcNormal(vec2 uv) {
+  vec2 e = vec2(1.0, 0.0) * 0.001;// - noise_3(uv.xyx * 100.0) * 0.01;
+  return normalize(vec3(
+    texture2D(map, uv + e.xy).r - texture2D(map, uv - e.xy).r,
+    texture2D(map, uv + e.yx).r - texture2D(map, uv - e.yx).r,
+    texture2D(map, uv) * 0.01
+  ));
+}
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy / resolution.xy) * 2.0 - 1.0;
+  vec2 uv_01 = uv * 0.5 + 0.5;
+  vec4 tex = texture2D(map, uv_01);
+  vec2 mo = mouse * 2.0 - 1.0;
+  mo.x *= -1.0;
+  
+  vec3 sky = mix(vec3(0.0, 0.4, 0.7), vec3(0.0, 0.7, 1.0), uv_01.y);
+
+  vec3 rd = normalize(vec3(uv.x, uv.y, 1.0));
+  vec3 nor = calcNormal(uv_01);
+  vec3 lig = normalize(vec3(mo.x, mo.y, 1.0));
+  float dif = clamp(dot(nor, lig), 0.0, 1.0);
+  vec3 ref = reflect(rd, nor);
+  float spe = pow(clamp(dot(ref, lig), 0.0, 1.0), 16.0);
+  float spe2 = pow(clamp(dot(ref, -lig), 0.0, 1.0), 32.0);
+  float fre = 1.0 - dot(nor, -rd);
+		
+  vec3 col = sky * (dif + spe + fre * 0.2) + spe2 * vec3(0.7, 0.0, 0.8) * 0.4;
+  //col = mix(sky, col, tex.r);
+  gl_FragColor = vec4(col, tex.r * 0.95);
+}
+  `;
+  
+  let width = 512;
+  let height = 512;
+  let el_content = document.querySelector('#content');
+  let rect_content = el_content.getBoundingClientRect();
+  
+  let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+  renderer.setPixelRatio(1);
+  renderer.setSize(width, height);
+  renderer.domElement.className = 'layer';
+  el_content.appendChild(renderer.domElement);
+  let g = document.createElement('canvas').getContext('2d');
+  g.canvas.id = 'canvas';
+  g.canvas.className = 'layer';
+  g.canvas.width = width;
+  g.canvas.height = height;
+  el_content.appendChild(g.canvas);
+  
+  let texture = new THREE.Texture(g.canvas);
+  texture.premultiplyAlpha = true;
+  
+  let plane_material = new THREE.ShaderMaterial( {
+    uniforms: {
+      resolution: { value: new THREE.Vector2() },
+      time: { value: 1.0 },
+      mouse: { value: new THREE.Vector2() },
+      map: { value: texture },
+    },
+    vertexShader: vertex_shader,
+    fragmentShader: fragment_shader,
+    visible: true,
+  } );
+  
+  let scene = new THREE.Scene();
+  let camera = new THREE.Camera();
+  camera.position.z = 1;
+  let plane_geometry = new THREE.PlaneBufferGeometry( 2, 2 );
+  let plane_mesh = new THREE.Mesh(plane_geometry, plane_material);
+  scene.add(plane_mesh);
+  plane_material.uniforms.resolution.value = new THREE.Vector2( width, height );
+  
+  function render() {
+    renderer.render( scene, camera );
+  }
+  
+  function loop() {
+    render();
+    requestAnimationFrame(loop);
+  }
+  
+  let touch = {
+    down: false,
+    px: 0,
+    py: 0,
+    x: 0,
+    y: 0,
+  };
+  
+  function touchstart(e) {
+    let eX, eY;
+    if(e.targetTouches) {
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    touch.px = eX;
+    touch.py = eY;
+    touch.x = eX - rect_content.left;
+    touch.y = eY - rect_content.top;
+    touch.down = true;
+  }
+  
+  function touchend(e) {
+    touch.down = false;
+    distance_transform();
+  }
+  
+  function touchmove(e) {
+    let eX, eY;
+    if(e.targetTouches) {
+      e.preventDefault();
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    touch.px = touch.x;
+    touch.py = touch.y;
+    touch.x = eX - rect_content.left;
+    touch.y = eY - rect_content.top;
+    
+    plane_material.uniforms.mouse.value.x = touch.x / width;
+    plane_material.uniforms.mouse.value.y = touch.y / height;
+    
+    if(touch.down) {
+      let n = 12;
+      let theta = Math.PI * 2 / n;
+      let dx = touch.x - touch.px;
+      let dy = touch.y - touch.py;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      for(let i = 0; i < n; i++) {
+        g.save();
+        g.translate(width*0.5, height*0.5);
+        g.rotate(theta * 0.5);
+        g.rotate(theta * i);
+        if(i % 2 == 0) {
+          g.scale(-1, 1);
+        }
+        g.rotate(theta * 0.5);
+        g.translate(-width*0.5, -height*0.5);
+        g.beginPath();
+        g.moveTo(touch.px, touch.py);
+        g.lineTo(touch.x, touch.y);
+        g.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        g.lineWidth = 1 + dist;
+        g.stroke();
+        g.restore();  
+      }
+      texture.needsUpdate = true;
+    }
+    
+    //plane_material.needsUpdate = true;
+  }
+  
+  /*
+  window.onmousedown = function(e) {
+    touchdown(e.pageX, e.pageY);
+  };
+  
+  window.onmouseup = function(e) {
+    touchup(e.pageX, e.pageY);
+  };
+  
+  window.onmousemove = function(e) {
+    touchmove(e.pageX, e.pageY);
+  };
+  */
+  
+  el_content.addEventListener('mousedown', touchstart);
+  el_content.addEventListener('mouseup', touchend); 
+  el_content.addEventListener('mousemove', touchmove);
+  
+  el_content.addEventListener('touchstart', touchstart);
+  el_content.addEventListener('touchend', touchend);
+  el_content.addEventListener('touchmove', touchmove);
+  
+  window.onresize = function() {
+    rect_content = el_content.getBoundingClientRect();  
+  };
+  
+  function distance_transform() {
+    let bi = booleanImageFromCanvas(g.canvas, 0.5);
+    let dt = distanceFromBooleanImage(bi, 512, 512, 'EDT');
+    //let dt = distanceFromBooleanImage(bi, 512, 512, 'CDT');
+    let max = dt.reduce((a, b) => Math.max(a, b));
+    let min = dt.reduce((a, b) => Math.min(a, b));
+    let d = max - min;
+    if(d == 0) d = 1;
+    let im = g.createImageData(512, 512);
+    for(let iy = 0; iy < 512; iy++) {
+      for(let ix = 0; ix < 512; ix++) {
+        let i = iy * 512 + ix;
+        let v = (dt[i] - min) / d;
+        im.data[4 * i + 0] = v * 255 | 0;
+        im.data[4 * i + 1] = v * 255 | 0;
+        im.data[4 * i + 2] = v * 255 | 0;
+        im.data[4 * i + 3] = 255;
+      }
+    }
+    
+    g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    g.putImageData(im, 0, 0);
+    texture.needsUpdate = true;
+  }
+  
+  loop();
+</script>
