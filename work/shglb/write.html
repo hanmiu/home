@@ -88,6 +88,10 @@
   let photo_holders = [];
   
   function read_tsv(file) {
+    let pages = document.querySelectorAll('.page')
+    for(let page of pages) {
+      page.remove();
+    }
     reader.readAsText(file);
     reader.onload = function() {
       parseAll(reader.result);
