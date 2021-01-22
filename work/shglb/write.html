@@ -363,6 +363,17 @@
     }
   }
   
+  function split(text) {
+    let result = [text];
+    if(text.match(',')) {
+      result = text.split(',').map(x => x.trim()).filter(x => x.length > 0);
+    }
+    else if(text.match(' ')) {
+      result = text.split(' ').map(x => x.trim()).filter(x => x.length > 0);
+    }
+    return result;
+  }
+  
   async function download(el_page) {
     let d = {};
     let tds = Array.prototype.slice.call(el_page.querySelectorAll('td')).filter(el => el.className);
@@ -370,22 +381,40 @@
       d[td.className] = td.textContent;
     }
     
-    let 담임3세 = d['담임3세'].split(',').map(x => x.trim());
-    for(let i = 0; i < 2; i++) {
-      let v = 담임3세[i] ? 담임3세[i] : '';
-      d['담임3세'+(i+1)] = v;
+    let 담임3세 = split(d['담임3세'].trim());
+    if(담임3세.length === 1) {
+      d['담임3세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임3세'].trim()}</CHAR></TEXT></P>`;
+    }
+    else if(담임3세.length === 2) {
+      for(let i = 0; i < 2; i++) {
+        let v = 담임3세[i] ? 담임3세[i] : '';
+        d['담임3세'+(i+1)] = v;
+      }
+      d['담임3세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임3세1']}</CHAR></TEXT></P><P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임3세2']}</CHAR></TEXT></P>`;
     }
 
-    let 담임4세 = d['담임4세'].split(',').map(x => x.trim());
-    for(let i = 0; i < 2; i++) {
-      let v = 담임4세[i] ? 담임4세[i] : '';
-      d['담임4세'+(i+1)] = v;
+    let 담임4세 = split(d['담임4세'].trim());
+    if(담임3세.length === 1) {
+      d['담임4세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임4세'].trim()}</CHAR></TEXT></P>`;
+    }
+    else if(담임4세.length === 2) {
+      for(let i = 0; i < 2; i++) {
+        let v = 담임4세[i] ? 담임4세[i] : '';
+        d['담임4세'+(i+1)] = v;
+      }
+      d['담임4세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임4세1']}</CHAR></TEXT></P><P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임4세2']}</CHAR></TEXT></P>`;
     }
 
-    let 담임5세 = d['담임5세'].split(',').map(x => x.trim());
-    for(let i = 0; i < 2; i++) {
-      let v = 담임5세[i] ? 담임5세[i] : '';
-      d['담임5세'+(i+1)] = v;
+    let 담임5세 = split(d['담임5세'].trim());
+    if(담임5세.length === 1) {
+      d['담임5세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임5세'].trim()}</CHAR></TEXT></P>`;
+    }
+    else if(담임5세.length === 2) {
+      for(let i = 0; i < 2; i++) {
+        let v = 담임5세[i] ? 담임5세[i] : '';
+        d['담임5세'+(i+1)] = v;
+      }
+      d['담임5세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임5세1']}</CHAR></TEXT></P><P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임5세2']}</CHAR></TEXT></P>`;
     }
 
     d['성'] = d['어린이성별'];
