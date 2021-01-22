@@ -59,6 +59,7 @@
       <button id="add">추가</button>
     </div>
     <button id="clear">전부 비우기(주의!)</button>
+    <button id="load">자동 저장 불러오기</button>
     <button id="download_tsv">tsv 다운로드</button>
   </div>
 </body>
@@ -86,6 +87,8 @@
   let reader = new FileReader();
   
   let photo_holders = [];
+  
+  let timeout_id = -1;
   
   function read_tsv(file) {
     let pages = document.querySelectorAll('.page')
@@ -460,6 +463,7 @@
   
   function download_tsv() {
     let tsv = build_tsv();
+    localStorage.setItem('tsv', tsv);
     
     download_link.download = `생활기록부.tsv`;;
     download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(tsv);
@@ -467,6 +471,13 @@
   }
   
   window.addEventListener('input', (e) => {
+    if(e.target.tagName === 'TD') {
+      // 자동 저장
+      clearTimeout(timeout_id);
+      timeout_id = setTimeout(() => {
+        localStorage.setItem('tsv', build_tsv());
+      }, 2000);
+    }
     check_all(e.target);
   });
   
@@ -481,6 +492,19 @@
         let pages = document.querySelectorAll('.page')
         for(let page of pages) {
           page.remove();
+        }
+      }
+    }
+    
+    if(e.target.id === 'load') {
+      if(window.confirm('정말 불러오겠습니까?')) {
+        let tsv = localStorage.getItem('tsv');
+        if(tsv) {
+          let pages = document.querySelectorAll('.page')
+          for(let page of pages) {
+            page.remove();
+          }
+          parseAll(tsv);
         }
       }
     }
@@ -512,43 +536,8 @@
     let lines = tsv.split('\n');
     let cols = lines.shift().split('\t').map(x => x.trim());
     for(let line of lines) {
-      //parse(cols, line);
       let infos = line.split('\t').map(x => x.trim());
       build_page(cols, infos);
     }
   }
-
-  /*
-  async function parse(cols, line) {
-    let d = {};
-    let infos = line.split('\t').map(x => x.trim());
-    if(cols.length === infos.length) {
-      for(let i = 0; i < cols.length; i++) {
-        d[cols[i]] = infos[i];
-      }
-    }
-
-    let 담임3세 = d['담임3세'].split(',').map(x => x.trim());
-    for(let i = 0; i < 2; i++) {
-      let v = 담임3세[i] ? 담임3세[i] : '';
-      d['담임3세'+(i+1)] = v;
-    }
-
-    let 담임4세 = d['담임4세'].split(',').map(x => x.trim());
-    for(let i = 0; i < 2; i++) {
-      let v = 담임4세[i] ? 담임4세[i] : '';
-      d['담임4세'+(i+1)] = v;
-    }
-
-    let 담임5세 = d['담임5세'].split(',').map(x => x.trim());
-    for(let i = 0; i < 2; i++) {
-      let v = 담임5세[i] ? 담임5세[i] : '';
-      d['담임5세'+(i+1)] = v;
-    }
-
-    d['성'] = d['어린이성별'];
-    
-    let hml = build_hml(d);
-  }
-  */
 </script>
