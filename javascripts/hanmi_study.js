@@ -27,6 +27,7 @@ html['study'] = `
   <div class="subtle">
     <ul class="flower">
     <li><a href="https://www.notion.so/2020-af348ba4e67c4cceb682f14b646c7379" target="_blank">2020 한미유치원 놀이 연수 (<strong>2020년 11월 30일 ~ 12월 7일</strong>, 비대면)</a></li>
+    <li><a href="https://forms.gle/idqRiKSkuxi54vDT7" target="_blank">한미유치원 놀이 연수 알림</a>에 신청해 주시면 이후 놀이 연수가 기획될 때 알림을 드립니다.</li>
     </ul>
   <br>
 
