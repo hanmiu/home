@@ -239,10 +239,13 @@ function build_page(cols, infos) {
   //let infos = line.split('\t').map(x => x.trim());
   if(cols.length === infos.length) {
     for(let i = 0; i < cols.length; i++) {
-      let el_field = el_page.querySelector(`.${cols[i]}`);
-      if(el_field) {
-        el_field.textContent = infos[i];
-        check_all(el_field);
+      let query = cols[i];
+      if(query) {
+        let el_field = el_page.querySelector(`.${query}`);
+        if(el_field) {
+          el_field.textContent = infos[i];
+          check_all(el_field);
+        }  
       }
     }
   }
