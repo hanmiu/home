@@ -15,9 +15,9 @@ function build_page(cols, infos) {
     <tbody>
       <tr>
         <td>수료ㆍ졸업대장번호</td>
-        <td contenteditable="true" spellcheck="false" class="대장3세">00-00</td>
-        <td contenteditable="true" spellcheck="false" class="대장4세">00-00</td>
-        <td contenteditable="true" spellcheck="false" class="대장5세">00-00</td>
+        <td contenteditable="true" spellcheck="false" class="대장3세">0000-0</td>
+        <td contenteditable="true" spellcheck="false" class="대장4세">0000-0</td>
+        <td contenteditable="true" spellcheck="false" class="대장5세">0000-0</td>
         <td rowspan="3" contenteditable="true" spellcheck="false" class="사진파일명"></td>
       </tr>
       <tr>
