@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>동그라미 차량표</title>
+<style>
+  body {
+    margin: 0;
+  }
+  
+  #ui {
+    width: 100%;
+    padding: 20px;
+    background-color: azure;
+  }
+  
+  #ui .section {
+    margin-bottom: 10px;
+  }
+  
+  #list {
+    width: 600px;
+    height: 400px;
+  }
+  
+  .name-tag {
+    display: inline-block;
+    width: 52mm;
+    height: 52mm;
+  }
+  
+  @media print {
+    #ui {
+      display: none;
+    }
+  }
+</style>
+<body>
+  <div id="ui">
+    <div id="first">
+      <div class="section">
+        <label>반:</label>
+        <input id="class-name" type="text" value="개나리반">
+      </div>
+      <div class="section">
+        <div><label>명단:</label></div>
+        <textarea id="list" spellcheck="false">
+{ "이름": "강호둥", "등원": "백1", "하원": "고", "방과후": "1"},
+{ "이름": "박기래", "등원": "고2", "하원": "유", "방과후": "0"},
+{ "이름": "신진나", "등원": "유3", "하원": "백", "방과후": "1"},
+</textarea>
+      </div>
+      <div class="section">
+        <button id="gen">생성</button>
+        <button id="print">인쇄</button>
+      </div>
+    </div>
+  </div>
+  <div id="stage"></div>
+</body>
+<script>
+  let bt_gen = document.querySelector('#gen');
+  let bt_print = document.querySelector('#print');
+  
+  let dic_car = {
+    '고': '고래',
+    '백': '백곰',
+    '유': '유니콘'
+  };
+  
+  let dic_tel = {
+    '고': '010-7313-6567',
+    '백': '010-7231-6567',
+    '유': '010-7241-6567'
+  };
+  
+  let dic_color = {
+    '고': '#d7f2ff',
+    '백': '#ffe8f1',
+    '유': '#feffa3'
+  };
+  
+  bt_gen.addEventListener('click', e => {
+    document.querySelector('#stage').innerHTML = '';
+    let str = document.querySelector('#list').value.trim();
+    str = str.split(',').filter(x => x.length > 0).join(',');
+    let data = JSON.parse(`[${str}]`);
+    for(let datum of data) {
+      build_tag(datum);
+    }
+  });
+  
+  bt_print.addEventListener('click', e => {
+    window.print();
+  });
+  
+  function build_tag(datum) {
+    let class_name = document.querySelector('#class-name').value;
+    let name = datum['이름'];
+    let car_in = datum['등원'];
+    let car_out = datum['하원'];
+    let tel_in = '';
+    let tel_out = '';
+    let sp = datum['방과후'] === '1' ? true : false;
+    let sp_str = datum['방과후'] === '1' ? '방과후 ' : '';
+    
+    let color_in = '#ffffff';
+    let color_out = '#ffffff';
+    
+    if(car_in) {
+      if(car_in.length === 2) {
+        color_in = dic_color[car_in[0]];
+        tel_in = dic_tel[car_in[0]];
+        car_in = dic_car[car_in[0]] + ' ' + car_in[1] + '호';
+      }  
+    }
+    
+    if(car_out) {
+      if(car_out.length === 1) {
+        color_out = dic_color[car_out[0]];
+        tel_out = dic_tel[car_out[0]];
+        car_out = dic_car[car_out[0]] + ' ' + sp_str + '하원';
+      }  
+    }
+    
+    let border_color = '#b8fcaa00';
+    if(sp) {
+      border_color = '#b8fcaa';
+    }
+    
+    let svg_str = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:v="https://vecta.io/nano" viewBox="0 0 148 148" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.5"><style><![CDATA[.B{font-family:AppleSDGothicNeo-Regular, Apple SD Gothic Neo}.C{font-size:37.5px}.D{font-family:ArialMT, Arial, sans-serif}]]></style><path d="M144.567 73.773c-.038 39.078-31.778 70.794-70.866 70.794S2.873 112.851 2.835 73.773h141.732z" fill="${color_out}"/><path d="M144.567 73.701H2.835c0-39.112 31.754-70.866 70.866-70.866s70.866 31.754 70.866 70.866z" fill="${color_in}"/><path d="M73.701 2.835c39.112 0 70.866 31.754 70.866 70.866s-31.754 70.866-70.866 70.866S2.835 112.813 2.835 73.701 34.589 2.835 73.701 2.835zm0 7c35.248 0 63.866 28.617 63.866 63.866s-28.618 63.866-63.866 63.866S9.835 108.949 9.835 73.701 38.452 9.835 73.701 9.835z" fill="${border_color}"/><path d="M119.055 56.082a5.06 5.06 0 0 0-5.058-5.058H33.405a5.06 5.06 0 0 0-5.059 5.058V91.32c0 2.791 2.267 5.058 5.059 5.058h80.592a5.06 5.06 0 0 0 5.058-5.058V56.082z" fill="#fffffe"/><text x="73.7" y="67.484" font-size="14" class="B" text-anchor="middle">${class_name}</text><text x="73.7" y="27" class="B" text-anchor="middle" font-size="9">${car_in}</text><text x="73.7" y="42.242" font-size="7" class="D" text-anchor="middle">${tel_in}</text><text x="73.7" y="109.264" font-size="9" class="B" text-anchor="middle">${car_out}</text><text x="73.7" y="123.876" font-size="7" class="D" text-anchor="middle">${tel_out}</text><text x="73.7" y="88.532" font-size="14" class="B" text-anchor="middle">${name}</text>`;
+    
+    let el = document.createElement('div');
+    el.className = 'name-tag';
+    el.innerHTML = svg_str;
+    document.querySelector('#stage').appendChild(el);
+    console.log(name, car_in, tel_in, car_out, tel_out, sp);
+  }
+</script>
