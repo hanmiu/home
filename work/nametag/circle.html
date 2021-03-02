@@ -50,7 +50,8 @@
         <textarea id="list" spellcheck="false">
 { "이름": "강호둥", "등원": "백1", "하원": "고", "방과후": "1"},
 { "이름": "박기래", "등원": "고2", "하원": "유", "방과후": "0"},
-{ "이름": "신진나", "등원": "유3", "하원": "백", "방과후": "1"},
+{ "이름": "신진나", "등원": "개", "하원": "개", "방과후": "1"},
+{ "이름": "전환희", "등원": "개", "하원": "백", "방과후": "0"},
 </textarea>
       </div>
       <div class="section">
@@ -68,19 +69,22 @@
   let dic_car = {
     '고': '고래',
     '백': '백곰',
-    '유': '유니콘'
+    '유': '유니콘',
+    '개': '개인',
   };
   
   let dic_tel = {
     '고': '010-7313-6567',
     '백': '010-7231-6567',
-    '유': '010-7241-6567'
+    '유': '010-7241-6567',
+    '개': '031-975-6567',
   };
   
   let dic_color = {
     '고': '#d7f2ff',
     '백': '#ffe8f1',
-    '유': '#feffa3'
+    '유': '#feffa3',
+    '개': '#d9b8fa',
   };
   
   bt_gen.addEventListener('click', e => {
@@ -115,7 +119,12 @@
         color_in = dic_color[car_in[0]];
         tel_in = dic_tel[car_in[0]];
         car_in = dic_car[car_in[0]] + ' ' + car_in[1] + '호';
-      }  
+      }
+      else if(car_in.length === 1){
+        color_in = dic_color[car_in[0]];
+        tel_in = dic_tel[car_in[0]];
+        car_in = dic_car[car_in[0]] + ' 등원';
+      }
     }
     
     if(car_out) {
