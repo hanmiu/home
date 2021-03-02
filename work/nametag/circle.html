@@ -23,8 +23,13 @@
   
   .name-tag {
     display: inline-block;
-    width: 52mm;
-    height: 52mm;
+    width: 60mm;
+    height: 60mm;
+  }
+  
+  .name {
+    font-weight: bold;
+    letter-spacing: 3px;
   }
   
   @media print {
@@ -126,7 +131,7 @@
       border_color = '#b8fcaa';
     }
     
-    let svg_str = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:v="https://vecta.io/nano" viewBox="0 0 148 148" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.5"><style><![CDATA[.B{font-family:AppleSDGothicNeo-Regular, Apple SD Gothic Neo}.C{font-size:37.5px}.D{font-family:ArialMT, Arial, sans-serif}]]></style><path d="M144.567 73.773c-.038 39.078-31.778 70.794-70.866 70.794S2.873 112.851 2.835 73.773h141.732z" fill="${color_out}"/><path d="M144.567 73.701H2.835c0-39.112 31.754-70.866 70.866-70.866s70.866 31.754 70.866 70.866z" fill="${color_in}"/><path d="M73.701 2.835c39.112 0 70.866 31.754 70.866 70.866s-31.754 70.866-70.866 70.866S2.835 112.813 2.835 73.701 34.589 2.835 73.701 2.835zm0 7c35.248 0 63.866 28.617 63.866 63.866s-28.618 63.866-63.866 63.866S9.835 108.949 9.835 73.701 38.452 9.835 73.701 9.835z" fill="${border_color}"/><path d="M119.055 56.082a5.06 5.06 0 0 0-5.058-5.058H33.405a5.06 5.06 0 0 0-5.059 5.058V91.32c0 2.791 2.267 5.058 5.059 5.058h80.592a5.06 5.06 0 0 0 5.058-5.058V56.082z" fill="#fffffe"/><text x="73.7" y="67.484" font-size="14" class="B" text-anchor="middle">${class_name}</text><text x="73.7" y="27" class="B" text-anchor="middle" font-size="9">${car_in}</text><text x="73.7" y="42.242" font-size="7" class="D" text-anchor="middle">${tel_in}</text><text x="73.7" y="109.264" font-size="9" class="B" text-anchor="middle">${car_out}</text><text x="73.7" y="123.876" font-size="7" class="D" text-anchor="middle">${tel_out}</text><text x="73.7" y="88.532" font-size="14" class="B" text-anchor="middle">${name}</text>`;
+    let svg_str = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:v="https://vecta.io/nano" viewBox="0 0 148 148" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.5"><style><![CDATA[.B{font-family:AppleSDGothicNeo-Regular, Apple SD Gothic Neo}.C{font-size:37.5px}.D{font-family:ArialMT, Arial, sans-serif}]]></style><path d="M144.567 73.773c-.038 39.078-31.778 70.794-70.866 70.794S2.873 112.851 2.835 73.773h141.732z" fill="${color_out}"/><path d="M144.567 73.701H2.835c0-39.112 31.754-70.866 70.866-70.866s70.866 31.754 70.866 70.866z" fill="${color_in}"/><path d="M73.701 2.835c39.112 0 70.866 31.754 70.866 70.866s-31.754 70.866-70.866 70.866S2.835 112.813 2.835 73.701 34.589 2.835 73.701 2.835zm0 7c35.248 0 63.866 28.617 63.866 63.866s-28.618 63.866-63.866 63.866S9.835 108.949 9.835 73.701 38.452 9.835 73.701 9.835z" fill="${border_color}"/><path d="M119.055 56.082a5.06 5.06 0 0 0-5.058-5.058H33.405a5.06 5.06 0 0 0-5.059 5.058V91.32c0 2.791 2.267 5.058 5.059 5.058h80.592a5.06 5.06 0 0 0 5.058-5.058V56.082z" fill="#fffffe"/><text x="73.7" y="67.484" font-size="14" class="B" text-anchor="middle">${class_name}</text><text x="73.7" y="27" class="B" text-anchor="middle" font-size="9">${car_in}</text><text x="73.7" y="42.242" font-size="7" class="D" text-anchor="middle">${tel_in}</text><text x="73.7" y="109.264" font-size="9" class="B" text-anchor="middle">${car_out}</text><text x="73.7" y="123.876" font-size="7" class="D" text-anchor="middle">${tel_out}</text><text x="73.7" y="88.532" font-size="14" class="name" text-anchor="middle">${name}</text>`;
     
     let el = document.createElement('div');
     el.className = 'name-tag';
