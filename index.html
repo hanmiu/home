@@ -302,33 +302,24 @@
   }
 
   #footer .subject {
-    /*
-    padding-left: 1rem;
-    margin-top: 1rem;
-    font-size: 3rem;
-    */
     padding-left: 1.8rem;
     margin-top: 2rem;
     font-size: 2rem;
   }
   
   #footer .tel {
-    /*
-    padding-left: 2rem;
-    margin-top: 2rem;
-    font-size: 1rem;
-    */
     padding-left: 2rem;
     margin-top: 1rem;
     font-size: 1rem;
   }
   
   #footer .address {
-    /*
     padding-left: 2rem;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     font-size: 1rem;
-    */
+  }
+  
+  #footer .notice {
     padding-left: 2rem;
     margin-top: 0.5rem;
     font-size: 1rem;
@@ -400,6 +391,7 @@
         <div class="subject">문의</div>
         <div class="tel"><a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a></div>
         <div class="address"><a href="https://www.google.com/maps/place/%ED%95%9C%EB%AF%B8%EC%9C%A0%EC%B9%98%EC%9B%90/@37.6835995,126.7720682,3a,75y,246.71h,88.2t/data=!3m6!1e1!3m4!1sZsMn1vavuVv2dQoIrgyJXw!2e0!7i13312!8i6656!4m5!3m4!1s0x357c8fe61a842b73:0xe9ca1a051e9682d7!8m2!3d37.6835187!4d126.7717634" target="_blank">경기도 고양시 일산서구 고양대로 686-8</a></div>
+        <div class="address"><a href="https://docs.google.com/document/d/1TBc-xMdBGwZKq9SxyNhGSeDEgfPRBM_5uZZPlRgb_qQ/edit?usp=sharing" target="_blank">그 밖의 공지사항</a></div>
       </div>
     </div>
     <div id="detail">
@@ -964,7 +956,8 @@ void main()	{
       el.addEventListener('click', (e) => {
         el_info.textContent = 'clicked: ' + e.target.id;
         let title = e.target.id.split('t-')[1];
-        show_detail(true, title);
+        //show_detail(true, title);
+        window.location.href = window.location.origin + `?page=${title}`;
       });
     });
     
