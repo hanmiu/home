@@ -102,7 +102,7 @@
   function touchmove(e) {
     let eX, eY;
     if(e.targetTouches) {
-      e.preventDefault();
+      //e.preventDefault();
       eX = e.targetTouches[0].pageX;
       eY = e.targetTouches[0].pageY;
 	}
@@ -162,6 +162,7 @@
     countdown(e.target.id);
   });
   
+  /*
   document.body.addEventListener('mousedown', touchstart);
   document.body.addEventListener('mouseup', touchend); 
   document.body.addEventListener('mousemove', touchmove);
@@ -169,6 +170,6 @@
   document.body.addEventListener('touchstart', touchstart);
   document.body.addEventListener('touchend', touchend);
   document.body.addEventListener('touchmove', touchmove);
-  
+  */
   loop();
 </script>
