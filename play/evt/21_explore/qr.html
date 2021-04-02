@@ -1,0 +1,207 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>한미 탐험</title>
+<style>
+  body {
+    padding: 50px;
+    font-family: 'Ropa Sans', sans-serif;
+    color: white;
+    background-color: black;
+    position: relative;
+  }
+  
+  #page {
+    display: flex;
+  }
+  
+  #left {
+    width: 500px;
+  }
+  
+  #right {
+    
+  }
+
+  h1 {
+    margin: 10px 0;
+    font-size: 40px;
+    color: white;
+  }
+
+  #loadingMessage {
+    text-align: center;
+    padding: 40px;
+    background-color: #eee;
+  }
+
+  #canvas {
+    height: 200px;
+  }
+
+  #output {
+    margin-top: 20px;
+    /* background: #eee; */
+    padding: 10px;
+    padding-bottom: 0;
+  }
+
+  #output div {
+    padding-bottom: 10px;
+    word-wrap: break-word;
+  }
+
+  #noQRFound {
+    text-align: center;
+  }
+  
+  #img-found {
+    height: 600px;
+    opacity: 0;
+    transition: opacity 1s;
+  }
+  
+  #footer {
+    margin-top: 20px;
+    overflow-y: scroll;
+  }
+  
+  .thumb {
+    display: inline-block;
+    height: 120px;
+    margin: 10px;
+    border-radius: 10px;
+  }
+</style>
+<body>
+  <div id="page">
+    <div id="left">
+      <h1>한미유치원 탐험</h1>
+      <p>찾은 QR 코드를 카메라에 보여 주세요.</p>
+      <div id="loadingMessage">🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
+      <canvas id="canvas" hidden></canvas>
+      <div id="output" hidden>
+        <div id="outputMessage" style="display: none;">QR코드를 아직 인식하지 못했습니다.</div>
+        <div hidden><b>Data:</b> <span id="outputData"></span></div>
+      </div>
+    </div>
+    <div id="right"><img id="img-found" src=""></div>
+  </div>
+  <div id="footer"></div>
+</body>
+<script src="./jsqr.js"></script>
+<script>
+  var video = document.createElement("video");
+  var canvasElement = document.getElementById("canvas");
+  var canvas = canvasElement.getContext("2d");
+  var loadingMessage = document.getElementById("loadingMessage");
+  var outputContainer = document.getElementById("output");
+  var outputMessage = document.getElementById("outputMessage");
+  var outputData = document.getElementById("outputData");
+  
+  let t_list = {
+    'http://bit.ly/33ThIus': '놀이', // : 참여 방법 ^_^
+    'http://bit.ly/2XIQxA0': '힘', // ⋯ 그리고 ⋯ 그리고 ⋯ 그리고 ⋯
+    'http://bit.ly/2TauRu4': '배움', // 끝과 시작을 연결하며 마디 만들기
+    'http://bit.ly/2QGA8wh': '맥락', // 일상 속의 호기심, 탐구, 창의성
+  };
+  
+  let last_found = '';
+  let last_founds = {};
+  
+  let img_found = document.querySelector('#img-found');
+  img_found.style.opacity = 0;
+  
+  let el_footer = document.querySelector('#footer');
+  
+  let wait = 0;
+      
+  function drawLine(begin, end, color) {
+    canvas.beginPath();
+    canvas.moveTo(begin.x, begin.y);
+    canvas.lineTo(end.x, end.y);
+    canvas.lineWidth = 4;
+    canvas.strokeStyle = color;
+    canvas.stroke();
+  }
+
+  // Use facingMode: environment to attemt to get the front camera on phones
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+    video.srcObject = stream;
+    video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+    video.play();
+    requestAnimationFrame(tick);
+  });
+  
+  function check(found) {
+    last_found = found;
+    if(last_found) {
+      let folder = '';
+      switch(last_found[0]) {
+        case 's':
+          folder = './sonamu/';
+          break;
+        case 'c':
+          folder = './chamnamu/';
+          break;
+      }
+      
+      img_found.src = folder + found + '.jpeg';
+      img_found.style.opacity = 1;
+      
+      if(!last_founds[found]) {
+        last_founds[found] = true;
+        let img = new Image();
+        img.src = folder + found + '.jpeg';
+        img.className = 'thumb';
+        if(el_footer.children.length === 0) {
+          el_footer.appendChild(img);
+        }
+        else {
+          el_footer.insertBefore(img, el_footer.children[0]);  
+        }
+      }
+      
+      wait = 500;
+    }
+  }
+
+  function tick() {
+    loadingMessage.innerText = "⌛ Loading video..."
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      loadingMessage.hidden = true;
+      canvasElement.hidden = false;
+      outputContainer.hidden = false;
+
+      canvasElement.height = video.videoHeight;
+      canvasElement.width = video.videoWidth;
+      canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+      var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+      var code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+      if (code) {
+        drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+        drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+        drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+        drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+        outputMessage.hidden = true;
+        outputData.parentElement.hidden = false;
+        outputData.innerText = code.data;
+        
+        check(code.data);
+        
+      } else {
+        outputMessage.hidden = false;
+        outputData.parentElement.hidden = true;
+      }
+    }
+    
+    if(wait > 0) {
+      wait--;
+      if(wait === 0) {
+        img_found.style.opacity = 0;
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+</script>
