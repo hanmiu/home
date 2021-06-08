@@ -58,7 +58,7 @@
     <div id="captured">
       <div id="message">그림을 기다리는 중...</div>
       <div class="ui">
-        <button id="copy">가져가기</button>
+        <button id="bt-copy">가져가기</button>
         <button id="download">다운로드</button>
       </div>
       <div id="capture-panel">
@@ -86,7 +86,7 @@
   
   let el_message = document.querySelector('#message');
   let el_text_for_copy = document.querySelector('#text-for-copy');
-  let el_copy = document.querySelector('#copy');
+  let el_copy = document.querySelector('#bt-copy');
   let el_download = document.querySelector('#download');
   let el_maze_copy = document.querySelector('#maze-copy');
   
@@ -683,4 +683,35 @@
       localStorage['rapt-level'] = JSON.stringify(json);
     }
   });
+
+
+  function to_roblox() {
+    let lua = `local wx = ${maze_width}
+local wz = ${maze_height}
+local size = 12
+
+local maze = Instance.new("Model")
+maze.Name = "Maze"
+maze.Parent = workspace
+
+local block = Instance.new("Part")
+block.Size = Vector3.new(size, size, size)
+block.Anchored = true
+
+local function addBlock(x, z)
+  local part = block:Clone()
+  part.CFrame = CFrame.new((x - wx*0.5)*size, size, (z - wz*0.5)*size)
+  part.Parent = maze	
+end
+`;
+    for(let z = 0; z < maze_height; z++) {
+      for(let x = 0; x < maze_width; x++) {
+        if(for_json[maze_height - 1 - z][x] === 0) {
+          lua += `addBlock(${x}, ${z})\n`
+        }
+      }
+    }
+
+    return lua;
+  }
 </script>
