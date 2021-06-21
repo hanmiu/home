@@ -103,6 +103,7 @@
     alphamax: 1,
     opttolerance: 0.2,
   };
+  let imediate_capture = false;
 
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
     video.srcObject = stream;
@@ -443,6 +444,13 @@
         prepare(video, square);
         score = 0;
       }
+
+      if(imediate_capture) {
+        captured_im = im;
+        imediate_prepare(video);
+        imediate_capture = false;
+        console.log('!!!');
+      }
       
       let w0 = 256;
       let r = 30;
@@ -498,6 +506,30 @@
 
     g.save();
     g.clip(clipPath);
+    g.drawImage(video, 0, 0);
+    g.restore();
+
+    g.closePath();
+    g.lineWidth = 10;
+    g.strokeStyle = 'white';
+    g.stroke();
+    
+    // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+    c.drawImage(g.canvas, g.canvas.width/2 - 128, g.canvas.height/2 - 128, 256, 256, 0, 0, c.canvas.width, c.canvas.height);
+    
+    Potrace.loadImageFromUrl(c.canvas.toDataURL('image/jpeg', 1.0));
+    Potrace.process(function(){
+      displaySVG(1);
+    });
+  }
+
+  function imediate_prepare(video) {
+    g.canvas.width = ctx.canvas.width;
+    g.canvas.height = ctx.canvas.height;
+    g.fillStyle = 'white';
+    g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+
+    g.save();
     g.drawImage(video, 0, 0);
     g.restore();
 
@@ -714,4 +746,10 @@ end
 
     return lua;
   }
+
+  window.addEventListener('keydown', (e) => {
+    if(e.code === 'Space') {
+      imediate_capture = true;
+    }
+  });
 </script>
