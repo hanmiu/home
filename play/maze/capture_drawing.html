@@ -73,7 +73,7 @@
       </div>
     </div>
   </div>
-  <input id="text-for-copy">
+  <textarea id="text-for-copy"></textarea>
 </body>
 <script src="./potrace.js"></script>
 <script>
@@ -714,6 +714,10 @@
       json['end'] = pos_list.splice(Math.random() * pos_list.length | 0, 1)[0];
       localStorage['rapt-level'] = JSON.stringify(json);
     }
+
+    el_text_for_copy.value = to_roblox();
+    el_text_for_copy.select();
+    document.execCommand('copy');
   });
 
 
