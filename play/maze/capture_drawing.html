@@ -3,13 +3,12 @@
 <style>
   body {
     margin: 0;
-    display: flex;
-    justify-content: center;
   }
   
   #container {
     margin-top: 50px;
-    display: flex;  
+    display: flex;
+    justify-content: center;
   }
   
   #video-canvas {
@@ -50,6 +49,9 @@
   }
 </style>
 <body>
+  <div>
+    <button id="cam-init">카메라 켜기</button>
+  </div>
   <div id="container">
     <div id="video-canvas">
       <div>초록색 사각형에 그림의 외각 사각형을 맞춰주세요. (모서리의 붉은 점이 8개가 되도록)</div>
@@ -105,11 +107,46 @@
   };
   let imediate_capture = false;
 
+  /*
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+    video.srcObject = stream;
+    video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+    //video.play();
+    requestAnimationFrame(loop);
+  });
+  */
+
+  function handleSuccess(stream) {
     video.srcObject = stream;
     video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
     video.play();
     requestAnimationFrame(loop);
+  }
+
+  function handleError(error) {
+    if (error.name === 'ConstraintNotSatisfiedError') {
+      const v = constraints.video;
+      console.log(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+    } else if (error.name === 'PermissionDeniedError') {
+      console.log('Permissions have not been granted to use your camera and ' +
+        'microphone, you need to allow the page access to your devices in ' +
+        'order for the demo to work.');
+    }
+    console.log(`getUserMedia error: ${error.name}`, error);
+  }
+
+  async function cam_init(e) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      handleSuccess(stream);
+      e.target.style.display = 'none';
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  document.querySelector('#cam-init').addEventListener('click', (e) => {
+    cam_init(e);
   });
   
   function Point(x, y) {
@@ -449,7 +486,6 @@
         captured_im = im;
         imediate_prepare(video);
         imediate_capture = false;
-        console.log('!!!');
       }
       
       let w0 = 256;
