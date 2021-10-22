@@ -29,7 +29,7 @@ html['admission'] = `
 <div>처음학교로 시스템</div>
 <div class="subtle">
   <ul class="musical">
-    <li>2020년 11월 1일 월요일 ~ 12월 31일 금요일</li>
+    <li>2021년 11월 1일 월요일 ~ 12월 31일 금요일</li>
     <li>우선모집 선발 후 일반모집과 대기자 선발</li>
     <li><a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로 사이트</a> 참고</li>
   </ul>
