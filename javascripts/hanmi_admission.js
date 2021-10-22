@@ -77,7 +77,7 @@ html['admission'] = `
 <div>그 밖의 정보</div>
 <br>
 <div class="subtle">
-  관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 <strong>유아모집 요강</strong>은 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a> 개통과 함께 공개할 예정입니다.<br><br>
+  관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 <strong><a href="https://drive.google.com/file/d/1hVmucthTSVuz5BqRdvj9OjTWsXigFtIf/view?usp=sharing" target="_blank">유아모집 요강</a></strong>을 참고해 주세요. 유아모집 요강의 내용은 처음학교로 개통 전에 일부 수정될 수 있습니다.<br><br>
   한미유치원 2021 가을 비대면 행사 <strong>뾰족산의 보물</strong>도 11월 초에 시작합니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 곧 방문할 수 있으니 기대해 주세요.  
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/treasure_mountain.jpg">
 </div>
