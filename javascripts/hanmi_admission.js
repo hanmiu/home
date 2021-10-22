@@ -11,7 +11,8 @@ html['admission'] = `
 --!>
 
 <div class="subtle">
-입학에 관해 상담하시려는 경우는... <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>로 전화 주시길 바랍니다. <strong>추가 모집</strong>은 유치원에서 자체적으로 선발하는 방식입니다.
+2022학년도 한미유치원 입학에 관심가져 주셔서 감사합니다.<br>
+<a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
 </div>
 <br>
 
@@ -73,10 +74,15 @@ html['admission'] = `
 </div>
 <br>
 
-<div>유아모집 요강</div>
+<div>그 밖의 정보</div>
 <br>
 <div class="subtle">
-  그외의 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 모집 요강은 처음학교로가 개통과 함께 공개할 예정입니다.<br>
+  관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 <strong>유아모집 요강</strong>은 처음학교로가 개통과 함께 공개할 예정입니다.<br><br>
+  한미유치원 2021 가을 비대면 행사 <strong>뾰족산의 보물</strong>도 11월 초에 진행됩니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 곧 방문할 수 있으니 기대해 주세요.  
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2021/treasure_mountain.jpg">
+</div>
+<div>
+
 </div>
 <br>
 
