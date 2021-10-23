@@ -41,7 +41,7 @@ html['admission'] = `
   <br>
   코로나19 <4단계 사회적 거리두기> 상황으로 인해 비대면 줌(Zoom) 설명회와 소그룹 대면 설명회를 병행합니다.
   <br>
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>는 처음학교로가 개통되는 10월 29일 금요일에 열립니다.
+  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>는 현재 준비 중으로 곧 열도록 하겠습니다.
   <br><br>
 
   <strong>비대면 Zoom 설명회</strong><br>
