@@ -39,9 +39,9 @@ html['admission'] = `
 <div>입학 및 교육설명회</div>
 <div class="subtle">
   <br>
-  코로나19 <4단계 사회적 거리두기> 상황으로 인해 비대면 줌(Zoom) 설명회와 소그룹 대면 설명회를 병행합니다.
+  코로나19 <4단계 사회적 거리두기> 상황으로 비대면 줌(Zoom) 설명회와 소그룹 대면 설명회를 병행합니다.
   <br>
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>는 현재 준비 중으로 곧 열도록 하겠습니다.
+  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있습니다.
   <br><br>
 
   <strong>비대면 Zoom 설명회</strong><br>
@@ -59,7 +59,7 @@ html['admission'] = `
   설명회에 이어서 추가 신청자에 한해 메타버스를 활용한 상상놀이 원격 워크숍을 진행할 계획입니다.
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/metaverse_workshop.jpg">
   한미유치원 입학을 기대하는 어린이들도 참여하는 설명회가 될 수 있도록 준비하겠습니다.<br>
-  설명회날 12시 부터 30분~40분, 오후 3시 부터 30분~40분 진행합니다.
+  설명회날 12시 10분 부터 30분~40분, 오후 3시 10분 부터 30분~40분 진행합니다.
   <br><br>
 
   <strong>소그룹 대면 설명회 및 놀이 체험</strong><br>
