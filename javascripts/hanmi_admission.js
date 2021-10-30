@@ -84,7 +84,8 @@ html['admission'] = `
     <li>2022학년도 <strong>방과후 과정 참여</strong>가 필요한 맞벌이 가정과 돌봄이 필요한 가정은 <strong>누구나 신청</strong>할 수 있습니다.</li>
   </ul>
   <br>
-  한미유치원 2021 가을 비대면 행사 <strong>뾰족산의 보물</strong>도 11월 초에 시작합니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 곧 방문할 수 있으니 기대해 주세요.  
+  한미유치원 2021 가을 비대면 행사 <strong><a href="https://bit.ly/3BsWdRu">&lt;뾰족산의 보물&gt;</a></strong>를 11월 초에 시작합니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 살펴볼 수 있습니다. 
+  <span><strong><span><a href="https://www.hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank">&lt;뾰족산의 보물&gt; 플레이</a></span></strong><span>, <span><a href="https://bit.ly/3BsWdRu" target="_blank">플레이 방법</a></span>  
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/treasure_mountain.jpg">
 </div>
 <div>
