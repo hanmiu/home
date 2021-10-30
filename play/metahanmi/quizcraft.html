@@ -1003,6 +1003,12 @@
 
                 let q = qnas[0];
                 curr_answer = q.answer;
+                if(q.year === 3) {
+                    utter.rate = 0.8;
+                }
+                else {
+                    utter.rate = 1;
+                }
                 let by = q.by;
                 if(by !== '어린이들') {
                     let _by = by.split('');
@@ -1124,6 +1130,8 @@
         `.split('\n').map(x => x.trim()).filter(x => x.length > 0);
 
         function check_answer(answer) {
+            if(!document.querySelector('#examples')) return;
+
             let inputs = document.querySelector('#examples').querySelectorAll('input[type="radio"]');
             for(let item of inputs) {
                 item.setAttribute('disabled', true);
@@ -1207,41 +1215,51 @@
         window.addEventListener('click', (e) => {
             if(e.target.className === 'example') {
                 let text = e.target.parentElement.querySelector('input').value;
-                e.target.parentElement.querySelector('input').checked = true;
-                check_answer(text);
+                if(!e.target.parentElement.querySelector('input').disabled) {
+                    e.target.parentElement.querySelector('input').checked = true;
+                    check_answer(text);
+                }
             }
 
             if(e.target.className === 'speak-quiz') {
-                utter.text = document.querySelector('#quiz-text').textContent;
-                speechSynthesis.speak(utter);
+                if(doing_quiz) {
+                    utter.text = document.querySelector('#quiz-text').textContent;
+                    speechSynthesis.speak(utter);
+                }
             }
 
             if(e.target.className === 'speak-result') {
-                utter.text = document.querySelector('#quiz-result-body').textContent;
-                //let tan = '땡,꽁,큥,삐'.split(',');
-                //utter.text = utter.text.replaceAll('O', tan[Math.random() * tan.length | 0]);
-                utter.text = utter.text.replaceAll('O', ' ');
-                speechSynthesis.speak(utter);
+                if(doing_quiz) {
+                    utter.text = document.querySelector('#quiz-result-body').textContent;
+                    //let tan = '땡,꽁,큥,삐'.split(',');
+                    //utter.text = utter.text.replaceAll('O', tan[Math.random() * tan.length | 0]);
+                    utter.text = utter.text.replaceAll('O', ' ');
+                    speechSynthesis.speak(utter);
+                }
             }
 
             if(e.target.parentElement.id === 'by') {
-                utter.text = document.querySelector('#by').textContent;
-                utter.text = utter.text.replaceAll('O', ' ');
-                speechSynthesis.speak(utter);
+                if(doing_quiz) {
+                    utter.text = document.querySelector('#by').textContent;
+                    utter.text = utter.text.replaceAll('O', ' ');
+                    speechSynthesis.speak(utter);
+                }
             }
 
             if(e.target.className === 'speak-example') {
-                let text = e.target.parentElement.querySelector('input').value;
-                let emoji_regex = /\p{Extended_Pictographic}/ug;
-                if(emoji_regex.test(text)) {
-                    let txt = text.split(' ');
-                    txt.pop();
-                    utter.text = txt.join(' ');
+                if(doing_quiz) {
+                    let text = e.target.parentElement.querySelector('input').value;
+                    let emoji_regex = /\p{Extended_Pictographic}/ug;
+                    if(emoji_regex.test(text)) {
+                        let txt = text.split(' ');
+                        txt.pop();
+                        utter.text = txt.join(' ');
+                    }
+                    else {
+                        utter.text = text;
+                    }
+                    speechSynthesis.speak(utter);
                 }
-                else {
-                    utter.text = text;
-                }
-                speechSynthesis.speak(utter);
             }
 
             if(e.target.id === 'resume') {
