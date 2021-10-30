@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+    #c {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+    #ui {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 5px;
+        opacity: 1;
+    }
+    #ui input[type=radio] {
+        width: 0;
+        height: 0;
+        display: none;
+    }
+    
+    #ui input[type=radio] + label {
+        background-image: url('./images/flourish-cc-by-nc-sa-2.png');
+        background-size: 1600% 400%;
+        image-rendering: pixelated;
+        width: 32px;
+        height: 32px;
+        display: inline-block;
+    }
+    #ui input[type=radio]:checked + label {
+        outline: 3px solid red;
+    }
+
+    #quiz-container {
+        display: none;
+        position: absolute;
+        left: 0px;
+        top: 50px;
+        width: 100%;
+    }
+
+    #quiz-panel {
+        margin: auto;
+        width: 800px;
+        padding: 20px;
+        line-height: 1.5em;
+        word-break: keep-all;
+        font-size: 30px;
+        border-radius: 20px;
+        background-color: rgba(255, 248, 219, 0.9);
+    }
+
+    #quiz-panel #quiz {
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgb(155, 148, 119);    
+    }
+
+    #quiz-panel input[type="radio"] {
+        transform: scale(2) translate(0, -2px);
+    }
+
+    #quiz-panel label {
+        margin-left: 20px;
+        cursor: pointer;
+    }
+
+    #quiz-panel .qtype {
+        display: inline-block;
+        border-radius: 10px;
+        background-color: white;
+        line-height: 1em;
+        font-size: 16px;
+        padding: 4px;
+        transform: translateY(-2px);
+    }
+
+    #quiz-panel .qtype.thought {
+        background-color: rgb(255, 225, 0);
+    }
+
+    #quiz-panel .qtype.sense {
+        background-color: rgb(164, 242, 55);
+    }
+
+    #quiz-panel .qtype.nonsense {
+        background-color: rgb(227, 146, 244);
+    }
+
+    #quiz-panel .qtype.calc {
+        background-color: rgb(25, 35, 72);
+        color: white;
+    }
+
+    #quiz-panel .qtype.experience {
+        background-color: rgb(51, 238, 210);
+    }
+
+    #quiz-panel #by {
+        text-align: right;
+        font-size: 20px;
+        cursor: pointer;    
+    }
+
+    #quiz-panel #quiz-result {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgb(155, 148, 119);    
+    }
+
+    #quiz-panel .speak-quiz, .speak-result {
+        display: inline-block;
+        margin-left: 10px;
+        font-size: 20px;
+        border-radius: 20px;
+        padding: 5px;
+        line-height: 1em;
+        background-color: yellow;
+        transform: translate(0px, -5px);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #quiz-panel .speak-example {
+        display: inline-block;
+        margin-left: 10px;
+        font-size: 20px;
+        border-radius: 20px;
+        padding: 5px;
+        line-height: 1em;
+        background-color: yellow;
+        transform: translate(0px, -5px) scale(-1, 1);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #captured {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        width: 520px;
+        text-align: right;
+    }
+
+    .cap {
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+        margin: 2px;
+        border-radius: 10px;
+    }
+
+    #resume, #restart {
+        display: inline-block;
+        margin-left: 10px;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid #818065;
+        background-color: #fffca5;
+        font-size: 20px;
+        cursor: pointer;
+        line-height: 1em;
+        box-shadow: inset 2px 2px 2px rgb(255, 255, 255, 0.25), inset -2px -2px 2px rgb(0, 0, 0, 0.25);
+    }
+    
+    @media (max-width: 600px), (max-height: 600px) {
+        #ui input[type=radio] + label {
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+<body>
+    <canvas id="c"></canvas>
+    <div id="ui">
+        <div class="tiles">
+            <input type="radio" name="voxel" id="voxel1" value="1"><label for="voxel1" style="background-position:   -0% -0%"></label>
+            <input type="radio" name="voxel" id="voxel2" value="2"><label for="voxel2" style="background-position: -100% -0%"></label>
+            <input type="radio" name="voxel" id="voxel3" value="3"><label for="voxel3" style="background-position: -200% -0%"></label>
+            <input type="radio" name="voxel" id="voxel4" value="4"><label for="voxel4" style="background-position: -300% -0%"></label>
+            <input type="radio" name="voxel" id="voxel5" value="5"><label for="voxel5" style="background-position: -400% -0%"></label>
+            <input type="radio" name="voxel" id="voxel6" value="6"><label for="voxel6" style="background-position: -500% -0%"></label>
+            <input type="radio" name="voxel" id="voxel7" value="7"><label for="voxel7" style="background-position: -600% -0%"></label>
+            <input type="radio" name="voxel" id="voxel8" value="8"><label for="voxel8" style="background-position: -700% -0%"></label>
+        </div>
+        <div class="tiles">
+            <input type="radio" name="voxel" id="voxel9"  value="9" ><label for="voxel9"  style="background-position:  -800% -0%"></label>
+            <input type="radio" name="voxel" id="voxel10" value="10"><label for="voxel10" style="background-position:  -900% -0%"></label>
+            <input type="radio" name="voxel" id="voxel11" value="11"><label for="voxel11" style="background-position: -1000% -0%"></label>
+            <input type="radio" name="voxel" id="voxel12" value="12"><label for="voxel12" style="background-position: -1100% -0%"></label>
+            <input type="radio" name="voxel" id="voxel13" value="13"><label for="voxel13" style="background-position: -1200% -0%"></label>
+            <input type="radio" name="voxel" id="voxel14" value="14"><label for="voxel14" style="background-position: -1300% -0%"></label>
+            <input type="radio" name="voxel" id="voxel15" value="15"><label for="voxel15" style="background-position: -1400% -0%"></label>
+            <input type="radio" name="voxel" id="voxel16" value="16"><label for="voxel16" style="background-position: -1500% -0%"></label>
+        </div>
+    </div>
+    <div id="quiz-container">
+        <div id="quiz-panel">
+            <div id="quiz">주황색을 만들려면 어떤 색을 섞어야 할까요?</div>
+            <div id="by">까O반 김O원</div>
+            <div>
+                <input type="radio" name="example"><label>노랑 + 파랑</label><br>
+                <input type="radio" name="example"><label>노랑 + 빨강</label><br>
+                <input type="radio" name="example"><label>빨강 + 하양</label><br>
+                <input type="radio" name="example"><label>빨강 + 파랑</label><br>
+            </div>
+        </div>
+    </div>
+    <div id="captured"></div>
+</body>
+<script src="./js/qnas.js"></script>
+<script src="./js/tone.min.js"></script>
+<script type="module">
+    import * as THREE from './js/three.module.js';
+    import { VoxelWorld } from './js/voxel_world.js';
+    import { GLTFLoader } from './js/GLTFLoader.js';
+    import { VOXLoader } from './js/VOXLoader.js';
+    import { OrbitControls } from './js/OrbitControls.js';
+    import { FirstPersonControls } from './js/FirstPersonControlsCustom.js';
+    import { TransformControls } from './js/TransformControls.js';
+    import { Physics } from './js/voxel-physics-engine.js';
+    import { AABB } from './js/aabb-3d.js';
+    //import * as Tone from './js/tone.min.js';
+    import { josa } from './js/josa.js';
+    import { Agent } from './js/agent.js';
+    
+    
+    let cs = Array(32*32*32).fill(0).map(c => [
+        Math.random(),
+        Math.random(),
+        Math.random(),
+    ]);
+    
+    function main() {
+        const canvas = document.querySelector('#c');
+        const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+        
+        const cellSize = 32;
+        
+        const fov = 45;
+        const aspect = 2;  // the canvas default
+        const near = 0.1;
+        const far = 1000;
+        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera.position.set(24, 20, 21);
+        camera.lookAt(24 + 1, 20, 21 + 1);
+        //const orbitControls = new OrbitControls(camera, canvas);
+        //orbitControls.target.set(cellSize / 2, cellSize / 3, cellSize / 2 - 1);
+        //orbitControls.enabled = false;
+        //orbitControls.update(0);
+        const firstPersonControls = new FirstPersonControls(camera, canvas);
+        firstPersonControls.fly = true;
+        let controls = firstPersonControls;
+        controls.update(0);
+        
+        const control = new TransformControls( camera, canvas );
+        control.addEventListener( 'change', render );
+
+        control.addEventListener( 'dragging-changed', function ( event ) {
+
+            //orbitControls.enabled = ! event.value;
+
+        } );
+        
+        window.controls = controls;
+        window.control = control;
+        window.camera = camera;
+
+        const clock = new THREE.Clock();
+        clock.start();
+        window.clock = clock;
+
+        let opts = { gravity: [0, -10, 0] }
+        let getter = function(x, y, z) { 
+            return world.getVoxel(x, y, z);
+            //return 0;
+        };
+
+        let fluid = function(x, y, z) { 
+            return 0;
+        };
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('lightblue');
+        window.scene = scene;
+        window.renderer = renderer;
+
+        let phys = new Physics(opts, getter, fluid);
+        let aabb = new AABB(
+            [camera.position.x, camera.position.y, camera.position.z],
+            [0.6, 1.4, 0.6]
+        );
+        //var body = phys.addBody( aabb, mass, friction, restitution, gravityMult, onCollide )
+        let body = phys.addBody(aabb, 1, 0.25, 0, 2, null);
+        let player = {
+            body: body,
+            getPosition() {
+            return [
+                    this.body.aabb.base[0] + this.body.aabb.vec[0]*0.5,
+                    this.body.aabb.base[1] + this.body.aabb.vec[1]*0.5,
+                    this.body.aabb.base[2] + this.body.aabb.vec[2]*0.5
+                ];
+            }
+        };
+        window.player = player;
+        window.phys = phys;
+
+        let max_jump_count = 1;
+        let jump_recovery = 0;
+        let captured_agents = [];
+        
+        /*
+        const box_geometry = new THREE.BoxGeometry(0.6, 1.4, 0.6);
+        const box_material = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
+        const cube = new THREE.Mesh( box_geometry, box_material );
+        cube.position.set(cellSize, cellSize / 3 + 5, cellSize);
+        scene.add( cube );
+        window.cube = cube;
+        */
+
+        let movingSpeed = 0.7;
+		let ySpeed = 0;
+		let acc = 0.065 / 3;
+        let canJump = false;
+
+        controls.movementSpeed = 10;
+        
+        const gltfLoader = new GLTFLoader();
+        /*
+        gltfLoader.load( './mesh/mesh_man.glb', function ( gltf ) {
+
+            // gltf.scene.traverse( function ( child ) {
+
+            //     if ( child.isMesh ) {
+
+            //         roughnessMipmapper.generateMipmaps( child.material );
+
+            //     }
+
+            // } );
+
+            if(gltf.scene.children.length > 0) {
+                let mesh = gltf.scene.children[0];
+                let mat = new THREE.MeshPhongMaterial({
+                    color: 0xffffff,
+                    map: mesh.material.map,
+                });
+                mesh.material.dispose();
+                mesh.material = mat;
+            }
+
+            //scene.add( gltf.scene );
+            //control.attach( gltf.scene );
+
+        } );
+        */
+        
+		scene.add( control );
+        
+        const tileSize = 16;
+        const tileTextureWidth = 256;
+        const tileTextureHeight = 64;
+        const loader = new THREE.TextureLoader();
+        const texture = loader.load('./images/flourish-cc-by-nc-sa-2.png', render);
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.NearestFilter;
+        
+        function addLight(x, y, z) {
+            const color = 0xFFFFFF;
+            const intensity = 1;
+            const light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(x, y, z);
+            scene.add(light);
+        }
+        addLight(1,  4,  4);
+        //addLight( 1, -1, -2);
+
+        const ambient_light = new THREE.AmbientLight('#ffffff', 0.5);
+        scene.add(ambient_light);
+        
+        const world = new VoxelWorld({
+            cellSize,
+            tileSize,
+            tileTextureWidth,
+            tileTextureHeight,
+        });
+        
+        const material = new THREE.MeshLambertMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+            alphaTest: 0.1,
+            transparent: true,
+            vertexColors: true,
+            wireframe: false,
+        });
+        
+        const cellIdToMesh = {};
+        function updateCellGeometry(x, y, z) {
+            const cellX = Math.floor(x / cellSize);
+            const cellY = Math.floor(y / cellSize);
+            const cellZ = Math.floor(z / cellSize);
+            const cellId = world.computeCellId(x, y, z);
+            let mesh = cellIdToMesh[cellId];
+            const geometry = mesh ? mesh.geometry : new THREE.BufferGeometry();
+            
+            const {positions, normals, colors, uvs, indices} = world.generateGeometryDataForCell(cellX, cellY, cellZ);
+            const positionNumComponents = 3;
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
+            
+            const colorNumComponents = 3;
+            geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), colorNumComponents));
+            
+            const normalNumComponents = 3;
+            geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+            const uvNumComponents = 2;
+            geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), uvNumComponents));
+            geometry.setIndex(indices);
+            geometry.computeBoundingSphere();
+            
+            if (!mesh) {
+                mesh = new THREE.Mesh(geometry, material);
+                mesh.name = cellId;
+                cellIdToMesh[cellId] = mesh;
+                scene.add(mesh);
+                mesh.position.set(cellX * cellSize, cellY * cellSize, cellZ * cellSize);
+            }
+        }
+        
+        const neighborOffsets = [
+            [ 0,  0,  0], // self
+            [-1,  0,  0], // left
+            [ 1,  0,  0], // right
+            [ 0, -1,  0], // down
+            [ 0,  1,  0], // up
+            [ 0,  0, -1], // back
+            [ 0,  0,  1], // front
+        ];
+        function updateVoxelGeometry(x, y, z) {
+            const updatedCellIds = {};
+            for (const offset of neighborOffsets) {
+                const ox = x + offset[0];
+                const oy = y + offset[1];
+                const oz = z + offset[2];
+                const cellId = world.computeCellId(ox, oy, oz);
+                if (!updatedCellIds[cellId]) {
+                    updatedCellIds[cellId] = true;
+                    updateCellGeometry(ox, oy, oz);
+                }
+            }
+        }
+
+        /*
+        for (let y = 0; y < cellSize; ++y) {
+            for (let z = 0; z < cellSize; ++z) {
+                for (let x = 0; x < cellSize; ++x) {
+                    const height = (Math.sin(x / cellSize * Math.PI * 2) + Math.sin(z / cellSize * Math.PI * 3)) * (cellSize / 6) + (cellSize / 2);
+                    if (y < height) {
+                        //world.setVoxel(x, y, z, randInt(1, 17));
+                        world.setVoxel(x, y, z, 14);
+                    }
+                }
+            }
+        }
+        */
+
+        /*
+        for (let y = 0; y < 2; ++y) {
+            for (let z = 0; z < cellSize; ++z) {
+                for (let x = 0; x < cellSize; ++x) {
+                    world.setVoxel(x, y - 2, z, 4);
+                }
+            }
+        }
+        */
+
+        function load_vox_chunks(chunks) {
+            window.chunks = chunks;
+            for ( let i = 0; i < chunks.length; i ++ ) {
+
+                const chunk = chunks[ i ];
+
+                let palette = chunk.palette;
+                window.palette = palette;
+                let data = chunk.data;
+
+                for ( let j = 0; j < data.length; j += 4 ) {
+
+                    const x = data[ j + 0 ];
+                    const y = data[ j + 1 ];
+                    const z = data[ j + 2 ];
+                    const c = data[ j + 3 ];
+
+                    const hex = palette[ c ];
+                    const r = ( hex >> 0 & 0xff ) / 0xff;
+                    const g = ( hex >> 8 & 0xff ) / 0xff;
+                    const b = ( hex >> 16 & 0xff ) / 0xff;
+
+                    if ( r > 0 || g > 0 || b > 0 ) {
+                        world.setVoxel(x, z, chunk.size.y - y, 100 + c); 
+                    }
+                    else {
+                        world.setVoxel(x, z, chunk.size.y - y, 5);
+                    }
+                }
+            }
+
+            for(let cid in world.cells) {
+                let id = cid.split(',').map(n => parseInt(n * cellSize));
+                updateCellGeometry(...id);
+            }
+        }
+
+        const vox_loader = new VOXLoader();
+        vox_loader.load( './vox/test_island.vox', load_vox_chunks);
+        firstPersonControls.fly = false;
+
+        //-----
+
+        let agents = [];
+        window.agents = agents;
+
+        function load_agent(url) {
+            gltfLoader.load( url, function ( gltf ) {
+
+                if(gltf.scene.children.length > 0) {
+                    
+                    let mesh = gltf.scene.children[0];
+                    let image = mesh.material.map.image;
+                    let ctx = document.createElement('canvas').getContext('2d');
+                    ctx.canvas.width = image.width;
+                    ctx.canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0);
+                    let texture = new THREE.CanvasTexture( ctx.canvas );
+                    texture.flipY = false;
+
+                    let mat = new THREE.MeshPhongMaterial({
+                        color: 0xffffff,
+                        emissive: 0x282828,
+                        //map: mesh.material.map,
+                        map: texture,
+                    });
+                    mesh.material.dispose();
+                    mesh.material = mat;
+
+                    scene.add(mesh);
+
+                    let agent = new Agent(mesh, agents, world, phys, player);
+                    agent.name = url.split('/').pop().split('.')[0];
+                    agent.className = url.split('/')[2];
+                    agent.ctx = ctx;
+                    // agent.setPosition(
+                    //     cellSize + (Math.random()*2-1) * 5,
+                    //     cellSize / 3 + 5,
+                    //     cellSize + (Math.random()*2-1) * 5);
+                    agent.setPosition(
+                        40 + (Math.random()*2-1) * 15,
+                        10 + Math.random() * 10,
+                        40 + (Math.random()*2-1) * 15);
+                    agents.push(agent);
+                }
+            } );
+        }
+
+        shuffle(_qnas);
+        let qnas = JSON.parse(JSON.stringify(_qnas)).splice(0, 20);
+
+        let glbs = [
+            '까치반/권라나.glb',
+            '까치반/김시원.glb',
+            '까치반/손승우.glb',
+            '까치반/안재준.glb',
+            '종달새반/김채은.glb',
+            '종달새반/이지원.glb',
+            '종달새반/전필립.glb',
+            '종달새반/정예은.glb',
+            '종달새반/최현율.glb',
+            '소나무반/김지유.glb',
+            '소나무반/박건.glb',
+            '소나무반/임채은.glb',
+            '소나무반/정유준.glb',
+            '소나무반/홍채은.glb',
+            '참나무반/이찬영_통통어몽어스.glb',
+            '참나무반/정현조_리을몬스터.glb',
+            '참나무반/태현우_쿠쿠다이노.glb',
+            '해바라기반/김세하_하트꽃.glb',
+            '해바라기반/김태건_코알라.glb',
+            '해바라기반/남주엘_곰돌이풍선.glb',
+            '해바라기반/이시아_꽃게.glb',
+            '진달래반/권이준.glb',
+            '진달래반/김봄.glb',
+            '진달래반/차지윤.glb',
+            '개나리반/김지완_고래.glb',
+            '개나리반/김태림_유니콘.glb',
+            '개나리반/김하엘_엄마토끼.glb',
+            '개나리반/유이온_튜닙.glb',
+            '개나리반/이다윤_상어.glb'
+        ];
+        shuffle(glbs);
+
+        glbs = glbs.splice(0, qnas.length + 1);
+        glbs.forEach(x => load_agent('./mesh/' + x));
+
+        //-----
+
+        let synth = null;
+        let utter = new SpeechSynthesisUtterance();
+        utter.lang = 'ko';
+        let curr_answer = [];
+        window.doing_quiz = false;
+        window.curr_agent = null;
+
+        window.addEventListener('storage', (e) => {
+            if(e.key === 'vox') {
+                let content = Uint8Array.from(localStorage['vox'].split(','));
+                let chunks = vox_loader.parse(content.buffer);
+                load_vox_chunks(chunks);
+            }
+        });
+        
+        function randInt(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+        
+        //updateVoxelGeometry(1, 1, 1);  // 0,0,0 will generate
+        for(let cid in world.cells) {
+            let id = cid.split(',').map(n => parseInt(n * cellSize));
+            updateCellGeometry(...id);
+        }
+
+        function resizeRendererToDisplaySize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            return needResize;
+        }
+        
+        let renderRequested = false;
+        
+        function render(delta) {
+            //renderRequested = undefined;
+            
+            if (resizeRendererToDisplaySize(renderer)) {
+                const canvas = renderer.domElement;
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function _intersect(x1, y1, z1, w1, h1, d1, x2, y2, z2, w2, h2, d2){
+			let a = {
+				minX : x1 - (w1/2),
+				maxX : x1 + (w1/2),
+				minZ : z1 - (d1/2),
+				maxZ : z1 + (d1/2),
+				minY : y1 - (h1/2),
+				maxY : y1 + (h1/2),
+			};
+			let b = {
+				minX : x2 - (w2/2),
+				maxX : x2 + (w2/2),
+				minZ : z2 - (d2/2),
+				maxZ : z2 + (d2/2),
+				minY : y2 - (h2/2),
+				maxY : y2 + (h2/2),
+			};
+			return (a.minX <= b.maxX && a.maxX >= b.minX) &&
+		           (a.minY <= b.maxY && a.maxY >= b.minY) &&
+		           (a.minZ <= b.maxZ && a.maxZ >= b.minZ);
+		}
+
+        let signs = [-1, 0, 1];
+        function update(delta) {
+
+            let time = performance.now() * 0.001;
+
+            if(!firstPersonControls.fly) {
+                for(let agent of agents) {
+                    agent.update(time);
+                }
+                
+
+                //------------
+
+                let f_speed = 0;
+                let r_speed = 0;
+                let speed = delta * controls.movementSpeed;
+
+                //let vf = firstPersonControls.getForwardVector();
+                //let vr = firstPersonControls.getRightVector();
+                //console.log(vf, vr);
+                let vf = new THREE.Vector3();
+                let vr = new THREE.Vector3();
+
+                if(firstPersonControls.moveForward) {
+                    vf.copy(firstPersonControls.getForwardVector());
+                    f_speed += speed;
+                }
+                if(firstPersonControls.moveBackward) {
+                    vf.copy(firstPersonControls.getForwardVector());
+                    f_speed += -speed;
+                }
+                if(firstPersonControls.moveLeft) {
+                    vr.copy(firstPersonControls.getRightVector());
+                    r_speed += -speed;
+                }
+                if(firstPersonControls.moveRight) {
+                    vr.copy(firstPersonControls.getRightVector());
+                    r_speed += speed;
+                }
+
+                let v = vf.clone().multiplyScalar(f_speed).add(vr.multiplyScalar(r_speed));
+
+                body.applyForce([v.x * 35, 0, v.z * 35]);
+                //body.applyImpulse([v.x * 1, 0, v.z * 1]);
+                
+                //phys.tick( delta * 1000 );
+                //phys.tick( 33.3333 );
+                if(!window.doing_quiz) {
+                    phys.tick( 24 );    
+                }
+
+                let pos = body.getPosition();
+                camera.position.x = pos[0] + 0.3;
+                camera.position.y = pos[1] + 1.4;
+                camera.position.z = pos[2] + 0.3;
+
+                if(pos[1] < -10) {
+                    body.setPosition([24, 20, 21]);
+                }
+            }
+
+            controls.update(delta);
+        }
+        
+        function requestRenderIfNotRequested() {
+            if (!renderRequested) {
+                renderRequested = true;
+                requestAnimationFrame(render);
+            }
+        }
+        
+        let currentVoxel = 0;
+        let currentId;
+        
+        document.querySelectorAll('#ui .tiles input[type=radio][name=voxel]').forEach((elem) => {
+            elem.addEventListener('click', allowUncheck);
+        });
+        
+        function allowUncheck() {
+            if (this.id === currentId) {
+                this.checked = false;
+                currentId = undefined;
+                currentVoxel = 0;
+            } else {
+                currentId = this.id;
+                currentVoxel = parseInt(this.value);
+            }
+        }
+        
+        function getCanvasRelativePosition(event) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (event.clientX - rect.left) * canvas.width  / rect.width,
+                y: (event.clientY - rect.top ) * canvas.height / rect.height,
+            };
+        }
+        
+        function placeVoxel(event) {
+            const pos = getCanvasRelativePosition(event);
+            const x = (pos.x / canvas.width ) *  2 - 1;
+            const y = (pos.y / canvas.height) * -2 + 1;  // note we flip Y
+            
+            const start = new THREE.Vector3();
+            const end = new THREE.Vector3();
+            start.setFromMatrixPosition(camera.matrixWorld);
+            end.set(x, y, 1).unproject(camera);
+            
+            const intersection = world.intersectRay(start, end);
+            if (intersection) {
+                const voxelId = event.shiftKey ? 0 : currentVoxel;
+                // the intersection point is on the face. That means
+                // the math imprecision could put us on either side of the face.
+                // so go half a normal into the voxel if removing (currentVoxel = 0)
+                // our out of the voxel if adding (currentVoxel  > 0)
+                const pos = intersection.position.map((v, ndx) => {
+                    return v + intersection.normal[ndx] * (voxelId > 0 ? 0.5 : -0.5);
+                });
+                world.setVoxel(...pos, voxelId);
+                updateVoxelGeometry(...pos);
+                requestRenderIfNotRequested();
+            }
+        }
+        
+        const mouse = {
+            x: 0,
+            y: 0,
+        };
+        
+        function recordStartPosition(event) {
+            mouse.x = event.clientX;
+            mouse.y = event.clientY;
+            mouse.moveX = 0;
+            mouse.moveY = 0;
+        }
+        function recordMovement(event) {
+            mouse.moveX += Math.abs(mouse.x - event.clientX);
+            mouse.moveY += Math.abs(mouse.y - event.clientY);
+        }
+        function placeVoxelIfNoMovement(event) {
+            if (mouse.moveX < 5 && mouse.moveY < 5) {
+                placeVoxel(event);
+            }
+            window.removeEventListener('pointermove', recordMovement);
+            window.removeEventListener('pointerup', placeVoxelIfNoMovement);
+        }
+        
+        canvas.addEventListener('pointerdown', (event) => {
+            //event.preventDefault();
+            recordStartPosition(event);
+            window.addEventListener('pointermove', recordMovement);
+            window.addEventListener('pointerup', placeVoxelIfNoMovement);
+        }, {passive: false});
+        
+        canvas.addEventListener('touchstart', (event) => {
+            // prevent scrolling
+            event.preventDefault();
+        }, {passive: false});
+        
+        //controls.addEventListener('change', requestRenderIfNotRequested);
+        window.addEventListener('resize', requestRenderIfNotRequested);
+
+        document.body.addEventListener("click", function() {
+			//controls.lock();
+        });
+
+        document.addEventListener("keydown", function(e) {
+            if(!synth) {
+                synth = new Tone.Synth().toDestination();
+                window.synth = synth;
+            }
+
+			if(e.code == 'Space') {
+                if(canJump) {
+                    if(jump_recovery === 0) {
+                        body.applyImpulse([0, 9, 0]);
+                    }
+                    canJump = false;
+                }
+		    }
+        });
+
+        function shuffle(array) {
+            let n = array.length, t, i;
+            while (n) {
+                i = Math.random() * n-- | 0; // 0 ≤ i < n
+                t = array[n];
+                array[n] = array[i];
+                array[i] = t;
+            }
+            return array;
+        }
+
+        document.addEventListener("keyup", function(e) {
+            //console.log(e.code);
+            if(e.code == 'Space') {
+                canJump = true;
+                jump_recovery = Math.max(20 - captured_agents.length, 0);
+		    }
+            
+            if(e.code === 'Digit1') {
+                //changeToFirstPerson();
+                do_quiz();
+            }
+
+            if(e.code === 'Digit2') {
+                //changeToOrbit();
+                document.querySelector('#quiz-container').style.display = 'none';
+            }
+
+			if(e.code === 'Enter') {
+                if(firstPersonControls.fly === true) {
+                    body.setPosition([
+                        camera.position.x - 0.3,
+                        camera.position.y - 1.4,
+                        camera.position.z - 0.3,
+                    ]);
+                }
+                firstPersonControls.fly = !firstPersonControls.fly;
+            }
+        });
+
+        function changeToOrbit() {
+            firstPersonControls.fly = false;
+            orbitControls.enabled = true;
+            firstPersonControls.enabled = false;
+            //orbitControls.target.copy(firstPersonControls.targetPos);
+            orbitControls.target.copy(control.object.position);
+            controls = orbitControls;
+        }
+        window.changeToOrbit = changeToOrbit;
+
+        function changeToFirstPerson() {
+            firstPersonControls.fly = true;
+            orbitControls.enabled = false;
+            firstPersonControls.enabled = true;
+            controls = firstPersonControls;
+        }
+        window.changeToFirstPerson = changeToFirstPerson;
+
+        function do_quiz() {
+            if(qnas.length > 0) {
+                synth.triggerAttackRelease("C4", "8n");
+
+                let q = qnas[0];
+                curr_answer = q.answer;
+                let by = q.by;
+                if(by !== '어린이들') {
+                    let _by = by.split('');
+                    _by[_by.length - 2] = 'O';
+                    by = _by.join('');
+                }
+                by = q.class + ' ' + by;
+                let list = [];
+                list = list.concat(q.answer, q.example);
+                shuffle(list);
+                let examples = '';
+                for(let li of list) {
+                    examples += `<div>
+                        <input type="radio" name="example" value="${li}">
+                        <label class="example">${li}</label>
+                        <span class="speak-example">📢</span>
+                    </div>`;
+                }
+
+                let en_type = {
+                    '생각': 'thought',
+                    '상식': 'sense',
+                    '엉뚱': 'nonsense',
+                    '숫자': 'calc',
+                    '일상': 'experience'
+                };
+
+                let types = q.type.map(x => {
+                    return `<span class="qtype ${en_type[x]}">${x}</span>`;    
+                }).join(', ');
+                
+                let quiz_signs = '💭,🔎,🏖️'.split(',');
+                let quiz_sign = quiz_signs[quiz_signs.length * Math.random() | 0];
+                let template = `<div id="quiz-panel">
+                    <div id="quiz"><span>${quiz_sign}</span> <span id="quiz-text">${q.quiz}</span><span class="speak-quiz">📢</span></div>
+                    <div id="by">
+                        <span id="by-name">${by}</span><span>의 ${types} 수수께끼</span>
+                    </div>
+                    <div id="examples">${examples}</div>
+                    <div id="quiz-result" style="display: none">
+                        <span id="result-sign"></span>
+                        <span id="quiz-result-body"></span>
+                        <span class="speak-result">📢</span>
+                        <div style="text-align: right"><div id="resume">이어서 플레이</div></div>
+                    </div>
+                </div>`;
+                document.querySelector('#quiz-container').innerHTML = template;
+                document.querySelector('#quiz-container').style.display = 'block';
+            }
+            else {
+                let template = `<div id="quiz-panel">
+                    <div>🎉 오늘의 수수께끼를 모두 풀었습니다! <br>축하합니다~ <br>오늘은 여기까지 하기로 해요!</div>
+                    <div style="text-align: right"><div id="resume">이어서 플레이</div><div id="restart">모든 그림이를 다시 놓아주기</div></div>
+                </div>`;
+                document.querySelector('#quiz-container').innerHTML = template;
+                document.querySelector('#quiz-container').style.display = 'block';
+            }
+            
+        }
+        window.do_quiz = do_quiz;
+        window.until_quiz = 120;
+        let run_exprs = `
+            콧방귀를 뀌면서
+            미안해하면서
+            하하 웃으면서
+            메롱 놀리면서
+            까불까불 장난치면서
+            즐겁게
+            기운차게
+            활기차게
+            쑥쓰러워하면서
+            아쉬워하면서
+            다음 만남을 기대하면서
+            재빠르게
+            머쓱해 하면서
+            푸하하 웃으면서
+            호호 웃으면서
+            힘내라고 응원하면서
+            수줍어하면서
+            매몰차게
+            상냥하게
+            다음에 또 보자며
+            룰루 흥얼거리며
+            고개를 갸웃거리며
+            휘리릭
+            쌔앵
+            뿅
+            우당탕쿵쾅
+            휘파람을 불면서
+        `.split('\n').map(x => x.trim()).filter(x => x.length > 0);
+
+        let reunion_exprs = `
+            생끗 웃으며
+            반가워하면서
+            멋적어하면서
+            기분 좋게
+            배시시 웃으며
+            빙긋 웃으며
+            방긋 웃으며
+            씩씩하게
+            곰곰히 생각하면서
+            깡총깡총 뛰면서
+            어슬렁거리며
+            갈팡질팡하면서
+            다시 도망갈까하다가
+            콧노래를 흥얼거리며
+            노래부르며
+            재채기하면서
+            눈물을 글썽이며
+            하품하면서
+            인사하면서
+            함박웃음 지으며
+            입을 비죽이며
+            용기내서
+            부끄러워하면서
+            수줍어하면서
+            어렵사리
+            윙크하면서
+        `.split('\n').map(x => x.trim()).filter(x => x.length > 0);
+
+        function check_answer(answer) {
+            let inputs = document.querySelector('#examples').querySelectorAll('input[type="radio"]');
+            for(let item of inputs) {
+                item.setAttribute('disabled', true);
+            }
+            let by = document.querySelector('#by-name').textContent;
+            let result_sign = '';
+            let O = '☺️,❤️,💡,✨,👍'.split(',');
+            let X = '🤔,☔,💭,🎃,💨'.split(',');
+            let html = '';
+            if(curr_answer.includes(answer)) {
+                const now = Tone.now()
+                synth.triggerAttackRelease("C4", "8n", now);
+                synth.triggerAttackRelease("E4", "8n", now + 0.25);
+                synth.triggerAttackRelease("G4", "8n", now + 0.5);
+
+                html = `${by}도 그렇게 생각한데요. <br>그림이를 찾았습니다!`;
+                let expr = reunion_exprs[Math.random() * reunion_exprs.length | 0];
+                if(curr_agent) {
+                    let [owner, a_name] = curr_agent.name.split('_');
+                    let _owner = owner.split('');
+                    _owner[_owner.length - 2] = 'O';
+                    owner = _owner.join('');
+                    let owner_1 = owner + josa.c(owner, '이/가');
+                    if(a_name) {
+                        let hsl = `hsl(${Math.random()*360|0},100%,40%)`;
+                        let a_name_1 = `<span style="color: ${hsl}">${a_name}</span>` + josa.c(a_name, '을/를');
+                        let a_name_2 = `<span style="color: ${hsl}">${a_name}</span>` + josa.c(a_name, '이/가');
+                        html = `${by}도 그렇게 생각한데요. <br>${owner_1} 그린 ${a_name_1} 찾았습니다! <br>${a_name_2} ${expr} 돌아옵니다.`;
+                    }
+                    else {
+                        html = `${by}도 그렇게 생각한데요. <br>${owner_1} 그린 그림이를 찾았습니다! <br>그림이가 ${expr} 돌아옵니다.`;
+                    }
+                }
+                result_sign = O[Math.random() * O.length | 0];
+                qnas.shift();
+                
+                // 잡았다!
+                if(curr_agent) {
+                    let img = new Image();
+                    img.className = 'cap';
+                    img.src = curr_agent.ctx.canvas.toDataURL();
+                    document.querySelector('#captured').appendChild(img);
+                    
+                    body.applyImpulse([-body.velocity[0], -body.velocity[1], -body.velocity[2]]);
+                    scene.remove(curr_agent.mesh);
+                    let idx = phys.bodies.indexOf(curr_agent.body);
+                    if(idx !== -1) {
+                        phys.bodies.splice(idx, 1);
+                    }
+                    idx = agents.indexOf(curr_agent);
+                    if(idx !== -1) {
+                        captured_agents.push(agents[idx]);
+                        agents.splice(idx, 1);
+                    }
+                    curr_agent = null;
+                }
+            }
+            else {
+                synth.triggerAttackRelease("G4", "8n");
+
+                let expr = run_exprs[Math.random() * run_exprs.length | 0];
+                html = `${by}의 생각은 달랐어요. <br>그림이가 ${expr} 도망갑니다!`;
+                result_sign = X[Math.random() * X.length | 0];
+                if(curr_agent) {
+                    curr_agent.body.applyImpulse([(Math.random()*2-1), 10, (Math.random()*2-1)]);
+                    body.applyImpulse([(Math.random()*2-1)*2, 5, (Math.random()*2-1)*2]);
+                }
+                curr_agent = null;
+            }
+            document.querySelector('#quiz-result-body').innerHTML = html;
+            document.querySelector('#result-sign').textContent = result_sign;
+            document.querySelector('#quiz-result').style.display = 'block';
+        }
+
+        window.addEventListener('input', (e) => {
+            if(e.target.name === 'example') {
+                check_answer(e.target.value);    
+            }
+        });
+
+        window.addEventListener('click', (e) => {
+            if(e.target.className === 'example') {
+                let text = e.target.parentElement.querySelector('input').value;
+                e.target.parentElement.querySelector('input').checked = true;
+                check_answer(text);
+            }
+
+            if(e.target.className === 'speak-quiz') {
+                utter.text = document.querySelector('#quiz-text').textContent;
+                speechSynthesis.speak(utter);
+            }
+
+            if(e.target.className === 'speak-result') {
+                utter.text = document.querySelector('#quiz-result-body').textContent;
+                //let tan = '땡,꽁,큥,삐'.split(',');
+                //utter.text = utter.text.replaceAll('O', tan[Math.random() * tan.length | 0]);
+                utter.text = utter.text.replaceAll('O', ' ');
+                speechSynthesis.speak(utter);
+            }
+
+            if(e.target.parentElement.id === 'by') {
+                utter.text = document.querySelector('#by').textContent;
+                utter.text = utter.text.replaceAll('O', ' ');
+                speechSynthesis.speak(utter);
+            }
+
+            if(e.target.className === 'speak-example') {
+                let text = e.target.parentElement.querySelector('input').value;
+                let emoji_regex = /\p{Extended_Pictographic}/ug;
+                if(emoji_regex.test(text)) {
+                    let txt = text.split(' ');
+                    txt.pop();
+                    utter.text = txt.join(' ');
+                }
+                else {
+                    utter.text = text;
+                }
+                speechSynthesis.speak(utter);
+            }
+
+            if(e.target.id === 'resume') {
+                doing_quiz = false;
+                document.querySelector('#quiz-container').style.display = 'none';
+                window.until_quiz = 300;
+            }
+
+            if(e.target.id === 'restart') {
+                doing_quiz = false;
+                window.until_quiz = 300;
+                document.querySelector('#quiz-container').style.display = 'none';
+                shuffle(_qnas);
+                qnas = JSON.parse(JSON.stringify(_qnas)).splice(0, 20);
+                while(captured_agents.length > 0) {
+                    let agent = captured_agents.shift();
+                    scene.add(agent.mesh);
+                    phys.bodies.push(agent.body);
+                    agents.push(agent);
+                }
+                //body.setPosition([24, 20, 21]);
+                document.querySelector('#captured').innerHTML = '';
+            }
+        });
+
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        function loop() {
+            let delta = clock.getDelta();
+            if(window.until_quiz > 0) {
+                window.until_quiz -= 1;
+            }
+            if(jump_recovery > 0) {
+                jump_recovery -= 1;
+            }
+            update(delta);
+            render();
+            requestAnimationFrame(loop);
+        }
+
+        window.render = render;
+        window.world = world;
+        window.updateVoxelGeometry = updateVoxelGeometry;
+
+        loop();
+    }
+    
+    main();
+</script> 
