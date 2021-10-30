@@ -835,12 +835,35 @@
             window.addEventListener('pointerup', placeVoxelIfNoMovement);
         }, {passive: false});
         
+        let touch = {
+            startX: 0,
+            startY: 0,
+            oldX: 0,
+            oldY: 0,
+            moveX: 0,
+            moveY: 0,
+        };
+
         canvas.addEventListener('touchstart', (event) => {
-            if(canJump) {
-                if(jump_recovery === 0) {
-                    body.applyImpulse([0, 9, 0]);
+            if(!synth) {
+                synth = new Tone.Synth().toDestination();
+                window.synth = synth;
+            }
+            if(event.touches[0]) {
+                touch.startX = event.touches[0].pageX;
+                touch.startY = event.touches[0].pageY;
+                touch.oldX = touch.startX;
+                touch.oldY = touch.startY;
+                touch.moveX = touch.startX;
+                touch.moveY = touch.startY;
+                if(touch.startY / window.innerHeight > 0.8) {
+                    if(canJump) {
+                        if(jump_recovery === 0) {
+                            body.applyImpulse([0, 9, 0]);
+                        }
+                        canJump = false;
+                    }
                 }
-                canJump = false;
             }
             // prevent scrolling
             event.preventDefault();
@@ -849,7 +872,42 @@
         canvas.addEventListener('touchend', (event) => {
             canJump = true;
             jump_recovery = Math.max(20 - captured_agents.length, 0);
+
+            firstPersonControls.viewLeft = false;
+            firstPersonControls.viewRight = false;
+            firstPersonControls.moveForward = false;
+            firstPersonControls.moveBackward = false;
+
             // prevent scrolling
+            event.preventDefault();
+        }, {passive: false});
+
+        canvas.addEventListener('touchmove', (event) => {
+            //console.log(event);
+            if(event.touches[0]) {
+                touch.oldX = touch.moveX;
+                touch.oldY = touch.moveY;
+                touch.moveX = event.touches[0].pageX;
+                touch.moveY = event.touches[0].pageY;
+                let dx = touch.moveX - touch.oldX;
+                let dy = touch.moveY - touch.oldY;
+                if(Math.abs(dx) > 20) {
+                    if(dx < 0) {
+                        firstPersonControls.viewLeft = true;
+                    }
+                    else if(dx > 0) {
+                        firstPersonControls.viewRight = true;
+                    }
+                }
+                if(Math.abs(dy) > 1) {
+                    if(dy < 0) {
+                        firstPersonControls.moveForward = true;
+                    }
+                    else if(dy > 0) {
+                        firstPersonControls.moveBackward = true;
+                    }       
+                }
+            }
             event.preventDefault();
         }, {passive: false});
         
