@@ -587,9 +587,9 @@
             '소나무반/임채은.glb',
             '소나무반/정유준.glb',
             '소나무반/홍채은.glb',
-            '참나무반/이찬영_통통어몽어스.glb',
-            '참나무반/정현조_리을몬스터.glb',
-            '참나무반/태현우_쿠쿠다이노.glb',
+            '참나무반/이찬영_통통어몽어스.glb',
+            '참나무반/정현조_리을몬스터.glb',
+            '참나무반/태현우_쿠쿠다이노.glb',
             '해바라기반/김세하_하트꽃.glb',
             '해바라기반/김태건_코알라.glb',
             '해바라기반/남주엘_곰돌이풍선.glb',
@@ -604,6 +604,10 @@
             '개나리반/이다윤_상어.glb'
         ];
         shuffle(glbs);
+
+        // for(let g of glbs) {
+        //     console.log(g.split(''))
+        // }
 
         // glbs = glbs.splice(0, qnas.length + 1);
         // glbs.forEach(x => load_agent('./mesh/' + x));
@@ -971,7 +975,7 @@
                         camera.position.z - 0.3,
                     ]);
                 }
-                //firstPersonControls.fly = !firstPersonControls.fly;
+                firstPersonControls.fly = !firstPersonControls.fly;
             }
         });
 
