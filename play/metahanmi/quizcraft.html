@@ -1187,16 +1187,16 @@
                     let owner_1 = owner + josa.c(owner, '이/가');
                     if(a_name) {
                         let hsl = `hsl(${Math.random()*360|0},100%,40%)`;
-                        let a_name_1 = `<span style="color: ${hsl}">${a_name}</span>` + josa.c(a_name, '을/를');
-                        let a_name_2 = `<span style="color: ${hsl}">${a_name}</span>` + josa.c(a_name, '이/가');
+                        let a_name_1 = `<span style="color: ${hsl}; font-weight: bold">${a_name}</span>` + josa.c(a_name, '을/를');
+                        let a_name_2 = `<span style="color: ${hsl}; font-weight: bold">${a_name}</span>` + josa.c(a_name, '이/가');
                         html = `<span class="text"> ${by}도 그렇게 생각한데요.</span><br>
                             <span>${found}</span> <span class="text">${owner_1} 그린 ${a_name_1} 찾았습니다!</span><br>
-                            <span>${home}</span> <span class="text">${a_name_2} ${expr} 돌아옵니다.</span>`;
+                            <span>${home}</span> <span class="text">${a_name_2} <span style="color: purple; font-weight: bold">${expr}</span> 돌아옵니다.</span>`;
                     }
                     else {
                         html = `<span class="text">${by}도 그렇게 생각한데요.</span><br>
                             <span>${found}</span> <span class="text">${owner_1} 그린 그림이를 찾았습니다!</span><br>
-                            <span>${home}</span> <span class="text">그림이가 ${expr} 돌아옵니다.</span>`;
+                            <span>${home}</span> <span class="text">그림이가 <span style="color: purple; font-weight: bold">${expr}</span> 돌아옵니다.</span>`;
                     }
                 }
                 result_sign = O[Math.random() * O.length | 0];
@@ -1228,7 +1228,7 @@
 
                 let expr = run_exprs[Math.random() * run_exprs.length | 0];
                 html = `<span class="text">${by}의 생각은 달랐어요.</span><br>
-                    <span>${R[Math.random() * R.length | 0]}</span> <span class="text">그림이가 ${expr} 도망갑니다!</span>`;
+                    <span>${R[Math.random() * R.length | 0]}</span> <span class="text">그림이가 <span style="color: purple; font-weight: bold">${expr}</span> 도망갑니다!</span>`;
                 result_sign = X[Math.random() * X.length | 0];
                 if(curr_agent) {
                     curr_agent.body.applyImpulse([(Math.random()*2-1), 10, (Math.random()*2-1)]);
