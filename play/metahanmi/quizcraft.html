@@ -200,6 +200,7 @@
             <input type="radio" name="voxel" id="voxel16" value="16"><label for="voxel16" style="background-position: -1500% -0%"></label>
         </div>
     </div>
+    <div id="captured"></div>
     <div id="quiz-container">
         <div id="quiz-panel">
             <div id="quiz">주황색을 만들려면 어떤 색을 섞어야 할까요?</div>
@@ -212,7 +213,6 @@
             </div>
         </div>
     </div>
-    <div id="captured"></div>
 </body>
 <script src="./js/qnas.js"></script>
 <script src="./js/tone.min.js"></script>
@@ -297,18 +297,7 @@
             [0.6, 1.4, 0.6]
         );
         //var body = phys.addBody( aabb, mass, friction, restitution, gravityMult, onCollide )
-        let body = phys.addBody(aabb, 1, 0.25, 0, 2, null);
-        let player = {
-            body: body,
-            getPosition() {
-            return [
-                    this.body.aabb.base[0] + this.body.aabb.vec[0]*0.5,
-                    this.body.aabb.base[1] + this.body.aabb.vec[1]*0.5,
-                    this.body.aabb.base[2] + this.body.aabb.vec[2]*0.5
-                ];
-            }
-        };
-        window.player = player;
+        let body, player;
         window.phys = phys;
 
         let max_jump_count = 1;
@@ -517,6 +506,19 @@
 
             glbs = glbs.splice(0, qnas.length + 1);
             glbs.forEach(x => load_agent('./mesh/' + x));
+
+            body = phys.addBody(aabb, 1, 0.25, 0, 2, null);
+            player = {
+                body: body,
+                getPosition() {
+                return [
+                        this.body.aabb.base[0] + this.body.aabb.vec[0]*0.5,
+                        this.body.aabb.base[1] + this.body.aabb.vec[1]*0.5,
+                        this.body.aabb.base[2] + this.body.aabb.vec[2]*0.5
+                    ];
+                }
+            };
+            window.player = player;
         }
 
         const vox_loader = new VOXLoader();
@@ -618,9 +620,19 @@
         let synth = null;
         let utter = new SpeechSynthesisUtterance();
         utter.lang = 'ko';
+        window.utter = utter;
         let curr_answer = [];
         window.doing_quiz = false;
         window.curr_agent = null;
+        let is_speaking = false;
+
+        utter.addEventListener('start', (e) => {
+            is_speaking = true;
+        });
+
+        utter.addEventListener('end', (e) => {
+            is_speaking = false;
+        });
 
         window.addEventListener('storage', (e) => {
             if(e.key === 'vox') {
@@ -690,6 +702,7 @@
 
         let signs = [-1, 0, 1];
         function update(delta) {
+            if(!player) return;
 
             let time = performance.now() * 0.001;
 
@@ -1146,8 +1159,13 @@
             }
             let by = document.querySelector('#by-name').textContent;
             let result_sign = '';
-            let O = '☺️,❤️,💡,✨,👍'.split(',');
-            let X = '🤔,☔,💭,🎃,💨'.split(',');
+            
+            let O = '☺️,❤️,💡,✨,👍,😉'.split(',');
+            let X = '🤔,☔,💭,🎃,🌈,💫'.split(',');
+            let R = '💨,🎈,🏃‍♀️,🏃‍♂️,🦋'.split(',');
+            let F = '👀,📷,👋,🕵️,👫'.split(',');
+            let H = '🤗,💖,🏠,📖,🎵'.split(',');
+
             let html = '';
             if(curr_answer.includes(answer)) {
                 const now = Tone.now()
@@ -1155,7 +1173,11 @@
                 synth.triggerAttackRelease("E4", "8n", now + 0.25);
                 synth.triggerAttackRelease("G4", "8n", now + 0.5);
 
-                html = `${by}도 그렇게 생각한데요. <br>그림이를 찾았습니다!`;
+                let found = F[Math.random() * F.length | 0];
+                let home = H[Math.random() * H.length | 0];
+
+                html = `<span class="text">${by}도 그렇게 생각한데요.</span><br>
+                    <span>${found}</span> <span class="text">그림이를 찾았습니다!</span>`;
                 let expr = reunion_exprs[Math.random() * reunion_exprs.length | 0];
                 if(curr_agent) {
                     let [owner, a_name] = curr_agent.name.split('_');
@@ -1167,10 +1189,14 @@
                         let hsl = `hsl(${Math.random()*360|0},100%,40%)`;
                         let a_name_1 = `<span style="color: ${hsl}">${a_name}</span>` + josa.c(a_name, '을/를');
                         let a_name_2 = `<span style="color: ${hsl}">${a_name}</span>` + josa.c(a_name, '이/가');
-                        html = `${by}도 그렇게 생각한데요. <br>${owner_1} 그린 ${a_name_1} 찾았습니다! <br>${a_name_2} ${expr} 돌아옵니다.`;
+                        html = `<span class="text"> ${by}도 그렇게 생각한데요.</span><br>
+                            <span>${found}</span> <span class="text">${owner_1} 그린 ${a_name_1} 찾았습니다!</span><br>
+                            <span>${home}</span> <span class="text">${a_name_2} ${expr} 돌아옵니다.</span>`;
                     }
                     else {
-                        html = `${by}도 그렇게 생각한데요. <br>${owner_1} 그린 그림이를 찾았습니다! <br>그림이가 ${expr} 돌아옵니다.`;
+                        html = `<span class="text">${by}도 그렇게 생각한데요.</span><br>
+                            <span>${found}</span> <span class="text">${owner_1} 그린 그림이를 찾았습니다!</span><br>
+                            <span>${home}</span> <span class="text">그림이가 ${expr} 돌아옵니다.</span>`;
                     }
                 }
                 result_sign = O[Math.random() * O.length | 0];
@@ -1201,7 +1227,8 @@
                 synth.triggerAttackRelease("G4", "8n");
 
                 let expr = run_exprs[Math.random() * run_exprs.length | 0];
-                html = `${by}의 생각은 달랐어요. <br>그림이가 ${expr} 도망갑니다!`;
+                html = `<span class="text">${by}의 생각은 달랐어요.</span><br>
+                    <span>${R[Math.random() * R.length | 0]}</span> <span class="text">그림이가 ${expr} 도망갑니다!</span>`;
                 result_sign = X[Math.random() * X.length | 0];
                 if(curr_agent) {
                     curr_agent.body.applyImpulse([(Math.random()*2-1), 10, (Math.random()*2-1)]);
@@ -1232,25 +1259,32 @@
             if(e.target.className === 'speak-quiz') {
                 if(doing_quiz) {
                     utter.text = document.querySelector('#quiz-text').textContent;
-                    speechSynthesis.speak(utter);
+                    if(!is_speaking) {
+                        speechSynthesis.speak(utter);
+                    }
                 }
             }
 
             if(e.target.className === 'speak-result') {
                 if(doing_quiz) {
-                    utter.text = document.querySelector('#quiz-result-body').textContent;
+                    let texts = Array.prototype.slice.call(document.querySelector('#quiz-result-body').querySelectorAll('.text')).map(x => x.textContent);
+                    utter.text = texts.join(' ');
                     //let tan = '땡,꽁,큥,삐'.split(',');
                     //utter.text = utter.text.replaceAll('O', tan[Math.random() * tan.length | 0]);
-                    utter.text = utter.text.replaceAll('O', ' ');
-                    speechSynthesis.speak(utter);
+                    if(!is_speaking) {
+                        utter.text = utter.text.replaceAll('O', '');
+                        speechSynthesis.speak(utter);
+                    }
                 }
             }
 
-            if(e.target.parentElement.id === 'by') {
+            if(e.target.parentElement.id === 'by' || e.target.parentElement.parentElement.id === 'by') {
                 if(doing_quiz) {
                     utter.text = document.querySelector('#by').textContent;
                     utter.text = utter.text.replaceAll('O', ' ');
-                    speechSynthesis.speak(utter);
+                    if(!is_speaking) {
+                        speechSynthesis.speak(utter);
+                    }
                 }
             }
 
@@ -1266,7 +1300,9 @@
                     else {
                         utter.text = text;
                     }
-                    speechSynthesis.speak(utter);
+                    if(!is_speaking) {
+                        speechSynthesis.speak(utter);
+                    }
                 }
             }
 
