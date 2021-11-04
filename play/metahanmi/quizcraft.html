@@ -574,6 +574,7 @@
 
         shuffle(_qnas);
         let qnas = JSON.parse(JSON.stringify(_qnas)).splice(0, 20);
+        qnas = qnas.sort((a, b) => (new Date(b.date)) - new Date(a.date));
 
         let glbs = [
             '까치반/권라나.glb',
@@ -622,6 +623,7 @@
         let utter = new SpeechSynthesisUtterance();
         utter.lang = 'ko';
         window.utter = utter;
+        let curr_quiz = null;
         let curr_answer = [];
         window.doing_quiz = false;
         window.curr_agent = null;
@@ -1017,12 +1019,23 @@
                 synth.triggerAttackRelease("C4", "8n");
 
                 let q = qnas[0];
+                if(curr_agent) {
+                    let by_name = curr_agent.name.split('_')[0];
+                    let by_quiz_list = qnas.filter(qu => qu.by === by_name);
+                    if(by_quiz_list.length > 0) {
+                        q = by_quiz_list[by_quiz_list.length * Math.random() | 0];
+                    }
+                }
+                curr_quiz = q;
                 curr_answer = q.answer;
                 if(q.year === 3) {
                     utter.rate = 0.8;
                 }
                 else {
                     utter.rate = 1;
+                }
+                if(q.lang_quiz !== 'ko') {
+                    utter.rate = 0.8;
                 }
                 let by = q.by;
                 if(by !== '어린이들') {
@@ -1031,6 +1044,9 @@
                     by = _by.join('');
                 }
                 by = q.class + ' ' + by;
+                if(q.role !== '어린이') {
+                    by += ' ' + q.role;
+                }
                 let list = [];
                 list = list.concat(q.answer, q.example);
                 shuffle(list);
@@ -1207,7 +1223,12 @@
                     }
                 }
                 result_sign = O[Math.random() * O.length | 0];
-                qnas.shift();
+                
+                // 맞춘 수수께끼 하나 빼기
+                let idx_curr_quiz = qnas.indexOf(curr_quiz);
+                if(idx_curr_quiz != -1) {
+                    qnas.splice(idx_curr_quiz, 1);
+                }
                 
                 // 잡았다!
                 if(curr_agent) {
@@ -1267,6 +1288,7 @@
                 if(doing_quiz) {
                     utter.text = document.querySelector('#quiz-text').textContent;
                     if(!is_speaking) {
+                        utter.lang = curr_quiz.lang_quiz;
                         speechSynthesis.speak(utter);
                     }
                 }
@@ -1280,6 +1302,7 @@
                     //utter.text = utter.text.replaceAll('O', tan[Math.random() * tan.length | 0]);
                     if(!is_speaking) {
                         utter.text = utter.text.replaceAll('O', '');
+                        utter.lang = 'ko';
                         speechSynthesis.speak(utter);
                     }
                 }
@@ -1290,6 +1313,7 @@
                     utter.text = document.querySelector('#by').textContent;
                     utter.text = utter.text.replaceAll('O', ' ');
                     if(!is_speaking) {
+                        utter.lang = 'ko';
                         speechSynthesis.speak(utter);
                     }
                 }
@@ -1308,6 +1332,7 @@
                         utter.text = text;
                     }
                     if(!is_speaking) {
+                        utter.lang = curr_quiz.lang_answer;
                         speechSynthesis.speak(utter);
                     }
                 }
