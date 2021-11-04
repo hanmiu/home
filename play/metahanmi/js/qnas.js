@@ -118,9 +118,9 @@ let _qnas = [
     },
     {
         type: '엉뚱'.split(','),
-        quiz: '1 더하기 1 은?',
+        quiz: '1 더하기 1이 무엇일까요?',
         answer: '귀요미'.split(','),
-        example: '창문,인간,방귀'.split(','),
+        example: '창문,인간'.split(','),
         year: 5,
         class: '까치반',
         by: '손승우',
