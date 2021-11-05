@@ -11,6 +11,42 @@
         height: 100%;
         display: block;
     }
+
+    #coord {
+        position: absolute;
+        width: 80px;
+        right: 20px;
+        top: 20px;
+        font-family: monospace;
+        font-size: 20px;
+        text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    #coord-label {
+        text-align: right;
+    }
+
+    #coord-x {
+        display: inline-block;
+        color: red;
+        width: 60px;
+        text-align: right;
+    }
+
+    #coord-y {
+        display: inline-block;
+        color: green;
+        width: 60px;
+        text-align: right;
+    }
+
+    #coord-z {
+        display: inline-block;
+        color: blue;
+        width: 60px;
+        text-align: right;
+    }
+
     #ui {
         position: absolute;
         left: 10px;
@@ -178,6 +214,11 @@
 </style>
 <body>
     <canvas id="c"></canvas>
+    <div id="coord">
+        <div><span class="coord-label" style="color: red">X</span><span id="coord-x">0</span></div>
+        <div><span class="coord-label" style="color: green">Y</span><span id="coord-y">0</span></div>
+        <div><span class="coord-label" style="color: blue">Z</span><span id="coord-z">0</span></div>
+    </div>
     <div id="ui">
         <div class="tiles">
             <input type="radio" name="voxel" id="voxel1" value="1"><label for="voxel1" style="background-position:   -0% -0%"></label>
@@ -241,6 +282,10 @@
         const canvas = document.querySelector('#c');
         const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
         renderer.shadowMap.enabled = true;
+
+        let el_coord_x = document.querySelector('#coord-x');
+        let el_coord_y = document.querySelector('#coord-y');
+        let el_coord_z = document.querySelector('#coord-z');
         
         const cellSize = 32;
         
@@ -785,6 +830,10 @@
 
                 shadow_light.position.set(pos[0], 100, pos[2]);
                 shadow_light.target.position.set(pos[0], -100, pos[2]);
+
+                el_coord_x.textContent = `${pos[0] | 0}`;
+                el_coord_y.textContent = `${pos[1] | 0}`;
+                el_coord_z.textContent = `${pos[2] | 0}`;
             }
 
             controls.update(delta);
@@ -1014,7 +1063,7 @@
                         camera.position.z - 0.3,
                     ]);
                 }
-                firstPersonControls.fly = !firstPersonControls.fly;
+                //firstPersonControls.fly = !firstPersonControls.fly;
             }
         });
 
