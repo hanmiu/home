@@ -240,6 +240,7 @@
     function main() {
         const canvas = document.querySelector('#c');
         const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+        renderer.shadowMap.enabled = true;
         
         const cellSize = 32;
         
@@ -366,11 +367,27 @@
             const light = new THREE.DirectionalLight(color, intensity);
             light.position.set(x, y, z);
             scene.add(light);
+            return light;
         }
-        addLight(1,  4,  4);
+        let directional_light = addLight(1, 4, 4);
+        let shadow_light = addLight(50, 40, 50);
+        shadow_light.intensity = 0;;
+        shadow_light.shadow.radius = 0;
+        scene.add(shadow_light.target);
+        shadow_light.target.position.set(50, 0, 50);
+        shadow_light.castShadow = true;
+        shadow_light.shadow.mapSize.width = 1024;
+        shadow_light.shadow.mapSize.height = 1024;
+        shadow_light.shadow.camera.top = 20;
+        shadow_light.shadow.camera.bottom = -20;
+        shadow_light.shadow.camera.left = -20;
+        shadow_light.shadow.camera.right = 20;
+        //const cameraHelper = new THREE.CameraHelper(shadow_light.shadow.camera);
+        //scene.add(cameraHelper);
+        window.shadow_light = shadow_light;
         //addLight( 1, -1, -2);
 
-        const ambient_light = new THREE.AmbientLight('#ffffff', 0.5);
+        const ambient_light = new THREE.AmbientLight('#ffffff', 0.75);
         scene.add(ambient_light);
         
         const world = new VoxelWorld({
@@ -414,6 +431,7 @@
             
             if (!mesh) {
                 mesh = new THREE.Mesh(geometry, material);
+                mesh.receiveShadow = true;
                 mesh.name = cellId;
                 cellIdToMesh[cellId] = mesh;
                 scene.add(mesh);
@@ -550,6 +568,7 @@
                         //map: mesh.material.map,
                         map: texture,
                     });
+                    mesh.castShadow = true;
                     mesh.material.dispose();
                     mesh.material = mat;
 
@@ -763,6 +782,9 @@
                 if(pos[1] < -10) {
                     body.setPosition([24, 20, 21]);
                 }
+
+                shadow_light.position.set(pos[0], 100, pos[2]);
+                shadow_light.target.position.set(pos[0], -100, pos[2]);
             }
 
             controls.update(delta);
@@ -1137,6 +1159,7 @@
             사뿐사뿐 아름답게
             후다다닥
             오 마이 갓! 하며
+            점프!점프!하면서
         `.split('\n').map(x => x.trim()).filter(x => x.length > 0);
 
         let reunion_exprs = `
@@ -1171,6 +1194,7 @@
             사뿐사뿐 아름답게
             오케이! 하며
             오예! 하며
+            회오리돌면서
         `.split('\n').map(x => x.trim()).filter(x => x.length > 0);
 
         function check_answer(answer) {
