@@ -1111,7 +1111,14 @@
                 let by = q.by;
                 if(by !== '어린이들') {
                     let _by = by.split('');
-                    _by[_by.length - 2] = 'O';
+                    for(let i = 0; i < _by.length; i++) {
+                        if(i > 0 && i < _by.length - 1) {
+                            _by[i] = 'O';
+                        }
+                    }
+                    if(_by.length === 2) {
+                        _by[1] = 'O';
+                    }
                     by = _by.join('');
                 }
                 by = q.class + ' ' + by;
