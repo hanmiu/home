@@ -396,7 +396,7 @@ let _qnas = [
         example: '검정색,무지개색'.split(','),
         year: 5,
         class: '종달새반',
-        by: '김라희',
+        by: '전태민',
         role: '어린이',
         lang_quiz: 'ko',
         lang_answer: 'ko',
