@@ -67,7 +67,7 @@ html['admission'] = `
     <li>11월 6일 토요일 10시 30분 (종료)</li>
     <li>11월 13일 토요일 10시 30분</li>
   </ul>
-  <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 자세한 내용을 살펴보신 후, 
+  <a href="https://bit.ly/3qjWFzD" target="_blank"><strong>설명회 안내</strong></a>에서 자세한 내용을 살펴보신 후, 
   <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>로 참여할 수 있습니다.   
   <br>
   <br><br>
