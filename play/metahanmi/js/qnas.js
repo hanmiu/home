@@ -443,7 +443,7 @@ let _qnas = [
     },
     {
         type: '엉뚱'.split(','),
-        quiz: '도토리는 무슨 나무의 열매일까요?',
+        quiz: '아몬드가 죽으면?',
         answer: '다이아몬드'.split(','),
         example: '다이하드,다이소,다리미'.split(','),
         year: 5,
