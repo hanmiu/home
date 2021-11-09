@@ -39,15 +39,15 @@ html['admission'] = `
 <div>입학 및 교육설명회</div>
 <div class="subtle">
   <br>
-  코로나19 <4단계 사회적 거리두기> 상황으로 비대면 줌(Zoom) 설명회와 소그룹 대면 설명회를 병행합니다.
+  코로나19 <4단계 사회적 거리두기> 상황으로 비대면 줌(Zoom) 설명회와 대면 설명회를 병행합니다.
   <br>
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있습니다.
+  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있으며, <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 다뤄졌던 내용을 살펴보실 수 있습니다.
   <br><br>
 
   <strong>비대면 Zoom 설명회</strong><br>
   <ul class="leaf">
-    <li>11월 2일 화요일 11시</li>
-    <li>11월 9일 화요일 11시</li>
+    <li>11월 2일 화요일 11시 (종료)</li>
+    <li>11월 9일 화요일 11시 (종료)</li>
     <li>11월 16일 화요일 11시</li>
   </ul>
   비대면 설명회는 1시간 정도 다음의 내용으로 진행합니다.
@@ -55,21 +55,21 @@ html['admission'] = `
     <li>2022학년도의 운영 계획과 모집대상 및 학급구성, 교육과정과 방과후과정 시간, 교육비, 방과후특성화활동, 통학차량, 급식관련, 학사운영, 하루일과 등을 소개합니다.</li>
     <li>2021년 한미유치원의 화두였던 <strong>놀이 속의 다양한 문해력</strong> 이야기를 소개합니다.</li>
   </ul></ul>
-  <b>메타버스를 활용한 상상놀이 원격 워크숍</b><br>
+  <b>메타버스를 활용한 상상놀이 원격 워크숍 (종료)</b><br>
   설명회에 이어서 추가 신청자에 한해 메타버스를 활용한 상상놀이 원격 워크숍을 진행할 계획입니다.
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/metaverse_workshop.jpg">
   한미유치원 입학을 기대하는 어린이들도 참여하는 설명회가 될 수 있도록 준비하겠습니다.<br>
   설명회날 12시 10분 부터 30분~40분, 오후 3시 10분 부터 30분~40분 진행합니다.
   <br><br>
 
-  <strong>소그룹 대면 설명회 및 놀이 체험</strong><br>
+  <strong>대면 설명회 및 놀이 체험</strong><br>
   <ul class="flower">
-    <li>11월 6일 토요일 10시 30분</li>
+    <li>11월 6일 토요일 10시 30분 (종료)</li>
     <li>11월 13일 토요일 10시 30분</li>
   </ul>
-  소그룹 대면 설명회 및 놀이 체험은 11월의 거리두기 지침에 따라 유동성이 있기 때문에 신청을 받긴 하지만 변동사항이 있거나 열리지 않을 수도 있습니다.<br>
+  <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 자세한 내용을 살펴보신 후, 
+  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>로 참여할 수 있습니다.   
   <br>
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 확인해 주세요. 
   <br><br>
   
   <b>설명회 참석 여부는 처음학교로를 통한 입학 선정에 영향을 주지 않습니다.</b>
