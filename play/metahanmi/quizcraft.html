@@ -294,8 +294,11 @@
         const near = 0.1;
         const far = 1000;
         const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-        camera.position.set(24, 20, 21);
-        camera.lookAt(24 + 1, 20, 21 + 1);
+        let c_theta = Math.random() * Math.PI * 2;
+        //camera.position.set(50 + 30 * Math.sin(c_theta), 100, 50 + 30 * Math.cos(c_theta));
+        //camera.lookAt(50, 100, 50);
+        camera.position.set(66, 50, 68);
+        camera.lookAt(50, 50, 50);
         //const orbitControls = new OrbitControls(camera, canvas);
         //orbitControls.target.set(cellSize / 2, cellSize / 3, cellSize / 2 - 1);
         //orbitControls.enabled = false;
@@ -585,7 +588,7 @@
         }
 
         const vox_loader = new VOXLoader();
-        vox_loader.load( './vox/test_island.vox', load_vox_chunks);
+        vox_loader.load( './vox/flower_island.vox', load_vox_chunks);
         firstPersonControls.fly = false;
 
         //-----
@@ -627,10 +630,12 @@
                     //     cellSize + (Math.random()*2-1) * 5,
                     //     cellSize / 3 + 5,
                     //     cellSize + (Math.random()*2-1) * 5);
+                    let theta = Math.random() * Math.PI * 2;
+                    let r = 10 + 20 * Math.random();
                     agent.setPosition(
-                        40 + (Math.random()*2-1) * 15,
-                        10 + Math.random() * 10,
-                        40 + (Math.random()*2-1) * 15);
+                        50 + r * Math.sin(theta),
+                        40 + Math.random() * 10,
+                        50 + r * Math.sin(theta));
                     agents.push(agent);
                 }
             } );
@@ -1087,7 +1092,10 @@
 
         function do_quiz() {
             if(qnas.length > 0) {
-                synth.triggerAttackRelease("C4", "8n");
+                if(synth) {
+                    synth.triggerAttackRelease("C4", "8n");
+                }
+                
 
                 let q = qnas[0];
                 if(curr_agent) {
@@ -1282,10 +1290,12 @@
 
             let html = '';
             if(curr_answer.includes(answer)) {
-                const now = Tone.now()
-                synth.triggerAttackRelease("C4", "8n", now);
-                synth.triggerAttackRelease("E4", "8n", now + 0.25);
-                synth.triggerAttackRelease("G4", "8n", now + 0.5);
+                const now = Tone.now();
+                if(synth) {
+                    synth.triggerAttackRelease("C4", "8n", now);
+                    synth.triggerAttackRelease("E4", "8n", now + 0.25);
+                    synth.triggerAttackRelease("G4", "8n", now + 0.5);
+                }
 
                 let found = F[Math.random() * F.length | 0];
                 let home = H[Math.random() * H.length | 0];
@@ -1343,7 +1353,9 @@
                 }
             }
             else {
-                synth.triggerAttackRelease("G4", "8n");
+                if(synth) {
+                    synth.triggerAttackRelease("G4", "8n");
+                }
 
                 let expr = run_exprs[Math.random() * run_exprs.length | 0];
                 html = `<span class="text">${by}의 생각은 달랐어요.</span><br>
