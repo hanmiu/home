@@ -50,7 +50,7 @@ html['admission'] = `
 <div>입학 및 교육설명회</div>
 <div class="subtle">
   <br>
-  코로나19 <4단계 사회적 거리두기> 상황으로 비대면 줌(Zoom) 설명회와 대면 설명회를 병행합니다.
+  코로나19 상황으로 비대면 줌(Zoom) 설명회와 대면 설명회를 병행합니다.
   <br>
   <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있으며, <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 다뤄졌던 내용을 자세하게 살펴보실 수 있습니다.
   <br>
