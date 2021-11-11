@@ -26,6 +26,7 @@ html['admission'] = `
 </div>
 <br>
 
+<!--
 <div>처음학교로 시스템</div>
 <div class="subtle">
   <ul class="musical">
@@ -35,14 +36,19 @@ html['admission'] = `
   </ul>
 </div>
 <br>
+-->
 
 <div>입학 및 교육설명회</div>
 <div class="subtle">
   <br>
   코로나19 <4단계 사회적 거리두기> 상황으로 비대면 줌(Zoom) 설명회와 대면 설명회를 병행합니다.
   <br>
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있으며, <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 다뤄졌던 내용을 살펴보실 수 있습니다.
-  <br><br>
+  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있으며, <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 다뤄졌던 내용을 자세하게 살펴보실 수 있습니다.
+  <br>
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">11월 6일의 <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회</a> 때 공개한 공간</div>
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2021/tour.jpg">
+  <br>
+  <br>
 
   <strong>비대면 Zoom 설명회</strong><br>
   <ul class="leaf">
@@ -55,6 +61,12 @@ html['admission'] = `
     <li>2022학년도의 운영 계획과 모집대상 및 학급구성, 교육과정과 방과후과정 시간, 교육비, 방과후특성화활동, 통학차량, 급식관련, 학사운영, 하루일과 등을 소개합니다.</li>
     <li><strong>일상의 놀이를 통한 배움</strong> 영상을 보며 한미유치원의 교육에 관해 소개합니다.</li>
   </ul></ul>
+
+  <br>
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">&lt;일상의 놀이를 통한 배움&gt; 영상 중에서</div>
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2021/learning_through_playing.jpg">
+  <br><br>
+
   <b>메타버스를 활용한 상상놀이 원격 워크숍 (종료)</b><br>
   설명회에 이어서 추가 신청자에 한해 메타버스를 활용한 상상놀이 원격 워크숍을 진행했습니다.
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/metaverse_workshop.jpg">
@@ -84,7 +96,7 @@ html['admission'] = `
     <li>2022학년도 <strong>방과후 과정 참여</strong>가 필요한 맞벌이 가정과 돌봄이 필요한 가정은 <strong>누구나 신청</strong>할 수 있습니다.</li>
   </ul>
   <br>
-  한미유치원 2021 가을 비대면 행사 <strong><a href="https://bit.ly/3BsWdRu">&lt;뾰족산의 보물&gt;</a></strong>를 11월 초에 시작합니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 살펴볼 수 있습니다. 
+  한미유치원 2021 가을 비대면 행사 <strong><a href="https://bit.ly/3BsWdRu">&lt;뾰족산의 보물&gt;</a></strong>이 진행 중 입니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 살펴볼 수 있습니다. 
   <span><strong><span><a href="https://www.hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank">&lt;뾰족산의 보물&gt; 플레이</a></span></strong><span>, <span><a href="https://bit.ly/3BsWdRu" target="_blank">플레이 방법</a></span>  
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/treasure_mountain.jpg">
 </div>
