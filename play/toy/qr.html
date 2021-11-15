@@ -22,6 +22,7 @@
     }
 
     #right {
+        position: relative;
         width: 100%;
         height: calc(100vh - 60px);
     }
@@ -85,6 +86,15 @@
         border-style: none;
         transition: 1s opacity;
     }
+
+    #hide-pane {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 220px;
+        height: calc(100vh - 60px);
+        background-color: black;
+    }
 </style>
 <body>
 <div id="page">
@@ -93,8 +103,14 @@
     <p>찾은 QR 코드를 카메라에 보여 주세요.</p>
     <div id="loadingMessage">🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
         <canvas id="canvas" hidden></canvas>
-        <div>
-            <input id="to_hide" type="checkbox"><input id="dur" type="number" value="60" style="width: 35px;"><label style="color: white;">초 후에 가리기</label>
+        <div id="control">
+            <div>
+                <input id="to-hide" type="checkbox"><input id="dur" type="number" value="60" style="width: 35px;"><label style="color: white;"> 초 후에 가리기</label>
+            </div>
+            <div>
+                <input id="hide-w" type="number" value="220" style="width: 40px;"><label style="color: white;"> 만큼 왼쪽 가리기</label>
+            </div>
+            <div><button id="hide-control">이 부분 숨기기</button></div>
         </div>
         <div id="output" hidden>
             <div id="outputMessage" style="display: none;">QR코드를 아직 인식하지 못했습니다.</div>
@@ -103,6 +119,7 @@
     </div>
     <div id="right">
         <iframe id="frame-content" src="" width="600"></iframe>
+        <div id="hide-pane"></div>
     </div>
 </div>
 <div id="footer"></div>
@@ -122,8 +139,11 @@ let last_found = '';
 let last_founds = {};
 
 let el_footer = document.querySelector('#footer');
-let cb_to_hide = document.querySelector('#to_hide');
+let cb_to_hide = document.querySelector('#to-hide');
 let el_dur = document.querySelector('#dur');
+let el_hide_w = document.querySelector('#hide-w');
+let bt_hide_control = document.querySelector('#hide-control');
+let el_hide_pane = document.querySelector('#hide-pane');
 
 let wait = 0;
 let time = 0;
@@ -192,6 +212,7 @@ function tick(timestamp) {
         let dur = parseFloat(el_dur.value);
         if(time > checked_time + dur) {
             el_frame_content.style.opacity = 0;
+            last_found = '';
         }
         else {
             el_frame_content.style.opacity = 1;
@@ -199,4 +220,12 @@ function tick(timestamp) {
     }
     requestAnimationFrame(tick);
 }
+
+bt_hide_control.addEventListener('click', (e) => {
+    document.querySelector('#control').style.display = 'none';
+});
+
+el_hide_w.addEventListener('input', (e) => {
+    el_hide_pane.style.width = e.target.value + 'px';
+});
 </script>
