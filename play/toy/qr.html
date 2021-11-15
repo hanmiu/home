@@ -1,0 +1,201 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>한미 탐험</title>
+<style>
+    body {
+        padding: 50px;
+        font-family: 'Ropa Sans', sans-serif;
+        color: white;
+        background-color: black;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #page {
+        display: flex;
+    }
+
+    #left {
+        width: 350px;
+        margin-right: 20px;
+        overflow: hidden;
+    }
+
+    #right {
+        width: 100%;
+        height: calc(100vh - 60px);
+    }
+
+    h1 {
+        margin: 10px 0;
+        font-size: 40px;
+        color: white;
+    }
+
+    #loadingMessage {
+        text-align: center;
+        padding: 40px;
+        background-color: #eee;
+    }
+
+    #canvas {
+        height: 200px;
+    }
+
+    #output {
+        margin-top: 20px;
+        /* background: #eee; */
+        padding: 10px;
+        padding-bottom: 0;
+        width: 640px;
+    }
+
+    #output div {
+        width: 250px;
+        padding-bottom: 10px;
+        word-wrap: break-word;
+    }
+
+    #noQRFound {
+        text-align: center;
+    }
+
+    #img-found {
+        height: 600px;
+        opacity: 0;
+        transition: opacity 1s;
+    }
+
+    #footer {
+        margin-top: 20px;
+        overflow-y: scroll;
+    }
+
+    .thumb {
+        display: inline-block;
+        height: 120px;
+        margin: 10px;
+        border-radius: 10px;
+    }
+
+    #frame-content {
+        width: 100%;
+        height: calc(100vh - 60px);
+        border-style: none;
+        transition: 1s opacity;
+    }
+</style>
+<body>
+<div id="page">
+    <div id="left">
+    <h1>한미유치원 탐험</h1>
+    <p>찾은 QR 코드를 카메라에 보여 주세요.</p>
+    <div id="loadingMessage">🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
+        <canvas id="canvas" hidden></canvas>
+        <div>
+            <input id="to_hide" type="checkbox"><input id="dur" type="number" value="60" style="width: 35px;"><label style="color: white;">초 후에 가리기</label>
+        </div>
+        <div id="output" hidden>
+            <div id="outputMessage" style="display: none;">QR코드를 아직 인식하지 못했습니다.</div>
+            <div hidden><b>Data:</b> <span id="outputData"></span></div>
+        </div>
+    </div>
+    <div id="right">
+        <iframe id="frame-content" src="" width="600"></iframe>
+    </div>
+</div>
+<div id="footer"></div>
+</body>
+<script src="./js/jsqr.js"></script>
+<script>
+let video = document.createElement("video");
+let canvasElement = document.getElementById("canvas");
+let canvas = canvasElement.getContext("2d");
+let loadingMessage = document.getElementById("loadingMessage");
+let outputContainer = document.getElementById("output");
+let outputMessage = document.getElementById("outputMessage");
+let outputData = document.getElementById("outputData");
+let el_frame_content = document.querySelector('#frame-content');
+
+let last_found = '';
+let last_founds = {};
+
+let el_footer = document.querySelector('#footer');
+let cb_to_hide = document.querySelector('#to_hide');
+let el_dur = document.querySelector('#dur');
+
+let wait = 0;
+let time = 0;
+let checked_time = 0;
+    
+function drawLine(begin, end, color) {
+    canvas.beginPath();
+    canvas.moveTo(begin.x, begin.y);
+    canvas.lineTo(end.x, end.y);
+    canvas.lineWidth = 4;
+    canvas.strokeStyle = color;
+    canvas.stroke();
+}
+
+// Use facingMode: environment to attemt to get the front camera on phones
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+    video.srcObject = stream;
+    video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+    video.play();
+    requestAnimationFrame(tick);
+});
+
+function check(found) {
+    if(last_found !== found) {
+        last_found = found;
+
+        el_frame_content.src = found;
+        el_frame_content.style.opacity = 1;
+        checked_time = time;
+    }
+}
+
+function tick(timestamp) {
+    time = timestamp / 1000;
+    loadingMessage.innerText = "⌛ Loading video..."
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        loadingMessage.hidden = true;
+        canvasElement.hidden = false;
+        outputContainer.hidden = false;
+
+        canvasElement.height = video.videoHeight;
+        canvasElement.width = video.videoWidth;
+        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+        var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        var code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+        });
+        if (code) {
+            drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+            drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+            drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+            drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+            outputMessage.hidden = true;
+            outputData.parentElement.hidden = false;
+            outputData.innerText = code.data;
+            
+            check(code.data);
+            
+        } else {
+            outputMessage.hidden = false;
+            outputData.parentElement.hidden = true;
+        }
+    }
+    
+    if(cb_to_hide.checked) {
+        let dur = parseFloat(el_dur.value);
+        if(time > checked_time + dur) {
+            el_frame_content.style.opacity = 0;
+        }
+        else {
+            el_frame_content.style.opacity = 1;
+        }
+    }
+    requestAnimationFrame(tick);
+}
+</script>
