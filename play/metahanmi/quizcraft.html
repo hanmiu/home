@@ -271,6 +271,7 @@
     import { josa } from './js/josa.js';
     import { Agent } from './js/agent.js';
     
+    window.Tone = Tone;
     
     let cs = Array(32*32*32).fill(0).map(c => [
         Math.random(),
@@ -1236,6 +1237,7 @@
             살금살금 뒤돌아보며
             엉덩이를 씰룩쌜룩하면서
             찡긋찡긋 윙크하며
+            빠르게
         `.split('\n').map(x => x.trim()).filter(x => x.length > 0);
 
         let reunion_exprs = `
