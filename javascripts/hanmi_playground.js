@@ -13,7 +13,6 @@ html['playground'] = `
   <br>
   2021학년도에 진행하고 있는 &lt;뾰족산의 보물&gt;은 2018학년도의 <a href="https://www.youtube.com/watch?v=3K7YbkTprO0" target="_blank"><strong>만드는 건 어렵지만 맞추면 재미있는 것은?</strong></a>에서 아이디어를 얻어 교실과 가정과 소통하며 함께 만들어가고 있습니다. 한미유치원 나름의 메타버스를 구현하기 위한 토대로 삼고자 하는 연구 개발이기도 합니다.<br><br>
   <span><a href="https://bit.ly/3Hne94r" target="_blank">&lt;뾰족산의 보물&gt; 플레이 방법과 더 자세한 소개</a> 
-  </div>
   <br><br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/toy/lens.html" target="_blank"><strong>
@@ -68,6 +67,16 @@ html['playground'] = `
   <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">2019 종달새반, 미디어 매체를 활용한 즐거움 만들기</div>
   <br>
   <div class="subtle">놀이를 지원하기 위해 개발한 소프트웨어만 아니라 <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 교실의 놀이와 연결되어 배움의 도움계단이 되어주는지 살펴보실 수 있습니다.</div>
+  <br><br>
+
+  &lt;디지털 놀이터&gt;를 구현하고 있는 한미유치원 설립자인 최승준 작가에 관한 이야기는 아래 링크를 통해 살펴볼 수 있습니다.
+  <ul class="musical">
+    <li><a href="https://youtu.be/enW8po_nMA4" target="_blank">디지털 기술로 새로운 교육 상상하기</a></li>
+    <li><a href="https://youtu.be/ls2GGdCdJ3A" target="_blank">기술시대의 예술과 예술교육</a></li>
+    <li><a href="https://www.youtube.com/watch?v=VJN_k3E_xMQ" target="_blank">코딩과 미디어아트, 그리고 일상의 아이디어</a></li>
+    <li><a href="https://drive.google.com/file/d/1f_sxbkl9gVWzKvwt_6OIRfFkcOmrL6D1/view?usp=sharing" target="_blank">&lt;마인드스톰&gt;에 얽혀있는 줄기</a>:<br><a href="https://blog.insightbook.co.kr/2020/05/21/%EC%9D%B8%EA%B0%84%EC%9D%84-%EC%9C%84%ED%95%9C-%EA%B0%95%EB%A0%A5%ED%95%9C-%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4-%E3%80%8A%EB%A7%88%EC%9D%B8%EB%93%9C%EC%8A%A4%ED%86%B0%E3%80%8B/" target="_blank">마인드스톰 - 어린이, 컴퓨터, 배움, 그리고 강력한 아이디어</a>의 부록 1</li>
+  </ul>
+  </div>
   <br><br>
 
   <div>더 살펴보기</div>
