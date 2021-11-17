@@ -11,7 +11,7 @@ html['playground'] = `
   <div class="subtle">
   어린이들이 그린 &lt;그림이&gt;가 종이를 떠나 신기한 섬에 갔습니다. &lt;수수께끼&gt;를 풀어서 &lt;그림이&gt;를 찾아주세요! 술래잡기 하듯이 &lt;그림이&gt;에게 다가가면 &lt;수수께끼&gt;가 나오고 그 &lt;수수께끼&gt;를 풀면 &lt;그림이&gt;를 되찾을 수 있습니다. 현재 가정과 교실로 부터 받은 90여개의 &lt;수수께끼&gt;가 모여있습니다.<br>
   <br>
-  2021학년도에 진행하고 있는 &lt;뾰족산의 보물&gt;은 2018학년도의 <a href="https://www.youtube.com/watch?v=3K7YbkTprO0" target="_blank"><strong>만드는 건 어렵지만 맞추면 재미있는 것은?</strong></a>에서 아이디어를 얻어 교실과 가정과 소통하며 함께 만들어가고 있습니다. 한미유치원 나름의 메타버스를 구현하기 위한 토대로 삼고자 하는 연구 개발이기도 합니다.<br><br>
+  2021학년도에 진행하고 있는 &lt;뾰족산의 보물&gt;은 <a href="https://www.youtube.com/watch?v=3K7YbkTprO0" target="_blank">&lt;<strong>만드는 건 어렵지만 맞추면 재미있는 것은?</strong></a> (2018)&gt;, &lt;한미유치원 탐험 (2019)&gt;, &lt;우리가 만드는 미로 (2020)&gt; 등에서 아이디어를 얻고 발전시켜 교실과 가정과 소통하며 함께 만들어가고 있습니다. 한미유치원 나름의 메타버스를 구현하기 위한 토대로 삼고자 하는 연구 개발이기도 합니다.<br><br>
   <span><a href="https://bit.ly/3Hne94r" target="_blank">&lt;뾰족산의 보물&gt; 플레이 방법과 더 자세한 소개</a> 
   <br><br><br>
 
