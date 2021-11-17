@@ -116,7 +116,7 @@ html['admission'] = `
   </ul>
   <br>
   한미유치원 2021 가을 비대면 행사 <strong><a href="https://bit.ly/3BsWdRu">&lt;뾰족산의 보물&gt;</a></strong>이 진행 중 입니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 살펴볼 수 있습니다.<br> 
-  <span><strong><span><a href="https://www.hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank">&lt;뾰족산의 보물&gt; 플레이</a></span></strong><span>, <span><a href="https://bit.ly/3Hne94r" target="_blank">플레이 방법</a></span>  
+  <span><strong><span><a href="https://www.hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank">&lt;뾰족산의 보물&gt; 플레이</a></span></strong><span>, <span><a href="https://bit.ly/3Hne94r" target="_blank">플레이 방법</a></span><br>  
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/treasure_mountain.jpg">
 </div>
 <div>
