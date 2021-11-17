@@ -2,6 +2,29 @@ html['playground'] = `
   <div>어린이의 동시대 환경인 디지털</div>
   <br>
   
+  <div class="subtle"><a href="https://hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank"><strong>
+  뾰족산의 보물
+  </strong></div>
+  <a class="no-underline" href="https://bit.ly/3Hne94r">
+    <img class="full" src="./images/2021/treasure_mountain.jpg">
+  </a>
+  <div class="subtle">
+  어린이들이 그린 &lt;그림이&gt;가 종이를 떠나 신기한 섬에 갔습니다. &lt;수수께끼&gt;를 풀어서 &lt;그림이&gt;를 찾아주세요! 술래잡기 하듯이 &lt;그림이&gt;에게 다가가면 &lt;수수께끼&gt;가 나오고 그 &lt;수수께끼&gt;를 풀면 &lt;그림이&gt;를 되찾을 수 있습니다. 현재 가정과 교실로 부터 받은 90여개의 &lt;수수께끼&gt;가 모여있습니다.<br>
+  <br>
+  2021학년도에 진행하고 있는 &lt;뾰족산의 보물&gt;은 2018학년도의 <a href="https://www.youtube.com/watch?v=3K7YbkTprO0" target="_blank"><strong>만드는 건 어렵지만 맞추면 재미있는 것은?</strong></a>에서 아이디어를 얻어 교실과 가정과 소통하며 함께 만들어가고 있습니다.<br><br>
+  <span><a href="https://bit.ly/3Hne94r" target="_blank">&lt;뾰족산의 보물&gt; 플레이 방법과 더 자세한 소개</a> 
+  </div>
+  <br><br>
+
+  <div class="subtle"><a href="https://www.hanmiu.cc/play/toy/lens.html" target="_blank"><strong>
+  호기심 렌즈
+  </strong></div>
+  <a class="no-underline" href="https://www.hanmiu.cc/play/toy/lens.html">
+    <img class="full" src="./images/2020/lens.jpg">
+  </a>
+  <div class="subtle">2020학년도 겨울에 만들었던 &lt;호기심 렌즈&gt;는 일상의 익숙한 사물을 동그라미, 세모, 네모의 렌즈 안에 담아 다른 관점으로 새롭게 표현해 보는 작업입니다. &lt;<a href="https://youtu.be/VqTJPbPC3OY" target="_blank">2021 세계문화예술교육 주간</a>&gt;에 소개되기도 했습니다.</div>
+  <br><br>
+  
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/hangul-slime.html" target="_blank"><strong>
   한글 슬라임
   </strong></div>
@@ -9,7 +32,7 @@ html['playground'] = `
     <img class="full" src="./play/glyph/hangul-slime.jpg">
   </a>
   <div class="subtle">모음과 자음 사이에 인력이 작용합니다. 빈 공간을 터치(클릭)하면 그 쪽으로 한글 자모가 모입니다. 데스크탑과 모바일을 지원하며 크롬, 엣지, 사파리, 파이어폭스 등의 요즘 브라우저에서 작동합니다. 위 링크 또는 이미지를 클릭하여 어린이와 함께 놀아보세요.</div>
-  <br>
+  <br><br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/mmj.html" target="_blank"><strong>
   몸문자
@@ -18,7 +41,7 @@ html['playground'] = `
     <img class="full" src="./play/glyph/mmj.jpg">
   </a>
   <div class="subtle"><a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 놀이를 지원하기 위해 만들었습니다. 만5세 어린이들의 호기심과 제안을 따라가며 문자 체계를 고안해 갔던 이야기입니다. 자세한 내용은 <a href="https://www.youtube.com/watch?v=x25lngyKUAU" target="_blank">몸문자</a> 영상을 살펴봐 주세요.</div>
-  <br>
+  <br><br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/snowflower.html" target="_blank"><strong>
   눈꽃
@@ -27,7 +50,7 @@ html['playground'] = `
     <img class="full" src="./play/glyph/snowflower.jpg">
   </a>
   <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 만4세의 한글에 관한 탐색을 지원하기 위한 여러 접근 중에 하나로 활용되었습니다. 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상을 살펴봐 주세요.</div>
-  <br>
+  <br><br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/drawing.html" target="_blank"><strong>
   글자 드로잉
@@ -45,7 +68,7 @@ html['playground'] = `
   <div style="margin-bottom: 0.5em; text-align: center; font-size: 0.5em; line-height: 1.5rem">2019 종달새반, 미디어 매체를 활용한 즐거움 만들기</div>
   <br>
   <div class="subtle">놀이를 지원하기 위해 개발한 소프트웨어만 아니라 <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어 매체를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 교실의 놀이와 연결되어 배움의 도움계단이 되어주는지 살펴보실 수 있습니다.</div>
-  <br>
+  <br><br>
 
   <div>더 살펴보기</div>
   <div class="subtle">
