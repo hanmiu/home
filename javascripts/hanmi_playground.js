@@ -71,10 +71,10 @@ html['playground'] = `
 
   &lt;디지털 놀이터&gt;를 구현하고 있는 한미유치원 설립자인 최승준 작가에 관한 이야기는 아래 링크를 통해 살펴볼 수 있습니다.
   <ul class="musical">
-    <li><a href="https://youtu.be/enW8po_nMA4" target="_blank">디지털 기술로 새로운 교육 상상하기</a></li>
-    <li><a href="https://youtu.be/ls2GGdCdJ3A" target="_blank">기술시대의 예술과 예술교육</a></li>
-    <li><a href="https://www.youtube.com/watch?v=VJN_k3E_xMQ" target="_blank">코딩과 미디어아트, 그리고 일상의 아이디어</a></li>
-    <li><a href="https://drive.google.com/file/d/1f_sxbkl9gVWzKvwt_6OIRfFkcOmrL6D1/view?usp=sharing" target="_blank">&lt;마인드스톰&gt;에 얽혀 있는 줄기</a>:<br><a href="https://blog.insightbook.co.kr/2020/05/21/%EC%9D%B8%EA%B0%84%EC%9D%84-%EC%9C%84%ED%95%9C-%EA%B0%95%EB%A0%A5%ED%95%9C-%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4-%E3%80%8A%EB%A7%88%EC%9D%B8%EB%93%9C%EC%8A%A4%ED%86%B0%E3%80%8B/" target="_blank">마인드스톰 - 어린이, 컴퓨터, 배움, 그리고 강력한 아이디어</a>의 부록 1</li>
+    <li><a href="https://youtu.be/enW8po_nMA4" target="_blank">디지털 기술로 새로운 교육 상상하기</a> (PaTI 미니 컨퍼런스, 2021)</li>
+    <li><a href="https://youtu.be/ls2GGdCdJ3A" target="_blank">기술시대의 예술과 예술교육</a> (서울예술교육 TA 월간 웨비나, 2021)</li>
+    <li><a href="https://www.youtube.com/watch?v=VJN_k3E_xMQ" target="_blank">코딩과 미디어아트, 그리고 일상의 아이디어</a> (2019)</li>
+    <li><a href="https://drive.google.com/file/d/1f_sxbkl9gVWzKvwt_6OIRfFkcOmrL6D1/view?usp=sharing" target="_blank">&lt;마인드스톰&gt;에 얽혀 있는 줄기</a>:<br><a href="https://blog.insightbook.co.kr/2020/05/21/%EC%9D%B8%EA%B0%84%EC%9D%84-%EC%9C%84%ED%95%9C-%EA%B0%95%EB%A0%A5%ED%95%9C-%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4-%E3%80%8A%EB%A7%88%EC%9D%B8%EB%93%9C%EC%8A%A4%ED%86%B0%E3%80%8B/" target="_blank">마인드스톰 - 어린이, 컴퓨터, 배움, 그리고 강력한 아이디어</a>의 부록 1 (2020)</li>
   </ul>
   </div>
   <br><br>
