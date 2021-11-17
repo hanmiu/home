@@ -13,7 +13,7 @@ html['playground'] = `
   <br>
   2021학년도에 진행하고 있는 &lt;뾰족산의 보물&gt;은 2018학년도의 <a href="https://www.youtube.com/watch?v=3K7YbkTprO0" target="_blank"><strong>만드는 건 어렵지만 맞추면 재미있는 것은?</strong></a>에서 아이디어를 얻어 교실과 가정과 소통하며 함께 만들어가고 있습니다. 한미유치원 나름의 메타버스를 구현하기 위한 토대로 삼고자 하는 연구 개발이기도 합니다.<br><br>
   <span><a href="https://bit.ly/3Hne94r" target="_blank">&lt;뾰족산의 보물&gt; 플레이 방법과 더 자세한 소개</a> 
-  <br><br>
+  <br><br><br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/toy/lens.html" target="_blank"><strong>
   호기심 렌즈
