@@ -644,7 +644,7 @@
 
         shuffle(_qnas);
         let qnas = JSON.parse(JSON.stringify(_qnas)).splice(0, 20);
-        qnas = qnas.sort((a, b) => (new Date(b.date)) - new Date(a.date));
+        qnas = qnas.sort((a, b) => (new Date(a.date)) - new Date(b.date));
 
         let glbs = [
             '까치반/권라나.glb',
