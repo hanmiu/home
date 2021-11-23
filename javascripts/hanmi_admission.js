@@ -12,7 +12,7 @@ html['admission'] = `
 
 <div class="subtle">
 2022학년도 한미유치원 입학에 관심가져 주셔서 감사합니다.<br><br>
-입학 문의는 <a href="tel:031-976-6567">전화</a>로 부탁드립니다. 아래에서 설명회 때 다뤘던 내용을 살펴보실 수 있습니다.
+입학에 관한 문의는 <a href="tel:031-976-6567">전화</a>로 부탁드립니다.
 <br><br>
 <strong>시설 참관</strong><br>
   <ul class="leaf">
