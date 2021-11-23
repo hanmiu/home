@@ -12,14 +12,13 @@ html['admission'] = `
 
 <div class="subtle">
 2022학년도 한미유치원 입학에 관심가져 주셔서 감사합니다.<br><br>
-계획했던 비대면 설명회와 대면 설명회를 모두 마쳤고, 11월 23일 오후 4시 30분에 시설참관을 한 번 더 준비했습니다. 비대면 설명회와는 다른 형식의 &lt;시설 참관&gt;으로 진행됩니다. 
+계획했던 비대면 설명회, 대면 설명회를 모두 마쳤고, 시설참관까지 진행했습니다. 
 <br><br>
 <strong>시설 참관</strong><br>
   <ul class="leaf">
-    <li>11월 23일 화요일 오후 4시 30분</li>
+    <li>11월 23일 화요일 오후 4시 30분 (종료)</li>
   </ul>
-  <a href="https://bit.ly/3qjWFzD" target="_blank"><strong>설명회 안내</strong></a>에서 그간 다뤄졌던 내용을 살펴보신 후, 기존의 
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>로 신청할 수 있습니다.
+  <a href="https://bit.ly/3qjWFzD" target="_blank"><strong>설명회 안내</strong></a>에서 그간 다뤄졌던 내용을 살펴보실 수 있습니다.
   <br><br>
 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
 </div>
