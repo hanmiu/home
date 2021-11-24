@@ -14,7 +14,7 @@ html['playground'] = `
   2021학년도에 진행하고 있는 &lt;뾰족산의 보물&gt;은 <a href="https://www.youtube.com/watch?v=3K7YbkTprO0" target="_blank">&lt;<strong>만드는 건 어렵지만 맞추면 재미있는 것은?</strong></a> (2018)&gt;, &lt;한미유치원 여행 (2019)&gt;, &lt;우리가 만드는 미로 (2020)&gt; 등에서 아이디어를 얻고 발전시켜 교실과 가정과 소통하며 함께 만들어가고 있습니다. 한미유치원 나름의 메타버스를 구현하기 위한 토대로 삼고자 하는 연구 개발이기도 합니다.
   <ul class="flower">
     <li><span><a href="https://bit.ly/3Hne94r" target="_blank">&lt;뾰족산의 보물&gt; 플레이 방법과 더 자세한 소개</a></li>
-    <li><span><a href="https://good-pike-738.notion.site/5-ab1ce4b1f7044a8ea6cc4c269159b0b3" target="_blank">&lt;디지털 리터러시&gt;를 포함한 2021학년도의 &lt;다양한 문해력&gt; 화두에 연결되어 있는 놀이</a></li>
+    <li><span><a href="https://good-pike-738.notion.site/5-ab1ce4b1f7044a8ea6cc4c269159b0b3" target="_blank">&lt;디지털 리터러시&gt;를 포함한 2021학년도 &lt;다양한 문해력&gt; 화두에 연결되어 있는 놀이</a></li>
   </ul>
   <br><br>
 
