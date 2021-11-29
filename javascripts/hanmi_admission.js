@@ -12,7 +12,31 @@ html['admission'] = `
 
 <div class="subtle">
 2022학년도 한미유치원 입학에 관심가져 주셔서 감사합니다.<br><br>
-입학에 관한 문의는 <a href="tel:031-976-6567">전화</a>로 부탁드립니다.
+추가 모집에 관한 문의는 전화 <a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a>로 부탁드립니다.  
+</div>
+<br>
+
+모집대상
+<div class="subtle">
+<ul class="flower">
+    <li>2018년생 (만3세) OO명</li>
+    <li>2017년생 (만4세) O명</li>
+    <li>2016년생 (만5세) O명</li>
+  </ul>
+  설명회 기간 다뤄졌던 내용은 <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 자세하게 살펴보실 수 있습니다.<br>
+  2021학년도 현재 <a href="https://bit.ly/3oXJnXo" target="_blank">만3세반</a>, <a href="https://bit.ly/3DUzLTB" target="_blank">만4세반</a>, <a href="https://bit.ly/3pcpDzl" target="_blank">만5세반</a>, <a href="https://bit.ly/3pdcaY9" target="_blank">전시장</a>의 공간과 교육을 사진과 간략한 글로 소개합니다.
+  
+</div>
+<br>
+
+<!--
+<div class="subtle">
+  <ul class="flower">
+    <li>2018년생 (만3세) 54명</li>
+    <li>2017년생 (만4세) 24명</li>
+    <li>2016년생 (만5세) 9명</li>
+  </ul>
+</div>
 <br><br>
 <strong>시설 참관</strong><br>
   <ul class="leaf">
@@ -23,25 +47,7 @@ html['admission'] = `
 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
 </div>
 <br>
-
-<div>모집 대상</div>
-<!--
-<div class="subtle">
-  <ul class="flower">
-    <li>2018년생 (만3세) 54명</li>
-    <li>2017년생 (만4세) 24명</li>
-    <li>2016년생 (만5세) 9명</li>
-  </ul>
-</div>
 -->
-<div class="subtle">
-  <ul class="flower">
-    <li>2018년생 (만3세) 29명</li>
-    <li>2017년생 (만4세) 22명</li>
-    <li>2016년생 (만5세) 9명</li>
-  </ul>
-</div>
-<br>
 
 <!--
 <div>처음학교로 시스템</div>
@@ -58,12 +64,12 @@ html['admission'] = `
 <div>입학 및 교육설명회</div>
 <div class="subtle">
   <br>
-  코로나19 상황으로 비대면 줌(Zoom) 설명회와 대면 설명회를 병행합니다.
-  <br>
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>를 통해 신청할 수 있으며, <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 다뤄졌던 내용을 자세하게 살펴보실 수 있습니다.
+  코로나19 상황으로 비대면 줌(Zoom) 설명회와 대면 설명회를 병행했습니다.
   <br>
   <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">11월 6일의 <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회</a> 때 공개한 공간</div>
-  <img style="display: block; width: 100%; margin: auto;" src="./images/2021/tour.jpg">
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2021/tour1.jpg">
+  <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">2021학년도 2학기의 <a href="https://bit.ly/3pdcaY9" target="_blank">전시장</a></div>
+  <img style="display: block; width: 100%; margin: auto;" src="./images/2021/tour2.jpg">
   <br>
   <br>
 
@@ -78,11 +84,13 @@ html['admission'] = `
     <li>2022학년도의 운영 계획과 모집대상 및 학급구성, 교육과정과 방과후과정 시간, 교육비, 방과후특성화활동, 통학차량, 급식관련, 학사운영, 하루일과 등을 소개합니다.</li>
     <li><strong>일상의 놀이를 통한 배움</strong> 영상을 보며 한미유치원의 교육에 관해 소개합니다.</li>
   </ul></ul>
-  계획한 3회의 비대면 설명회를 모두 마쳤습니다. 혹시 추가적인 비대면 설명회를 원하시는 경우는 <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>로 &lt;참여 희망&gt;의견을 알려주시면, 혹시 진행될 때 알려드리도록 하겠습니다.
+  계획한 3회의 비대면 설명회를 모두 마쳤습니다.
 
   <br>
   <div style="margin-bottom: 0.5em; text-align: right; font-size: 0.5em">&lt;일상의 놀이를 통한 배움&gt; 영상 중에서</div>
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/learning_through_playing.jpg">
+  <br>
+  위 사진에 등장하는 &lt;일상의 놀이를 통한 배움&gt;에 관한 자세한 내용은 2021학년도 <a href="https://bit.ly/3oXJnXo" target="_blank">만3세반</a>, <a href="https://bit.ly/3DUzLTB" target="_blank">만4세반</a>, <a href="https://bit.ly/3pcpDzl" target="_blank">만5세반</a> 이야기에서 살펴볼 수 있습니다.
   <br><br>
 
   <b>메타버스를 활용한 상상놀이 원격 워크숍 (종료)</b><br>
@@ -96,9 +104,10 @@ html['admission'] = `
   <ul class="flower">
     <li>11월 6일 토요일 10시 30분 (종료)</li>
     <li>11월 13일 토요일 10시 30분 (종료)</li>
+    <li>11월 23일 화요일 오후 4시 30분 (종료)</li>
   </ul>
-  <a href="https://bit.ly/3qjWFzD" target="_blank"><strong>설명회 안내</strong></a>에서 자세한 내용을 살펴보신 후, 
-  <a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>로 참여할 수 있습니다.   
+  <a href="https://bit.ly/3qjWFzD" target="_blank"><strong>설명회 안내</strong></a>에서 자세한 내용을 살펴보실 수 있습니다. 
+  <!--<a href="https://forms.gle/e8ECbMSQX28tcfxKA" target="_blank">설명회 신청 링크</a>로 참여할 수 있습니다.--> 
   <br>
   <br><br>
   
@@ -115,7 +124,7 @@ html['admission'] = `
   </ul>
   <br>
   한미유치원 2021 가을 비대면 행사 <strong><a href="https://bit.ly/3BsWdRu">&lt;뾰족산의 보물&gt;</a></strong>이 진행 중 입니다. 한미유치원 어린이들이 그린 그림과, 교실과 가정에서 고안한 수수께끼가 등장하는 가상의 섬을 한미유치원 홈페이지를 통해 살펴볼 수 있습니다.<br> 
-  <span><strong><span><a href="https://www.hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank">&lt;뾰족산의 보물&gt; 플레이</a></span></strong><span>, <span><a href="https://bit.ly/3Hne94r" target="_blank">플레이 방법</a></span><br>  
+  <span><strong><span><a href="https://www.hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank">&lt;뾰족산의 보물&gt; 플레이</a></span></strong><span>, <span><a href="https://bit.ly/3Hne94r" target="_blank">플레이 방법</a></span><br><br> 
   <img style="display: block; width: 100%; margin: auto;" src="./images/2021/treasure_mountain.jpg">
 </div>
 <div>
