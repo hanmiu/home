@@ -23,7 +23,7 @@ html['admission'] = `
     <li>2017년생 (만4세) O명</li>
     <li>2016년생 (만5세) O명</li>
   </ul>
-  설명회 기간 다뤄졌던 내용은 <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 자세하게 살펴보실 수 있습니다.<br>
+  설명회 기간 다뤄졌던 내용은 <a href="https://bit.ly/3qjWFzD" target="_blank">대면 설명회 안내</a>에서 자세하게 살펴볼 수 있습니다.<br>
   2021학년도 현재 <a href="https://bit.ly/3oXJnXo" target="_blank">만3세반</a>, <a href="https://bit.ly/3DUzLTB" target="_blank">만4세반</a>, <a href="https://bit.ly/3pcpDzl" target="_blank">만5세반</a>, <a href="https://bit.ly/3pdcaY9" target="_blank">전시장</a>의 공간과 교육을 사진과 간략한 글로 소개합니다.
   
 </div>
