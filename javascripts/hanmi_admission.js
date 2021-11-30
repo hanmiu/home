@@ -118,7 +118,7 @@ html['admission'] = `
 <div>그 밖의 정보</div>
 <br>
 <div class="subtle">
-  관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 <strong><a href="https://drive.google.com/file/d/1hVmucthTSVuz5BqRdvj9OjTWsXigFtIf/view?usp=sharing" target="_blank">유아모집 요강</a></strong>을 참고해 주세요. 유아모집 요강의 내용은 처음학교로 개통 전에 일부 수정될 수 있습니다.<br><br>
+  관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 <strong><a href="https://drive.google.com/file/d/1hVmucthTSVuz5BqRdvj9OjTWsXigFtIf/view?usp=sharing" target="_blank">유아모집 요강</a></strong>을 참고해 주세요.<br><br>
   <ul class="musical">
     <li>2022학년도 <strong>방과후 과정 참여</strong>가 필요한 맞벌이 가정과 돌봄이 필요한 가정은 <strong>누구나 신청</strong>할 수 있습니다.</li>
   </ul>
