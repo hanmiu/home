@@ -19,7 +19,7 @@ html['admission'] = `
 모집대상
 <div class="subtle">
 <ul class="flower">
-    <li>2018년생 (만3세) OO명</li>
+    <li>2018년생 (만3세) O명</li>
     <li>2017년생 (만4세) O명</li>
     <li>2016년생 (만5세) O명</li>
   </ul>
