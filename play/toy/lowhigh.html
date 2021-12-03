@@ -38,7 +38,7 @@
         <button id="new-game">새로 하기</button>
         <input id="max" type="number" step="1" value="100">
     </div>
-    <h2 id="hint">1번 ~ 100번 중에 하나입니다.</h2>
+    <h2 id="hint">1번 부터 100번 중에 하나입니다.</h2>
     <div>
         <input id="number" type="number" step="1" value="0" min="0" max="100">
         <button id="guess">일까?</button>
@@ -77,7 +77,7 @@
         el_high.textContent = '?';
         let min = parseInt(el_min.value);
         let max = parseInt(el_max.value);
-        el_hint.textContent = `${min}번 ~ ${max}번 중에 하나입니다.`;
+        el_hint.textContent = `${min}번 부터 ${max}번 중에 하나입니다.`;
         el_number.value = 0;
         el_judge.textContent = '';
         el_pokemon_info.textContent = '';
@@ -111,6 +111,18 @@
             `;
         }
     }
+
+    el_min.addEventListener('input', (e) => {
+        let n = parseInt(e.target.value);
+        n = Math.max(Math.min(n, 898), 1);
+        e.target.value = n;
+    });
+
+    el_max.addEventListener('input', (e) => {
+        let n = parseInt(e.target.value);
+        n = Math.max(Math.min(n, 898), 1);
+        e.target.value = n;
+    });
 
     bt_new_game.addEventListener('click', () => {
         restart();
