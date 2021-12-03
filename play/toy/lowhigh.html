@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1" />
+<title>나는 몇일까요?</title>
+<style>
+    body {
+        text-align: center;
+        font-family: sans-serif;
+    }
+
+    #number {
+        font-size: 64px;
+        width: 200px;
+        text-align: center;
+    }
+
+    #guess {
+        font-size: 64px;
+    }
+
+    #lowhigh {
+        margin-top: 10px;
+        font-size: 32px;
+    }
+
+    #judge {
+        margin-top: 10px;
+        font-size: 32px;;
+    }    
+</style>
+<body>
+    <h1>나는 몇번 포켓몬일까요?</h1>
+    <button id="new-game">새로 하기</button>
+    <h2>힌트: 1번 ~ 100번 중에 하나입니다.</h2>
+    <div>
+        <input id="number" type="number" step="1" value="0" min="0" max="100">
+        <button id="guess">일까?</button>
+    </div>
+    <div id="lowhigh">
+        <span class="range" id="low">?</span> &lt; 
+        <span class="range" id="mid">?</span> &lt; 
+        <span class="range" id="high">?</span>
+    </div>
+    <div id="judge"></div>
+    <div id="pokemon"></div>
+</body>
+<script>
+    let el_number = document.querySelector('#number');
+    let el_judge = document.querySelector('#judge');
+    let el_low = document.querySelector('#low');
+    let el_mid = document.querySelector('#mid');
+    let el_high = document.querySelector('#high');
+    let el_pokemon = document.querySelector('#pokemon');
+
+    let bt_new_game = document.querySelector('#new-game');
+    let bt_guess = document.querySelector('#guess');
+
+    let the_number = 0;
+
+    function restart() {
+        el_pokemon.innerHTML = '';
+        el_low.textContent = '?';
+        el_low.textContent = '?';
+        the_number = 1 + Math.random() * 100 | 0;
+    }
+
+    function guess() {
+        let number = parseInt(el_number.value);
+        if(number < the_number) {
+            el_judge.textContent = `${number} 보다 큽니다.`;
+            el_low.textContent = number;
+        }
+        else if(number > the_number) {
+            el_judge.textContent = `${number} 보다 작습니다.`;
+            el_high.textContent = number;
+        }
+        if(number === the_number) {
+            el_judge.textContent = `${number} 맞습니다! 그 번호의 포켓몬은!`;
+            el_mid.textContent = number;
+
+            let img = new Image();
+            img.className = 'the-pokemon';
+            let pokenum = String(number).padStart(4, '0') + '01';
+            img.src = `https://data1.pokemonkorea.co.kr/newdata/pokedex/full/${pokenum}.png`;
+            el_pokemon.appendChild(img);
+        }
+    }
+
+    bt_new_game.addEventListener('click', () => {
+        restart();
+    });
+
+    bt_guess.addEventListener('click', () => {
+        guess();
+    });
+
+    restart();
+</script>
