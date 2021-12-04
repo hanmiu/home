@@ -264,6 +264,12 @@
         el_high.textContent = '?';
         let min = parseInt(el_min.value);
         let max = parseInt(el_max.value);
+        if(min > max) {
+            el_min.value = max;
+            el_max.value = min;
+            min = parseInt(el_min.value);
+            max = parseInt(el_max.value);
+        }
         el_hint.textContent = `${min} 부터 ${max} 중에 하나입니다.`;
         el_number.value = 0;
         el_judge.textContent = 'ㅤ';
@@ -379,14 +385,12 @@
     el_min.addEventListener('input', (e) => {
         let n = parseInt(e.target.value);
         n = Math.max(Math.min(n, 898), 1);
-        n = Math.min(n, parseInt(el_max.value));
         e.target.value = n;
     });
 
     el_max.addEventListener('input', (e) => {
         let n = parseInt(e.target.value);
         n = Math.max(Math.min(n, 898), 1);
-        n = Math.max(n, parseInt(el_min.value));
         e.target.value = n;
     });
 
