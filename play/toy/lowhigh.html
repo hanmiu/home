@@ -33,6 +33,7 @@
         border-radius: 3px;
         border: 1px solid rgb(247, 225, 98);
         cursor: pointer;
+        user-select: none;
     }
 
     #hint {
@@ -42,9 +43,9 @@
     }
 
     #challenge {
-        margin-top: 20px;
+        margin-top: 5px;
         margin-bottom: 10px;
-        font-size: 16px;
+        font-size: 18px;
     }
 
     #min, #max {
@@ -72,6 +73,7 @@
         border-radius: 3px;
         border: 1px solid rgb(31, 238, 169);
         cursor: pointer;
+        user-select: none;
     }
 
     #guess {
@@ -83,6 +85,7 @@
         border-radius: 3px;
         border: 1px solid rgb(77, 185, 218);
         cursor: pointer;
+        user-select: none;
     }
 
     #lowhigh {
@@ -143,7 +146,7 @@
     }
 </style>
 <body>
-    <div id="h1">나는 몇 번 포켓몬일까요?</div>
+    <div id="h1">나는 몇 번 포켓몬일까?</div>
     <div id="find-range">
         <input id="min" type="number" step="1" value="1">
         <div class="button" id="new-game">새로 만나기</div>
@@ -217,18 +220,26 @@
     Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('.button')).forEach(el => {
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('m')[1]);
-            el_number.value = parseInt(el_number.value) - n;
+            //el_number.value = parseInt(el_number.value) - n;
+            to_num = to_num - n;
+            is_rolling = true;
         });
     });
 
     Array.prototype.slice.call(document.querySelector('#plus').querySelectorAll('.button')).forEach(el => {
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('p')[1]);
-            el_number.value = parseInt(el_number.value) + n;
+            //el_number.value = parseInt(el_number.value) + n;
+            to_num = to_num + n;
+            is_rolling = true;
         });
     });
 
     let the_number = 0;
+    let to_num = 0;
+    let num = 0;
+    let is_rolling = false;
+
     let nth = 0;
     let challenge_limit = 10;
 
@@ -251,6 +262,8 @@
         el_pokemon.style.border = '1px solid #dbdbdb';
 
         the_number = min + Math.random() * (max - min) | 0;
+        to_num = 0;
+        num = 0;
         nth = 1;
         let d = max - min;
         if(d > 100) {
@@ -292,6 +305,7 @@
     }
 
     function guess() {
+        is_rolling = false;
         let number = parseInt(el_number.value);
 
         let img = new Image();
@@ -325,7 +339,7 @@
             }
         }
         else if(number === the_number) {
-            el_judge.textContent = `${number} 맞습니다! 이 번호의 포켓몬은!`;
+            el_judge.textContent = `${number} 맞습니다! 이 번호의 포켓몬은`;
             el_mid.textContent = number;
 
             el_pokemon.style.borderRadius = '0px';
@@ -366,6 +380,10 @@
         e.target.value = n;
     });
 
+    el_number.addEventListener('input', (e) => {
+        is_rolling = false;
+    });
+
     bt_new_game.addEventListener('click', () => {
         restart();
     });
@@ -380,5 +398,18 @@
         }
     }, {passive: false});
 
+    function loop() {
+        if(is_rolling) {
+            num += (to_num - num) * 0.1;
+            let n = Math.round(num);
+            el_number.value = n;
+            if(n === to_num) {
+                is_rolling = false;
+            }
+        }
+        requestAnimationFrame(loop);
+    }
+
     restart();
+    loop();
 </script>
