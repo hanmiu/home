@@ -20,6 +20,14 @@
         font-family: 'Jua', sans-serif;
     }
 
+    #find-range input {
+        font-size: 18px;
+    }
+
+    #find-range button {
+        font-size: 18px;
+    }
+
     #hint {
         margin-top: 20px;
         margin-bottom: 10px;
@@ -46,6 +54,10 @@
     .mp {
         margin-top: 10px;
         font-family: monospace;
+    }
+
+    .mp button {
+        font-size: 18px;
     }
 
     #guess {
@@ -111,7 +123,7 @@
 </style>
 <body>
     <div id="h1">나는 몇 번 포켓몬일까요?</div>
-    <div>
+    <div id="find-range">
         <input id="min" type="number" step="1" value="1">
         <button id="new-game">새로 만나기</button>
         <input id="max" type="number" step="1" value="898">
