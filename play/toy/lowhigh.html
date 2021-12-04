@@ -55,8 +55,12 @@
         font-family: monospace;
     }
 
-    .mp button {
+    .mp .button {
+        display: inline-block;
         font-size: 18px;
+        padding: 3px;
+        background-color: aquamarine;
+        border-radius: 3px;
     }
 
     #guess {
@@ -135,18 +139,18 @@
     </div>
     <div>
         <div id="plus" class="mp">
-            <button id="p1">+1</button>
-            <button id="p5">+5</button>
-            <button id="p10">+10</button>
-            <button id="p50">+50</button>
-            <button id="p100">+100</button>
+            <div class="button" id="p1">+ 1</div>
+            <div class="button" id="p5">+ 5</div>
+            <div class="button" id="p10">+ 10</div>
+            <div class="button" id="p50">+ 50</div>
+            <div class="button" id="p100">+ 100</div>
         </div>
         <div id="minus" class="mp">
-            <button id="m1">−1</button>
-            <button id="m5">−5</button>
-            <button id="m10">−10</button>
-            <button id="m50">−50</button>
-            <button id="m100">−100</button>
+            <div class="button" id="m1">− 1</div>
+            <div class="button" id="m5">− 5</div>
+            <div class="button" id="m10">− 10</div>
+            <div class="button" id="m50">− 50</div>
+            <div class="button" id="m100">− 100</div>
         </div>
     </div>
     <div id="lowhigh">
@@ -192,14 +196,14 @@
     let bt_new_game = document.querySelector('#new-game');
     let bt_guess = document.querySelector('#guess');
 
-    Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('button')).forEach(el => {
+    Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('.button')).forEach(el => {
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('m')[1]);
             el_number.value = parseInt(el_number.value) - n;
         });
     });
 
-    Array.prototype.slice.call(document.querySelector('#plus').querySelectorAll('button')).forEach(el => {
+    Array.prototype.slice.call(document.querySelector('#plus').querySelectorAll('.button')).forEach(el => {
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('p')[1]);
             el_number.value = parseInt(el_number.value) + n;
