@@ -221,7 +221,12 @@
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('m')[1]);
             //el_number.value = parseInt(el_number.value) - n;
-            to_num = to_num - n;
+            if(is_rolling) {
+                to_num = to_num - n;
+            }
+            else {
+                to_num = parseInt(el_number.value) - n;
+            }
             is_rolling = true;
         });
     });
@@ -230,7 +235,12 @@
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('p')[1]);
             //el_number.value = parseInt(el_number.value) + n;
-            to_num = to_num + n;
+            if(is_rolling) {
+                to_num = to_num + n;
+            }
+            else {
+                to_num = parseInt(el_number.value) + n;
+            }
             is_rolling = true;
         });
     });
@@ -352,8 +362,8 @@
 
             let el = document.createElement('div');
             el.className = 'captured';
-            el.innerHTML = `<img src='${img.src}'><label>${the_number}번, 도전:${nth}</label>`;
-            el_box.appendChild(el);
+            el.innerHTML = `<img src='${img.src}'><label>${the_number}번, 도전:${nth}</label><br><label>${pokemon_data[number].name}</label>`;
+            el_box.insertBefore(el, el_box.firstElementChild);
         }
 
         nth += 1;
