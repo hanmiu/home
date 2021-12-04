@@ -28,10 +28,10 @@
         display: inline-block;
         font-size: 18px;
         padding: 5px;
-        background-color: aquamarine;
+        background-color: rgb(250, 233, 136);
         box-sizing: border-box;
         border-radius: 3px;
-        border: 1px solid rgb(31, 238, 169);
+        border: 1px solid rgb(247, 225, 98);
         cursor: pointer;
     }
 
@@ -76,6 +76,13 @@
 
     #guess {
         font-size: 28px;
+        display: inline-block;
+        padding: 5px;
+        background-color: rgb(170, 226, 244);
+        box-sizing: border-box;
+        border-radius: 3px;
+        border: 1px solid rgb(77, 185, 218);
+        cursor: pointer;
     }
 
     #lowhigh {
@@ -146,7 +153,7 @@
     <div id="challenge"><span id="n-th">0</span>차 도전, 남은 도전: <span id="remain">10</span></div>
     <div>
         <input id="number" type="number" step="1" value="0">
-        <button id="guess">일까?</button>
+        <div id="guess">일까?</div>
     </div>
     <div>
         <div id="plus" class="mp">
