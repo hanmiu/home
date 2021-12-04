@@ -248,10 +248,6 @@
         }
         img.src = `https://data1.pokemonkorea.co.kr/newdata/pokedex/full/${pokenum + suffix}.png`;
 
-        nth += 1;
-        el_nth.textContent = nth;
-        el_remain.textContent = challenge_limit - nth;
-
         if(number < the_number) {
             el_judge.textContent = `${number} 보다 큽니다.`;
             el_low.textContent = number;
@@ -281,6 +277,10 @@
             el.innerHTML = `<img src='${img.src}'><label>${the_number}번, 도전:${nth}</label>`;
             el_box.appendChild(el);
         }
+
+        nth += 1;
+        el_nth.textContent = nth;
+        el_remain.textContent = challenge_limit - nth;
 
         if(nth === challenge_limit) {
             el_judge.textContent = `💨 ${the_number}번 포켓몬이 도망갔습니다.`;
