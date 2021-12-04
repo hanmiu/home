@@ -10,7 +10,6 @@
         text-align: center;
         font-family: sans-serif;
         user-select: none;
-        touch-action: pan-x pan-y;
     }
 
     #h1 {
@@ -195,14 +194,14 @@
 
     Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('button')).forEach(el => {
         el.addEventListener('click', (e) => {
-            let n = parseInt(e.target.textContent.split(' ')[1]);
+            let n = parseInt(e.target.id.split('m')[1]);
             el_number.value = parseInt(el_number.value) - n;
         });
     });
 
     Array.prototype.slice.call(document.querySelector('#plus').querySelectorAll('button')).forEach(el => {
         el.addEventListener('click', (e) => {
-            let n = parseInt(e.target.textContent.split(' ')[1]);
+            let n = parseInt(e.target.id.split('p')[1]);
             el_number.value = parseInt(el_number.value) + n;
         });
     });
@@ -227,7 +226,7 @@
         el_judge.textContent = 'ㅤ';
         el_pokemon_info.textContent = 'ㅤ';
         el_pokemon.style.borderRadius = '200px';
-        el_pokemon.style.border = '1px solid black';
+        el_pokemon.style.border = '1px solid #dbdbdb';
 
         the_number = min + Math.random() * (max - min) | 0;
         nth = 1;
