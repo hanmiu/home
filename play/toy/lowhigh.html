@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0" />
 <title>나는 몇일까요?</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
@@ -10,6 +10,7 @@
         text-align: center;
         font-family: sans-serif;
         user-select: none;
+        touch-action: pan-x pan-y;
     }
 
     #h1 {
@@ -339,6 +340,12 @@
     bt_guess.addEventListener('click', () => {
         guess();
     });
+
+    window.document.addEventListener('touchmove', e => {
+        if(e.scale !== 1) {
+            e.preventDefault();
+        }
+    }, {passive: false});
 
     restart();
 </script>
