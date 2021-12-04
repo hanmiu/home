@@ -249,10 +249,12 @@
     }
 
     function loadMidImage(e) {
-        g_pokemon.canvas.style.filter = '';
-        g_pokemon.canvas.style.transform = `rotate(0deg)`;
         g_pokemon.clearRect(0, 0, g_pokemon.canvas.width, g_pokemon.canvas.height);
         g_pokemon.drawImage(e.target, 0, 0);
+        setTimeout(() => {
+            g_pokemon.canvas.style.filter = '';
+            g_pokemon.canvas.style.transform = `rotate(0deg)`;
+        }, 100);
     }
 
     function guess() {
