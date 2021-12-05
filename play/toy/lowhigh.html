@@ -260,9 +260,6 @@
         g_pokemon.clearRect(0, 0, g_pokemon.canvas.width, g_pokemon.canvas.height);
         g_low.innerHTML = '';
         g_high.innerHTML = '';
-        el_low.textContent = '?';
-        el_mid.textContent = '?';
-        el_high.textContent = '?';
         let min = parseInt(el_min.value);
         let max = parseInt(el_max.value);
         if(min > max) {
@@ -271,6 +268,9 @@
             min = parseInt(el_min.value);
             max = parseInt(el_max.value);
         }
+        el_low.textContent = min - 1;
+        el_mid.textContent = '?';
+        el_high.textContent = max + 1;
 
         the_number = min + Math.random() * (max - min) | 0;
 
