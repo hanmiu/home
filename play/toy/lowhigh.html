@@ -271,14 +271,21 @@
             min = parseInt(el_min.value);
             max = parseInt(el_max.value);
         }
+
+        the_number = min + Math.random() * (max - min) | 0;
+
         el_hint.textContent = `${min} 부터 ${max} 중에 하나입니다.`;
         el_number.value = 0;
         el_judge.textContent = 'ㅤ';
-        el_pokemon_info.textContent = 'ㅤ';
+
+        let types = pokemon_data[the_number].types.map(x => x);
+        types[Math.random() * types.length | 0] = '?';
+        el_pokemon_info.innerHTML = `
+                <div class="pokemon-name">?</div><div>${types.join(', ')} 타입</div>
+            `;
         el_pokemon.style.borderRadius = '200px';
         el_pokemon.style.border = '1px solid #dbdbdb';
 
-        the_number = min + Math.random() * (max - min) | 0;
         to_num = 0;
         num = 0;
         nth = 1;
