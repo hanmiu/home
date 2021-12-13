@@ -65,6 +65,14 @@
             reader.readAsDataURL(file);
         }
     }
+
+    function load_image_from_url(url) {
+        let image = new Image();
+        image.height = 100;
+        image.title = `${(new Date()).getTime()}.jpg`;
+        image.src = url;
+        el_preview.appendChild( image );
+    }
     
 
     window.addEventListener("dragenter", (e) => {
@@ -119,4 +127,17 @@
             }, 'image/jpeg', 0.9);
         }
     }, false);
+
+    document.addEventListener('paste', (e) => {
+        for(let item of e.clipboardData.items) {
+            if(item.kind == 'file') {
+                let blob = item.getAsFile();
+                let reader = new FileReader();
+                reader.addEventListener('load', (evt) => {
+                    load_image_from_url(evt.target.result);
+                });
+                reader.readAsDataURL(blob);
+            }
+        }
+    });
 </script>
