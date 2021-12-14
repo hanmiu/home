@@ -20,6 +20,11 @@
         font-family: 'Jua', sans-serif;
     }
 
+    #total {
+        margin-bottom: 10px;
+        color: rgb(194, 194, 194);
+    }
+
     #cards {
         margin-top: 30px;
         margin-bottom: 10px;
@@ -36,6 +41,7 @@
 </style>
 <body>
     <h1>픽토그램</h1>
+    <div id="total"></div>
     <div>
         <button id="shuffle">섞기</button>
         <button id="next">다음 장</button>
@@ -56,9 +62,12 @@
     let el_cards = document.querySelector('#cards');
     let el_answer = document.querySelector('#answer');
 
-    //let list = `똥,가다,기차,모기,아빠,요가,주다,치다,타다,하다,낳다,눕다,담배,된다,많다,먹다,밟다,사격,사람,사랑,수영,없다,있다,점프,조심,축구,근육,아니다,아프다,양궁,키우다,펜싱,다이빙,달리기,자전거,태권도,엉덩이,화장실,뱀파이어,종이접기`.split(',');
-    let list = `똥,가다,기차,모기,아빠,요가,주다,치다,타다,하다,낳다,눕다,담배,된다,많다,먹다,밟다,사격,사람,사랑,수영,없다,있다,점프,조심,축구,근육,아니다,아프다,양궁,키우다,펜싱,다이빙,달리기,자전거,태권도,엉덩이,화장실,뱀파이어,종이접기`.split(',');
+    let words = `똥,가다,기차,모기,아빠,요가,주다,치다,타다,하다,낳다,눕다,담배,된다,많다,먹다,밟다,사격,사람,사랑,수영,없다,있다,점프,조심,축구,근육,아니다,아프다,양궁,키우다,펜싱,다이빙,달리기,자전거,태권도,엉덩이,화장실,뱀파이어,종이접기`;
+    words += `,감사,엄마,박치기,사마귀,부수다,준비,수술,닌텐도,싸다,잠자다,토,싸움,오늘,개구리,로켓,고장,불사조,발사,도미노,고민,알까기,보다,에펠탑,무지개,선생님,홀리다,유치원,학교,어린이,그러나,그리고,다시,바깥,밥,붕어빵,집,비눗방울,이야기,재미,떨어지다`;
+    let list = words.split(',');
     let answers = [];
+
+    document.querySelector('#total').innerText = `2021학년도 한미유치원 종달새반 어린이들이 만든 ${list.length}개의 픽토그램이 있습니다.`;
 
     function shuffle(array) {
         let n = array.length, t, i;
@@ -82,6 +91,15 @@
             let img = new Image();
             img.src = uri;
             img.className = 'pictogram';
+            img.style.opacity = 0;
+            img.style.filter = 'blur(5px)';
+            img.style.transform = `rotate(${(Math.random() * 2 - 1) * 360}deg)`;
+            img.style.transition = `${1 + Math.random()}s`;
+            img.addEventListener('load', (e) => {
+                e.target.style.opacity = 1;
+                e.target.style.filter = '';
+                e.target.style.transform = 'rotate(0deg)';
+            });
             el_cards.appendChild(img);
             list.push(item);
             answers.push(item);
@@ -101,9 +119,17 @@
     bt_show_answer.addEventListener('click', (e) => {
         let html = '';
         for(let answer of answers) {
-            html += `<div class="pictogram">${answer}</div>`;
+            html += `<div class="pictogram" style="opacity: 0; filter: blur(5px); transition: ${1 + Math.random()}s;">${answer}</div>`;
         }
         el_answer.innerHTML = html;
+
+        let els = Array.prototype.slice.call(el_answer.querySelectorAll('.pictogram'));
+        for(let el of els) {
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.filter = '';
+            }, 10);
+        }
     });
 
     shuffle(list);
