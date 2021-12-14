@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>픽토그램</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+    body {
+        display: grid;
+        text-align: center;
+        font-family: sans-serif;
+        user-select: none;
+        touch-action: pan-x pan-y;
+    }
+
+    #h1 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 32px;
+        font-family: 'Jua', sans-serif;
+    }
+
+    #cards {
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+
+    .pictogram {
+        display: inline-flex;
+        width: 200px;
+        height: 200px;
+        justify-content: center;
+        align-items: center;
+        font-size: 40px;
+    }
+</style>
+<body>
+    <h1>픽토그램</h1>
+    <div>
+        <button id="shuffle">섞기</button>
+        <button id="next">다음 장</button>
+        <input id="n-cards" type="number" value="1" min="1" max="5" step="1">
+    </div>
+    <div id="cards"></div>
+    <div>
+        <button id="show_answer">뜻 보기</button>
+    </div>
+    <div id="answer"></div>
+</body>
+<script>
+    let bt_shuffle = document.querySelector('#shuffle');
+    let bt_next = document.querySelector('#next');
+    let bt_show_answer = document.querySelector('#show_answer');
+
+    let el_n_cards = document.querySelector('#n-cards');
+    let el_cards = document.querySelector('#cards');
+    let el_answer = document.querySelector('#answer');
+
+    let list = `똥,가다,기차,모기,아빠,요가,주다,치다,타다,하다,낳다,눕다,담배,된다,많다,먹다,밟다,사격,사람,사랑,수영,없다,있다,점프,조심,축구,근육,아니다,아프다,양궁,키우다,펜싱,다이빙,달리기,자전거,태권도,엉덩이,화장실,뱀파이어,종이접기`.split(',');
+    let answers = [];
+
+    function shuffle(array) {
+        let n = array.length, t, i;
+        while (n) {
+            i = Math.random() * n-- | 0; // 0 ≤ i < n
+            t = array[n];
+            array[n] = array[i];
+            array[i] = t;
+        }
+        return array;
+    }
+
+    function show_pictograms() {
+        el_answer.innerHTML = '';
+        answers = [];
+        let n = parseInt(el_n_cards.value);
+        let html = '';
+        while(n > 0) {
+            let item = list.shift();
+            html += `<img class="pictogram" src="./data/pictogram/${item}.svg">`;
+            list.push(item);
+            answers.push(item);
+            n--;
+        }
+        el_cards.innerHTML = html;
+    }
+
+    bt_shuffle.addEventListener('click', (e) => {
+        shuffle(list);
+        show_pictograms();
+    });
+
+    bt_next.addEventListener('click', (e) => {
+        show_pictograms();
+    });
+
+    bt_show_answer.addEventListener('click', (e) => {
+        let html = '';
+        for(let answer of answers) {
+            html += `<div class="pictogram">${answer}</div>`;
+        }
+        el_answer.innerHTML = html;
+    });
+
+    shuffle(list);
+    show_pictograms();
+</script>
