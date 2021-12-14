@@ -93,8 +93,9 @@
             img.className = 'pictogram';
             img.style.opacity = 0;
             img.style.filter = 'blur(5px)';
-            img.style.transform = `rotate(${(Math.random() * 2 - 1) * 360}deg)`;
+            img.style.transform = `rotate(${(Math.random() * 2 - 1) * 180}deg)`;
             img.style.transition = `${1 + Math.random()}s`;
+            img.style['transition-timing-function'] = 'cubic-bezier(0.68, -0.55, 0.265, 1.55)';
             img.addEventListener('load', (e) => {
                 e.target.style.opacity = 1;
                 e.target.style.filter = '';
