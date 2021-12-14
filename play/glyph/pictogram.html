@@ -77,7 +77,8 @@
         let html = '';
         while(n > 0) {
             let item = list.shift();
-            html += `<img class="pictogram" src="./data/pictogram/${encodeURI(item)}.svg">`;
+            let uri = encodeURI(`./data/pictogram/${item}.svg`);
+            html += `<img class="pictogram" src="${uri}">`;
             list.push(item);
             answers.push(item);
             n--;
