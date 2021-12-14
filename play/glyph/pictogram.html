@@ -71,19 +71,21 @@
     }
 
     function show_pictograms() {
+        el_cards.innerHTML = '';
         el_answer.innerHTML = '';
         answers = [];
         let n = parseInt(el_n_cards.value);
-        let html = '';
         while(n > 0) {
             let item = list.shift();
-            let uri = encodeURI(`./data/pictogram/${item}.svg`);
-            html += `<img class="pictogram" src="${uri}">`;
+            let uri = `./data/pictogram/${item}.svg`;
+            let img = new Image();
+            img.src = uri;
+            img.className = 'pictogram';
+            el_cards.appendChild(img);
             list.push(item);
             answers.push(item);
             n--;
         }
-        el_cards.innerHTML = html;
     }
 
     bt_shuffle.addEventListener('click', (e) => {
