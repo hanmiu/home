@@ -93,13 +93,19 @@
             img.className = 'pictogram';
             img.style.opacity = 0;
             img.style.filter = 'blur(5px)';
-            img.style.transform = `rotate(${(Math.random() * 2 - 1) * 180}deg)`;
+            if(Math.random() > 0.5) {
+                img.style.transform = `rotate(${(Math.random() * 2 - 1) * 180}deg)`;
+            }
+            else {
+                img.style.transform = `rotateY(${(Math.random() * 2 - 1) * 270}deg)`;
+            }
             img.style.transition = `${1 + Math.random()}s`;
             img.style['transition-timing-function'] = 'cubic-bezier(0.68, -0.55, 0.265, 1.55)';
             img.addEventListener('load', (e) => {
                 e.target.style.opacity = 1;
                 e.target.style.filter = '';
                 e.target.style.transform = 'rotate(0deg)';
+                e.target.style.transform = 'rotateY(0deg)';
             });
             el_cards.appendChild(img);
             list.push(item);
