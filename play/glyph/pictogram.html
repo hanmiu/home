@@ -161,10 +161,10 @@
             list.push(item);
             let s = item.split('O');
             if(s.length === 2) {
-                answers.push(s[1]);
+                answers.push('~'+s[1]);
             }
             else {
-                answers.push('~'+item);
+                answers.push(item);
             }
             n--;
         }
