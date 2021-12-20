@@ -150,7 +150,7 @@
             .then(text => {
                 card.innerHTML = text;
                 let el_path = card.querySelector('path');
-                el_path.style.fill = 'blue';
+                el_path.style['fill'] = 'blue';
                 card.style.opacity = 1;
                 card.style.filter = '';
                 card.style.transform = 'rotate(0deg)';
@@ -182,7 +182,7 @@
         }
         el_answer.innerHTML = html;
 
-        let els = Array.prototype.slice.call(el_answer.querySelectorAll('.pictogram'));
+        let els = Array.from(el_answer.querySelectorAll('.pictogram'));
         for(let el of els) {
             setTimeout(() => {
                 el.style.opacity = '1';
