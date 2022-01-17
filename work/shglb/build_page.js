@@ -111,11 +111,6 @@ function build_page(cols, infos) {
         <td contenteditable="true" spellcheck="false" class="학적특기5"></td>
       </tr>
       <tr>
-        <td contenteditable="true" spellcheck="false" class="학적날짜6"></td>
-        <td contenteditable="true" spellcheck="false" class="학적내용6"></td>
-        <td contenteditable="true" spellcheck="false" class="학적특기6"></td>
-      </tr>
-      <tr>
         <td>졸업 후의 상황</td>
         <td colspan="2" contenteditable="true" spellcheck="false" class="졸업후의상황"></td>
       </tr>

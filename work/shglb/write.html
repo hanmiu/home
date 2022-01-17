@@ -389,6 +389,7 @@
     return result;
   }
 
+  /*
   function extra_hakjuck(date, content, special) {
     return `<ROW>
 							<CELL BorderFill="7" ColAddr="0" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="9069">
@@ -423,6 +424,7 @@
 							</CELL>
 						</ROW>`;
   }
+  */
   
   async function download(el_page) {
     let d = {};
@@ -469,10 +471,12 @@
 
     d['성'] = d['어린이성별'];
 
+    /*
     d['추가학적'] = '';
     if(d['학적날짜5']) {
       d['추가학적'] += extra_hakjuck(d['학적날짜5'], d['학적내용5'], d['학적특기5']);     
     }
+    */
     
     let img = el_page.querySelector('.photo');
     if(img) {
