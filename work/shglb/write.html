@@ -74,7 +74,7 @@
   
   let check_document_number_strings = '대장3세,대장4세,대장5세'.split(',');
   let check_name_strings = '어린이이름,부성명,모성명'.split(',');
-  let check_date_strings = '어린이생년월일,부생년월일,모생년월일,학적날짜1,학적날짜2,학적날짜3,학적날짜4,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
+  let check_date_strings = '어린이생년월일,부생년월일,모생년월일,학적날짜1,학적날짜2,학적날짜3,학적날짜4,학적날짜5,학적날짜6,학적날짜7,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
   let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
   let check_develop_strings = '발달상황3세,발달상황4세,발달상황5세'.split(',');
   
@@ -388,6 +388,41 @@
     }
     return result;
   }
+
+  function extra_hakjuck(date, content, special) {
+    return `<ROW>
+							<CELL BorderFill="7" ColAddr="0" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="9069">
+								<CELLMARGIN Bottom="141" Left="141" Right="141" Top="141"/>
+								<PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">
+									<P ParaShape="35" Style="36">
+										<TEXT CharShape="12">
+											<CHAR>${date}</CHAR>
+										</TEXT>
+									</P>
+								</PARALIST>
+							</CELL>
+							<CELL BorderFill="7" ColAddr="1" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="27494">
+								<CELLMARGIN Bottom="141" Left="141" Right="141" Top="141"/>
+								<PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">
+									<P ParaShape="34" Style="36">
+										<TEXT CharShape="12">
+											<CHAR>${content}</CHAR>
+										</TEXT>
+									</P>
+								</PARALIST>
+							</CELL>
+							<CELL BorderFill="7" ColAddr="2" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="11054">
+								<CELLMARGIN Bottom="141" Left="141" Right="141" Top="141"/>
+								<PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">
+									<P ParaShape="35" Style="36">
+										<TEXT CharShape="12">
+											<CHAR>${special}</CHAR>
+										</TEXT>
+									</P>
+								</PARALIST>
+							</CELL>
+						</ROW>`;
+  }
   
   async function download(el_page) {
     let d = {};
@@ -433,6 +468,11 @@
     }
 
     d['성'] = d['어린이성별'];
+
+    d['추가학적'] = '';
+    if(d['학적날짜5']) {
+      d['추가학적'] += extra_hakjuck(d['학적날짜5'], d['학적내용5'], d['학적특기5']);     
+    }
     
     let img = el_page.querySelector('.photo');
     if(img) {

@@ -4,7 +4,7 @@ function build_hml(d) {
 var Document = Documents.Active_XHwpDocument;
 </SCRIPTHEADER><SCRIPTSOURCE>function OnDocument_New()
 {
-	//todo : 
+    //todo : 
 }
 
 </SCRIPTSOURCE></SCRIPTCODE></TAIL></HWPML>
