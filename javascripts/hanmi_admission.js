@@ -16,6 +16,13 @@ html['admission'] = `
 </div>
 <br>
 
+<div>2022학년도 입학 원서</div>
+<br>
+<div class="subtle">
+입학 확정 후 <a href="https://forms.gle/B6S3iemZqbknvAbH8" target="_blank">2022학년도 입학원서</a>를 클릭하여 온라인으로 작성해 주시기 바랍니다.  
+</div>
+<br>
+
 모집대상
 <div class="subtle">
 <ul class="flower">
