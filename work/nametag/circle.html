@@ -51,7 +51,7 @@
 { "이름": "강호둥", "등원": "백1", "하원": "고", "방과후": "1"},
 { "이름": "박기래", "등원": "고2", "하원": "유", "방과후": "0"},
 { "이름": "신진나", "등원": "개", "하원": "개", "방과후": "1"},
-{ "이름": "전환희", "등원": "개", "하원": "백", "방과후": "0"},
+{ "이름": "전환희", "등원": "개", "하원": "백2", "방과후": "0"},
 </textarea>
       </div>
       <div class="section">
@@ -128,10 +128,14 @@
     }
     
     if(car_out) {
-      if(car_out.length === 1) {
+      if(car_out.length >= 1) {
         color_out = dic_color[car_out[0]];
         tel_out = dic_tel[car_out[0]];
-        car_out = dic_car[car_out[0]] + ' ' + sp_str + '하원';
+        let ho = '';
+        if(car_out.length > 1) {
+          ho = car_out[1] + '호';
+        }
+        car_out = dic_car[car_out[0]] + ' ' + ho + sp_str + ' 하원';
       }  
     }
     
