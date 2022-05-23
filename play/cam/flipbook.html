@@ -102,6 +102,7 @@
       let [w, h] = [this.cropped_canvas.width, this.cropped_canvas.height];
       let left = (this.canvas.width - w) / 2;
       let top = (this.canvas.height - h) / 2;
+      this.g.strokeStyle = 'cyan';
       this.g.strokeRect(left, top, w, h);
       this.g.restore();
     }
