@@ -35,6 +35,7 @@
     <label>초 마다</label>
     <button id="record">● 캡쳐 시작</button>
     <label id="took_count"></label>
+    <label>(스페이스 키를 누르면 1장만 즉시 캡쳐)</label>
   </div>
   <div id="cam"></div>
   <div id="ui_B" class="ui">
@@ -42,6 +43,10 @@
     <input id="fps" type="number" value="5" min="1" max="30">
     <label>장 속도로</label>
     <button id="play">▶ 재생</button>
+    <button id="prev">&lt;</button>
+    <button id="next">&gt;</button>
+    <button id="delete">한 장 지우기</button>
+    <label>|</label>
     <button id="download">다운로드(영상)</button>
     <button id="download_seq">다운로드(사진압축)</button>
     <label id="play_head">(/)</label>
@@ -55,9 +60,13 @@
       let scope = this;
       let video = document.createElement('video');
       scope.canvas = document.createElement('canvas');
-      scope.g = this.canvas.getContext('2d');
+      scope.cropped_canvas = document.createElement('canvas');
+      scope.g = scope.canvas.getContext('2d');
+      scope.g_cropped = scope.cropped_canvas.getContext('2d');
       scope.canvas.width = constraints.video.width;
       scope.canvas.height = constraints.video.height;
+      scope.cropped_canvas.width = 640;
+      scope.cropped_canvas.height = 640;
       scope.video = video;
       scope.mediaRecorder = null;
       scope.chunks = [];
@@ -89,13 +98,25 @@
         this.g.scale(-1, 1);
       }
       this.g.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+      this.g.lineWidth = 3;
+      let [w, h] = [this.cropped_canvas.width, this.cropped_canvas.height];
+      let left = (this.canvas.width - w) / 2;
+      let top = (this.canvas.height - h) / 2;
+      this.g.strokeRect(left, top, w, h);
       this.g.restore();
     }
 
     capture() {
       if(this.is_capturing) {
+        this.g_cropped.drawImage(this.g.canvas, 
+          (this.canvas.width - this.cropped_canvas.width) / 2, 
+          (this.canvas.height - this.cropped_canvas.height) / 2,
+          this.cropped_canvas.width, this.cropped_canvas.height,
+          0, 0,
+          this.cropped_canvas.width, this.cropped_canvas.height
+        );
         let img = new Image();
-        this.canvas.toBlob(blob => {
+        this.cropped_canvas.toBlob(blob => {
           img.src = URL.createObjectURL(blob);
         }, 'image/jpeg', 0.95);
         this.captures.push(img);
@@ -121,6 +142,9 @@
   let cb_flip_h = document.querySelector('#flip-h');
   let bt_record = document.querySelector('#record');
   let bt_play = document.querySelector('#play');
+  let bt_prev = document.querySelector('#prev');
+  let bt_next = document.querySelector('#next');
+  let bt_delete = document.querySelector('#delete');
   let bt_download = document.querySelector('#download');
   let bt_download_seq = document.querySelector('#download_seq');
   let is_recording = false;
@@ -148,6 +172,7 @@
       if(cam) {
         cam.is_capturing = true;
         cam.capture();
+        document.querySelector('#took_count').textContent = `${cam.captures.length} 장 캡쳐`;
         cam.is_capturing = false;
       }
     }
@@ -203,9 +228,8 @@
       bt_record.textContent = '● 캡쳐 시작';
     }
   });
-  
-  bt_play.addEventListener('click', () => {
-    is_playing = !is_playing;
+
+  function update_play_status() {
     if(is_playing) {
       bt_play.textContent = '■ 멈춤';
       current_frame = 0;
@@ -213,6 +237,54 @@
     else {
       bt_play.textContent = '▶ 재생';
     }
+  } 
+  
+  bt_play.addEventListener('click', () => {
+    is_playing = !is_playing;
+    update_play_status();
+  });
+
+  bt_prev.addEventListener('click', () => {
+    is_playing = false;
+    update_play_status();
+    if(cam) {
+      current_frame -= 1;
+      if(current_frame < 0) {
+        current_frame = cam.captures.length - 1;
+      }
+      g.drawImage(cam.captures[current_frame], 0, 0);
+    }
+  });
+
+  bt_next.addEventListener('click', () => {
+    is_playing = false;
+    update_play_status();
+    if(cam) {
+      current_frame += 1;
+      if(current_frame > cam.captures.length - 1) {
+        current_frame = 0;
+      }
+      g.drawImage(cam.captures[current_frame], 0, 0);
+    }
+  });
+
+  bt_delete.addEventListener('click', () => {
+    is_playing = false;
+    update_play_status();
+    let idx = current_frame;
+    cam.captures.splice(idx, 1);
+    cam.captimes.splice(idx, 1);
+    current_frame = idx - 1;
+    if(current_frame < 0) {
+      current_frame = 0;
+    }
+    if(cam.captures.length > 0) {
+      g.drawImage(cam.captures[current_frame], 0, 0);
+    }
+    else {
+      g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    }
+    document.querySelector('#took_count').textContent = `${cam.captures.length} 장 캡쳐`;
   });
   
   bt_download.addEventListener('click', () => {
