@@ -65,8 +65,8 @@
       scope.g_cropped = scope.cropped_canvas.getContext('2d');
       scope.canvas.width = constraints.video.width;
       scope.canvas.height = constraints.video.height;
-      scope.cropped_canvas.width = 640;
-      scope.cropped_canvas.height = 640;
+      scope.cropped_canvas.width = 512;
+      scope.cropped_canvas.height = 512;
       scope.video = video;
       scope.mediaRecorder = null;
       scope.chunks = [];
@@ -103,7 +103,7 @@
       let left = (this.canvas.width - w) / 2;
       let top = (this.canvas.height - h) / 2;
       this.g.strokeStyle = 'cyan';
-      this.g.strokeRect(left, top, w, h);
+      this.g.strokeRect(left-2, top-2, w+4, h+4);
       this.g.restore();
     }
 
