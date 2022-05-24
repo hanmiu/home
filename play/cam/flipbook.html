@@ -29,7 +29,7 @@
 </style>
 <body>
   <div id="ui_A" class="ui">
-    <input type="checkbox" id="flip-h">
+    <input type="checkbox" id="flip-h" checked>
     <label>좌우 반전</label>
     <input id="interval" type="number" value="5" min="1">
     <label>초 마다</label>
@@ -73,7 +73,7 @@
       scope.is_capturing = false;
       scope.captures = [];
       scope.captimes = [];
-      scope.flipH = false;
+      scope.flipH = true;
 
       navigator.mediaDevices.getUserMedia(constraints)
       .then(function(mediaStream) {
