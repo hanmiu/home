@@ -47,6 +47,7 @@
     <button id="next">&gt;</button>
     <button id="delete">한 장 지우기</button>
     <label>|</label>
+    <label>이름:</label><input id="fn" type="text" value="까치">
     <button id="download">다운로드(영상)</button>
     <button id="download_seq">다운로드(사진압축)</button>
     <label id="play_head">(/)</label>
@@ -180,6 +181,7 @@
   });
   
   cam.canvas.addEventListener('click', () => {
+    /*
     if(cam.canvas.style['width'] === '') {
       cam.canvas.style['width'] = '100%';
       g.canvas.style['display'] = 'none';
@@ -194,9 +196,11 @@
         el.style['display'] = '';  
       });
     }
+    */
   });
   
   g.canvas.addEventListener('click', () => {
+    /*
     if(g.canvas.style['width'] === '') {
       g.canvas.style['width'] = '100%';
       cam.canvas.style['display'] = 'none';
@@ -211,6 +215,7 @@
         el.style['display'] = '';  
       });
     }
+    */
   });
   
   bt_record.addEventListener('click', () => {
@@ -335,9 +340,10 @@
       let ts1 = get_time_string(cam.captimes[cam.captimes.length - 1]);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
+      let fn = document.querySelector('#fn').value;
         a.style.display = 'none';
         a.href = url;
-        a.download = `타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).zip`;
+        a.download = `${fn}-타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).zip`;
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
@@ -366,10 +372,11 @@
       let ds = get_date_string(dt);
       let ts0 = get_time_string(cam.captimes[0]);
       let ts1 = get_time_string(cam.captimes[cam.captimes.length - 1]);
+      let fn = document.querySelector('#fn').value;
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).webm`;
+      a.download = `${fn}-타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).webm`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
