@@ -1,0 +1,331 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body {
+    background: black;
+  }
+  
+  .ui {
+    margin: 10px;
+  }
+  
+  input {
+    width: 50px;
+  }
+  
+  label {
+    margin-left: 10px;
+    margin-right: 10px;
+    color: snow;
+  }
+  
+  #flip-h {
+    width: auto;
+  }
+  
+  canvas {
+    cursor: pointer;
+  }
+</style>
+<body>
+  <div id="ui_A" class="ui">
+    <input type="checkbox" id="flip-h" checked>
+    <label>좌우 반전</label>
+    <button id="record">● 캡쳐</button>
+    <label id="took_count"></label>
+    <label>(스페이스 키를 누르면 1장만 즉시 캡쳐)</label>
+  </div>
+  <div id="cam"></div>
+  <div id="ui_B" class="ui">
+    <label>1초에</label>
+    <input id="fps" type="number" value="5" min="1" max="30">
+    <label>장 속도로</label>
+    <button id="play">▶ 재생</button>
+    <button id="prev">&lt;</button>
+    <button id="next">&gt;</button>
+    <button id="delete">한 장 지우기</button>
+    <label>|</label>
+    <label>이름:</label><input id="fn" type="text" value="한미">
+    <button id="download">다운로드(영상)</button>
+    <button id="download_seq">다운로드(사진압축)</button>
+    <label id="play_head">(/)</label>
+  </div>
+  <div id="vid"></div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
+<script>
+  class Cam {
+    constructor(constraints) {
+      let scope = this;
+      let video = document.createElement('video');
+      scope.canvas = document.createElement('canvas');
+      scope.cropped_canvas = document.createElement('canvas');
+      scope.g = scope.canvas.getContext('2d');
+      scope.g_cropped = scope.cropped_canvas.getContext('2d');
+      scope.canvas.width = constraints.video.width;
+      scope.canvas.height = constraints.video.height;
+      scope.cropped_canvas.width = 712;
+      scope.cropped_canvas.height = 712;
+      scope.video = video;
+      scope.mediaRecorder = null;
+      scope.chunks = [];
+      scope.is_capturing = false;
+      scope.captures = [];
+      scope.captimes = [];
+      scope.flipH = true;
+
+      navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(mediaStream) {
+        video.srcObject = mediaStream;
+        let mediaRecorder = new MediaRecorder(mediaStream);
+        mediaRecorder.ondataavailable = function(e) {
+          scope.chunks.push(e.data);
+        }
+        scope.mediaRecorder = mediaRecorder;
+        video.onloadedmetadata = function(e) {
+          video.play();
+        };
+      })
+      .catch(function(err) { console.log(err.name + ": " + err.message); });
+    }
+
+    update() {
+      this.g.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.g.save();
+      if(this.flipH) {
+        this.g.translate(this.canvas.width, 0);
+        this.g.scale(-1, 1);
+      }
+      this.g.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+      this.g.lineWidth = 3;
+      let [w, h] = [this.cropped_canvas.width, this.cropped_canvas.height];
+      let left = (this.canvas.width - w) / 2;
+      let top = (this.canvas.height - h) / 2;
+      this.g.strokeStyle = 'cyan';
+      this.g.strokeRect(left-2, top-2, w+4, h+4);
+      this.g.restore();
+    }
+
+    capture() {
+      if(this.is_capturing) {
+        this.g_cropped.save();
+        this.g_cropped.translate(this.g_cropped.canvas.width, 0);
+        this.g_cropped.scale(-1, 1);
+        this.g_cropped.drawImage(this.g.canvas, 
+          (this.canvas.width - this.cropped_canvas.width) / 2, 
+          (this.canvas.height - this.cropped_canvas.height) / 2,
+          this.cropped_canvas.width, this.cropped_canvas.height,
+          0, 0,
+          this.cropped_canvas.width, this.cropped_canvas.height
+        );
+        this.g_cropped.restore();
+        // this.g_cropped.save();
+        // this.g_cropped.translate(this.g.canvas.width, 0);
+        // this.g_cropped.scale(-1, 1);
+        // this.g_cropped.drawImage(this.g.canvas, 0, 0);
+        // this.g_cropped.restore();
+        let img = new Image();
+        this.cropped_canvas.toBlob(blob => {
+          img.src = URL.createObjectURL(blob);
+        }, 'image/jpeg', 0.95);
+        this.captures.push(img);
+        this.captimes.push(new Date());
+        document.querySelector('#vid').prepend(img);
+      }
+    }
+  }
+  
+  let cam = new Cam({ audio: false, video: { width: 1280, height: 720 } });
+  document.querySelector('#cam').appendChild(cam.canvas);
+  
+  let cb_flip_h = document.querySelector('#flip-h');
+  let bt_record = document.querySelector('#record');
+  let bt_play = document.querySelector('#play');
+  let bt_prev = document.querySelector('#prev');
+  let bt_next = document.querySelector('#next');
+  let bt_delete = document.querySelector('#delete');
+  let bt_download = document.querySelector('#download');
+  let bt_download_seq = document.querySelector('#download_seq');
+  let is_recording = false;
+  let is_playing = false;
+  let is_downloading = false;
+  
+  cb_flip_h.addEventListener('input', () => {
+    cam.flipH = cb_flip_h.checked;
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if(e.code == 'Space') {
+      e.preventDefault();
+      if(cam) {
+        cam.is_capturing = true;
+        cam.capture();
+        document.querySelector('#took_count').textContent = `${cam.captures.length} 장 캡쳐`;
+        cam.is_capturing = false;
+      }
+    }
+  });
+  
+  bt_record.addEventListener('click', () => {
+    is_recording = !is_recording;
+    if(is_recording) {
+      cam.chunks = [];
+      cam.captures = [];
+      cam.captimes = [];
+      //cam.mediaRecorder.start();
+      cam.is_capturing = true;
+      bt_record.textContent = '■ 캡쳐 종료';
+    }
+    else {
+      //cam.mediaRecorder.stop();
+      cam.is_capturing = false;
+      bt_record.textContent = '● 캡쳐 시작';
+    }
+  });
+
+  function update_play_status() {
+    if(is_playing) {
+      bt_play.textContent = '■ 멈춤';
+      current_frame = 0;
+    }
+    else {
+      bt_play.textContent = '▶ 재생';
+    }
+  } 
+  
+  bt_play.addEventListener('click', () => {
+    is_playing = !is_playing;
+    update_play_status();
+  });
+
+  bt_prev.addEventListener('click', () => {
+    is_playing = false;
+    update_play_status();
+    if(cam) {
+      current_frame -= 1;
+      if(current_frame < 0) {
+        current_frame = cam.captures.length - 1;
+      }
+      g.drawImage(cam.captures[current_frame], 0, 0);
+    }
+  });
+
+  bt_next.addEventListener('click', () => {
+    is_playing = false;
+    update_play_status();
+    if(cam) {
+      current_frame += 1;
+      if(current_frame > cam.captures.length - 1) {
+        current_frame = 0;
+      }
+      g.drawImage(cam.captures[current_frame], 0, 0);
+    }
+  });
+
+  bt_delete.addEventListener('click', () => {
+    is_playing = false;
+    update_play_status();
+    let idx = current_frame;
+    cam.captures.splice(idx, 1);
+    cam.captimes.splice(idx, 1);
+    current_frame = idx - 1;
+    if(current_frame < 0) {
+      current_frame = 0;
+    }
+    if(cam.captures.length > 0) {
+      g.drawImage(cam.captures[current_frame], 0, 0);
+    }
+    else {
+      g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    }
+    document.querySelector('#took_count').textContent = `${cam.captures.length} 장 캡쳐`;
+  });
+  
+  function get_date_string(dt) {
+    let ymd6 = String(dt.getFullYear()).slice(2,4).padStart(2, '0')
+          + String(dt.getMonth()+1).padStart(2, '0')
+          + String(dt.getDate()).padStart(2, '0');
+    return ymd6;
+  }
+  
+  function get_time_string(dt) {
+    let ts = String(dt.getHours()).padStart(2, '0')
+           + String(dt.getMinutes()).padStart(2, '0')
+           + String(dt.getSeconds()).padStart(2, '0');
+    return ts;
+  }
+  
+  async function download_seq() {
+    bt_download_seq.disabled = true;
+    bt_download.disabled = true;
+    is_playing = false;
+    bt_play.textContent = '▶ 재생';
+    document.querySelector('#play_head').textContent = `압축 중...`;
+    
+    let zip = new JSZip();
+    let n = String(cam.captures.length).length;
+    for(let i = 0; i < cam.captures.length; i++) {
+      let blob = await fetch(cam.captures[i].src).then(r => r.blob());
+      let idx = String(i).padStart(n, '0');
+      zip.file(`${idx}.jpg`, blob);
+    }
+    
+    await zip.generateAsync({type:"blob"})
+    .then(blob => {
+      let dt = new Date();
+      let ds = get_date_string(dt);
+      let ts0 = get_time_string(cam.captimes[0]);
+      let ts1 = get_time_string(cam.captimes[cam.captimes.length - 1]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      let fn = document.querySelector('#fn').value;
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${fn}-타임랩스(${ds}_${ts0}-${ts1}-${cam.captures.length}장).zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          document.querySelector('#play_head').textContent = `(${current_frame+1} / ${cam.captures.length})`;
+          bt_download_seq.disabled = false;
+          bt_download.disabled = false;
+        }, 100);
+    });
+  }
+  
+  bt_download_seq.addEventListener('click', () => {
+    download_seq();
+  });
+  
+  let past_timestamp = 0;
+  let elapsed_time = 0;
+  let current_frame = 0;
+  let frame_count = 0;
+  
+  function loop(timestamp) {
+    cam.update();
+    
+    if(cam.captures.length > 0 && is_playing) {
+      if(frame_count % fps === 0 && current_frame < cam.captures.length) {
+        document.querySelector('#play_head').textContent = `(${current_frame+1} / ${cam.captures.length})`;
+        g.drawImage(cam.captures[current_frame], 0, 0);
+        current_frame += 1;
+        if(current_frame > cam.captures.length - 1) {
+          if(!is_downloading) {
+            current_frame = 0;
+          }
+          else {
+            download();
+          }
+        }  
+      }
+    }
+    
+    frame_count += 1;
+    
+    requestAnimationFrame(loop);
+  }
+  
+  loop();
+</script>
