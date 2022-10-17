@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    #view {
+        height: 480px;
+    }
+
+    #filter {
+        width: 460px;
+    }
+
+    .pane {
+        display: inline-block;
+        min-width: 480px;
+        min-height: 600px;
+    }
+
+    .brush {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        box-sizing: border-box;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+
+    #brush-black {
+        background-color: black;
+        border: 2px solid gray;
+    }
+
+    #brush-white {
+        background-color: white;
+        border: 2px solid blue;
+    }
+
+    #svg-container {
+        min-width: 480px;
+        height: 480px;
+    }
+</style>
+<body>
+    <div class="pane">
+        <div style="line-height: 2em;">
+            <label>카메라 해상도</label>
+            <input type="radio" name="resolution" value="640x480">
+            <label>640x480</label>
+            <input type="radio" name="resolution" value="800x600" checked>
+            <label>800x600</label>
+            <input type="radio" name="resolution" value="960x720">
+            <label>960x720</label>
+            <input type="radio" name="resolution" value="1280x720">
+            <label>1280x720</label>
+            <button id="open-camera">카메라 열기</button>
+        </div>
+        <div>
+            <label>필터</label>
+            <input type="checkbox" id="cb-filter">
+            <input type="text" id="filter" value="grayscale(1) brightness(1.5) contrast(100)">
+        </div>
+        <br>
+        <div>
+            <canvas id="view" width="800" height="600"></canvas>
+        </div>     
+    </div>
+    <div class="pane">
+        <div>
+            <label>캡쳐 해상도</label>
+            <input type="radio" name="capture-resolution" value="camera">
+            <label>카메라</label>
+            <input type="radio" name="capture-resolution" value="1024x1024">
+            <label>1024x1024</label>
+            <input type="radio" name="capture-resolution" value="512x512" checked>
+            <label>512x512</label>
+            <input type="radio" name="capture-resolution" value="256x256">
+            <label>256x256</label>
+            <button id="bt-capture">캡쳐</button>
+        </div>
+        <div style="margin-bottom: 5px;">
+            <label>즉시 변환</label>
+            <input type="checkbox" id="cb-convert" checked>
+            <button id="bt-convert">패쓰 변환</button>
+            <button id="bt-apply-path">패쓰로 칠</button>
+        </div>
+        <div>
+            <div style="margin-bottom: 5px;">
+                <label>레벨</label>
+                <input id="l0" class="level" type="range" min="0" max="100" step="1" value="0">
+                <input id="l1" class="level" type="range" min="0" max="100" step="1" value="50">
+                <input id="l2" class="level" type="range" min="0" max="100" step="1" value="100">
+            </div>
+            <div style="margin-bottom: 5px;">
+                <label>브러시</label>
+                <div id="brush-black" class="brush"></div>
+                <div id="brush-white" class="brush"></div>
+                <input id="brush-radius" type="range" min="1" max="30" step="1" value="3">
+            </div>
+            <div style="margin-bottom: 5px;">
+                <label>필터</label>
+                <input type="checkbox" id="cb-filter-result">
+                <input type="text" id="filter-result" value="blur(1px)" style="width: 350px">
+            </div>
+            <button id="bt-apply-level">변경 적용</button>
+            <label>채우기</label><input type="checkbox" id="cb-fill-in">
+            <button id="bt-download-svg">다운로드 SVG</button>
+            <button id="bt-download-png">다운로드 PNG</button>
+            <button id="bt-copy">가져가기</button>
+        </div>
+        <br>
+        <div id="svg-container">
+            <svg width="100%" height="100%"></svg>
+        </div>
+    </div>
+    <textarea id="text-for-copy" style="opacity: 0;"></textarea>
+</body>
+<script type="module">
+    import { Cam } from './js/cam.js';
+    import { Potrace } from './js/potrace.js';
+    
+    const view_height = 480;
+    let cam;
+    let is_cam_ready = false;
+    let ctx = document.querySelector('#view').getContext('2d');
+    let g_capture = document.createElement('canvas').getContext('2d');
+    let g_resize = document.createElement('canvas').getContext('2d');
+    g_resize.canvas.style.cursor = 'crosshair';
+    let g_download = document.createElement('canvas').getContext('2d');
+    let im, im0, im1;
+    let path_string = '';
+
+    let el_svg_container = document.querySelector('#svg-container');
+    let cb_filter = document.querySelector('#cb-filter');
+    let el_filter = document.querySelector('#filter');
+    let cb_filter_result = document.querySelector('#cb-filter-result');
+    let el_filter_result = document.querySelector('#filter-result');
+    let el_brush_radius = document.querySelector('#brush-radius');
+    let crop_rect = new DOMRect();
+    let touch = {
+        down: false,
+        start_x: 0,
+        start_y: 0,
+        x: 0,
+        y: 0,
+        end_x: 0,
+        end_y: 0,
+        rect: new DOMRect(),
+        container_rect: null,
+    };
+    let brush_radius = 3;
+    let brush_color = 'rgb(255, 255, 255)';
+
+    function loop() {
+        if(!is_cam_ready) {
+            if (cam.video.readyState === cam.video.HAVE_ENOUGH_DATA) {
+                ctx.canvas.width = cam.video.videoWidth;
+                ctx.canvas.height = cam.video.videoHeight;
+                is_cam_ready = true;
+                center_align_touch_rect(ctx.canvas.height * 0.9);
+            }
+        }
+        else {
+            if(cb_filter.checked) {
+                ctx.filter = el_filter.value;
+            }
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.translate(-ctx.canvas.width, 0);
+            ctx.drawImage(cam.video, 0, 0);
+            ctx.restore();
+            ctx.filter = 'none';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            let path = new Path2D(`
+            M0,0 L${ctx.canvas.width},0 L${ctx.canvas.width},${ctx.canvas.height} L0,${ctx.canvas.height}Z
+            M${crop_rect.left},${crop_rect.bottom} L${crop_rect.right},${crop_rect.bottom} L${crop_rect.right},${crop_rect.top} L${crop_rect.left},${crop_rect.top}Z
+            `);
+            ctx.fill(path);
+            ctx.strokeStyle = 'yellowgreen';
+            ctx.strokeRect(crop_rect.x, crop_rect.y, crop_rect.width, crop_rect.height);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    function center_align_touch_rect(size) {
+        touch.rect.width = size | 0;
+        touch.rect.height = size | 0;
+        touch.rect.x = (ctx.canvas.width - size) * 0.5 | 0; 
+        touch.rect.y = (ctx.canvas.height - size) * 0.5 | 0;
+        crop_rect.x = touch.rect.x;
+        crop_rect.y = touch.rect.y;
+        crop_rect.width = touch.rect.width;
+        crop_rect.height = touch.rect.height;
+    }
+
+    function capture(target_image, mode) {
+        let resolution = document.querySelector('input[name="capture-resolution"]:checked').value.split('x');
+        
+        let g = g_capture;
+        if(mode === 'video') {
+            g.canvas.width = crop_rect.width;
+            g.canvas.height = crop_rect.height;
+            g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+            g.filter = 'grayscale(1)';
+            g.drawImage(target_image, ctx.canvas.width - crop_rect.right, crop_rect.top, g.canvas.width, g.canvas.height, 0, 0, g.canvas.width, g.canvas.height);
+        }
+        else if(mode === 'pasted') {
+            g.canvas.width = target_image.naturalWidth;
+            g.canvas.height = target_image.naturalHeight;
+            g.drawImage(target_image, 0, 0);
+        }
+        
+        g = g_resize;
+        if(resolution.length === 2) {
+            g.canvas.width = parseInt(resolution[0]);
+            g.canvas.height = parseInt(resolution[1]);
+            g.fillStyle = 'white';
+            g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+            let ratio = g_capture.canvas.width / g_capture.canvas.height;
+            let dx, dy, dw, dh;
+            if(ratio > 1) {
+                dw = g_resize.canvas.width;
+                dh = dw / ratio | 0;
+                dx = 0;
+                dy = 0.5 * (g_resize.canvas.height - dh) | 0;
+            }
+            else {
+                dh = g_resize.canvas.height;
+                dw = dh * ratio | 0;
+                dy = 0;
+                dx = 0.5 * (g_resize.canvas.width - dw) | 0;
+            }
+            g.filter = 'grayscale(1)';
+            g.drawImage(g_capture.canvas, 0, 0, g_capture.canvas.width, g_capture.canvas.height, dx, dy, dw, dh);
+        }
+        else {
+            g.canvas.width = g_capture.canvas.width;
+            g.canvas.height = g_capture.canvas.height;
+            g.drawImage(g_capture.canvas, 0, 0);
+        }
+
+        apply_level();
+
+        if(document.querySelector('#cb-convert').checked) {
+            convert_to_path(g);
+        }
+        else {
+            el_svg_container.innerHTML = '';
+            g.canvas.style.height = view_height + 'px';
+            el_svg_container.appendChild(g.canvas);
+        }
+    }
+
+    function lerp(a, b, t) {
+        return (1.0 - t) * a + t * b;
+    }
+    
+    function invlerp(a, b, v) {
+        return (v - a) / (b - a);
+    }
+    
+    function remap(imin, imax, omin, omax, v) {
+        let t = invlerp(imin, imax, v);
+        return lerp(omin, omax, t);
+    }
+
+    function level(black, gray, white) {
+        if(im0) {
+            for(let i = 0; i < im0.data.length / 4; i++) {
+                let R = im0.data[4 * i + 0];
+                let G = im0.data[4 * i + 1];
+                let B = im0.data[4 * i + 2];
+                let A = im0.data[4 * i + 3];
+                
+                let fR = R / 255.0;
+                let fG = G / 255.0;
+                let fB = B / 255.0;
+
+                let gbwb = (gray - black) / (white - black);
+                let wgwb = (white - gray) / (white - black);
+                fR = fR < 0.5 ? gbwb * fR / 0.5 : gbwb + wgwb * (fR - 0.5) / 0.5; 
+                let lR = Math.min(Math.max(remap(black, white, 0, 1, fR), 0), 1);
+                fG = fG < 0.5 ? gbwb * fG / 0.5 : gbwb + wgwb * (fG - 0.5) / 0.5; 
+                let lG = Math.min(Math.max(remap(black, white, 0, 1, fG), 0), 1);
+                fB = fB < 0.5 ? gbwb * fB / 0.5 : gbwb + wgwb * (fB - 0.5) / 0.5; 
+                let lB = Math.min(Math.max(remap(black, white, 0, 1, fB), 0), 1);
+                
+                im1.data[4 * i + 0] = lR * 255 | 0;
+                im1.data[4 * i + 1] = lG * 255 | 0;
+                im1.data[4 * i + 2] = lB * 255 | 0;
+                im1.data[4 * i + 3] = A;
+            }
+            g_resize.putImageData(im1, 0, 0);
+            
+            el_svg_container.innerHTML = '';
+            g_resize.canvas.style.height = view_height + 'px';
+            el_svg_container.appendChild(g_resize.canvas);
+        }
+    }
+
+    function convert_to_path(g) {
+        if(g.canvas.width > 0 && g.canvas.height) {
+            let ratio = g.canvas.width /  g.canvas.height;
+            el_svg_container.style.width = (ratio * view_height | 0) + 'px';
+            im = g.getImageData(0, 0, g.canvas.width, g.canvas.height);
+            let l = im.data.length, i, j, gray, bin;
+            for (i = 0, j = 0; i < l; i += 4, j++) {
+                gray = 0.2126 * im.data[i] + 0.7153 * im.data[i + 1] + 0.0721 * im.data[i + 2];
+                bin = (gray < 100 ? 1 : 0);
+                im.data[i + 0] = (1-bin) * 255;
+                im.data[i + 1] = (1-bin) * 255;
+                im.data[i + 2] = (1-bin) * 255;
+            }
+            Potrace.loadBm(im);
+            Potrace.process(() => {
+                path_string = Potrace.getPathString();
+                let svg_string = `
+                    <svg id="svg-path" width="100%" height="100%" viewBox="0 0 ${g.canvas.width} ${g.canvas.height}" version="1.1" xmlns="http://www.w3.org/2000/svg" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+                        <path d="${path_string}" style="stroke: none; fill: black;">
+                    </svg>`.trim(); 
+                el_svg_container.innerHTML = svg_string;
+            });
+        }
+
+        apply_level();
+    }
+
+    function apply_apth() {
+        
+    }
+
+    function apply_level() {
+        im0 = g_resize.getImageData(0, 0, g_resize.canvas.width, g_resize.canvas.height);
+        im1 = g_resize.getImageData(0, 0, g_resize.canvas.width, g_resize.canvas.height);
+        document.querySelector('#l0').value = 0;
+        document.querySelector('#l1').value = 50;
+        document.querySelector('#l2').value = 100;
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if(e.code === 'Space') {
+            if(is_cam_ready && document.activeElement.type !== 'text') {
+                capture(cam.video, 'video');
+            }
+        }
+    });
+
+    window.addEventListener('input', (e) => {
+        if(e.target.className === 'level') {
+            level(
+                Number(document.querySelector('#l0').value) / 100,
+                Number(document.querySelector('#l1').value) / 100,
+                Number(document.querySelector('#l2').value) / 100
+            );  
+        }
+    });
+
+    document.addEventListener('paste', (e) => {
+        for(let item of e.clipboardData.items) {
+            if(item.kind == 'file') {
+                let blob = item.getAsFile();
+                let img = new Image();
+                img.src = URL.createObjectURL(blob);
+                img.addEventListener('load', () => {
+                    capture(img, 'pasted');
+                });
+            }
+        }
+    });
+
+    document.querySelector('#open-camera').addEventListener('click', (e) => {
+        let resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
+        let constraints = {
+            video: { 
+                facingMode: "environment",
+                width: parseInt(resolution[0]),
+                height: parseInt(resolution[1]),
+            },
+        }; 
+        cam = new Cam(constraints);
+        cam.init(() => {
+            is_cam_ready = false;
+            window.cam = cam;
+            loop();
+        });
+    });
+
+    document.querySelector('#bt-capture').addEventListener('click', (e) => {
+        if(is_cam_ready) {
+            capture(cam.video, 'video');
+        }
+    });
+
+    document.querySelector('#bt-convert').addEventListener('click', (e) => {
+        let resolution = document.querySelector('input[name="capture-resolution"]:checked').value.split('x');
+        convert_to_path(g_resize);
+    });
+
+    document.querySelector('#bt-apply-level').addEventListener('click', (e) => {
+        apply_level();
+    });
+
+    document.querySelector('#bt-apply-path').addEventListener('click', (e) => {
+        let el_svg_path = document.querySelector('#svg-path');
+        if(el_svg_path) {
+            g_resize.fillStyle = 'white';
+            g_resize.fillRect(0, 0, g_resize.canvas.width, g_resize.canvas.height);
+            g_resize.fillStyle = 'black';
+            let paths = el_svg_path.querySelectorAll('path');
+            for(let path of paths) {
+                g_resize.fill(new Path2D(path.getAttribute('d')));
+            }
+            apply_level();
+        }
+    });
+
+    document.querySelector('#brush-black').addEventListener('click', (e) => {
+        brush_color = 'rgb(0, 0, 0)';
+        document.querySelector('#brush-black').style.border = '2px solid blue';
+        document.querySelector('#brush-white').style.border = '2px solid gray';
+    });
+
+    document.querySelector('#brush-white').addEventListener('click', (e) => {
+        brush_color = 'rgb(255, 255, 255)';
+        document.querySelector('#brush-white').style.border = '2px solid blue';
+        document.querySelector('#brush-black').style.border = '2px solid gray';
+    });
+
+    el_brush_radius.addEventListener('input', (e) => {
+        brush_radius = parseFloat(e.target.value);
+    });
+
+    cb_filter_result.addEventListener('input', (e) => {
+        if(e.target.checked) {
+            el_svg_container.style.filter =  el_filter_result.value;
+        }
+        else {
+            el_svg_container.style.filter = '';   
+        }
+    });
+
+    el_filter_result.addEventListener('input', (e) => {
+        if(cb_filter_result.checked) {
+            el_svg_container.style.filter =  el_filter_result.value;
+        }
+    });
+
+    document.querySelector('#bt-download-svg').addEventListener('click', (e) => {
+        let el_svg_path = document.querySelector('#svg-path');
+        let original_inner_svg_string = el_svg_path.innerHTML;
+        if(el_svg_path) {
+            let paths = el_svg_path.querySelectorAll('path');
+            let inner_svg_string = '';
+            for(let path of paths) {
+                let path_string = path.getAttribute('d');
+                let path_strs = path_string.split('M').filter(p => p.length > 0).map(p => 'M' + p);
+                let boundary_path = path_strs[0];
+                if(path_strs.length > 1 && document.querySelector('#cb-fill-in').checked) {
+                    inner_svg_string += `<path d="${boundary_path}" style="stroke: none; fill: white;"></path>`;
+                }
+                inner_svg_string += `<path d="${path_string}" style="stroke: none; fill: black;"></path>`;
+            }
+            el_svg_path.innerHTML = inner_svg_string;
+        }
+        let el = document.createElement('a');
+        el.href = 'data:image/svg+xml,' + document.querySelector('#svg-path').outerHTML;
+        el_svg_path.innerHTML = original_inner_svg_string;
+        el.download = `그림_${(new Date()).getTime()}.svg`;
+        el.click();
+    });
+
+    document.querySelector('#bt-download-png').addEventListener('click', (e) => {
+        let el_svg_path = document.querySelector('#svg-path');
+        if(el_svg_path) {
+            g_download.canvas.width = g_resize.canvas.width * 2;
+            g_download.canvas.height = g_resize.canvas.height * 2;
+            g_download.clearRect(0, 0, g_download.canvas.width, g_download.canvas.height);
+            g_download.fillStyle = 'black';
+            let paths = el_svg_path.querySelectorAll('path');
+            for(let path of paths) {
+                let path_string = path.getAttribute('d');
+                let path_strs = path_string.split('M').filter(p => p.length > 0).map(p => 'M' + p);
+                let boundary_path = path_strs[0];
+
+                g_download.save();
+                g_download.scale(2, 2);
+                if(document.querySelector('#cb-fill-in').checked) {
+                    g_download.fillStyle = 'white';
+                    g_download.fill(new Path2D(boundary_path));
+                }
+
+                g_download.fillStyle = 'black';
+                g_download.fill(new Path2D(path_string));
+                g_download.restore();
+            }
+            apply_level();
+        }
+
+        let el = document.createElement('a');
+        
+        el.href = g_download.canvas.toDataURL();
+        el.download = `그림_${(new Date()).getTime()}.png`;
+        el.click();
+    });
+
+    document.querySelector('#bt-copy').addEventListener('click', (e) => {
+        document.querySelector('#text-for-copy').value = path_string;
+        document.querySelector('#text-for-copy').select();
+        document.execCommand('copy');
+        localStorage['path-string'] = path_string;
+    });
+
+    ctx.canvas.addEventListener('mousedown', (e) => {
+        if(is_cam_ready) {
+            touch.down = true;
+            touch.container_rect = ctx.canvas.getBoundingClientRect();
+            touch.start_x = e.pageX - touch.container_rect.x - window.scrollX;
+            touch.start_y = e.pageY - touch.container_rect.y - window.scrollY;
+            let ratio = cam.video.videoHeight / view_height;
+            touch.rect.x = touch.start_x * ratio | 0;
+            touch.rect.y = touch.start_y * ratio | 0;
+            touch.rect.width = 0;
+            touch.rect.height = 0;
+
+            crop_rect.x = touch.rect.x;
+            crop_rect.y = touch.rect.y;
+            crop_rect.width = touch.rect.width;
+            crop_rect.height = touch.rect.height;
+        }
+    });
+
+    ctx.canvas.addEventListener('mouseup', (e) => {
+        if(is_cam_ready) {
+            touch.down = false;
+            touch.end_x = e.pageX - touch.container_rect.x - window.scrollX;
+            touch.end_y = e.pageY - touch.container_rect.y - window.scrollY;
+            let ratio = cam.video.videoHeight / view_height;
+            touch.end_x = touch.end_x * ratio | 0;
+            touch.end_y = touch.end_y * ratio | 0;
+        }
+    });
+
+    ctx.canvas.addEventListener('mousemove', (e) => {
+        if(is_cam_ready) {
+            if(touch.down) {
+                touch.x = e.pageX - touch.container_rect.x - window.scrollX;
+                touch.y = e.pageY - touch.container_rect.y - window.scrollY;
+                let ratio = cam.video.videoHeight  / view_height;
+                touch.rect.width = (touch.x - touch.start_x) * ratio | 0;
+                touch.rect.height = (touch.y - touch.start_y) * ratio | 0;
+                if(touch.rect.width < 0) {
+                    crop_rect.x = (touch.start_x * ratio) - Math.abs(touch.rect.width) | 0;
+                }
+                if(touch.rect.height < 0) {
+                    crop_rect.y = (touch.start_y * ratio) - Math.abs(touch.rect.height) | 0;    
+                }
+                crop_rect.width = Math.abs(touch.rect.width) | 0;
+                crop_rect.height = Math.abs(touch.rect.height) | 0;
+            }
+        }
+    });
+
+    ctx.canvas.addEventListener('mouseleave', (e) => {
+        touch.down = false;
+    });
+
+    let tool = {
+        down: false,
+        old_x: 0,
+        olt_y: 0,
+    };
+
+    function brush_down(e) {
+        if(e.buttons === 1) {
+            tool.down = true;
+            let g = g_resize;
+            let rect = g.canvas.getBoundingClientRect();
+            let ratio = g_resize.canvas.height / view_height;
+            let x = (e.pageX - rect.x - window.scrollX) * ratio;
+            let y = (e.pageY - rect.y - window.scrollY) * ratio;
+            g.beginPath();
+            g.arc(x, y, brush_radius, 0, Math.PI * 2);
+            g.fillStyle = brush_color;
+            g.fill();
+            tool.old_x = x;
+            tool.old_y = y;
+            g.lineJoin = 'round';
+            g.lineCap = 'round';
+            g.lineWidth = brush_radius * 2;
+        }
+    }
+
+    g_resize.canvas.addEventListener('mousedown', (e) => {
+        brush_down(e);    
+    });
+
+    g_resize.canvas.addEventListener('mouseup', (e) => {
+        tool.down = false;
+    });
+
+    g_resize.canvas.addEventListener('mousemove', (e) => {
+        if(tool.down) {
+            let g = g_resize;
+            let rect = g.canvas.getBoundingClientRect();
+            let ratio = g_resize.canvas.height / view_height;
+            let x = (e.pageX - rect.x - window.scrollX) * ratio;
+            let y = (e.pageY - rect.y - window.scrollY) * ratio;
+            g.beginPath();
+            g.moveTo(tool.old_x, tool.old_y);
+            g.lineTo(x, y);
+            g.strokeStyle = brush_color;
+            g.stroke();
+            tool.old_x = x;
+            tool.old_y = y;
+        }
+    });
+
+    g_resize.canvas.addEventListener('mouseleave', (e) => {
+        tool.down = false;
+    });
+
+    g_resize.canvas.addEventListener('mouseenter', (e) => {
+        brush_down(e);
+    });
+</script>
