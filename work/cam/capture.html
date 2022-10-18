@@ -122,7 +122,7 @@
     let is_cam_ready = false;
     let ctx = document.querySelector('#view').getContext('2d');
     let g_capture = document.createElement('canvas').getContext('2d');
-    let g_resize = document.createElement('canvas').getContext('2d');
+    let g_resize = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
     g_resize.canvas.style.cursor = 'crosshair';
     let g_download = document.createElement('canvas').getContext('2d');
     let im, im0, im1;
@@ -199,7 +199,7 @@
             g.canvas.width = crop_rect.width;
             g.canvas.height = crop_rect.height;
             g.clearRect(0, 0, g.canvas.width, g.canvas.height);
-            g.filter = 'grayscale(1)';
+            //g.filter = 'grayscale(1)';
             g.drawImage(target_image, ctx.canvas.width - crop_rect.right, crop_rect.top, g.canvas.width, g.canvas.height, 0, 0, g.canvas.width, g.canvas.height);
         }
         else if(mode === 'pasted') {
@@ -228,7 +228,7 @@
                 dy = 0;
                 dx = 0.5 * (g_resize.canvas.width - dw) | 0;
             }
-            g.filter = 'grayscale(1)';
+            //g.filter = 'grayscale(1)';
             g.drawImage(g_capture.canvas, 0, 0, g_capture.canvas.width, g_capture.canvas.height, dx, dy, dw, dh);
         }
         else {
