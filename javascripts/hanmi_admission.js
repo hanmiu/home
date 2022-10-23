@@ -1,5 +1,5 @@
 html['admission'] = `
-<div>2023학년도 입학 안내</div>
+<div>2023학년도 한미유치원 입학 안내</div>
 <br>
 <div class="subtle">
 <a href="https://docs.google.com/document/d/1PiE16sqAxto9-xOHdEVEk2z3jbNsMRMPFI1f5kxWbvk/edit?usp=sharing" target="_blank"><strong>2023학년도 모집 요강</strong></a>  (← 클릭)
@@ -70,7 +70,10 @@ html['admission'] = `
 <br>
 
 <img src="./images/2022/2023_intro_1.svg" style="width: 100%">
-  
+<br>
+<img src="./images/2022/2023_intro_2.svg" style="width: 100%">
+<br>
+<img src="./images/2022/2023_intro_3.svg" style="width: 100%">
 <br><br>
 
 <div>그 밖의 정보</div>
