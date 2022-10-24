@@ -73,11 +73,17 @@ html['admission'] = `
 </div>
 <br>
 
-<img src="./images/2022/2023_intro_1.svg" style="width: 100%">
+<img src="./images/2022/2023_vintro_1.svg" style="width: 100%">
 <br>
-<img src="./images/2022/2023_intro_2.svg" style="width: 100%">
+<img src="./images/2022/2023_vintro_2.svg" style="width: 100%">
 <br>
-<img src="./images/2022/2023_intro_3.svg" style="width: 100%">
+<img src="./images/2022/2023_vintro_3.svg" style="width: 100%">
+<br>
+<img src="./images/2022/2023_vintro_4.svg" style="width: 100%">
+<br>
+<img src="./images/2022/2023_vintro_5.svg" style="width: 100%">
+<br>
+<img src="./images/2022/2023_vintro_6.svg" style="width: 100%">
 <br><br>
 
 <div>그 밖의 정보</div>
