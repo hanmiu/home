@@ -52,7 +52,7 @@ html['admission'] = `
 <strong>시설 참관</strong>
 <div class="subtle">
   <ul class="leaf">
-    <li>10/24(월) ~ 10/28(금) 16시 30분 ~ 18시</li>
+    <li>10월 24일 (월) ~ 10월 28일 (금) 16시 30분 ~ 18시</li>
   </ul>
   이 기간 동안 한미유치원을 방문하여 시설을 둘러보고 소개를 받으실 수 있습니다.
 </div>
@@ -67,8 +67,8 @@ html['admission'] = `
   <br><br>
 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
   <ul class="flower">
-    <li>우선 모집: 10/31(월) ~ 11/2(수)</li>
-    <li>일반 모집: 11/16(수) ~ 11/18(금)</li>
+    <li>우선 모집: 10월 31일 (월) ~ 11월 2일 (수)</li>
+    <li>일반 모집: 11월 16일 (수) ~ 11월 18일 (금)</li>
   </ul>
 </div>
 <br>
