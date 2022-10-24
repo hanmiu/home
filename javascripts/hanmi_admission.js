@@ -26,7 +26,7 @@ html['admission'] = `
 </div>
 <br>
 
-모집대상
+모집 대상
 <div class="subtle">
 <ul class="flower">
     <li>2019년생 (만3세) 54명</li>
