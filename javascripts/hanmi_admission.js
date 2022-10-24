@@ -66,6 +66,10 @@ html['admission'] = `
   <a href="https://bit.ly/3qjWFzD" target="_blank">2022학년도 설명회 안내</a>에서 작년에 다뤘던 내용을 살펴보실 수 있습니다.
   <br><br>
 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
+  <ul class="flower">
+    <li>우선 모집: 10/31(월) ~ 11/2(수)</li>
+    <li>일반 모집: 11/16(수) ~ 11/18(금)</li>
+  </ul>
 </div>
 <br>
 
