@@ -63,7 +63,9 @@ html['admission'] = `
   <ul class="leaf">
     <li>10/26(수) 16시 30분, 10/27(목) 16시 30분</li>
   </ul>
-  <a href="https://bit.ly/3qjWFzD" target="_blank">2022학년도 설명회 안내</a>에서 작년에 다뤘던 내용을 살펴보실 수 있습니다.
+  <a href="https://drive.google.com/file/d/19PTw8G9JZgrhI2o7mF0XUK8U0AczWEht/view?usp=sharing" target="_blank"><strong>2023학년도 교육 설명회 자료</strong></a>  (← 클릭)
+  <br><br>
+  <a href="https://bit.ly/3qjWFzD" target="_blank">2022학년도 설명회 안내</a>에서 작년에 다뤘던 내용도 살펴보실 수 있습니다.
   <br><br>
 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
   <ul class="flower">
