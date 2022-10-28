@@ -2,7 +2,7 @@ html['admission'] = `
 <div>2023학년도 한미유치원 입학 안내</div>
 <br>
 <div class="subtle">
-<a href="https://docs.google.com/document/d/1PiE16sqAxto9-xOHdEVEk2z3jbNsMRMPFI1f5kxWbvk/edit?usp=sharing" target="_blank"><strong>2023학년도 모집 요강</strong></a>  (← 클릭)
+<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)
 </div>
 <br>
 
@@ -63,7 +63,7 @@ html['admission'] = `
   <ul class="leaf">
     <li>10/26(수) 16시 30분, 10/27(목) 16시 30분</li>
   </ul>
-  <a href="https://drive.google.com/file/d/19PTw8G9JZgrhI2o7mF0XUK8U0AczWEht/view?usp=sharing" target="_blank"><strong>2023학년도 교육 설명회 자료</strong></a>  (← 클릭)
+  <a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)
   <br><br>
   <a href="https://bit.ly/3qjWFzD" target="_blank">2022학년도 설명회 안내</a>에서 작년에 다뤘던 내용도 살펴보실 수 있습니다.
   <br><br>
@@ -91,7 +91,7 @@ html['admission'] = `
 <div>그 밖의 정보</div>
 <br>
 <div class="subtle">
-  관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 담은 상세 <strong><a href="https://docs.google.com/document/d/1PiE16sqAxto9-xOHdEVEk2z3jbNsMRMPFI1f5kxWbvk/edit?usp=sharing" target="_blank">유아모집 요강</a></strong>을 참고해 주세요.<br><br>
+<strong><a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank">설명회 자료의 유아모집 요강</a></strong>에서 관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간, 교육비 등의 내용을 확인할 수 있습니다. <strong><a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a></strong>을 통해 2022학년도 현재 환경 사진과 간추린 교실 이야기 등 설명회 자료에 넣지 못한 다양한 이미지를 공유하고 있습니다.<br><br>
   <ul class="musical">
     <li>2023학년도 <strong>방과후 과정 참여</strong>가 필요한 맞벌이 가정과 돌봄이 필요한 가정은 <strong>누구나 신청</strong>할 수 있습니다.</li>
   </ul>
@@ -99,7 +99,7 @@ html['admission'] = `
 </div>
 <div>
 
-<div class="subtle">설명회 전에 이 홈페이지의 내용을 통해 한미유치원의 교육에 관한 다양한 자료를 살펴보실 수 있습니다. 교실 공간과 환경은 <a href="/?page=hanmi" target="_blank">&lt;한미유치원의 역사·문화·환경&gt;</a> 페이지를, 어린이들이 사용하는 놀잇감은 <a href="/?page=about_play" target="_blank">&lt;놀이&gt;</a> 페이지를 살펴봐 주세요.</div>
+<div class="subtle">설명회 전후에 이 홈페이지의 내용을 통해 한미유치원의 교육에 관한 다양한 자료를 살펴보실 수 있습니다. 교실 공간과 환경은 <a href="/?page=hanmi" target="_blank">&lt;한미유치원의 역사·문화·환경&gt;</a> 페이지를, 어린이들이 사용하는 놀잇감은 <a href="/?page=about_play" target="_blank">&lt;놀이&gt;</a> 페이지를 살펴봐 주세요.</div>
 <br>
 
 <!--
