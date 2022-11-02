@@ -2,7 +2,8 @@ html['admission'] = `
 <div>2023학년도 한미유치원 입학 안내</div>
 <br>
 <div class="subtle">
-<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)
+<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)<br>
+<strong><a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a></strong>을 통해 2022학년도 현재 환경 사진과 연령별 간추린 교실 이야기를 소개하고 있습니다.<br>
 </div>
 <br>
 
@@ -61,7 +62,8 @@ html['admission'] = `
 <strong>교육 설명회</strong>
 <div class="subtle">
   <ul class="leaf">
-    <li>10/26(수) 16시 30분, 10/27(목) 16시 30분</li>
+    <li>우선 모집: 10/26(수) 16시 30분, 10/27(목) 16시 30분 (종료)</li>
+    <li><strong>일반 모집</strong>: 11월 2주 또는 3주 중 하루 (오후 예정, 정확한 일정은 다시 공지)</li>
   </ul>
   <a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)
   <br><br>
