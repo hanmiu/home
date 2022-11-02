@@ -3,7 +3,7 @@ html['admission'] = `
 <br>
 <div class="subtle">
 <a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)<br>
-<strong><a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a></strong>을 통해 2022학년도 현재 환경 사진과 연령별 간추린 교실 이야기를 소개하고 있습니다.<br>
+<a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a>을 통해 환경 사진과 연령별 간추린 교실 이야기를 소개하고 있습니다.<br>
 </div>
 <br>
 
@@ -50,15 +50,6 @@ html['admission'] = `
 </div>
 <br>
 
-<strong>시설 참관</strong>
-<div class="subtle">
-  <ul class="leaf">
-    <li>10월 24일 (월) ~ 10월 28일 (금) 16시 30분 ~ 18시</li>
-  </ul>
-  이 기간 동안 한미유치원을 방문하여 시설을 둘러보고 소개를 받으실 수 있습니다.
-</div>
-<br>
-
 <strong>교육 설명회</strong>
 <div class="subtle">
   <ul class="leaf">
@@ -69,13 +60,26 @@ html['admission'] = `
   <br><br>
   <a href="https://bit.ly/3qjWFzD" target="_blank">2022학년도 설명회 안내</a>에서 작년에 다뤘던 내용도 살펴보실 수 있습니다.
   <br><br>
+</div>
+<br>
+
+<strong>시설 참관</strong>
+<div class="subtle">
+  <ul class="leaf">
+    <!--<li>10월 24일 (월) ~ 10월 28일 (금) 16시 30분 ~ 18시</li>-->
+    <li>전화로 문의 주시기 바랍니다.</li>
+  </ul>
+  <!--이 기간 동안 한미유치원을 방문하여 시설을 둘러보고 소개를 받으실 수 있습니다.-->
+</div>
+<br>
+
+<div class="subtle">
 <a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
   <ul class="flower">
     <li>우선 모집: 10월 31일 (월) ~ 11월 2일 (수)</li>
     <li>일반 모집: 11월 16일 (수) ~ 11월 18일 (금)</li>
   </ul>
 </div>
-<br>
 
 <img src="./images/2022/2023_vintro_1.svg" style="width: 100%">
 <br>
