@@ -2,7 +2,8 @@ html['admission'] = `
 <div>2023학년도 한미유치원 입학 안내</div>
 <br>
 <div class="subtle">
-<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)<br>
+<!--
+<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)<br>-->
 <a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a>을 통해 환경 사진과 연령별 간추린 교실 이야기를 소개하고 있습니다.<br>
 </div>
 <br>
@@ -53,21 +54,19 @@ html['admission'] = `
 <strong>교육 설명회</strong>
 <div class="subtle">
   <ul class="leaf">
-    <li>우선 모집: 10/26(수) 16시 30분, 10/27(목) 16시 30분 (종료)</li>
-    <li><strong>일반 모집</strong>: 11월 2주 또는 3주 중 하루 (오후 예정, 정확한 일정은 다시 공지)</li>
+    <!--<li>우선 모집: 10/26(수) 16시 30분, 10/27(목) 16시 30분 (종료)</li>-->
+    <li>일반 모집: 11/14(월) 16시 30분, <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a>  (← 클릭) </li>
   </ul>
   <a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)
   <br><br>
   <a href="https://bit.ly/3qjWFzD" target="_blank">2022학년도 설명회 안내</a>에서 작년에 다뤘던 내용도 살펴보실 수 있습니다.
   <br><br>
-</div>
-<br>
 
 <strong>시설 참관</strong>
 <div class="subtle">
   <ul class="leaf">
     <!--<li>10월 24일 (월) ~ 10월 28일 (금) 16시 30분 ~ 18시</li>-->
-    <li>전화로 문의 주시기 바랍니다.</li>
+    <li>11월 14일 설명회 이후에 이어서 진행합니다. <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a></li>
   </ul>
   <!--이 기간 동안 한미유치원을 방문하여 시설을 둘러보고 소개를 받으실 수 있습니다.-->
 </div>
