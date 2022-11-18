@@ -218,6 +218,11 @@
     let bt_new_game = document.querySelector('#new-game');
     let bt_guess = document.querySelector('#guess');
 
+    let utter = new SpeechSynthesisUtterance();
+    if(utter) {
+        utter.lang = 'ko';
+    }
+
     Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('.button')).forEach(el => {
         el.addEventListener('click', (e) => {
             let n = parseInt(e.target.id.split('m')[1]);
@@ -350,6 +355,10 @@
                     g_low.querySelector('img').style.opacity = 1;
                 }, 1);
             }
+            if(utter) {
+                utter.text = el_judge.textContent;
+                speechSynthesis.speak(utter);
+            }
         }
         else if(number > the_number) {
             el_judge.textContent = `${number} 보다 작습니다.`;
@@ -360,6 +369,10 @@
                     g_high.querySelector('img').style.filter = '';
                     g_high.querySelector('img').style.opacity = 1;
                 }, 1);
+            }
+            if(utter) {
+                utter.text = el_judge.textContent;
+                speechSynthesis.speak(utter);
             }
         }
         else if(number === the_number) {
@@ -378,6 +391,11 @@
             el.className = 'captured';
             el.innerHTML = `<img src='${img.src}'><label>${the_number}번, 도전:${nth}</label><br><label>${pokemon_data[number].name}</label>`;
             el_box.insertBefore(el, el_box.firstElementChild);
+
+            if(utter) {
+                utter.text = `맞아요! ${number}, 번 포켓몬은 ${pokemon_data[number].name}! ${pokemon_data[number].types.join(', ')} 타입`;
+                speechSynthesis.speak(utter);
+            }
         }
 
         nth += 1;
@@ -387,6 +405,11 @@
         if(number !== the_number && nth === challenge_limit) {
             el_judge.textContent = `💨 ${the_number}번 포켓몬이 도망갔습니다.`;
             setTimeout(restart, 4000);
+
+            if(utter) {
+                utter.text = `${the_number}, 번 포켓몬이 도망갔습니다.`;
+                speechSynthesis.speak(utter);
+            }
         }
     }
 
