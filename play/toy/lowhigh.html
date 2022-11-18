@@ -393,7 +393,7 @@
             el_box.insertBefore(el, el_box.firstElementChild);
 
             if(utter) {
-                utter.text = `맞아요! ${number}, 번 포켓몬은 ${pokemon_data[number].name}! ${pokemon_data[number].types.join(', ')} 타입`;
+                utter.text = `맞아요! ${number}, 번 포켓몬은 ${pokemon_data[number].name}! ${pokemon_data[number].types.join(' ')} 타입`;
                 speechSynthesis.speak(utter);
             }
         }
