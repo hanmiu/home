@@ -18,6 +18,7 @@ html['playground'] = `
   </ul>
   <br><br>
 
+  <!--
   <div class="subtle"><a href="https://www.hanmiu.cc/play/toy/lens.html" target="_blank"><strong>
   호기심 렌즈
   </strong></div>
@@ -26,6 +27,7 @@ html['playground'] = `
   </a>
   <div class="subtle">2020학년도 겨울에 만들었던 &lt;호기심 렌즈&gt;는 일상의 익숙한 사물을 동그라미, 세모, 네모의 렌즈 안에 담아 다른 관점으로 새롭게 표현해 보는 작업입니다. &lt;<a href="https://youtu.be/VqTJPbPC3OY" target="_blank">2021 세계문화예술교육 주간</a>&gt;에 소개되기도 했습니다.</div>
   <br><br>
+  -->
   
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/hangul-slime.html" target="_blank"><strong>
   한글 슬라임
