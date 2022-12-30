@@ -72,6 +72,7 @@ html['playground'] = `
   <div class="subtle">놀이를 지원하기 위해 개발한 소프트웨어만 아니라 <a href="https://www.youtube.com/watch?v=GhHWJIfQtWc" target="_blank">미디어를 활용한 즐거움 만들기</a>, <a href="https://www.youtube.com/watch?v=tudpqm8lS3Y" target="_blank">움직이는 그림책</a>, <a href="https://www.youtube.com/watch?v=x4dYaeiNGuw&t=1133s" target="_blank">영상 놀이</a>, <a href="https://i-nuri.go.kr/ebook/20200303S3E/index.html" target="_blank">공연은 움직여야 해</a>, <a href="https://www.youtube.com/watch?v=EyLhNf8Tg80" target="_blank">몸글자</a> 등에서 어린이들이 이미 익숙하게 느끼는 일상 속의 디지털 매체가 어떻게 교실의 놀이와 연결되어 배움의 도움계단이 되어주는지 살펴보실 수 있습니다.</div>
   <br><br>
 
+  <!--
   &lt;디지털 놀이터&gt;를 구현하고 있는 한미유치원 설립자 최승준 작가에 관한 이야기는 아래 링크를 통해 살펴볼 수 있습니다.
   <ul class="musical">
     <li><a href="https://youtu.be/enW8po_nMA4" target="_blank">디지털 기술로 새로운 교육 상상하기</a> (PaTI 미니 컨퍼런스, 2021)</li>
@@ -82,6 +83,7 @@ html['playground'] = `
   </ul>
   </div>
   <br><br>
+  -->
 
   <div>더 살펴보기</div>
   <div class="subtle">
