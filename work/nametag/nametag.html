@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>name tags</title>
+    <link href="https://fonts.googleapis.com/css?family=Jua|Noto+Serif+KR&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css" type="text/css">
+    <script type="text/javascript" src="./js/main.js"></script>
+</head>
+<body>
+    <div id="ui">
+        <div>
+            <div>
+                <label>반 이름</label><input id="class_name" value="OO반">
+            </div>
+            <!--
+            <div>
+                <label>차량 이름</label><input id="car_name" value="OO호">
+            </div>
+            <div>
+                <label>차량 전화번호</label><input id="car_tel" value="OOO-OOOO-OOOO">
+            </div>
+            -->
+            <hr>
+            <div style="margin-bottom: 5px"><label>어린이 이름 (띄어쓰기, 줄바꿈, 콤마 중에 하나로 구분)</label></div>
+            <div><textarea id="names"></textarea></div>
+            <div><label>빈 양식 개수</label><input id="num_print" type="number" min="0" value="0"></div>
+        </div>
+        <hr>
+        <div>
+            <label>양식</label>
+            <select id="ptype">
+              <option value="가방라벨">가방라벨</option>
+              <option value="가방라벨2023">가방라벨 2023</option>
+              <option value="신발가방장">신발가방장</option>
+              <option value="편지함">편지함</option>
+              <option value="편지통">편지통</option>
+              <option value="수건걸이">수건걸이</option>
+              <option value="어린이명찰">어린이명찰</option>
+              <option value="학부모명찰">학부모명찰</option>
+            </select>
+            <button id="build">만들기</button>
+            <button id="print">인쇄</button>
+        </div>
+    </div>
+    <div id="view">
+    </div>
+</body>
+</html>

@@ -1,0 +1,307 @@
+body {
+    margin-left: 0;
+    margin-top: 5px;
+    overflow-x: hidden;
+    font-family: Nanum Gothic;
+}
+
+#ui {
+    padding: 10px;
+    font-size: 12px;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+input {
+    margin-left: 10px;    
+}
+
+#class_name, #car_name {
+    margin-left: 10px;
+    width: 80px;
+}
+
+#num_print {
+    width: 40px;
+}
+
+#names {
+    width: 400px;
+}
+
+.circle {
+    display: inline-block;
+    border: 1px solid black;
+    text-align: center;
+    width: 5.2cm;
+    height: 5.2cm;
+    border-radius: 3cm;
+    margin: 0.2cm;
+}
+
+.circle .alias {
+    margin-top: 0.8cm;
+    font-size: 0.6cm;
+}
+
+.circle .name {
+    margin-top: 0.2cm;
+    font-size: 1cm;
+    font-weight: bold;
+    letter-spacing: 0.2cm;
+    text-indent: 0.2cm;
+}
+
+.circle .tel {
+    margin-top: 0.2cm;
+    font-size: 0.45cm;
+}
+
+.circle .cname {
+    margin-top: 0.2cm;
+    font-size: 0.45cm;
+}
+
+.bag {
+    display: inline-block;
+    width: 5.5cm;
+    height: 2.5cm;
+    border: 1px solid black;
+    /*margin: 0.2cm;*/ 
+    margin-top: -0.1cm;
+}
+
+.bag .symbol {
+    float: left;
+    height: 2.3cm;
+    margin-top: 0.1cm;
+    margin-bottom: 0.1cm;
+    margin-left: 0.1cm;
+}
+
+.bag .cname {
+    float: right;
+    margin-top: 0.2cm;
+    margin-right: 0.1cm;
+    width: 2.9cm;
+    text-align: center;
+}
+
+.bag .name {
+    float: right;
+    margin-top: 0.2cm;
+    margin-right: 0.1cm;
+    width: 2.9cm;
+    text-align: center;
+    font-size: 0.8cm;
+    font-weight: bold;
+}
+
+.bag2023 {
+    display: inline-block;
+    width: 4.7cm;
+    height: 3.1cm;
+    border: 1px solid black;
+    /*margin: 0.2cm;*/ 
+    margin-top: -0.1cm;
+}
+
+.bag2023 .symbol {
+    float: left;
+    height: 1.6cm;
+    margin-top: 0.5cm;
+    margin-bottom: 0.1cm;
+    margin-left: 0.1cm;
+}
+
+.bag2023 .cname {
+    float: right;
+    margin-top: 0.7cm;
+    margin-right: 0.1cm;
+    width: 2.9cm;
+    text-align: center;
+}
+
+.bag2023 .name {
+    float: right;
+    margin-top: 0.2cm;
+    margin-right: 0.1cm;
+    width: 2.9cm;
+    text-align: center;
+    font-size: 0.7cm;
+    font-weight: bold;
+}
+
+.shoe {
+    display: inline-block;
+    width: 8.5cm;
+    height: 4.2cm;
+    border: 1px solid black;
+}
+
+.shoe .name {
+    margin-top: 0.8cm;
+    text-align: center;
+    font-size: 2cm;
+    letter-spacing: 0.2cm;
+    text-indent: 0.2cm;
+    font-weight: bold;
+}
+
+.letter_a {
+    display: inline-block;
+    width: 4.0cm;
+    height: 1.2cm;
+    border: 1px solid black;
+}
+
+.letter_a .name {
+    margin-top: 0.0cm;
+    text-align: center;
+    font-size: 1cm;
+    letter-spacing: 0.1cm;
+    text-indent: 0.2cm;
+    font-weight: bold;
+}
+
+.letter_b {
+    display: inline-block;
+    /* margin: 0.1cm; */
+    width: 15.8cm;
+    height: 5.2cm;
+    border: 1px solid black;
+    margin-top: -0.1cm;
+}
+
+.letter_b .name {
+    float: right;
+    margin-top: 1cm;
+    margin-right: 0.5cm;
+    width: 7.9cm;
+    text-align: center;
+    font-size: 2.5cm;
+    letter-spacing: 0.2cm;
+    text-indent: 0.2cm;
+    font-weight: bold;
+}
+
+.towel {
+    display: inline-block;
+    width: 1.6cm;
+    height: 1.1cm;
+    border: 1px solid black;
+}
+
+.towel .name {
+    margin-top: 0.3cm;
+    text-align: center;
+    font-size: 0.4cm;
+    letter-spacing: 0.0cm;
+    font-weight: bold;
+}
+
+.children {
+    display: inline-block;
+    width: 8.6cm;
+    height: 5.6cm;
+    border: 1px solid black;
+    /* margin: 0.1cm; */
+}
+
+.children .cname {
+    float: left;
+    margin-top: 0.4cm;
+    margin-left: 0.3cm;
+    font-size: 0.75cm;
+    font-family: Jua;
+    color: #6d6969;
+}
+
+.children .symbol {
+    float: right;
+    margin-top: 0.1cm;
+    margin-right: 0.3cm;
+    height: 1.5cm;
+}
+
+.children .new-symbol {
+    float: right;
+    margin-top: 0.35cm;
+    margin-right: 0.3cm;
+    height: 0.8cm;
+}
+
+.children .name {
+    clear: both;
+    margin-top: 1.5cm;
+    margin-left: 0.3cm;
+    margin-right: 0.3cm;
+    padding-top: 0.4cm;
+    text-align: center;
+    font-size: 2.0cm;
+    letter-spacing: 0.15cm;
+    font-weight: bold;
+    border-top: 1px solid black;
+    font-family: 'Jua';
+}
+
+.children .tel {
+    bottom: 0.0cm;
+    margin-top: 0.0cm;
+    margin-left: 0.3cm;
+    margin-right: 0.3cm;
+    padding-top: 0.2cm;
+    text-align: center;
+    font-size: 0.6cm;
+    letter-spacing: 0.0cm;
+    border-top: 1px solid black;
+    font-family: Jua;
+    color: #6d6969;
+}
+
+.parent {
+    display: inline-block;
+    width: 8.6cm;
+    height: 5.6cm;
+    border: 1px solid black;
+    /* margin: 0.1cm; */
+}
+
+.parent .cname {
+    float: right;
+    margin-top: 0.4cm;
+    margin-right: 0.3cm;
+    font-size: 0.75cm;
+}
+
+.parent .symbol {
+    float: left;
+    margin-top: 0.1cm;
+    margin-left: 0.3cm;
+    height: 1.3cm;
+}
+
+.parent .name {
+    clear: both;
+    margin-top: 1.5cm;
+    margin-left: 0.3cm;
+    margin-right: 0.3cm;
+    padding-top: 0.2cm;
+    text-align: center;
+    font-size: 2.0cm;
+    letter-spacing: 0.0cm;
+    font-weight: bold;
+    border-top: 1px solid black;
+}
+
+.parent .hbm {
+    bottom: 0.0cm;
+    margin-top: 0.3cm;
+    margin-left: 0.3cm;
+    margin-right: 0.3cm;
+    padding-top: 0.2cm;
+    text-align: center;
+    font-size: 0.6cm;
+    font-weight: bold;
+    letter-spacing: 0.0cm;
+    border-top: 1px solid black;
+}
