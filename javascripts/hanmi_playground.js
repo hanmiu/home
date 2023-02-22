@@ -52,6 +52,10 @@ html['playground'] = `
     <img class="full" src="./play/glyph/snowflower.jpg">
   </a>
   <div class="subtle"><a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 놀이를 지원하기 위해 만들었습니다. 만4세의 한글에 관한 탐색을 지원하기 위한 여러 접근 중에 하나로 활용되었습니다. 자세한 내용은 <a href="https://youtu.be/AmFalsFzkYA?t=948" target="_blank">글자 디자인</a> 영상을 살펴봐 주세요.</div>
+  <br>
+
+  <div class="subtle"><a href="https://www.hanmiu.cc/play/seasons/winter/snowflake.html" target="_blank"><strong>
+  눈송이 그리기
   <br><br>
 
   <div class="subtle"><a href="https://www.hanmiu.cc/play/glyph/drawing.html" target="_blank"><strong>
