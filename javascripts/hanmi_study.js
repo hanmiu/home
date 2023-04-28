@@ -14,7 +14,7 @@ html['study'] = `
       <li><a href="https://drive.google.com/file/d/13MgcFyn4ZPkZzABfBwwIyT7j6CQtaFyF/view?usp=sharing" target="_blank">기록작업의 선순환과 신임교사 교육</a></li>
       <li><a href="https://www.youtube.com/watch?v=ph5UTocxw9M" target="_blank">연구 과제를 보고 (신임 교사 교육)</a></li>
       <li><a href="https://drive.google.com/file/d/1Bre-mBU9s-_wfGbc4FZAqCoqzO0G1pve/view?usp=sharing" target="_blank">몸글자 되돌아 보며, 그 의미를 다시 짚어 보기</a></li>
-      <li><a href="https://drive.google.com/file/d/0BwNA5QSGhdCgY2VGQi1Fdk1vNzA/view" target="_blank">종이 상자 공룡의 골판지 뿔 - 블록 놀이에 새로운 가능성을 가져온 자료로서 종이</a></li>
+      <li><a href="https://drive.google.com/file/d/0BwNA5QSGhdCgY2VGQi1Fdk1vNzA/view?usp=sharing&resourcekey=0-2RMClzq4XwLAMmmMhDHI4Q" target="_blank">종이 상자 공룡의 골판지 뿔 - 블록 놀이에 새로운 가능성을 가져온 자료로서 종이</a></li>
       <li><a href="https://www.youtube.com/watch?v=HbvYkkT3FoE" target="_blank">‘이만큼’이 얼마만큼이야? - 일상의 관찰과 탐구가 배움으로 연결되는 과정</a></li>
       <li><a href="https://docs.google.com/document/d/1O_5P0g-UuknP00l7tBCq15znpRIOpfywsDJwFei3ilo/edit?usp=sharing" target="_blank">확실함과 불확실함 사이를 넘나들기</a></li>
     </ul>
