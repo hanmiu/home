@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>암호 찾기 퀴즈</title>
+<style>
+    body {
+        padding: 50px;
+    }
+    #pw_setup {
+        margin-bottom: 20px;
+    }
+    #try {
+        margin-top: 20px;
+    }
+    #try_answer {
+        margin-right: 10px;
+    }
+    #result {
+        margin-top: 10px;
+    }
+</style>
+<body>
+    <div id="pw_setup">
+        <input type="text" id="answer" placeholder="숨길 정답을 입력하세요." spellcheck="false" autocomplete="off">
+        <input type="text" id="password" placeholder="암호를 입력하세요." spellcheck="false" autocomplete="off">
+        <button id="hide">숨기기</button>
+    </div>
+    <div id="try">
+        <input type="text" id="try_answer" placeholder="찾은 정답을 입력하세요." spellcheck="false" autocomplete="off">
+        <button id="try_btn">확인</button>
+        <div id="result"></div>
+    </div>
+</body>
+<script>
+    var answer = document.getElementById('answer');
+    var password = document.getElementById('password');
+    var hide = document.getElementById('hide');
+    var try_answer = document.getElementById('try_answer');
+    var try_btn = document.getElementById('try_btn');
+    var result = document.getElementById('result');
+
+    let answer_value = '';
+    let password_value = '';
+
+    hide.addEventListener('click', function() {
+        answer_value = answer.value;
+        password_value = password.value;
+        answer.value = '';
+        password.value = '';
+    });
+
+    try_btn.addEventListener('click', function() {
+        if (try_answer.value === answer_value) {
+            result.textContent = `정답입니다. 암호는 ${password_value} 입니다.`;
+        } else {
+            result.textContent = '오답입니다. 다시 시도하세요.';
+        }
+    });
+</script>
