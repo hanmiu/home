@@ -47,12 +47,12 @@
     </div>
 
     <script>
-        let answer = document.getElementById('answer');
-        let password = document.getElementById('password');
-        let hide = document.getElementById('hide');
-        let try_answer = document.getElementById('try_answer');
-        let try_btn = document.getElementById('try_btn');
-        let result = document.getElementById('result');
+        let el_answer = document.querySelector('#answer');
+        let el_password = document.querySelector('#password');
+        let bt_hide = document.querySelector('#hide');
+        let el_try_answer = document.querySelector('#try_answer');
+        let bt_try = document.querySelector('#try_btn');
+        let el_result = document.querySelector('#result');
 
         let answer_value = '';
         let password_value = '';
@@ -62,10 +62,10 @@
         utter.lang = 'ko';
 
         hide.addEventListener('click', function() {
-            answer_value = answer.value;
-            password_value = password.value;
-            answer.value = '';
-            password.value = '';
+            answer_value = el_answer.value;
+            password_value = el_password.value;
+            el_answer.value = '';
+            el_password.value = '';
             if(answer_value.length > 0) {
                 utter.text = '정답을 숨겼습니다.';
                 if(password_value.length > 0) {
@@ -76,29 +76,28 @@
             fail_count = 0;
         });
 
-        try_btn.addEventListener('click', function() {
+        bt_try.addEventListener('click', function() {
             result.textContent = '';
             if(answer_value.length === 0) {
                 result.textContent = '숨긴 정답이 없습니다.';
-                answer = result.textContent;
             }
             else {
-                if (try_answer.value === answer_value) {
+                if (el_try_answer.value === answer_value) {
                     if(password_value.length === 0) {
-                        result.innerHTML = `💡 정답입니다.`; 
+                        el_result.innerHTML = `💡 정답입니다.`; 
                     }
                     else {
-                        result.innerHTML = `💡 정답입니다, <br>🔐 암호는 <span style="color: blue">${password_value}</span> 입니다.`;
+                        el_result.innerHTML = `💡 정답입니다, <br>🔐 암호는 <span style="color: blue">${password_value}</span> 입니다.`;
                     }
                 } else {
-                    result.textContent = '❌ 오답입니다. 다시 시도하세요.';
+                    el_result.textContent = '❌ 오답입니다. 다시 시도하세요.';
                     fail_count += 1;
                     if(fail_count > 0 && answer_value.length > 0) {
                         hint();
                     }
                 }
             }
-            if(result.textContent.length > 0) {
+            if(el_result.textContent.length > 0) {
                 utter.text = result.textContent.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
                 speechSynthesis.speak(utter);
             }
@@ -108,7 +107,7 @@
             let html = `❌ 오답입니다.`;
             if(fail_count === 2) {
                 html = `❌ 오답입니다,`;
-                html += `<br>글자 수는 ${answer_value.length}입니다,`;
+                html += `정답의 <br>글자 수는 ${answer_value.length}입니다,`;
                 html += `<br>다시 시도하세요.`;
             }
             else if(fail_count === 3 || fail_count === 4) {
@@ -147,7 +146,7 @@
                 }
                 html += `<br>다시 시도하세요.`;
             }
-            result.innerHTML = html;
+            el_result.innerHTML = html;
         }
     </script>
 </body>
