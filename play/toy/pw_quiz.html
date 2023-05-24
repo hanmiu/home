@@ -81,7 +81,7 @@
                 answer = result.textContent;
             }
             else {
-                let pw_answer = password_value.length > 0 ? `🔐 암호는 ${password_value} 입니다.` : '';
+                let pw_answer = password_value.length > 0 ? `🔐 암호는 <span style="color: blue">${password_value}</span> 입니다.` : '';
                 if (try_answer.value === answer_value) {
                     result.innerHTML = `💡 정답입니다. <br>${pw_answer}`;
                 } else {
