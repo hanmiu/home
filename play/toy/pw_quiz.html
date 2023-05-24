@@ -107,7 +107,7 @@
             let html = `❌ 오답입니다.`;
             if(fail_count === 2) {
                 html = `❌ 오답입니다,`;
-                html += `정답의 <br>글자 수는 ${answer_value.length}입니다,`;
+                html += `<br>정답의 글자 수는 ${answer_value.length}입니다,`;
                 html += `<br>다시 시도하세요.`;
             }
             else if(fail_count === 3 || fail_count === 4) {
