@@ -1,23 +1,39 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<title>암호 찾기 퀴즈</title>
-<style>
-    body {
-        padding: 50px;
-    }
-    #pw_setup {
-        margin-bottom: 20px;
-    }
-    #try {
-        margin-top: 20px;
-    }
-    #try_answer {
-        margin-right: 10px;
-    }
-    #result {
-        margin-top: 10px;
-    }
-</style>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>암호 찾기 퀴즈</title>
+    <style>
+        body {
+            padding: 50px;
+        }
+        #pw_setup {
+            margin-bottom: 20px;
+        }
+        #try {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            width: 100vw;
+            height: 100vh;
+            text-align: center;
+            transform: translateY(40%);;
+        }
+        #try_answer {
+            margin-right: 10px;
+            padding: 10px;
+            font-size: 40px;
+        }
+        #try_btn {
+            padding: 10px 20px;
+            font-size: 40px;
+        }
+        #result {
+            margin-top: 30px;
+            font-size: 50px;
+        }
+    </style>
+</head>
 <body>
     <div id="pw_setup">
         <input type="text" id="answer" placeholder="숨길 정답을 입력하세요." spellcheck="false" autocomplete="off">
@@ -29,30 +45,55 @@
         <button id="try_btn">확인</button>
         <div id="result"></div>
     </div>
+
+    <script>
+        let answer = document.getElementById('answer');
+        let password = document.getElementById('password');
+        let hide = document.getElementById('hide');
+        let try_answer = document.getElementById('try_answer');
+        let try_btn = document.getElementById('try_btn');
+        let result = document.getElementById('result');
+
+        let answer_value = '';
+        let password_value = '';
+
+        let utter = new SpeechSynthesisUtterance();
+        utter.lang = 'ko';
+
+        hide.addEventListener('click', function() {
+            answer_value = answer.value;
+            password_value = password.value;
+            answer.value = '';
+            password.value = '';
+            if(answer_value.length > 0) {
+                utter.text = '정답을 숨겼습니다.';
+                if(password_value.length > 0) {
+                    utter.text = `정답과 암호를 숨겼습니다.`;
+                }
+            }
+            speechSynthesis.speak(utter);
+        });
+
+        try_btn.addEventListener('click', function() {
+            result.textContent = '';
+            if(answer_value.length === 0) {
+                result.textContent = '숨긴 정답이 없습니다.';
+                answer = result.textContent;
+            }
+            else {
+                let pw_answer = password_value.length > 0 ? `🔐 암호는 ${password_value} 입니다.` : '';
+                if (try_answer.value === answer_value) {
+                    result.innerHTML = `💡 정답입니다. <br>${pw_answer}`;
+                } else {
+                    result.textContent = '❌ 오답입니다. 다시 시도하세요.';
+                }
+            }
+            if(result.textContent.length > 0) {
+                //utter.text = result.textContent.replace(/[\uD800-\uDFFF]./g, '');
+                utter.text = result.textContent.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
+                speechSynthesis.speak(utter);
+            }
+        });
+    </script>
 </body>
-<script>
-    var answer = document.getElementById('answer');
-    var password = document.getElementById('password');
-    var hide = document.getElementById('hide');
-    var try_answer = document.getElementById('try_answer');
-    var try_btn = document.getElementById('try_btn');
-    var result = document.getElementById('result');
-
-    let answer_value = '';
-    let password_value = '';
-
-    hide.addEventListener('click', function() {
-        answer_value = answer.value;
-        password_value = password.value;
-        answer.value = '';
-        password.value = '';
-    });
-
-    try_btn.addEventListener('click', function() {
-        if (try_answer.value === answer_value) {
-            result.textContent = `정답입니다. 암호는 ${password_value} 입니다.`;
-        } else {
-            result.textContent = '오답입니다. 다시 시도하세요.';
-        }
-    });
-</script>
+</html>
