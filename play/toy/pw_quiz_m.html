@@ -10,6 +10,9 @@
         #pw_setup {
             margin-bottom: 20px;
         }
+        #status {
+            margin-left: 10px;
+        }
         #try {
             position: absolute;
             left: 0px;
@@ -39,6 +42,7 @@
         <input type="text" id="answer" placeholder="숨길 정답을 입력하세요." spellcheck="false" autocomplete="off">
         <input type="text" id="password" placeholder="암호를 입력하세요." spellcheck="false" autocomplete="off">
         <button id="hide">숨기기</button>
+        <span id="status">숨긴 정답 수: 0</span>
     </div>
     <div id="try">
         <input type="text" id="try_answer" placeholder="찾은 정답을 입력하세요." spellcheck="false" autocomplete="off">
@@ -49,40 +53,46 @@
     <script>
         let el_answer = document.querySelector('#answer');
         let el_password = document.querySelector('#password');
+        let el_status = document.querySelector('#status');
         let bt_hide = document.querySelector('#hide');
         let el_try_answer = document.querySelector('#try_answer');
         let bt_try = document.querySelector('#try_btn');
         let el_result = document.querySelector('#result');
 
-        let answer_value = '';
-        let password_value = '';
-        let fail_count = 0;
+        let answers = {};
+        let answer_count = 0;
 
         let utter = new SpeechSynthesisUtterance();
         utter.lang = 'ko';
 
         hide.addEventListener('click', function() {
-            answer_value = el_answer.value;
-            password_value = el_password.value;
+            if(el_answer.value.length === 0 || el_password.value.length === 0) {
+                utter.text = '정답과 암호를 모두 입력하세요.';
+                speechSynthesis.speak(utter);
+                return;
+            }
+            answers[el_answer.value] = el_password.value;
             el_answer.value = '';
             el_password.value = '';
-            if(answer_value.length > 0) {
-                utter.text = '정답을 숨겼습니다.';
-                if(password_value.length > 0) {
-                    utter.text = `정답과 암호를 숨겼습니다.`;
-                }
+            answer_count = 0;
+            for(let answer in answers) {
+                answer_count += 1;
             }
+            el_status.textContent = `숨긴 정답 수: ${answer_count}`;
+            utter.text = '정답을 숨겼습니다.';
             speechSynthesis.speak(utter);
             fail_count = 0;
         });
 
         bt_try.addEventListener('click', function() {
             el_result.textContent = '';
-            if(answer_value.length === 0) {
+            let password_value = answers[el_try_answer.value];
+
+            if(answer_count === 0) {
                 el_result.textContent = '숨긴 정답이 없습니다.';
             }
             else {
-                if (el_try_answer.value === answer_value) {
+                if (answers.hasOwnProperty(el_try_answer.value)) {
                     if(password_value.length === 0) {
                         el_result.innerHTML = `💡 정답입니다.`; 
                     }
@@ -92,9 +102,6 @@
                 } else {
                     el_result.textContent = '❌ 오답입니다. 다시 시도하세요.';
                     fail_count += 1;
-                    if(fail_count > 0 && answer_value.length > 0) {
-                        hint();
-                    }
                 }
             }
             if(el_result.textContent.length > 0) {
@@ -102,52 +109,6 @@
                 speechSynthesis.speak(utter);
             }
         });
-
-        function hint() {
-            let html = `❌ 오답입니다.`;
-            if(fail_count === 2) {
-                html = `❌ 오답입니다,`;
-                html += `<br>정답의 글자 수는 ${answer_value.length}입니다,`;
-                html += `<br>다시 시도하세요.`;
-            }
-            else if(fail_count === 3 || fail_count === 4) {
-                let answer_elements = Array.from(answer_value);
-                let try_elements = Array.from(try_answer.value);
-
-                let intersection = try_elements.filter(element => answer_elements.includes(element));
-
-                let count = intersection.length;
-                let elements = intersection.join(', ');
-
-                html = `❌ 오답입니다,`;
-                if(count > 0) {
-                    html += `<br>맞춘 글자 수는 ${count} 이고, <br>맞춘 글자는 ${elements} 입니다,`;
-                }
-                else {
-                    html += `<br>맞춘 글자 수는 ${count} 입니다,`;
-                }
-                html += `<br>다시 시도하세요.`;
-            }
-            else if(fail_count >= 5) {
-                let answer_elements = Array.from(answer_value.normalize('NFD')).filter(char => !/[\u0300-\u036f]/.test(char));
-                let try_elements = Array.from(try_answer.value.normalize('NFD')).filter(char => !/[\u0300-\u036f]/.test(char));
-
-                let intersection = try_elements.filter(element => answer_elements.includes(element));
-
-                let count = intersection.length;
-                let elements = intersection.join(', ');
-
-                html = `❌ 오답입니다,`;
-                if(count > 0) {
-                    html += `<br>맞춘 자모 수는 ${count} 이고, <br>맞춘 자모는 ${elements} 입니다,`;
-                }
-                else {
-                    html += `<br>맞춘 자모 수는 ${count} 입니다,`;
-                }
-                html += `<br>다시 시도하세요.`;
-            }
-            el_result.innerHTML = html;
-        }
     </script>
 </body>
 </html>
