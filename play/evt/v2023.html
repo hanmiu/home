@@ -1,6 +1,8 @@
 <!doctype html>
 <meta charset="utf-8">
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap');
+
     body {
         margin: 0;
         padding: 10vw;
@@ -49,7 +51,7 @@
     }
 
     .story p {
-        color: slategray;
+        color: rgb(0, 0, 0);
         font-size: 2vh;
         text-align: left;
     }
@@ -90,6 +92,14 @@
         color: dimgray;
         text-align: center;
     }
+
+    .title {
+        font-family: 'Noto Serif KR', serif;
+        color: rgb(4, 84, 30);
+        text-align: center;
+        text-shadow: 0px 0px 10px #f5fe92;
+        font-size: 3vh;
+    }
     
     .qr {
         height: 10vh;
@@ -107,7 +117,7 @@
         margin: auto;
         border-radius: 1vh;
         /* mix-blend-mode: multiply; */
-        box-shadow: 0px 0px 20px white;
+        /* box-shadow: 0px 0px 20px white; */
         /* visibility: hidden; */
     }
     
@@ -351,11 +361,20 @@
             <div class="visual">
                 <img src="./img/2023/intro_3.jpg">
             </div>
+            <p>그런데, 나무는 자신이 가진 이야기를 마을 어린이들에게 공유하고 싶어도, 열매를 직접 줄 수가 없었어요. 그래서 똑똑한 방법을 생각해냈죠. 바로 새들의 도움을 받는 것이었습니다.</p>
+            <div class="visual">
+                <img src="./img/2023/intro_4.jpg">
+            </div>
+            <p>나무가 피워낸 꽃의 향기와 열매의 빛에 모여든 새들은 이야기 조각을 담은 열매를 마을 구석구석에 숨겼어요.</p>
+            <div class="visual">
+                <img src="./img/2023/intro_5.jpg">
+            </div>
+            <p>지금도, 그 나무의 이야기는 우리 마을 곳곳에서 찾을 수 있답니다. 이 이야기를 찾는 것은 어렵지 않아요. 그냥 주변을 잘 보면, 그 흔적을 발견할 수 있을 거예요.</p>
         </div>
         `;
         
         let template = `
-        <p class="intro">빛나는 나무</p>
+        <p class="title">빛나는 나무</p>
         <!--
         <h1 style="color: ${colors[category]}">${index}/5</h1>
         <div class="qr">${svg_str}</div>
@@ -366,6 +385,7 @@
         <p class="desc">${desc}</p>
         <hr>
         <div class="bottom">
+            <!--
             <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요. 모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다. 지금까지 ${count_found}개의 조각을 찾았습니다.</p>
             <div class="found">
                 <span class="got">${solved[0]}</span>
@@ -375,8 +395,10 @@
                 <span class="got">${solved[4]}</span>
             </div>
             <p class="notice">아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
-            <!--<p class="alert">다른 가족의 참여를 위해 QR코드를 가져가거나 떼지 말아주시길 부탁드려요. 이벤트 종료 후 깨끗이 수거하겠습니다.</p>-->
             <p class="alert">( 수수께끼를 푸는 이벤트는 종료했습니다. )</p>
+            -->
+            <p>.</p>
+            <div class="qr">${svg_str}</div>
             <div class="solve">
                 <span class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></span>
             </div>
