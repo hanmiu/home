@@ -55,6 +55,13 @@
         font-size: 2vh;
         text-align: left;
     }
+
+    .direction {
+        color: rgb(12, 139, 33);
+        font-size: 2vh;
+        text-align: left;
+        text-shadow: 0px 0px 10px #f5fe92;
+    }
     
     strong {
         background-color: yellow;
@@ -95,10 +102,19 @@
 
     .title {
         font-family: 'Noto Serif KR', serif;
-        color: rgb(4, 84, 30);
+        /* color: rgb(4, 84, 30); */
+        color: rgb(12, 139, 33);
         text-align: center;
         text-shadow: 0px 0px 10px #f5fe92;
         font-size: 3vh;
+    }
+
+    .subtitle {
+        font-family: 'Noto Serif KR', serif;
+        color: rgb(12, 139, 33);
+        text-align: center;
+        text-shadow: 0px 0px 10px #f5fe92;
+        font-size: 2.5vh;
     }
     
     .qr {
@@ -347,9 +363,9 @@
             localStorage.setItem(id, 'found:' + Date.now());
         }
 
-        let desc = `
+        let intro = `
         <div class="story">
-            <p>옛날 옛날, 한 작은 마을에 특별한 나무가 하나 있었어요. 이 나무는 다른 나무들과 달리 빛나는 나무였답니다. 그냥 햇빛에 반짝이는 그런 빛이 아니라, 진짜로 마법처럼 빛나는 나무랍니다! 그럼 왜 그렇게 빛났을까요?</p>
+            <p>옛날 옛날, 한 작은 마을에 특별한 나무가 하나 있었어요. 이 나무는 다른 나무들과 달리 빛나는 나무였답니다. 그냥 햇빛에 반짝이는 그런 빛이 아니라, 진짜로 마법처럼 빛나는 나무랍니다! 그런데 왜 그렇게 빛이 났을까요?</p>
             <div class="visual">
                 <img src="./img/2023/intro_1.jpg">
             </div>
@@ -370,11 +386,30 @@
                 <img src="./img/2023/intro_5.jpg">
             </div>
             <p>지금도, 그 나무의 이야기는 우리 마을 곳곳에서 찾을 수 있답니다. 이 이야기를 찾는 것은 어렵지 않아요. 그냥 주변을 잘 보면, 그 흔적을 발견할 수 있을 거예요.</p>
+            <br>
+            <p>그 흔적은 이렇게 생겼답니다.</p>
+            <div class="qr">${svg_str}</div>
+            <div class="direction">한미유치원 여기저기에 숨어 있는 이 흔적을 찾아 나머지 이야기를 완성해 보세요!</div>
+        </div>
+        `;
+
+        let story1 = `
+        <div class="story">
+            <p>빛나는 나무가 자신의 지식을 담은 열매를 마을 곳곳에 숨기자, 마을 어린이들이 그것을 찾기 시작했어요. 그것은 재미있는 보물 찾기처럼 느껴졌죠. 어린이들은 이 열매를 찾아다니면서 서로가 발견한 것을 나누며 놀았어요.</p>
+            <div class="visual">
+                <img src="./img/2023/story1_1.jpg">
+            </div>
+            <p>한 어린이는 '왜 꽃들은 다양한 색깔을 가지고 있을까?'라는 이야기를 담은 열매를 찾았어요. 다른 어린이는 '별들은 어떻게 하늘에 붙어있을까?'라는 이야기를 담은 열매를 발견했죠. 어린이들은 찾은 이야기를 서로 나누며, 더 많은 지식을 얻었어요.</p>
+            <div class="visual">
+                <img src="./img/2023/story1_2.jpg">
+            </div>
+            <p>그런데, 어린이들이 알게 된 것은 이것뿐이 아니었어요. 그들은 열매를 찾아다니면서 서로 도와주고, 함께 웃고, 때로는 서로의 열매를 나누기도 했어요. 그래서 어린이들은 서로에 대해 더 알게 되고, 친구가 되었답니다..</p>
         </div>
         `;
         
         let template = `
         <p class="title">빛나는 나무</p>
+        <p class="desc">${intro}</p>
         <!--
         <h1 style="color: ${colors[category]}">${index}/5</h1>
         <div class="qr">${svg_str}</div>
@@ -382,7 +417,9 @@
             <img src="./img/2020/${id}.jpg">
         </div>
         -->
-        <p class="desc">${desc}</p>
+        <hr>
+        <p class="subtitle">서로의 조각</p>
+        <p class="desc">${story1}</p>
         <hr>
         <div class="bottom">
             <!--
@@ -397,8 +434,6 @@
             <p class="notice">아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
             <p class="alert">( 수수께끼를 푸는 이벤트는 종료했습니다. )</p>
             -->
-            <p>.</p>
-            <div class="qr">${svg_str}</div>
             <div class="solve">
                 <span class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></span>
             </div>
