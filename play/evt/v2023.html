@@ -336,7 +336,7 @@
         }
         */
 
-        let intro = `
+        stories['intro'] = `
         <div class="story">
             <div class="listen-box">
                 <span class="listen" id="listen0">듣기</span>
@@ -473,15 +473,18 @@
         </div>
         `;
 
-        let epilogue = `
+        stories['epilogue'] = `
         <div class="story">
+            <div class="listen-box">
+                <span class="listen" id="listen5">듣기</span>
+            </div>
             <p>이 이야기는 나무와 새들, 그리고 어린이들이 함께 만들어낸 '작은 도서관'의 이야기입니다.</p>
         </div>
         `;
         
         let template = `
         <p class="title">빛나는 나무</p>
-        <p class="desc">${intro}</p>
+        <p class="desc">${stories['intro']}</p>
 
         <hr>
         <p class="subtitle" id="st_story1">서로의 열매가</p>
@@ -528,6 +531,7 @@
 
         el_epilogue.innerHTML = `<div class="story"><div class="whisper">( 모든 흔적을 찾길 기다리고 있어요... )</div></div>`;
 
+        let count = 0;
         for(let i of [1,2,3,4]) {
             let vt = localStorage.getItem('story' + i);
             if(vt) {
@@ -538,8 +542,17 @@
                             audio.src = `./audio/2023/story${i}.mp3`;
                             audio.play();
                     });
+                    count += 1;
                 }
             }
+        }
+
+        if(count === 4) {
+            el_epilogue.innerHTML = stories['epilogue'];
+            document.querySelector(`#listen5`).addEventListener('click', () => {
+                audio.src = `./audio/2023/epilogue.mp3`;
+                audio.play();
+            });
         }
 
         if(focused) {
