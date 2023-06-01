@@ -197,6 +197,31 @@
         text-decoration: none;
         color: cadetblue;
     }
+
+    .listen-box {
+        text-align: center;
+        margin-top: 2vh;
+        margin-bottom: 4vh;
+    }
+
+    .listen {
+        text-align: center;
+        margin: auto;
+        padding: 10px 20px 10px 20px;
+        height: 3vh;
+        line-height: 3vh;
+        font-size: 1.8vh;
+        border-radius: 15px;
+        background-color: aquamarine;
+        color: cadetblue;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .listen:active {
+        background-color: aqua;
+    }
     
     @-webkit-keyframes appear {
         from { opacity: 0} to { opacity: 1 }
@@ -228,6 +253,8 @@
 
     let stories = {};
     let focused = '';
+
+    let audio = new Audio();
     
     let g = el_bg.getContext('2d');
     
@@ -311,6 +338,9 @@
 
         let intro = `
         <div class="story">
+            <div class="listen-box">
+                <span class="listen" id="listent0">듣기</span>
+            </div>
             <p>옛날 옛날, 작은 마을에 특별한 나무가 하나 있었어요. 이 나무는 다른 나무들과 달리 빛나는 나무였답니다. 그냥 햇빛에 반짝이는 그런 빛이 아니라, 진짜로 마법처럼 빛나는 나무랍니다! 그런데 왜 그렇게 빛이 났을까요?</p>
             <div class="visual">
                 <img src="./img/2023/intro_1.jpg">
@@ -335,7 +365,7 @@
             <br>
             <p>그 흔적은 이렇게 생겼답니다.</p>
             <div class="qr">${svg_str}</div>
-            <div class="direction">한미유치원 여기저기에 숨어 있는 이 흔적을 찾아 나머지 이야기를 완성해 보세요!</div>
+            <div class="direction">한미유치원 여기저기에 숨어있는 이 흔적을 찾아 나머지 이야기를 완성해 보세요!</div>
         </div>
         `;
 
@@ -362,7 +392,7 @@
             <div class="visual">
                 <img src="./img/2023/story2_1.jpg">
             </div>
-            <p>그런데 어린이들은 열매에 들어있는 이야기를 단순히 찾기만 하는 것이 아니었어요. 그들은 찾은 이야기를 가지고 더 많은 이야기를 만들어냈답니다. '왜 눈이 녹을까?'라는 질문으로부터 어린이들은 자신만의 눈 녹는 이야기를 만들어냈어요. '비행기는 왜 하늘에서 떨어지지 않을까?'라는 질문으로부터는 자신만의 비행기 이야기를 만들어냈죠.</p>
+            <p>그런데 어린이들은 단순히 열매에 들어있는 이야기를 찾기만 하는 것이 아니었어요. 그들은 찾은 이야기를 가지고 더 많은 이야기를 만들어냈답니다. '왜 눈이 녹을까?'라는 호기심으로부터 어린이들은 자신만의 눈에 관한 이야기를 만들어냈어요. '비행기는 왜 하늘에서 떨어지지 않을까?'라는 호기심으로부터는 자신만의 비행기 이야기를 만들어냈죠.</p>
             <div class="visual">
                 <img src="./img/2023/story2_2.jpg">
             </div>
@@ -500,7 +530,7 @@
             setTimeout(() => {
                 document.querySelector(`#${focused}`).innerHTML = stories[focused];
                 document.querySelector(`#st_${focused}`).scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-            }, 500);
+            }, 1000);
         }
         
         let svg = el_content.querySelector('svg');
@@ -516,6 +546,10 @@
             img.style['visibility'] = 'visible';
         };
         */
+        document.querySelector('#listent0').addEventListener('click', () => {
+            audio.src = './audio/intro.mp3';
+            audio.play();
+        });
         
         loop();
     }
