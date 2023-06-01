@@ -56,6 +56,12 @@
         text-align: left;
     }
 
+    .whisper {
+        color: rgb(124, 124, 124);
+        font-size: 1.5vh;
+        text-align: center;
+    }
+
     .direction {
         color: rgb(12, 139, 33);
         font-size: 2vh;
@@ -216,6 +222,12 @@
 <script>
     let el_bg = document.querySelector('#bg');
     let el_content = document.querySelector('#content');
+
+    let el_stories = [];
+    let el_epilogue = null;
+
+    let stories = {};
+    let focused = '';
     
     let g = el_bg.getContext('2d');
     
@@ -227,85 +239,31 @@
     function init() {
         layout();
         
-        /*
         let params = new URLSearchParams(location.search.slice(1));
-        let title = params.get('w');
-        let desc = '?';
-        let hint = '???';
+        //let title = params.get('w');
+        //let desc = '?';
+        //let hint = '???';
         
-        //console.log(params.get('w'));
+        console.log(params.get('w'));
         
         switch(params.get('w')) {
             case 'A1_m9dc':
-            desc = `어느 평화로운 마을에 조금은 무서운 일이났어. 코로일구라는 괴물들이 마을을 습격한거야! 그 마을에는 요술 <strong>모자를 쓴</strong> 아이가 있었어. 바로 목화였지. 모자를 쓴 목화는 코로일구가 잠든 사이에 마을 사람들을 안전한 곳으로 데려다 주었어.`;
-            hint = '';
-            break;
+                localStorage.setItem('story1', 'found:' + Date.now());
+                focused = 'story1';
+                break;
             case 'A2_c50y':
-            desc = `다음 날, 코로일구가 마을에 다시 나타나자 목화는 코로일구를 물리칠 방법을 생각했어. 그러던 중 주변에 주렁주렁 열려있던 <strong>열매가</strong> 눈에 띄었지. 한참을 고민하던 목화는 주문을 외우기 시작했어. <span class="magic">뚜뚜따리 뚜뚜따리 얍~</span>`;
-            hint = '';
-            break;
+                localStorage.setItem('story2', 'found:' + Date.now());
+                focused = 'story2';
+                break;
             case 'A3_p5y6':
-            desc = `목화가 주문을 외우자 마을에 있던 열매들이 슝~ 날아와서 마을 주변으로 모였어. <strong>다닥다닥 붙은</strong> 열매들은 동그랗게 마을에 보호막을 만들기 시작했어. 목화는 주문을 한번 더 외웠어. <span class="magic">뚜뚜따리 뚜뚜따리 얍~</span> 그러자 열매에서 환한 빛이 나오더니 코로일구가 먼지처럼 사라졌어! 코로일구가 사라지자 목화는 다시 주문을 외웠어 <span class="magic">뚜뚜따리 뚜뚜따리 얍~</span><br>`;
-            hint = '';
-            break;
+                localStorage.setItem('story3', 'found:' + Date.now());
+                focused = 'story3';
+                break;
             case 'A4_06ch':
-            desc = `그러자 열매들이 다시 슝~ 하고 나무로 돌아갔어. <strong>나무는</strong> 열매들이 돌아오자 마법의 힘을 얻어 쑥쑥 자라나고 더 맑은 공기를 만들어내서 코로일구같은 나쁜 바이러스들이 더이상 오지 못했대~`;
-            hint = '';
-            break;
-            case 'A5_51j8':
-            desc = `그런데 코로일구가 갑자기 마을을 공격한 이유는 <strong>무엇일까?</strong> 정말 궁금하지 않니?`;
-            hint = '';
-            break;
-            case 'B1_6g67':
-            desc = `<strong>나</strong>는 노는게 제일 좋아.<br>가능성으로 가득 차 있어.`;
-            hint = '';
-            break;
-            case 'B2_4rd2':
-            desc = `하고 싶은 것도 많아.<br>나<strong>는</strong> 참 다채로워.`;
-            hint = '';
-            break;
-            case 'B3_5f89':
-            desc = `나는 <strong>누구</strong>와도 친구가 될 수 있지.<br>무척 호기심이 많아.`;
-            hint = '';
-            break;
-            case 'B4_zp0s':
-            desc = `나는 이제 다섯 살, 여섯 살, 그리고 <strong>일</strong>곱 살이 됐어.<br>금방 쑥쑥 자라지.`;
-            hint = '';
-            break;
-            case 'B5_0r74':
-            desc = `어른들은 날 어리다고 말하지만 <span class="magic">내 생각은 하늘까지 우주<strong>까</strong>지 닿아.</span> 나는 지금이 좋아.`;
-            hint = '';
-            break;
-            case 'C1_3poh':
-            desc = `알을 깨고 나온 날, 눈이 마주친 <strong>나를</strong> 보고 기뻐하며 인사하던 아빠 얼굴이 떠올라요.`;
-            hint = '';
-            break;
-            case 'C2_1x29':
-            desc = `엄마가 <strong>낳은</strong> 알 속에서부터 따뜻하게 품어주셨던 사랑을 느끼고 있었죠.</p>`;
-            hint = '';
-            break;
-            case 'C3_ru90':
-            desc = `<strong>두 분</strong>이 함께 행복한 우리 가족 둥지를 꾸며주셨어요.`;
-            hint = '';
-            break;
-            case 'C4_66em':
-            desc = `그때 저는 언젠가 엄마 아빠처럼 멋지게 하늘을 날고 싶다고 <strong>생각하는</strong> 작은 새였습니다.`;
-            hint = '';
-            break;
-            case 'C5_q6wk':
-            desc = `이제 날개에 힘에 생겨 훨훨 하늘을 <strong>날</strong>다 드문드문 보이는 새 둥지를 보면, <span class="magic">그때 그 따스함이 생각나곤 합니다.</span>`;
-            hint = '';
-            break;
+                localStorage.setItem('story4', 'found:' + Date.now());
+                focused = 'story4';
+                break;
         }
-        */
-        
-        //let category = title[0];
-        let category = 'A';
-        let colors = {
-            A: '#000000',
-            B: '#2A8000',
-            C: '#0061EA',
-        };
         
         let qrcode = new QRCode({
             content: location.href,
@@ -313,26 +271,13 @@
             padding: 0,
             width: 100,
             height: 100,
-            color: colors[category],
+            color: '#000000',
             background: "#ffffff00",
         });
         
         let svg_str = qrcode.svg();
         
-        //let index = title[1];
-        let index = '1';
-        //let id = title.slice(0, 2);
-        let id = 'A1';
-        
-        // 다섯 개 중 첫 번째 이야기 조각을 찾았습니다!
-        let nth = {
-            1: '첫',
-            2: '두',
-            3: '세',
-            4: '네',
-            5: '다섯',
-        }
-        
+        /*
         localStorage.setItem(id, 'found:' + Date.now());
         
         let riddle = {
@@ -362,10 +307,11 @@
             localStorage.clear();
             localStorage.setItem(id, 'found:' + Date.now());
         }
+        */
 
         let intro = `
         <div class="story">
-            <p>옛날 옛날, 한 작은 마을에 특별한 나무가 하나 있었어요. 이 나무는 다른 나무들과 달리 빛나는 나무였답니다. 그냥 햇빛에 반짝이는 그런 빛이 아니라, 진짜로 마법처럼 빛나는 나무랍니다! 그런데 왜 그렇게 빛이 났을까요?</p>
+            <p>옛날 옛날, 작은 마을에 특별한 나무가 하나 있었어요. 이 나무는 다른 나무들과 달리 빛나는 나무였답니다. 그냥 햇빛에 반짝이는 그런 빛이 아니라, 진짜로 마법처럼 빛나는 나무랍니다! 그런데 왜 그렇게 빛이 났을까요?</p>
             <div class="visual">
                 <img src="./img/2023/intro_1.jpg">
             </div>
@@ -393,9 +339,9 @@
         </div>
         `;
 
-        let story1 = `
+        stories['story1'] = `
         <div class="story">
-            <p>빛나는 나무가 자신의 지식을 담은 열매를 마을 곳곳에 숨기자, 마을 어린이들이 그것을 찾기 시작했어요. 그것은 재미있는 보물 찾기처럼 느껴졌죠. 어린이들은 이 열매를 찾아다니면서 서로가 발견한 것을 나누며 놀았어요.</p>
+            <p>빛나는 나무가 자신의 지식을 담은 열매를 마을 곳곳에 숨기자, 마을 어린이들이 그것을 찾기 시작했어요. 재미있는 보물찾기 같았죠. 어린이들은 이 열매를 찾아다니면서 서로가 발견한 것을 나누며 놀았어요.</p>
             <div class="visual">
                 <img src="./img/2023/story1_1.jpg">
             </div>
@@ -403,20 +349,20 @@
             <div class="visual">
                 <img src="./img/2023/story1_2.jpg">
             </div>
-            <p>그런데, 어린이들이 알게 된 것은 이것뿐이 아니었어요. 그들은 열매를 찾아다니면서 서로 도와주고, 함께 웃고, 때로는 서로의 열매를 나누기도 했어요. 그래서 어린이들은 서로에 대해 더 알게 되고, 친구가 되었답니다.</p>
+            <p>그런데, 어린이들이 알게 된 것은 이것뿐이 아니었어요. 그들은 열매를 찾아다니면서 서로 도와주고, 함께 웃고, 때로는 서로의 열매를 나누기도 했어요. 그래서 어린이들은 서로에 대해 더 알게 되고, 더 사이좋은 친구가 되었답니다.</p>
             <div class="visual">
                 <img src="./img/2023/story1_3.jpg">
             </div>
         </div>
         `;
 
-        let story2 = `
+        stories['story2'] = `
         <div class="story">
             <p>어린이들이 빛나는 나무의 열매를 찾으면서, 그들은 놀이와 함께 배우는 즐거움을 알게 되었어요. 어떤 어린이는 '왜 눈이 녹을까?'라는 열매를 찾았고, 또 다른 어린이는 '왜 비행기는 하늘에서 떨어지지 않을까?'라는 열매를 찾았어요.</p>
             <div class="visual">
                 <img src="./img/2023/story2_1.jpg">
             </div>
-            <p>그런데 어린이들은 이 이야기를 단순히 찾기만 하는 것이 아니었어요. 그들은 찾은 이야기를 가지고 더 많은 이야기를 만들어냈답니다. '왜 눈이 녹을까?'라는 질문으로부터 어린이들은 자신만의 눈 녹는 이야기를 만들어냈어요. '비행기는 왜 하늘에서 떨어지지 않을까?'라는 질문으로부터는 자신만의 비행기 이야기를 만들어냈죠.</p>
+            <p>그런데 어린이들은 열매에 들어있는 이야기를 단순히 찾기만 하는 것이 아니었어요. 그들은 찾은 이야기를 가지고 더 많은 이야기를 만들어냈답니다. '왜 눈이 녹을까?'라는 질문으로부터 어린이들은 자신만의 눈 녹는 이야기를 만들어냈어요. '비행기는 왜 하늘에서 떨어지지 않을까?'라는 질문으로부터는 자신만의 비행기 이야기를 만들어냈죠.</p>
             <div class="visual">
                 <img src="./img/2023/story2_2.jpg">
             </div>
@@ -431,7 +377,7 @@
         </div>
         `;
 
-        let story3 = `
+        stories['story3'] = `
         <div class="story">
             <p>어느 날, 어린이들은 각자 집에서 더 이상 쓰지 않는, 빛이 약간 흐린 열매들을 손에 쥐고 나무 아래에 모였습니다. 이들은 열매들을 조심스럽게 나무 밑둥에 기대어 놓았어요.</p>
             <div class="visual">
@@ -445,24 +391,24 @@
             <div class="visual">
                 <img src="./img/2023/story3_3.jpg">
             </div>
-            <p>어린이들은 빛이 약해진 열매가 다시 빛나는 새로운 열매로 태어나는 것을 보며 무언가가 오래되었거나 더 이상 쓰이지 않더라도, 그것을 새로운 방법으로 활용하면 새로운 가치를 만들어낼 수 있다는 것을 배웠습니다.</p>
+            <p>어린이들은 빛이 약해진 열매가 다시 빛나는 새로운 열매로 태어나는 것을 보며 무언가가 오래되었거나 더 이상 쓰이지 않더라도, 그것을 새로운 방법으로 활용하면 멋진 것을 새로 만들어낼 수 있다는 것을 배웠습니다.</p>
             <div class="visual">
                 <img src="./img/2023/story3_4.jpg">
             </div>
-            <p>이렇게 아이들은 다시는 사용하지 않을 것 같던 열매를 활용하여, 새로운 지식과 이야기를 만들어내는 방법을 배웠습니다. 그래서, 마을의 빛나는 나무는 계속해서 성장할 수 있었습니다.</p>
+            <p>이렇게 어린이들은 다시는 사용하지 않을 것 같던 열매를 활용하여, 새로운 지식과 이야기를 만들어내는 방법을 배웠습니다. 그렇게 마을의 빛나는 나무는 계속해서 자랄 수 있었습니다.</p>
             <div class="visual">
                 <img src="./img/2023/story3_5.jpg">
             </div>
         </div>
         `;
 
-        let story4 = `
+        stories['story4'] = `
         <div class="story">
             <p>마을 어린이들은 빛나는 나무의 열매를 찾아다니면서 서로 이야기를 나누었어요. 그들이 찾아낸 이야기들은 모두 다르고, 각각이 특별했죠. 이런 이야기들은 마치 작은 도서관의 책들처럼, 다양한 지식과 경험을 담고 있었어요.</p>
             <div class="visual">
                 <img src="./img/2023/story4_1.jpg">
             </div>
-            <p>그리고 어린이들은 서로의 이야기를 듣고, 자신의 이야기를 추가하면서, 마치 새로운 책을 작은 도서관에 추가하는 것처럼, 지식과 지혜를 쌓아가게 되었어요.</p>
+            <p>그리고 어린이들은 서로의 이야기를 듣고, 자신의 이야기를 더하면서, 마치 새로운 책을 작은 도서관에 더하는 것처럼, 지식과 지혜를 쌓아가게 되었어요.</p>
             <div class="visual">
                 <img src="./img/2023/story4_2.jpg">
             </div>
@@ -470,11 +416,11 @@
             <div class="visual">
                 <img src="./img/2023/story4_3.jpg">
             </div>
-            <p>이렇게 어린이들이 모은 이야기들로 결국 마을에 작은 도서관을 만들게 되었어요. 이 도서관은 모든 어린이들의 지식과 경험, 그리고 그들이 함께 만들어낸 이야기들을 보관하게 되었죠. 그렇게 마을에는 '작은 도서관'이 생기게 됩니다.</p>
+            <p>어린이들이 모은 이야기들로 결국 마을에 '작은 도서관'을 만들게 되었어요. 이곳에 어린이들이 모은 지식과 경험, 그리고 함께 만들어낸 이야기를 간직하게 되었죠.</p>
             <div class="visual">
                 <img src="./img/2023/story4_4.jpg">
             </div>
-            <p>이 도서관은 어린이들이 함께 만들어낸 지식의 보물상자고, 함께하는 즐거움의 집이기도 합니다. 이렇게 어린이들은 빛나는 나무의 열매를 찾아가며, 함께 이야기를 만들어내고, 그 과정에서 함께 배우는 즐거움을 알게 되었답니다.</p>
+            <p>이 작은 도서관은 어린이들이 함께 만들어낸 지식의 보물상자고, 함께하는 즐거움의 집이기도 합니다. 이렇게 어린이들은 꽃과 새의 도움을 받아 빛나는 나무의 열매를 찾아가며, 함께 이야기를 만들어내고, 그 과정에서 함께 배우는 즐거움을 알게 되었답니다.</p>
             <div class="visual">
                 <img src="./img/2023/story4_5.jpg">
             </div>
@@ -484,49 +430,39 @@
             </div>
         </div>
         `;
+
+        let epilogue = `
+        <div class="story">
+            <p>이 이야기는 나무와 새들, 그리고 어린이들이 함께 만들어낸 '작은 도서관'의 이야기입니다.</p>
+        </div>
+        `;
         
         let template = `
         <p class="title">빛나는 나무</p>
         <p class="desc">${intro}</p>
-        <!--
-        <hr>
-        <p class="subtitle">서로의 조각</p>
-        <p class="desc">${story1}</p>
 
         <hr>
-        <p class="subtitle">호기심에서 이어진</p>
-        <p class="desc">${story2}</p>
+        <p class="subtitle" id="st_story1">서로의 열매</p>
+        <p class="desc" id="story1"></p>
 
         <hr>
-        <p class="subtitle">다시 태어나</p>
-        <p class="desc">${story3}</p>
+        <p class="subtitle" id="st_story2">호기심에서 이어진</p>
+        <p class="desc" id="story2"></p>
 
         <hr>
-        <p class="subtitle">작은 도서관</p>
-        <p class="desc">${story4}</p>
-        -->
-        <!--
-        <h1 style="color: ${colors[category]}">${index}/5</h1>
-        <div class="qr">${svg_str}</div>
-        <div class="visual">
-            <img src="./img/2020/${id}.jpg">
-        </div>
-        -->
+        <p class="subtitle" id="st_story3">다시 태어나</p>
+        <p class="desc" id="story3"></p>
+
+        <hr>
+        <p class="subtitle" id="st_story4">작은 도서관</p>
+        <p class="desc" id="story4"></p>
+
+        <hr>
+        <p class="subtitle" id="st_epilogue">에필로그</p>
+        <p class="desc" id="epilogue"></p>
 
         <hr>
         <div class="bottom">
-            <!--
-            <p class="notice">위 이야기 글을 옮겨 적거나 캡처해서 수수께끼를 풀 때 활용하세요. 모든 이야기 조각을 모아 합쳐보면, 수수께끼(<strong>노란색으로 강조한 글들을 합치면</strong>)가 만들어집니다. 지금까지 ${count_found}개의 조각을 찾았습니다.</p>
-            <div class="found">
-                <span class="got">${solved[0]}</span>
-                <span class="got">${solved[1]}</span>
-                <span class="got">${solved[2]}</span>
-                <span class="got">${solved[3]}</span>
-                <span class="got">${solved[4]}</span>
-            </div>
-            <p class="notice">아래 버튼을 눌러 그 수수께끼를 풀어보세요.</p>
-            <p class="alert">( 수수께끼를 푸는 이벤트는 종료했습니다. )</p>
-            -->
             <div class="solve">
                 <span class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">수수께끼 풀기</a></span>
             </div>
@@ -534,6 +470,38 @@
         `;
         
         el_content.innerHTML = template;
+
+        el_stories = [
+            document.querySelector('#story1'),
+            document.querySelector('#story2'),
+            document.querySelector('#story3'),
+            document.querySelector('#story4'),
+        ];
+
+        el_epilogue = document.querySelector('#epilogue');
+
+        for(let el of el_stories) {
+            el.innerHTML = `<div class="story"><div class="whisper">( 흔적을 찾길 기다리고 있어요... )</div></div>`;
+        }
+
+        el_epilogue.innerHTML = `<div class="story"><div class="whisper">( 모든 흔적을 찾길 기다리고 있어요... )</div></div>`;
+
+        for(let i of [1,2,3,4]) {
+            let vt = localStorage.getItem('story' + i);
+            if(vt) {
+                let [v, t] = vt.split(':');
+                if(v === 'found') {
+                    el_stories[i - 1].innerHTML = stories['story' + i];
+                }
+            }
+        }
+
+        if(focused) {
+            setTimeout(() => {
+                document.querySelector(`#${focused}`).innerHTML = stories[focused];
+                document.querySelector(`#st_${focused}`).scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+            }, 500);
+        }
         
         let svg = el_content.querySelector('svg');
         svg.setAttribute('width', '100%');
