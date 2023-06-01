@@ -271,7 +271,7 @@
         //let desc = '?';
         //let hint = '???';
         
-        console.log(params.get('w'));
+        //console.log(params.get('w'));
         
         switch(params.get('w')) {
             case 'A1_m9dc':
@@ -339,7 +339,7 @@
         let intro = `
         <div class="story">
             <div class="listen-box">
-                <span class="listen" id="listent0">듣기</span>
+                <span class="listen" id="listen0">듣기</span>
             </div>
             <p>옛날 옛날, 작은 마을에 특별한 나무가 하나 있었어요. 이 나무는 다른 나무들과 달리 빛나는 나무였답니다. 그냥 햇빛에 반짝이는 그런 빛이 아니라, 진짜로 마법처럼 빛나는 나무랍니다! 그런데 왜 그렇게 빛이 났을까요?</p>
             <div class="visual">
@@ -371,6 +371,9 @@
 
         stories['story1'] = `
         <div class="story">
+            <div class="listen-box">
+                <span class="listen" id="listen1">듣기</span>
+            </div>
             <p>빛나는 나무가 자신의 지식을 담은 열매를 마을 곳곳에 숨기자, 마을 어린이들이 그것을 찾기 시작했어요. 재미있는 보물찾기 같았죠. 어린이들은 이 열매를 찾아다니면서 서로가 발견한 것을 나누며 놀았어요.</p>
             <div class="visual">
                 <img src="./img/2023/story1_1.jpg">
@@ -388,9 +391,12 @@
 
         stories['story2'] = `
         <div class="story">
+            <div class="listen-box">
+                <span class="listen" id="listen2">듣기</span>
+            </div>
             <p>어린이들이 빛나는 나무의 열매를 찾으면서, 그들은 놀이와 함께 배우는 즐거움을 알게 되었어요. 어떤 어린이는 '왜 눈이 녹을까?'라는 열매를 찾았고, 또 다른 어린이는 '왜 비행기는 하늘에서 떨어지지 않을까?'라는 열매를 찾았어요.</p>
             <div class="visual">
-                <img src="./img/2023/story2_1.jpg">
+                <img src="./img/2023/story2_1.png">
             </div>
             <p>그런데 어린이들은 단순히 열매에 들어있는 이야기를 찾기만 하는 것이 아니었어요. 그들은 찾은 이야기를 가지고 더 많은 이야기를 만들어냈답니다. '왜 눈이 녹을까?'라는 호기심으로부터 어린이들은 자신만의 눈에 관한 이야기를 만들어냈어요. '비행기는 왜 하늘에서 떨어지지 않을까?'라는 호기심으로부터는 자신만의 비행기 이야기를 만들어냈죠.</p>
             <div class="visual">
@@ -409,6 +415,9 @@
 
         stories['story3'] = `
         <div class="story">
+            <div class="listen-box">
+                <span class="listen" id="listen3">듣기</span>
+            </div>
             <p>어느 날, 어린이들은 각자 집에서 더 이상 쓰지 않는, 빛이 약간 흐린 열매들을 손에 쥐고 나무 아래에 모였습니다. 이들은 열매들을 조심스럽게 나무 밑둥에 기대어 놓았어요.</p>
             <div class="visual">
                 <img src="./img/2023/story3_1.jpg">
@@ -434,6 +443,9 @@
 
         stories['story4'] = `
         <div class="story">
+            <div class="listen-box">
+                <span class="listen" id="listen4">듣기</span>
+            </div>
             <p>마을 어린이들은 빛나는 나무의 열매를 찾아다니면서 서로 이야기를 나누었어요. 그들이 찾아낸 이야기들은 모두 다르고, 각각이 특별했죠. 이런 이야기들은 마치 작은 도서관의 책들처럼, 다양한 지식과 경험을 담고 있었어요.</p>
             <div class="visual">
                 <img src="./img/2023/story4_1.jpg">
@@ -522,13 +534,16 @@
                 let [v, t] = vt.split(':');
                 if(v === 'found') {
                     el_stories[i - 1].innerHTML = stories['story' + i];
+                    document.querySelector(`#listen${i}`).addEventListener('click', () => {
+                            audio.src = `./audio/2023/story${i}.mp3`;
+                            audio.play();
+                    });
                 }
             }
         }
 
         if(focused) {
             setTimeout(() => {
-                document.querySelector(`#${focused}`).innerHTML = stories[focused];
                 document.querySelector(`#st_${focused}`).scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
             }, 1000);
         }
@@ -546,8 +561,8 @@
             img.style['visibility'] = 'visible';
         };
         */
-        document.querySelector('#listent0').addEventListener('click', () => {
-            audio.src = './audio/intro.mp3';
+        document.querySelector('#listen0').addEventListener('click', () => {
+            audio.src = './audio/2023/intro.mp3';
             audio.play();
         });
         
