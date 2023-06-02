@@ -475,10 +475,23 @@
 
         stories['epilogue'] = `
         <div class="story">
+            <!--
             <div class="listen-box">
                 <span class="listen" id="listen5">듣기</span>
             </div>
-            <p>이 이야기는 나무와 새들, 그리고 어린이들이 함께 만들어낸 '작은 도서관'의 이야기입니다.</p>
+            -->
+            <p>이 이야기는 나무와 꽃과 새들, 그리고 어린이들이 함께 만들어낸 '작은 도서관'의 이야기인 동시에 그 이야기를 은유삼아 한미유치원에 '작은 도서관'을 만드는 맥락을 형성하는 이야기입니다.
+            <br><br>
+            오늘 참여 수업에서 헌책을 나눴던 일과 관계 있었던 이야기 흔적도 있었고, 교실의 놀이 중에는 앞으로 '작은 도서관'이 간직할 '어린이 책'과 이어질 가능성이 있는 놀이도 있었을 것입니다. 
+            <br><br>
+            이 '작은 도서관'을 만드는데 참여하는 과정이 어린이, 교사, 부모 모두에게 '<span style="background-color: yellow">다양한 측면의 배움이 일어날 수 있는 맥락</span>'이 되길 기대합니다.
+            <br><br>
+            앞으로 계속 건강한 방향으로 조정하며 차근차근 시도해 보고자 하는 아이디어들이 있습니다. 아래 <span style="background-color: yellow">미션</span>에 참여해서 오늘의 경험에 관한 소감과 아이디어를 함께 나눠주세요. 
+            <br><br>
+            미션까지 완료하면 이후 '작은 도서관'에 보관할 <span style="background-color: yellow">명예의 전당</span>에 오르게 됩니다. 미션 참여 후 이곳을 다시 방문해 보시면, <span style="background-color: yellow">비밀 흔적</span> 버튼이 나타나며, '빛나는 나무' 이야기의 '비하인드 스토리'로 연결됩니다.
+            <br></br>
+            참여해 주셔서 감사합니다! 
+            </p>
         </div>
         `;
         
@@ -507,9 +520,12 @@
         <p class="desc" id="epilogue"></p>
 
         <hr>
-        <div class="bottom">
+        <div class="bottom" id="extra" style="visibility: hidden">
             <div class="solve">
-                <span class="solve-riddle"><a href="https://forms.gle/gTsfJWWBoKojrBDP8" target="_blank">미션 참여</a></span>
+                <span class="solve-riddle"><a id="mission" href="https://forms.gle/KY5Bh6Rpki3FhHes9" target="_blank">미션 참여</a></span>
+            </div>
+            <div class="solve" style="visibility: hidden">
+                <span class="solve-riddle" id="secret"><a href="https://bit.ly/3WO3JTy" target="_blank">비밀 흔적</a></span>
             </div>
         </div>
         `;
@@ -529,7 +545,7 @@
             el.innerHTML = `<div class="story"><div class="whisper">( 흔적을 찾길 기다리고 있어요... )</div></div>`;
         }
 
-        el_epilogue.innerHTML = `<div class="story"><div class="whisper">( 모든 흔적을 찾길 기다리고 있어요... )</div></div>`;
+        el_epilogue.innerHTML = `<div class="story"><div class="whisper">( 모든 흔적을 찾길 기다리고 있어요... <br> 모든 흔적을 다 찾은 후 여기로 오세요... )</div></div>`;
 
         let count = 0;
         for(let i of [1,2,3,4]) {
@@ -547,13 +563,20 @@
             }
         }
 
+        let el_extra = document.querySelector('#extra'); 
+
         if(count === 4) {
             el_epilogue.innerHTML = stories['epilogue'];
-            document.querySelector(`#listen5`).addEventListener('click', () => {
-                audio.src = `./audio/2023/epilogue.mp3`;
-                audio.play();
-            });
+            el_extra.style['visibility'] = 'visible';
+            // document.querySelector(`#listen5`).addEventListener('click', () => {
+            //     audio.src = `./audio/2023/epilogue.mp3`;
+            //     audio.play();
+            // });
         }
+
+        document.querySelector('#mission').addEventListener('click', () => {
+            document.querySelector('#secret').style['visibility'] = 'visible';
+        });
 
         if(focused) {
             setTimeout(() => {
