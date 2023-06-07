@@ -290,6 +290,13 @@
                 localStorage.setItem('story4', 'found:' + Date.now());
                 focused = 'story4';
                 break;
+            case 'A5_1q2w':
+                localStorage.setItem('story1', 'found:' + Date.now());
+                localStorage.setItem('story2', 'found:' + Date.now());
+                localStorage.setItem('story3', 'found:' + Date.now());
+                localStorage.setItem('story4', 'found:' + Date.now());
+                focused = 'story0';
+                break;
         }
         
         let qrcode = new QRCode({
@@ -496,7 +503,7 @@
         `;
         
         let template = `
-        <p class="title">빛나는 나무</p>
+        <p class="title" id="st_story0">빛나는 나무</p>
         <p class="desc">${stories['intro']}</p>
 
         <hr>
