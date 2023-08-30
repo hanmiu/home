@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { display: flex; justify-content: space-around; align-items: flex-end; height: 100vh; padding: 5vh 0; }
+        #controller { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: center; justify-items: center; }
+        .elevator { position: absolute; width: 50px; height: 50px; background-color: gray; transition: 1s; }
+        .building { display: flex; justify-content: flex-end; height: 90vh; }
+        .floor { display: flex; justify-content: flex-start; align-items: center; border: 1px solid black; width: 100px; height: 3vh; }
+    </style>
+</head>
+<body>
+    <div id="controller">
+        <!-- Elevator buttons will be added here -->
+    </div>
+    <div class="building">
+        <div id="floors">
+            <!-- Floors will be added here -->
+        </div>
+        <div id="elevator" class="elevator"></div>
+    </div>
+    <script>
+        const totalFloors = 30;
+        const floorHeight = 3; // in vh
+        const elevator = document.getElementById('elevator');
+        const controller = document.getElementById('controller');
+        const floors = document.getElementById('floors');
+
+        // Generate floors and buttons
+        for (let i = totalFloors; i > 0; i--) {
+            const floor = document.createElement('div');
+            floor.className = 'floor';
+            floor.dataset.floor = i;
+            floor.textContent = `${i}층`;
+            floors.appendChild(floor);
+
+            const button = document.createElement('button');
+            button.textContent = `${i}층`;
+            button.dataset.f = i;
+            button.onclick = (e) => moveElevator(e);
+            controller.appendChild(button);
+        }
+
+        function moveElevator(e) {
+            let i = e.target.dataset.f;
+            console.log(i);
+            let floor = document.querySelector(`[data-floor="${i}"]`);
+            console.log(floor);
+            let rect = floor.getBoundingClientRect();
+            elevator.style.bottom = rect.bottom + 'px';
+        }
+    </script>
+</body>
+</html>

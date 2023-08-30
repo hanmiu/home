@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>자모 어구전철(애너그램)</title>
+<style>
+    #answer {
+        color: rgba(0, 0, 0, 1.0);
+        transition: color 0.5s;
+    }
+
+    #stage {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+    }
+
+    .jamo {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        font-size: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* border: 1px solid rgba(0, 0, 0, 0.25); */
+        user-select: none;
+        cursor: pointer;
+    }
+</style>
+<body>
+    <div>
+        <input type="checkbox" id="show-answer" checked>
+        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미">
+        <button id="quiz">문제 만들기</button>
+        <button id="reset">다시 시작</button>
+    </div>
+    <div id="stage">
+        <!--<div class="jamo" style="left: 200px; top: 300px">ㅎ</div>-->
+    </div>
+</body>
+<script>
+    let params = new URLSearchParams(new URL(location.href).search);
+    if(params.has('answer')) {
+        document.querySelector('#show-answer').checked = false;
+        document.querySelector('#answer').style.color = 'rgba(0, 0, 0, 0.0)';
+        document.querySelector('#answer').value = params.get('answer');
+    }
+
+    function shuffle(array) {
+        let n = array.length, t, i;
+        while (n) {
+            i = Math.random() * n-- | 0; // 0 ≤ i < n
+            t = array[n];
+            array[n] = array[i];
+            array[i] = t;
+        }
+        return array;
+    }
+
+    document.querySelector('#quiz').addEventListener('click', () => {
+        clear();
+        let answer = document.querySelector('#answer');
+        let chars = answer.value.split('');
+        console.log(chars);
+        let jamos = [];
+        for(let ch of chars) {
+            let decomposed = Array.from(ch.normalize('NFD'));
+            console.log(ch, decomposed);
+            jamos.push(...decomposed);
+        }
+        let shuffled = shuffle(jamos);
+        console.log(shuffled);
+        let x = 100, y = 200;
+        for(let jm of shuffled) {
+            let jamo = document.createElement('div');
+            jamo.classList.add('jamo');
+            jamo.innerText = jm;
+            document.querySelector('#stage').appendChild(jamo);
+            jamo.style.transform = `translate(${x}px, ${y}px)`;
+            x += 100;
+        }
+    });
+
+    function clear() {
+        let stage = document.querySelector('#stage');
+        stage.innerHTML = '';
+        document.querySelector('#quiz').value = '';
+    }
+
+    document.querySelector('#reset').addEventListener('click', () => {
+        clear();
+    });
+
+    document.querySelector('#show-answer').addEventListener('change', (event) => {
+        let answer = document.querySelector('#answer');
+        if(event.target.checked) {
+            answer.style.color = 'rgba(0, 0, 0, 1.0)';
+        } else {
+            answer.style.color = 'rgba(0, 0, 0, 0.0)';
+        }
+    });
+    
+    let selectedJamo = null;
+    let offsetX = 0, offsetY = 0;
+
+    document.addEventListener('mousedown', (event) => {
+        let target = event.target;
+        if(target.classList.contains('jamo')) {
+            selectedJamo = target;
+            let rect = selectedJamo.getBoundingClientRect();
+            offsetX = event.pageX - rect.left;
+            offsetY = event.pageY - rect.top;
+        }
+    });
+
+    document.addEventListener('mousemove', (event) => {
+        if(selectedJamo) {
+            let x = event.pageX - offsetX;
+            let y = event.pageY - offsetY;
+            let deltaX = event.pageX;// - startX;
+            let deltaY = event.pageY;// - startY;
+            selectedJamo.style.transform = `translate(${x}px, ${y}px)`;
+        }
+    });
+
+    document.addEventListener('mouseup', (event) => {
+        selectedJamo = null;
+    });
+</script>
