@@ -23,6 +23,7 @@
         width: 10px;
         height: 10px;
         font-size: 100px;
+        font-family: sans-serif;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -32,9 +33,8 @@
     }
 
     .jamo:hover {
-        /* text-shadow: 0px 0px 10px rgba(255, 255, 0, 1); */
-        -webkit-text-stroke: 3px blue;
-        color: blue;
+        -webkit-text-stroke: '3px blue';
+        color: 'blue';
     }
 
     #ui-top {
@@ -155,13 +155,19 @@
             } else if (event.type === 'touchstart') {
                 offsetX = event.touches[0].pageX- rect.left;
                 offsetY = event.touches[0].pageY - rect.top;
-                selectedJamo.style['-webkit-text-stroke'] = '3px blue';
-                selectedJamo.style.color = 'blue';
+                
             }
+            selectedJamo.style['-webkit-text-stroke'] = '3px blue';
+            selectedJamo.style.color = 'blue';
         }
     }
 
     function handleMove(event) {
+        // if(event.target.classList.contains('jamo')) {
+        //     event.target.style['-webkit-text-stroke'] = '3px blue';
+        //     event.target.style.color = 'blue';
+        // }
+
         if(selectedJamo) {
             let x, y;
             if (event.type === 'mousemove') {
@@ -170,25 +176,21 @@
             } else if (event.type === 'touchmove') {
                 x = event.touches[0].pageX - offsetX;
                 y = event.touches[0].pageY - offsetY;
-                selectedJamo.style['-webkit-text-stroke'] = '3px blue';
-                selectedJamo.style.color = 'blue';
             }
             selectedJamo.style.transform = `translate(${x}px, ${y}px)`;
+            selectedJamo.style['-webkit-text-stroke'] = '3px blue';
+            selectedJamo.style.color = 'blue';
             compose();
         }
     }
 
     function handleEnd(event) {
         if(selectedJamo) {
-            selectedJamo.style['-webkit-text-stroke'] = '0px black';
-            selectedJamo.style.color = 'black';
+            selectedJamo.style['-webkit-text-stroke'] = '';
+            selectedJamo.style.color = '';
         }
         selectedJamo = null;
     }
-
-    document.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-    });
 
     function resize() {
         // 가로가 세로보다 작으면 기존의 style rule에서 class가 jamo 인것의 font-size를 50px로 설정
@@ -216,6 +218,22 @@
 
     document.addEventListener('mouseup', handleEnd);
     document.addEventListener('touchend', handleEnd);
+
+    // document.addEventListener('mouseleave', (event) => {
+    //     if(event.target.classList.contains('jamo')) {
+    //         console.log('!');
+    //         event.target.style['-webkit-text-stroke'] = '';
+    //         event.target.style.color = 'black';
+    //     }
+    // });
+
+    document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+    });
+
+    document.addEventListener('dragstart', (event) => {
+        event.preventDefault();
+    });
 
     function getJamoType(char) {
         const codePoint = char.codePointAt(0);
