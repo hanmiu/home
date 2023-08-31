@@ -49,6 +49,11 @@
         bottom: 20px;
         text-align: right;
     }
+
+    #ui-bottom input {
+        border: none;
+        text-align: right;
+    }
 </style>
 <body>
     <div id="stage">
@@ -105,7 +110,7 @@
             jamo.innerText = jm;
             document.querySelector('#stage').appendChild(jamo);
             jamo.style.transform = `translate(${x}px, ${y}px)`;
-            if(x + jamo_size > window.innerWidth) {
+            if(x + jamo_size * 1.5 > window.innerWidth) {
                 y += jamo_size;
                 x = jamo_size;
             }
