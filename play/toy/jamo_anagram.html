@@ -91,11 +91,11 @@
     function clear() {
         let stage = document.querySelector('#stage');
         stage.innerHTML = '';
-        document.querySelector('#answer').value = '';
         document.querySelector('#test').value = '';
     }
 
     document.querySelector('#reset').addEventListener('click', () => {
+        document.querySelector('#answer').value = '';
         clear();
     });
 
