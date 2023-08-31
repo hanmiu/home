@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1">
 <title>자모 어구전철(애너그램)</title>
 <style>
+    body {
+        overflow: hidden;
+    }
+
     #answer {
         color: rgba(0, 0, 0, 1.0);
         transition: color 0.5s;
@@ -31,17 +36,32 @@
         -webkit-text-stroke: 3px blue;
         color: blue;
     }
+
+    #ui-top {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+    }
+
+    #ui-bottom {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        text-align: right;
+    }
 </style>
 <body>
-    <div>
-        <input type="checkbox" id="show-answer" checked>
-        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="홍채인">
-        <button id="quiz">문제 만들기</button>
-        <button id="reset">다시 시작</button>
-        <input type="text" id="test" spellcheck="false" autocomplete="off" value="">
-    </div>
     <div id="stage">
         <!--<div class="jamo" style="left: 200px; top: 300px">ㅎ</div>-->
+    </div>
+    <div id="ui-top">
+        <input type="checkbox" id="show-answer" checked>
+        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미">
+        <button id="quiz">문제 만들기</button>
+        <button id="reset">다시 시작</button>
+    </div>
+    <div id="ui-bottom">
+        <input type="text" id="test" spellcheck="false" autocomplete="off" value="">
     </div>
 </body>
 <script>
@@ -51,6 +71,7 @@
         document.querySelector('#answer').style.color = 'rgba(0, 0, 0, 0.0)';
         document.querySelector('#answer').value = params.get('answer');
     }
+    let jamo_size = 100;
 
     function shuffle(array) {
         let n = array.length, t, i;
@@ -76,7 +97,7 @@
         }
         let shuffled = shuffle(jamos);
         console.log(shuffled);
-        let x = 100, y = 200;
+        let x = jamo_size, y = 200;
         for(let jm of shuffled) {
             let jamo = document.createElement('div');
             jamo.dataset.jamo = jm;
@@ -84,7 +105,13 @@
             jamo.innerText = jm;
             document.querySelector('#stage').appendChild(jamo);
             jamo.style.transform = `translate(${x}px, ${y}px)`;
-            x += 100;
+            if(x + jamo_size > window.innerWidth) {
+                y += jamo_size;
+                x = jamo_size;
+            }
+            else {
+                x += jamo_size;
+            }
         }
     });
 
@@ -111,30 +138,79 @@
     let selectedJamo = null;
     let offsetX = 0, offsetY = 0;
 
-    document.addEventListener('mousedown', (event) => {
+    function handleStart(event) {
         let target = event.target;
         if(target.classList.contains('jamo')) {
             selectedJamo = target;
             let rect = selectedJamo.getBoundingClientRect();
-            offsetX = event.pageX - rect.left;
-            offsetY = event.pageY - rect.top;
-        }
-    });
 
-    document.addEventListener('mousemove', (event) => {
+            if (event.type === 'mousedown') {
+                offsetX = event.pageX - rect.left;
+                offsetY = event.pageY - rect.top;
+            } else if (event.type === 'touchstart') {
+                offsetX = event.touches[0].pageX- rect.left;
+                offsetY = event.touches[0].pageY - rect.top;
+                selectedJamo.style['-webkit-text-stroke'] = '3px blue';
+                selectedJamo.style.color = 'blue';
+            }
+        }
+    }
+
+    function handleMove(event) {
         if(selectedJamo) {
-            let x = event.pageX - offsetX;
-            let y = event.pageY - offsetY;
-            let deltaX = event.pageX;// - startX;
-            let deltaY = event.pageY;// - startY;
+            let x, y;
+            if (event.type === 'mousemove') {
+                x = event.pageX - offsetX;
+                y = event.pageY - offsetY;
+            } else if (event.type === 'touchmove') {
+                x = event.touches[0].pageX - offsetX;
+                y = event.touches[0].pageY - offsetY;
+                selectedJamo.style['-webkit-text-stroke'] = '3px blue';
+                selectedJamo.style.color = 'blue';
+            }
             selectedJamo.style.transform = `translate(${x}px, ${y}px)`;
-            test();
+            compose();
         }
+    }
+
+    function handleEnd(event) {
+        if(selectedJamo) {
+            selectedJamo.style['-webkit-text-stroke'] = '0px black';
+            selectedJamo.style.color = 'black';
+        }
+        selectedJamo = null;
+    }
+
+    document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
     });
 
-    document.addEventListener('mouseup', (event) => {
-        selectedJamo = null;
+    function resize() {
+        // 가로가 세로보다 작으면 기존의 style rule에서 class가 jamo 인것의 font-size를 50px로 설정
+        if(window.innerWidth < window.innerHeight) {
+            jamo_size = 50;
+            let styleSheet = document.styleSheets[0];
+            let cssRules = Array.from(styleSheet.cssRules || styleSheet.rules);
+            let rule = cssRules.filter(x => x.selectorText == '.jamo')[0];
+            rule.style.fontSize = `${jamo_size}px`;
+        }  
+        else {
+            jamo_size = 100;
+        }     
+    }
+
+    document.addEventListener('resize', (event) => {
+        resize();
     });
+
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
 
     function getJamoType(char) {
         const codePoint = char.codePointAt(0);
@@ -162,31 +238,7 @@
         return -1;
     }
 
-    function test0() {
-        // 왼쪽에서 오른쪽으로 정렬
-        let lr_sorted = Array.from(document.querySelectorAll('.jamo')).sort((a, b) => {
-            let rect_a = a.getBoundingClientRect();
-            let rect_b = b.getBoundingClientRect();
-            return rect_a.left - rect_b.left;
-        });
-
-        let chars = [];
-        for(let i = 0; i < lr_sorted.length; i++) {
-            let el_jamo = lr_sorted[i];
-            let jamo_type = getJamoType(el_jamo.dataset.jamo);
-            if(jamo_type === 1) { // 중성 모음
-                let char = {
-                    cho: lr_sorted[i - 1].dataset.jamo,
-                    jung: el_jamo.dataset.jamo,
-                    jong: i < lr_sorted.length - 1 ? lr_sorted[i + 1].dataset.jamo : null,
-                };
-                chars.push(char);
-            }
-        }
-        console.log(chars);
-    }
-
-    function test() {
+    function compose() {
         // ᅡᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵ
         let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
         let type_h = 'ᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴ'.split('');
@@ -220,7 +272,7 @@
                         let dy = other_y - y;
                         let d = Math.sqrt(dx * dx + dy * dy);
                         if(type_v.includes(jamo)) { // ㅏ type
-                            if(dx < 0 && (other_y > y - 50 && other_y < y + 50)) {
+                            if(dx < 0 && (other_y > y - jamo_size/2 && other_y < y + jamo_size/2)) {
                                 if(d < min_d) {
                                     min_d = d;
                                     el_cho = other_jamo;
@@ -253,8 +305,8 @@
 
         for(let el_char of el_chars) {
             let rect = el_char.jung.getBoundingClientRect();
-            let left = el_char.cho.getBoundingClientRect().left - 50;
-            let right = el_char.jung.getBoundingClientRect().right + 50;
+            let left = el_char.cho.getBoundingClientRect().left - jamo_size/2;
+            let right = el_char.jung.getBoundingClientRect().right +  jamo_size/2;
             let candidates = [];
             for(let other_jamo of el_jamos) {
                 if(getJamoType(other_jamo.dataset.jamo) === 1) continue;
@@ -294,11 +346,5 @@
         document.querySelector('#test').value = print;
     }
 
-    /*
-    Array.from(document.querySelectorAll('.jamo')).sort((a, b) => {
-        let rect_a = a.getBoundingClientRect();
-        let rect_b = b.getBoundingClientRect();
-        return rect_a.left - rect_b.left;
-    }).map(x => x.dataset.jamo).join('').normalize('NFC')
-    */
+    resize();
 </script>
