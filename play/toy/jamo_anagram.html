@@ -5,6 +5,7 @@
 <style>
     body {
         overflow: hidden;
+        touch-action: none;
     }
 
     #answer {
@@ -63,9 +64,9 @@
         <input type="checkbox" id="show-answer" checked>
         <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미" size="10">
         <button id="quiz">문제 만들기</button>
-        <button id="random2">🎲 2</button>
-        <button id="random3">🎲 3</button>
-        <button id="random4">🎲 4</button>
+        <button id="random2">②</button>
+        <button id="random3">③</button>
+        <button id="random4">④</button>
         <button id="reset">다시 시작</button>
     </div>
     <div id="ui-bottom">
@@ -210,6 +211,7 @@
                 x = event.pageX - offsetX;
                 y = event.pageY - offsetY;
             } else if (event.type === 'touchmove') {
+                // event.preventDefault();
                 x = event.touches[0].pageX - offsetX;
                 y = event.touches[0].pageY - offsetY;
             }
@@ -243,20 +245,26 @@
         }     
     }
 
-    document.addEventListener('resize', (event) => {
+    window.addEventListener('resize', (event) => {
         setTimeout(() => {
             resize();
         }, 100);
     });
 
-    document.addEventListener('mousedown', handleStart);
-    document.addEventListener('touchstart', handleStart);
+    window.addEventListener("orientationchange", (event) => {
+        setTimeout(() => {
+            resize();
+        }, 100);
+    });
 
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('touchmove', handleMove);
+    window.addEventListener('mousedown', handleStart);
+    window.addEventListener('touchstart', handleStart);
 
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchend', handleEnd);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('touchmove', handleMove);
+
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchend', handleEnd);
 
     // document.addEventListener('mouseleave', (event) => {
     //     if(event.target.classList.contains('jamo')) {
@@ -268,11 +276,12 @@
 
     document.addEventListener('contextmenu', (event) => {
         event.preventDefault();
+        event.stopPropagation();
     });
 
-    document.addEventListener('dragstart', (event) => {
-        event.preventDefault();
-    });
+    // document.addEventListener('dragstart', (event) => {
+    //     event.preventDefault();
+    // });
 
     function getJamoType(char) {
         const codePoint = char.codePointAt(0);
