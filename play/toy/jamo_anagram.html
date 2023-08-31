@@ -9,7 +9,6 @@
 
     #answer {
         color: rgba(0, 0, 0, 1.0);
-        transition: color 0.5s;
     }
 
     #stage {
@@ -30,6 +29,7 @@
         /* border: 1px solid rgba(0, 0, 0, 0.25); */
         user-select: none;
         cursor: pointer;
+        transition: text-shadow 0.5s;
     }
 
     .jamo:hover {
@@ -63,6 +63,7 @@
         <input type="checkbox" id="show-answer" checked>
         <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미">
         <button id="quiz">문제 만들기</button>
+        <button id="random">🎲</button>
         <button id="reset">다시 시작</button>
     </div>
     <div id="ui-bottom">
@@ -89,19 +90,24 @@
         return array;
     }
 
-    document.querySelector('#quiz').addEventListener('click', () => {
+    let words = `사과,친구,학교,선생,가족,나무,동물,하늘,바다,계절,사랑,기쁨,슬픔,책상,문제,보물,용기,신화,동화,운동,축구,음악,무용,영화,미술,시장,과일,생일,산책,여행,축제,문화,전통,인사,새우,용사,마법,소원,비밀,옷장,거울,반지,마음,기분,물건,예술,사진,빵집,아침,점심,저녁,자연,식물,공원,숫자,과학,언어,편지,선물,휴식,쉼터,캠프,텐트,시골,강변,해변,미래,과거,현재,일기,만화,영상,연극,모델,로봇,기계,트럭,표범,문어,참새,사슴,풍선,축구,농구,탁구,수영,책상,침대,책장,박쥐,벌레,놀이,공부,숙제,행성,태양,목성,화성,금성,수성,토성,구름,바람,열매,씨앗,건물,식물,빨강,노랑,초록,파랑,정글,크림,마법,마술,진화,눈물,폭풍,태풍,왕자,공주,여왕,왕국,광대,망고,수박,딸기,식사,달걀,여름,겨울,가을,햇빛,달빛,풀잎,노을,탐정,`;
+    words += `비행기,도서관,우주선,동물원,무지개,마법사,해적선,모험가,미술관,영화관,신기루,왕자님,공주님,도깨비,꿈나라,강아지,고양이,편의점,기차역,대학교,수영장,경찰서,소방서,물놀이,연주회,식물원,박물관,도서관,금붕어`;
+    words += ``;
+    words = shuffle(words.split(','));
+
+    function quiz(answer) {
         clear();
-        let answer = document.querySelector('#answer');
-        let chars = answer.value.split('');
-        console.log(chars);
+        let el_answer = document.querySelector('#answer');
+        let chars = answer.split('');
+        //console.log(chars);
         let jamos = [];
         for(let ch of chars) {
             let decomposed = Array.from(ch.normalize('NFD'));
-            console.log(ch, decomposed);
+            //console.log(ch, decomposed);
             jamos.push(...decomposed);
         }
         let shuffled = shuffle(jamos);
-        console.log(shuffled);
+        //console.log(shuffled);
         let x = jamo_size, y = 200;
         for(let jm of shuffled) {
             let jamo = document.createElement('div');
@@ -118,6 +124,21 @@
                 x += jamo_size;
             }
         }
+
+        document.querySelector('#show-answer').checked = false;
+        el_answer.style.color = 'rgba(0, 0, 0, 0.0)';
+    }
+
+    document.querySelector('#quiz').addEventListener('click', () => {
+        let el_answer = document.querySelector('#answer');
+        quiz(el_answer.value);
+    });
+
+    document.querySelector('#random').addEventListener('click', () => {
+        let word = words.pop();
+        words.unshift(word);
+        quiz(word);
+        document.querySelector('#answer').value = word;
     });
 
     function clear() {
@@ -190,6 +211,7 @@
             selectedJamo.style.color = '';
         }
         selectedJamo = null;
+        is_correct();
     }
 
     function resize() {
@@ -369,6 +391,24 @@
         }
 
         document.querySelector('#test').value = print;
+    }
+
+    function is_correct() {
+        let answer = document.querySelector('#answer').value.normalize('NFD');
+        let test = document.querySelector('#test').value.normalize('NFD');
+        if(answer == test) {
+            for(let el_jamo of document.querySelectorAll('.jamo')) {
+                let hue = Math.random() * 360;
+                el_jamo.style.textShadow = `0px 0px ${jamo_size/4}px hsl(${hue}, 100%, 70%)`;
+            }
+            document.querySelector('#show-answer').checked = true;
+            document.querySelector('#answer').style.color = 'rgba(0, 0, 0, 1.0)';
+        }
+        else {
+            for(let el_jamo of document.querySelectorAll('.jamo')) {
+                el_jamo.style.textShadow = '';
+            }
+        }
     }
 
     resize();
