@@ -6,6 +6,7 @@
     body {
         overflow: hidden;
         touch-action: none;
+        user-select: none;
     }
 
     #answer {
@@ -33,15 +34,16 @@
         transition: text-shadow 0.5s;
     }
 
-    .jamo:hover {
+    /* .jamo:hover {
         -webkit-text-stroke: 3px blue;
         color: blue;
-    }
+    } */
 
     #ui-top {
         position: absolute;
         left: 20px;
         top: 20px;
+        line-height: 2em;
     }
 
     #ui-bottom {
@@ -51,9 +53,13 @@
         text-align: right;
     }
 
-    #ui-bottom input {
-        border: none;
+    #test {
+        font-family: sans-serif;
         text-align: right;
+    }
+
+    #test > a:visited {
+        color: LinkText;
     }
 </style>
 <body>
@@ -64,13 +70,13 @@
         <input type="checkbox" id="show-answer" checked>
         <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미" size="10">
         <button id="quiz">문제 만들기</button>
-        <button id="random2">②</button>
-        <button id="random3">③</button>
-        <button id="random4">④</button>
+        <button id="random2">🎲 2</button>
+        <button id="random3">🎲 3</button>
+        <button id="random4">🎲 4</button>
         <button id="reset">다시 시작</button>
     </div>
     <div id="ui-bottom">
-        <input type="text" id="test" spellcheck="false" autocomplete="off" value="">
+        <div id="test"></div>
     </div>
 </body>
 <script>
@@ -112,12 +118,14 @@
         //console.log(shuffled);
         let x = jamo_size, y = 200;
         for(let jm of shuffled) {
-            let jamo = document.createElement('div');
-            jamo.dataset.jamo = jm;
-            jamo.classList.add('jamo');
-            jamo.innerText = jm;
-            document.querySelector('#stage').appendChild(jamo);
-            jamo.style.transform = `translate(${x}px, ${y}px)`;
+            let el_jamo = document.createElement('div');
+            el_jamo.dataset.jamo = jm;
+            el_jamo.classList.add('jamo');
+            el_jamo.innerText = jm;
+            document.querySelector('#stage').appendChild(el_jamo);
+            el_jamo.style.transform = `translate(${x}px, ${y}px)`;
+            el_jamo.dataset.x = x;
+            el_jamo.dataset.y = y;
             if(x + jamo_size * 1.5 > window.innerWidth) {
                 y += jamo_size;
                 x = jamo_size;
@@ -160,7 +168,7 @@
     function clear() {
         let stage = document.querySelector('#stage');
         stage.innerHTML = '';
-        document.querySelector('#test').value = '';
+        document.querySelector('#test').innerHTML = '';
     }
 
     document.querySelector('#reset').addEventListener('click', () => {
@@ -200,11 +208,6 @@
     }
 
     function handleMove(event) {
-        // if(event.target.classList.contains('jamo')) {
-        //     event.target.style['-webkit-text-stroke'] = '3px blue';
-        //     event.target.style.color = 'blue';
-        // }
-
         if(selectedJamo) {
             let x, y;
             if (event.type === 'mousemove') {
@@ -216,33 +219,48 @@
                 y = event.touches[0].pageY - offsetY;
             }
             selectedJamo.style.transform = `translate(${x}px, ${y}px)`;
+            selectedJamo.dataset.x = x;
+            selectedJamo.dataset.y = y;
             selectedJamo.style['-webkit-text-stroke'] = '3px blue';
             selectedJamo.style.color = 'blue';
             compose();
         }
+        else {
+            if(event.target.classList.contains('jamo')) {
+                event.target.style['-webkit-text-stroke'] = '3px blue';
+                event.target.style.color = 'blue';
+            }
+        }
     }
+
+    document.addEventListener('mouseout', (event) => {
+        if(event.target.classList.contains('jamo')) {
+            event.target.style['-webkit-text-stroke'] = '';
+            event.target.style.color = '';
+        }
+    });
 
     function handleEnd(event) {
         if(selectedJamo) {
             selectedJamo.style['-webkit-text-stroke'] = '';
             selectedJamo.style.color = '';
+            is_correct();
         }
         selectedJamo = null;
-        is_correct();
     }
 
     function resize() {
         // 가로가 세로보다 작으면 기존의 style rule에서 class가 jamo 인것의 font-size를 50px로 설정
         if(window.innerWidth < window.innerHeight) {
             jamo_size = 50;
-            let styleSheet = document.styleSheets[0];
-            let cssRules = Array.from(styleSheet.cssRules || styleSheet.rules);
-            let rule = cssRules.filter(x => x.selectorText == '.jamo')[0];
-            rule.style.fontSize = `${jamo_size}px`;
         }  
         else {
             jamo_size = 100;
-        }     
+        }
+        let styleSheet = document.styleSheets[0];
+        let cssRules = Array.from(styleSheet.cssRules || styleSheet.rules);
+        let rule = cssRules.filter(x => x.selectorText == '.jamo')[0];
+        rule.style.fontSize = `${jamo_size}px`;
     }
 
     window.addEventListener('resize', (event) => {
@@ -257,31 +275,19 @@
         }, 100);
     });
 
-    window.addEventListener('mousedown', handleStart);
-    window.addEventListener('touchstart', handleStart);
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
 
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('touchmove', handleMove);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
 
-    window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchend', handleEnd);
-
-    // document.addEventListener('mouseleave', (event) => {
-    //     if(event.target.classList.contains('jamo')) {
-    //         console.log('!');
-    //         event.target.style['-webkit-text-stroke'] = '';
-    //         event.target.style.color = 'black';
-    //     }
-    // });
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
 
     document.addEventListener('contextmenu', (event) => {
         event.preventDefault();
-        event.stopPropagation();
+        //event.stopPropagation();
     });
-
-    // document.addEventListener('dragstart', (event) => {
-    //     event.preventDefault();
-    // });
 
     function getJamoType(char) {
         const codePoint = char.codePointAt(0);
@@ -410,16 +416,20 @@
                 }
             }
             
+            if(!cho) cho = '';
+            if(!jung) jung = '';
+            if(!jong) jong = '';
 
             print += cho + jung + jong;
         }
 
-        document.querySelector('#test').value = print;
+        document.querySelector('#test').textContent = print;
     }
 
     function is_correct() {
+        let ans = document.querySelector('#answer').value;
         let answer = document.querySelector('#answer').value.normalize('NFD');
-        let test = document.querySelector('#test').value.normalize('NFD');
+        let test = document.querySelector('#test').textContent.normalize('NFD');
         if(answer == test) {
             for(let el_jamo of document.querySelectorAll('.jamo')) {
                 let hue = Math.random() * 360;
@@ -427,6 +437,7 @@
             }
             document.querySelector('#show-answer').checked = true;
             document.querySelector('#answer').style.color = 'rgba(0, 0, 0, 1.0)';
+            document.querySelector('#test').innerHTML = `<a href="https://ko.wikipedia.org/wiki/${ans}" target="_blank">${ans}</a>`;
         }
         else {
             for(let el_jamo of document.querySelectorAll('.jamo')) {
