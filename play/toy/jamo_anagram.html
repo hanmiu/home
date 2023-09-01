@@ -65,6 +65,18 @@
         text-align: right;
     }
 
+    #info {
+        position: absolute;
+        left: 0px;
+        top: 100px;
+        padding-left: 20px;
+    }
+
+    #info > ul > li {
+        margin-top: 0.3em;
+        line-height: 1.5em;
+    }
+
     #test {
         font-family: sans-serif;
         text-align: right;
@@ -80,8 +92,8 @@
     </div>
     <div id="ui-top">
         <span id="showhide">😳</span> <!--😌-->
-        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미" size="8">
-        <button id="quiz">맞춰봐❗️</button>
+        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="호기심" size="8">
+        <button id="quiz">맞춰봐 !</button>
         <button id="random2">🎲 2</button>
         <button id="random3">🎲 3</button>
         <button id="random4">🎲 4</button>
@@ -89,6 +101,28 @@
     </div>
     <div id="ui-bottom">
         <div id="test"></div>
+    </div>
+    <div id="info">
+        <h2>한글 자모 섞어 맞추기</h2>
+        <hr>
+        <h3>놀이 방법</h3>
+        <ul>
+            <li>😳 / 😌 : 정답 보기 / 숨기기</li>
+            <li><input type="text" size="8"> : 정답 직접 쓰기</li>
+            <li><button>맞춰봐 !</button> : 숨길 정답을 직접 입력한 후 ‘맞춰봐!’ 버튼을 눌러 보세요. 단어의 자모가 섞입니다.</li>
+            <li><button>🎲 2</button> <button>🎲 3</button> <button>🎲 4</button> : 미리 입력해 둔 두 글자, 세 글자, 네 글자 단어 중 무작위로 문제가 나옵니다.</li>
+            <li><button>❌</button> : 다시 시작 (다 지우기)</li>
+            <li>정답을 맞추면 글자 주변의 색이 바뀌고 우하단의 링크로 그 의미를 탐색할 수 있습니다.</li>
+            <li><a href="https://www.hanmiu.cc" target="_blank">한미유치원</a> 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !</li>
+        </ul>
+        <div style="text-align: right; font-size: 0.75em; margin: 20px 0px 10px 0px;">창작: 미디어아티스트 최승준</div>
+        <div style="text-align: right;">
+            <img src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg" height="25px">
+        </div>
+        <hr>
+        <div style="text-align: right">
+            <button id="close-info">놀이 방법 닫기</button>
+        </div>
     </div>
 </body>
 <script>
@@ -192,6 +226,7 @@
         let stage = document.querySelector('#stage');
         stage.innerHTML = '';
         document.querySelector('#test').innerHTML = '';
+        document.querySelector('#info').style.display = 'none';
     }
 
     document.querySelector('#reset').addEventListener('click', () => {
@@ -285,6 +320,10 @@
         rule.style.fontSize = `${jamo_size}px`;
     }
 
+    document.querySelector('#close-info').addEventListener('click', () => {
+        document.querySelector('#info').style.display = 'none';
+    });
+
     window.addEventListener('resize', (event) => {
         setTimeout(() => {
             resize();
@@ -309,6 +348,10 @@
     document.addEventListener('contextmenu', (event) => {
         event.preventDefault();
         //event.stopPropagation();
+    });
+
+    document.addEventListener('dragstart', (event) => {
+        event.preventDefault();
     });
 
     function getJamoType(char) {
