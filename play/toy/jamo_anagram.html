@@ -107,15 +107,12 @@
         clear();
         let el_answer = document.querySelector('#answer');
         let chars = answer.split('');
-        //console.log(chars);
         let jamos = [];
         for(let ch of chars) {
             let decomposed = Array.from(ch.normalize('NFD'));
-            //console.log(ch, decomposed);
             jamos.push(...decomposed);
         }
         let shuffled = shuffle(jamos);
-        //console.log(shuffled);
         let x = jamo_size, y = 200;
         for(let jm of shuffled) {
             let el_jamo = document.createElement('div');
