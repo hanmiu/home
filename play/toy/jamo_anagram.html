@@ -98,11 +98,12 @@
         <button id="random3">🎲 3</button>
         <button id="random4">🎲 4</button>
         <button id="reset">❌</button>
+        <button id="show-info">❓</button>
     </div>
     <div id="ui-bottom">
         <div id="test"></div>
     </div>
-    <div id="info">
+    <div id="info" style="background-color: white; display: none;">
         <h2>한글 자모 섞어 맞추기</h2>
         <hr>
         <h3>놀이 방법</h3>
@@ -112,6 +113,7 @@
             <li><button>맞춰봐 !</button> : 숨길 정답을 직접 입력한 후 ‘맞춰봐!’ 버튼을 눌러 보세요. 단어의 자모가 섞입니다.</li>
             <li><button>🎲 2</button> <button>🎲 3</button> <button>🎲 4</button> : 미리 입력해 둔 두 글자, 세 글자, 네 글자 단어 중 무작위로 문제가 나옵니다.</li>
             <li><button>❌</button> : 다시 시작 (다 지우기)</li>
+            <li><button>❓</button> : 놀이 방법 다시 보기</li>
             <li>정답을 맞추면 글자 주변의 색이 바뀌고 우하단의 링크로 그 의미를 탐색할 수 있습니다.</li>
             <li><a href="https://www.hanmiu.cc" target="_blank">한미유치원</a> 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !</li>
         </ul>
@@ -126,6 +128,19 @@
     </div>
 </body>
 <script>
+    if(!localStorage.jamo_anagram_visited_count) {
+        localStorage.jamo_anagram_visited_count = 1;
+        document.querySelector('#info').style.display = 'block';
+    }
+    else {
+        let visited_count = parseInt(localStorage.jamo_anagram_visited_count);
+        visited_count += 1;
+        if(visited_count <= 3) {
+            document.querySelector('#info').style.display = 'block';
+        }
+        localStorage.jamo_anagram_visited_count = visited_count;
+    }
+
     let el_showhide = document.querySelector('#showhide');
 
     function show_answer() {
@@ -322,6 +337,10 @@
 
     document.querySelector('#close-info').addEventListener('click', () => {
         document.querySelector('#info').style.display = 'none';
+    });
+
+    document.querySelector('#show-info').addEventListener('click', () => {
+        document.querySelector('#info').style.display = 'block';
     });
 
     window.addEventListener('resize', (event) => {
