@@ -68,13 +68,19 @@
     #info {
         position: absolute;
         left: 0px;
-        top: 100px;
+        top: 70px;
         padding-left: 20px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        background-color: white;
+        border-top: 1px solid gray;
+        border-bottom: 1px solid gray;
     }
 
     #info > ul > li {
         margin-top: 0.3em;
-        line-height: 1.5em;
+        line-height: 1.25em;
+        font-size: 0.8em;
     }
 
     #test {
@@ -103,10 +109,9 @@
     <div id="ui-bottom">
         <div id="test"></div>
     </div>
-    <div id="info" style="background-color: white; display: none;">
-        <h2>한글 자모 섞어 맞추기</h2>
-        <hr>
-        <h3>놀이 방법</h3>
+    <div id="info" style="display: none;">
+        <h3>한글 자모 섞어 맞추기</h3>
+        <h4>놀이 방법</h4>
         <ul>
             <li>😳 / 😌 : 정답 보기 / 숨기기</li>
             <li><input type="text" size="8"> : 정답 직접 쓰기</li>
@@ -117,11 +122,10 @@
             <li>정답을 맞추면 글자 주변의 색이 바뀌고 우하단의 링크로 그 의미를 탐색할 수 있습니다.</li>
             <li><a href="https://www.hanmiu.cc" target="_blank">한미유치원</a> 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !</li>
         </ul>
-        <div style="text-align: right; font-size: 0.75em; margin: 20px 0px 10px 0px;">창작: 미디어아티스트 최승준</div>
+        <div style="text-align: right; font-size: 0.8em; margin: 20px 0px 10px 0px;">창작: 미디어아티스트 최승준</div>
         <div style="text-align: right;">
             <img src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg" height="25px">
         </div>
-        <hr>
         <div style="text-align: right">
             <button id="close-info">놀이 방법 닫기</button>
         </div>
