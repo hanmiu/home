@@ -223,7 +223,7 @@
     function quiz(answer) {
         clear();
         let chars = mix_jamo(answer);
-        let x = jamo_size * 1.5, y = 200;
+        let x = jamo_size * 1.5, y = 250;
         for(let ch of chars) {
             let [cho, jung, jong] = ch; 
             let el_jung = document.createElement('div');
