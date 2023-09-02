@@ -167,7 +167,12 @@
         hide_answer();
         document.querySelector('#answer').value = params.get('answer');
     }
+
     let jamo_size = 100;
+    // ᅡᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵ
+    let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
+    let type_h = 'ᅩᅭᅮᅲᅳ'.split('');
+    let type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
 
     function shuffle(array) {
         let n = array.length, t, i;
@@ -184,9 +189,8 @@
     let words3 = shuffle(`가야금,가자미,갈매기,강아지,개구리,개나리,거문고,경사로,경찰서,계산기,고등어,고릴라,고양시,고양이,고인돌,공주님,구급차,구조대,군만두,그림자,그림책,금붕어,금요일,기차역,까마귀,꿈나라,나무꾼,나뭇잎,노선도,놀이터,눈사람,달팽이,대통령,대피소,대학교,대학생,도깨비,도마뱀,도미노,도서관,도시락,도토리,독수리,돌고래,동물원,동화책,두꺼비,둘레길,드래곤,땅거미,마법사,마스크,마우스,망원경,메뚜기,모래성,모험가,목걸이,목요일,목욕탕,무지개,물놀이,미술관,박물관,박사님,반딧불,백두산,뱃시람,별똥별,별자리,보관함,보름달,부동산,북극곰,비빔밥,비행기,사마귀,상상력,색연필,선생님,선풍기,설거지,설계도,설명서,소나무,소방관,소방서,소방차,소화기,손잡이,수영장,수족관,수증기,승강기,승강장,식물원,신기루,실내화,심부름,쓰레기,아마존,아파트,안전띠,알사탕,애벌레,어린이,연구실,연주회,영화관,예술가,오뚝기,오로라,오징어,옥수수,올빼비,왕자님,외계인,우주선,우체국,운동장,운동화,운전대,원숭이,월요일,유니콘,유치원,유튜브,은하수,음식점,자동차,자전거,잠자리,장난감,장마철,전개도,정거장,종달새,주사위,줄넘기,중학교,지구본,지렁이,지우개,지하철,진달래,차림표,참나무,천문대,축구공,카메라,컴퓨터,코끼리,코뿔소,키보드,탐험대,탕수육,태양계,태평양,팥빙수,편의점,피아노,한라산,할머니,해적선,해파리,현미경,호기심,화장실,회사원,휘파람`.split(','));
     let words4 = shuffle(`가족여행,고등학교,고등학생,고래상어,고슴도치,고추냉이,귀뚜라미,김치찌개,나무늘보,놀이공원,느티나무,대한민국,된장찌개,딱정벌레,모래시계,무당벌레,뭉게구름,미끄럼틀,미세먼지,밀짚모자,바다표범,바이올린,백과사전,백상아리,백설공주,불가사리,불꽃놀이,비밀기지,비밀번호,사과나무,사슴벌레,손목시계,송이버섯,수도꼭지,수수께끼,스마트폰,스케이트,스파게티,쓰레기통,아름드리,안전운전,야생동물,어린이날,어린이집,엉망진창,예방주사,오아시스,은근슬쩍,인공지능,인어공주,일기예보,자작나무,종이접기,초등학교,초등학생,카멜레온,할아버지,해바라기,향유고래,허수아비,헐레벌떡,호랑나비,흔들의자`.split(','));
 
-    function quiz(answer) {
+    function quiz_(answer) {
         clear();
-        let el_answer = document.querySelector('#answer');
         let chars = answer.split('');
         let jamos = [];
         for(let ch of chars) {
@@ -210,6 +214,88 @@
             }
             else {
                 x += jamo_size;
+            }
+        }
+
+        hide_answer();
+    }
+
+    function quiz(answer) {
+        clear();
+        let chars = mix_jamo(answer);
+        let x = jamo_size * 1.5, y = 200;
+        for(let ch of chars) {
+            let [cho, jung, jong] = ch; 
+            let el_jung = document.createElement('div');
+            el_jung.dataset.jamo = jung;
+            el_jung.classList.add('jamo');
+            el_jung.innerText = jung;
+            document.querySelector('#stage').appendChild(el_jung);
+            el_jung.style.transform = `translate(${x}px, ${y}px)`;
+            el_jung.dataset.x = x;
+            el_jung.dataset.y = y;
+
+            let el_cho = document.createElement('div');
+            el_cho.dataset.jamo = cho;
+            el_cho.classList.add('jamo');
+            el_cho.innerText = cho;
+            document.querySelector('#stage').appendChild(el_cho);
+
+            let el_jong;
+            if(jong !== '') {
+                el_jong = document.createElement('div');
+                el_jong.dataset.jamo = jong;
+                el_jong.classList.add('jamo');
+                el_jong.innerText = jong;
+                document.querySelector('#stage').appendChild(el_jong);
+            }
+
+            let [dx, dy] = [0, 0];
+            if(type_v.includes(jung)) {
+                dx = jamo_size * 0.75;
+                el_cho.style.transform = `translate(${x - dx}px, ${y}px)`;
+                el_cho.dataset.x = x - dx;
+                el_cho.dataset.y = y;
+                if(el_jong) {
+                    dx = jamo_size * 0.25;
+                    dy = jamo_size * 0.9;
+                    el_jong.style.transform = `translate(${x - dx}px, ${y + dy}px)`;
+                    el_jong.dataset.x = x - dx;
+                    el_jong.dataset.y = y + dy;
+                }               
+            }
+            else if(type_d.includes(jung)) {
+                dx = jamo_size * 0.25;
+                dy = jamo_size * 0.5;
+                el_cho.style.transform = `translate(${x - dx}px, ${y - dy}px)`;
+                el_cho.dataset.x = x - dx;
+                el_cho.dataset.y = y - dx; 
+                if(el_jong) {
+                    dy = jamo_size * 0.8;
+                    el_jong.style.transform = `translate(${x}px, ${y + dy}px)`;
+                    el_jong.dataset.x = x;
+                    el_jong.dataset.y = y + dy;
+                } 
+            }
+            else if(type_h.includes(jung)) {
+                dy = jamo_size * 0.7;
+                el_cho.style.transform = `translate(${x}px, ${y - dy}px)`;
+                el_cho.dataset.x = x;
+                el_cho.dataset.y = y - dy;
+                if(el_jong) {
+                    dy = jamo_size * 0.75;
+                    el_jong.style.transform = `translate(${x}px, ${y + dy}px)`;
+                    el_jong.dataset.x = x;
+                    el_jong.dataset.y = y + dy;
+                } 
+            }
+
+            if(x + jamo_size * 2 > window.innerWidth) {
+                y += jamo_size * 2;
+                x = jamo_size * 1.5;
+            }
+            else {
+                x += jamo_size * 1.75;
             }
         }
 
@@ -379,6 +465,7 @@
     });
 
     function getJamoType(char) {
+        if(!char) return - 1;
         const codePoint = char.codePointAt(0);
 
         // 초성 (Leading consonants): U+1100 – U+1112 (19자)
@@ -405,10 +492,6 @@
     }
 
     function compose() {
-        // ᅡᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵ
-        let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
-        let type_h = 'ᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴ'.split('');
-
         el_chars = [];
 
         let el_jamos = Array.from(document.querySelectorAll('.jamo')).sort((a, b) => {
@@ -445,7 +528,7 @@
                                     el_cho = other_jamo;
                                 }
                             }
-                        } else if(type_h.includes(jamo)) { // ㅗ type
+                        } else if(type_h.includes(jamo) || type_d.includes(jamo)) { // ㅗ type 또는 ᅪ type
                             if(dy < 0) {
                                 if(d < min_d) {
                                     min_d = d;
@@ -485,7 +568,7 @@
                 let dy = other_y - rect.top + rect.height / 2;
                 let d = Math.sqrt(dx * dx + dy * dy);
                 
-                if(other_x > left && other_x < right && d < jamo_size * 1.25) {
+                if(other_x > left && other_x < right && Math.abs(dy) < jamo_size * 1.5) {
                     candidates.push(other_jamo);    
                 }
             }
@@ -538,6 +621,57 @@
                 el_jamo.style.textShadow = '';
             }
         }
+    }
+
+    function mix_jamo(str) {
+        let chars = [];
+        let result = [];
+        for(let ch of str) {
+            let decomposed = Array.from(ch.normalize('NFD'));
+            if(decomposed.length < 3) {
+                decomposed.push('');
+            }
+            chars.push(decomposed);
+        }
+        let shuffled = shuffle(chars);
+        // flatten shuffled
+        shuffled = shuffled.reduce((a, b) => a.concat(b), []);
+        // 3개씩 끊어가니까 3으로 나눈 나머지가 1인 것들은 중성 모음이 아닌 것들
+        let jaum_indices = shuffled.map((x,i) => i).filter((x,i) => i%3 !== 1);
+        //console.log(jaum_indices);
+        for(let i = 0; i < jaum_indices.length - 1; i++) {
+            let candidates = jaum_indices.slice(i+1, jaum_indices.length);
+            if(getJamoType(shuffled[jaum_indices[i]]) === 0) { // 초성
+                candidates = candidates.filter(x => shuffled[x] !== '');
+            }
+            if(candidates.length === 0) continue;
+            let temp_jamo_idx = jaum_indices[i];
+            let idx = Math.floor(Math.random() * candidates.length);
+            let switch_idx = jaum_indices.indexOf(candidates[idx]);
+            jaum_indices[i] = jaum_indices[switch_idx];
+            jaum_indices[switch_idx] = temp_jamo_idx;
+            //console.log(i, jaum_indices);
+        }
+        for(let i = 0; i < jaum_indices.length/2; i++) {
+            let cho = shuffled[jaum_indices[2 * i]];
+            let jung = shuffled[3 * i + 1];
+            let jong = shuffled[jaum_indices[2 * i + 1]];
+            if(cho === '') {
+                cho = jong;
+                jong = '';
+                if(cho === '') { // 마지막 글자에 중성만 있는 확률 낮은 경우
+                    for(let res of result) {
+                        if(res[2] !== '') {
+                            cho = res[2];
+                            res[2] = '';
+                            break;
+                        }
+                    }
+                }
+            }
+            result.push([cho, jung, jong]);
+        }
+        return result;
     }
 
     resize();
