@@ -205,7 +205,7 @@
     else {
         document.querySelector('#answer').value = words2[0];
     }
-    
+
     function quiz_(answer) {
         clear();
         let chars = answer.split('');
@@ -377,9 +377,17 @@
         }
     }
 
-    let censor_begin = `개,젖`.split(',');
-    let censor_end = `괴,남,녀,놈,련,젖,젗,젛,충`.split(',');
-    let censor = `갈보,게이,고자,고추,골빈,귀신,꼬추,꼰대,꼴통,년,등신,로리,루저,루저,멍청,메갈,미랄,미럴,미친,별창,병신,병신,보지,부랄,불알,빠큐,뻐큐,뻑,새끼,성교,섹스,쇼타,스섹,시랄,시발,쌍,썅,씨바,씨발,씨파,씨팔,씹,아다,악마,애미,애비,에미,에비,엠창,염병,엽기,옌장,옘병,유방,음경,음문,일베,자지,잡종,잼민,저능,정박,제길,젠장,조센,존나,졷,졸라,좃,좄,좆,좆나,좇,좋,지랄,짱깨,쫄,찐따,창녀,추남,추녀,튀기,트롤,틀딱,파쇼,퍼큐,퍽유,페도,폐,한남,한녀,허접,호구,호로,호모,화냥,후다,후빨,후장`.split(',');
+    function to_unicode(comma_separated_str) {
+        return comma_separated_str.split(',').map(x => x.trim().split('').map(y => y.codePointAt(0).toString(16)).join('|')).join(',');
+    }
+
+    function from_unicode(unicode_str) {
+        return unicode_str.split(',').map(x => x.trim().split('|').map(y => String.fromCharCode(parseInt(y,16))).join('')).join(',');
+    }
+
+    let censor_begin = from_unicode(`ac1c,c816`).split(',');
+    let censor_end = from_unicode(`ad34,b0a8,b140,b188,b828,c816,c817,c81b,cda9`).split(',');
+    let censor = from_unicode(`ac08|bcf4,ac8c|c774,ace0|c790,ace0|cd94,ace8|be48,adc0|c2e0,af2c|cd94,af30|b300,af34|d1b5,b144,b4f1|c2e0,b85c|b9ac,b8e8|c800,b8e8|c800,ba4d|ccad,ba54|ac08,bbf8|b784,bbf8|b7f4,bbf8|ce5c,bcc4|cc3d,bcd1|c2e0,bcd1|c2e0,bcf4|c9c0,bd80|b784,bd88|c54c,be60|d050,bed0|d050,bed1,c0c8|b07c,c131|ad50,c139|c2a4,c1fc|d0c0,c2a4|c139,c2dc|b784,c2dc|bc1c,c30d,c345,c528|bc14,c528|bc1c,c528|d30c,c528|d314,c539,c544|b2e4,c545|b9c8,c560|bbf8,c560|be44,c5d0|bbf8,c5d0|be44,c5e0|cc3d,c5fc|bcd1,c5fd|ae30,c60c|c7a5,c618|bcd1,c720|bc29,c74c|acbd,c74c|bb38,c77c|bca0,c790|c9c0,c7a1|c885,c7bc|bbfc,c800|b2a5,c815|bc15,c81c|ae38,c820|c7a5,c870|c13c,c874|b098,c877,c878|b77c,c883,c884,c886,c886|b098,c887,c88b,c9c0|b784,c9f1|ae68,cac4,cc10|b530,cc3d|b140,cd94|b0a8,cd94|b140,d280|ae30,d2b8|b864,d2c0|b531,d30c|c1fc,d37c|d050,d37d|c720,d398|b3c4,d3d0,d55c|b0a8,d55c|b140,d5c8|c811,d638|ad6c,d638|b85c,d638|baa8,d654|b0e5,d6c4|b2e4,d6c4|be68,d6c4|c7a5`).split(',');
 
     document.querySelector('#quiz').addEventListener('click', () => {
         let el_answer = document.querySelector('#answer');
