@@ -240,7 +240,7 @@
     function quiz(answer) {
         clear();
         let chars = mix_jamo(answer);
-        let x = jamo_size * 2.5, y = 250;
+        let x = jamo_size * 2, y = 250;
 
         for(let ch of chars) {
             let [cho, jung, jong] = ch;
@@ -345,7 +345,7 @@
 
             if(x + jamo_size * 2 > window.innerWidth) {
                 y += jamo_size * 2;
-                x = jamo_size * 1.5;
+                x = jamo_size * 2;
             }
             else {
                 x += jamo_size * 1.75;
