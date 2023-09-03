@@ -354,33 +354,30 @@
         let print = compose().normalize('NFC');
         // 안전 체크
         if(print.length > 0) {
-            for(let i = 0; i < print.length; i++) {
-                let ch = print[i];
-                let avoid = false;
+            if(print[0] === '개') {
+                //console.log('검토: ', print);
+                quiz_(answer);
+            }
 
-                if(i === 0 && ch === '개') {
-                    avoid = true;
-                }
+            if(print[print.length - 1] === '녀') {
+                quiz_(answer);
+            }
 
-                if(ch === '좆') {
-                    avoid = true;
-                }
+            if(print[print.length - 1] === '남') {
+                quiz_(answer);
+            }
 
-                if(ch === '젖') {
-                    avoid = true;
-                }
-
-                if(ch === '씹') {
-                    avoid = true;
-                }
-
-                if(avoid) {
-                    //console.log('검토: ', ch);
-                    quiz(answer);
+            for(let censor_word of censor) {
+                if(print.includes(censor_word)) {
+                    console.log('검토: ', print);
+                    quiz_(answer);
+                    break;
                 }
             }
         }
     }
+
+    let censor = `갈보,게이,고자,고추,기랄,꼬추,꼰대,꼴통,년,놈,등신,련,로리,루저,루저,멍청,메갈,미랄,미럴,미친,별창,병신,병신,보지,부랄,불알,뻐큐,뻑,새끼,성교,섹스,쇼타,스섹,시랄,시발,쌍,썅,씨바,씨발,씨파,씨팔,씹,엠창,염병,옌장,옘병,유방,음경,음문,일베,자지,잡종,잼민,저능,젇,젓,정박,젖,젗,젛,제길,젠장,조센,존나,졷,졸라,좃,좄,좆,좆나,좇,좋,지랄,짱깨,쫄,찐따,창녀,추남,추녀,충,튀기,트롤,틀딱,파쇼,퍽,페도,폐,한남,한녀,허접,호구,호로,호모,화냥,후빨,후장`.split(',');
 
     document.querySelector('#quiz').addEventListener('click', () => {
         let el_answer = document.querySelector('#answer');
