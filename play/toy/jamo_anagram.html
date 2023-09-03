@@ -351,7 +351,35 @@
 
         hide_answer();
 
-        compose();
+        let print = compose().normalize('NFC');
+        // 안전 체크
+        if(print.length > 0) {
+            for(let i = 0; i < print.length; i++) {
+                let ch = print[i];
+                let avoid = false;
+
+                if(i === 0 && ch === '개') {
+                    avoid = true;
+                }
+
+                if(ch === '좆') {
+                    avoid = true;
+                }
+
+                if(ch === '젖') {
+                    avoid = true;
+                }
+
+                if(ch === '씹') {
+                    avoid = true;
+                }
+
+                if(avoid) {
+                    //console.log('검토: ', ch);
+                    quiz(answer);
+                }
+            }
+        }
     }
 
     document.querySelector('#quiz').addEventListener('click', () => {
@@ -669,6 +697,7 @@
         }
 
         document.querySelector('#test').textContent = print;
+        return print;
     }
 
     function is_correct() {
