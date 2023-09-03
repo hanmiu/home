@@ -87,6 +87,7 @@
     #test {
         font-family: sans-serif;
         text-align: right;
+        cursor: pointer;
     }
 
     #test > a:visited {
@@ -99,13 +100,14 @@
     </div>
     <div id="ui-top">
         <span id="showhide">😳</span> <!--😌-->
-        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="호기심" size="8">
+        <input type="text" id="answer" spellcheck="false" autocomplete="off" value="한미" size="8">
         <button id="quiz">맞춰봐 !</button>
         <button id="random2">🎲 2</button>
         <button id="random3">🎲 3</button>
         <button id="random4">🎲 4</button>
         <button id="reset">❌</button>
         <button id="show-info">❓</button>
+        <button id="speak" style="display: none;">🗣️</button>
     </div>
     <div id="ui-bottom">
         <div id="test"></div>
@@ -120,6 +122,7 @@
             <li><button>🎲 2</button> <button>🎲 3</button> <button>🎲 4</button> : 미리 입력해 둔 두 글자, 세 글자, 네 글자 단어 중 무작위로 문제가 나옵니다.</li>
             <li><button>❌</button> : 다시 시작 (다 지우기)</li>
             <li><button>❓</button> : 놀이 방법 다시 보기</li>
+            <li id="show-speak" style="display: none;"><button>🗣️</button> : 소리내서 읽기</li>
             <li>정답을 맞추면 글자 주변의 색이 바뀌고 우하단의 링크로 그 의미를 탐색할 수 있습니다.</li>
             <li><a href="https://www.hanmiu.cc" target="_blank">한미유치원</a> 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !</li>
         </ul>
@@ -160,6 +163,15 @@
         el_showhide.dataset.status = 'hide';
     }
 
+    if(speechSynthesis) {
+        document.querySelector('#speak').style.display = 'inline-block';
+        document.querySelector('#show-speak').style.display = 'inline-block';
+        document.querySelector('#speak').addEventListener('click', () => {
+            utter.text = document.querySelector('#test').innerText;
+            speechSynthesis.speak(utter);
+        });
+    }
+
     show_answer();
 
     let params = new URLSearchParams(new URL(location.href).search);
@@ -173,6 +185,8 @@
     let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
     let type_h = 'ᅩᅭᅮᅲᅳ'.split('');
     let type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
+    let utter = new SpeechSynthesisUtterance();
+    utter.lang = 'ko';
 
     function shuffle(array) {
         let n = array.length, t, i;
@@ -185,9 +199,9 @@
         return array;
     }
 
-    let words2 = shuffle(`가방,가을,가족,간식,갈치,감옥,감자,감정,갑옷,강변,갯벌,거울,건강,건물,게임,겨울,결혼,경사,경찰,계곡,계산,계절,공간,공기,공룡,공부,공연,공원,공장,공주,공짜,공책,공학,과일,과학,관찰,광고,광대,괴물,교통,구름,구청,국수,국어,굴뚝,그림,극장,금성,기분,기쁨,기업,기침,김치,깃털,꽃게,꿀벌,나방,낙타,날씨,날치,남극,남해,노랑,노을,놀이,농구,농장,눈물,달걀,달빛,당근,도둑,동굴,동물,동전,동해,동화,등산,딱지,딸기,떡국,로봇,마당,마법,마술,마을,마음,만두,만화,말벌,망고,모델,모양,모험,목성,목욕,무용,무한,문어,문제,문화,물건,미국,미술,믿음,바다,바람,박사,박쥐,반달,반지,방귀,방패,방학,배움,버섯,벌레,병원,보물,보석,복어,북극,블록,비밀,빌딩,빨강,빵집,사격,사람,사랑,사슴,사실,사전,사진,사탕,산불,산적,산책,삼촌,상어,색깔,생각,생명,생선,생일,서울,선물,설계,설날,설명,설탕,성공,세상,소금,소망,소원,소풍,손님,수박,수성,수영,숙제,숫자,쉼터,슬픔,시간,시골,시장,식물,식사,신발,신비,신화,실망,실수,실패,싸움,씨앗,아침,안경,안전,약국,양념,어른,언어,얼음,엄마,엉망,여름,여왕,여행,역사,연구,연극,연습,연필,열매,영국,영상,영어,영웅,영화,예술,옥상,온도,옷장,왕국,왕자,외식,요정,용기,용사,용암,우박,우산,운동,은하,은행,음악,이불,인간,인도,인사,인형,일기,일본,일산,입체,자연,장마,장미,장화,저녁,전쟁,전철,점심,정글,정원,종이,주문,중국,지진,진화,질서,짬뽕,참새,책상,책장,청소,초록,촛불,추석,축구,축제,친구,침대,칭찬,캠프,크림,탁구,탐구,탐정,탐험,태양,태풍,탱크,텐트,토성,통증,튀김,트럭,트림,파랑,팔찌,팽이,펭귄,편지,평화,폭우,폭풍,표범,풀잎,풍선,피망,하늘,학교,한글,해변,해적,햇빛,행복,행성,헬멧,현재,호박,홍수,화산,화살,화성,화장,환경,황소,휴식,흐름,희망`.split(','));
+    let words2 = shuffle(`가방,가을,가족,간식,갈치,감옥,감자,감정,갑옷,강변,갯벌,거울,건강,건물,게임,겨울,결혼,경사,경찰,계곡,계산,계절,공간,공기,공룡,공부,공연,공원,공장,공주,공짜,공책,공학,과일,과학,관찰,광고,광대,괴물,교통,구름,구청,국수,국어,굴뚝,그림,극장,금성,기분,기쁨,기업,기침,김치,깃털,꽃게,꿀벌,나방,낙타,날씨,날치,남극,남해,노랑,노을,놀이,농구,농장,눈물,달걀,달빛,당근,도둑,동굴,동물,동전,동해,동화,등산,딱지,딸기,떡국,로봇,마당,마법,마술,마을,마음,만두,만화,말벌,망고,모델,모양,모험,목성,목욕,무용,무한,문어,문제,문화,물건,미국,미술,믿음,바다,바람,박사,박쥐,반달,반지,방귀,방패,방학,배움,버섯,벌레,병원,보물,보석,복어,북극,블록,비밀,빌딩,빨강,빵집,사격,사람,사랑,사슴,사실,사전,사진,사탕,산불,산적,산책,삼촌,상어,색깔,생각,생명,생선,생일,서울,선물,설계,설날,설명,설탕,성공,세상,소금,소망,소원,소풍,손님,수박,수성,수영,숙제,숫자,쉼터,슬픔,시간,시골,시장,식물,식사,식빵,식품,신발,신비,신화,실망,실수,실패,싸움,씨앗,아침,안경,안전,약국,양념,어른,언어,얼음,엄마,엉망,여름,여왕,여행,역사,연구,연극,연습,연필,열매,영국,영상,영어,영웅,영화,예술,옥상,온도,옷장,왕국,왕자,외식,요정,용기,용사,용암,우박,우산,운동,은하,은행,음악,이불,인간,인도,인사,인형,일기,일본,일산,입체,자연,장마,장미,장화,저녁,전쟁,전철,점심,정글,정원,종이,주문,중국,지진,진화,질서,짬뽕,참새,책상,책장,청소,초록,촛불,추석,축구,축제,친구,침대,칭찬,캠프,크림,탁구,탐구,탐정,탐험,태양,태풍,탱크,텐트,토성,통증,튀김,트럭,트림,파랑,팔찌,팽이,펭귄,편지,평화,폭우,폭풍,표범,풀잎,풍선,피망,하늘,학교,한글,해변,해적,햇빛,행복,행성,헬멧,현재,호박,홍수,화산,화살,화성,화장,환경,황소,휴식,흐름,희망`.split(','));
     let words3 = shuffle(`가야금,가자미,갈매기,강아지,개구리,개나리,거문고,경사로,경찰서,계산기,고등어,고릴라,고양시,고양이,고인돌,공주님,구급차,구조대,군만두,그림자,그림책,금붕어,금요일,기차역,까마귀,꿈나라,나무꾼,나뭇잎,노선도,놀이터,눈사람,달팽이,대통령,대피소,대학교,대학생,도깨비,도마뱀,도미노,도서관,도시락,도토리,독수리,돌고래,동물원,동화책,두꺼비,둘레길,드래곤,땅거미,마법사,마스크,마우스,망원경,메뚜기,모래성,모험가,목걸이,목요일,목욕탕,무지개,물놀이,미술관,박물관,박사님,반딧불,백두산,뱃시람,별똥별,별자리,보관함,보름달,부동산,북극곰,비빔밥,비행기,사마귀,상상력,색연필,선생님,선풍기,설거지,설계도,설명서,소나무,소방관,소방서,소방차,소화기,손잡이,수영장,수족관,수증기,승강기,승강장,식물원,신기루,실내화,심부름,쓰레기,아마존,아파트,안전띠,알사탕,애벌레,어린이,연구실,연주회,영화관,예술가,오뚝기,오로라,오징어,옥수수,올빼비,왕자님,외계인,우주선,우체국,운동장,운동화,운전대,원숭이,월요일,유니콘,유치원,유튜브,은하수,음식점,자동차,자전거,잠자리,장난감,장마철,전개도,정거장,종달새,주사위,줄넘기,중학교,지구본,지렁이,지우개,지하철,진달래,차림표,참나무,천문대,축구공,카메라,컴퓨터,코끼리,코뿔소,키보드,탐험대,탕수육,태양계,태평양,팥빙수,편의점,피아노,한라산,할머니,해적선,해파리,현미경,호기심,화장실,회사원,휘파람`.split(','));
-    let words4 = shuffle(`가족여행,고등학교,고등학생,고래상어,고슴도치,고추냉이,귀뚜라미,김치찌개,나무늘보,놀이공원,느티나무,대한민국,된장찌개,딱정벌레,모래시계,무당벌레,뭉게구름,미끄럼틀,미세먼지,밀짚모자,바다표범,바이올린,백과사전,백상아리,백설공주,불가사리,불꽃놀이,비밀기지,비밀번호,사과나무,사슴벌레,손목시계,송이버섯,수도꼭지,수수께끼,스마트폰,스케이트,스파게티,쓰레기통,아름드리,안전운전,야생동물,어린이날,어린이집,엉망진창,예방주사,오아시스,은근슬쩍,인공지능,인어공주,일기예보,자작나무,종이접기,초등학교,초등학생,카멜레온,할아버지,해바라기,향유고래,허수아비,헐레벌떡,호랑나비,흔들의자`.split(','));
+    let words4 = shuffle(`가족여행,고등학교,고등학생,고래상어,고슴도치,고추냉이,귀뚜라미,김치찌개,나무늘보,놀이공원,느티나무,대한민국,된장찌개,딱정벌레,딱따구리,모래시계,무당벌레,뭉게구름,미끄럼틀,미세먼지,밀짚모자,바다표범,바이올린,백과사전,백상아리,백설공주,불가사리,불꽃놀이,비밀기지,비밀번호,사과나무,사슴벌레,손목시계,송이버섯,수도꼭지,수수께끼,스마트폰,스케이트,스파게티,쓰레기통,아름드리,안전운전,야생동물,어린이날,어린이집,엉망진창,예방주사,오아시스,은근슬쩍,인공지능,인어공주,일기예보,자작나무,종이접기,초등학교,초등학생,카멜레온,할아버지,해바라기,향유고래,허수아비,헐레벌떡,호랑나비,흔들의자`.split(','));
 
     function quiz_(answer) {
         clear();
@@ -223,23 +237,22 @@
     function quiz(answer) {
         clear();
         let chars = mix_jamo(answer);
-        let x = jamo_size * 1.5, y = 250;
+        let x = jamo_size * 2.5, y = 250;
+
         for(let ch of chars) {
-            let [cho, jung, jong] = ch; 
+            let [cho, jung, jong] = ch;
             let el_jung = document.createElement('div');
             el_jung.dataset.jamo = jung;
             el_jung.classList.add('jamo');
             el_jung.innerText = jung;
-            document.querySelector('#stage').appendChild(el_jung);
-            el_jung.style.transform = `translate(${x}px, ${y}px)`;
-            el_jung.dataset.x = x;
-            el_jung.dataset.y = y;
 
             let el_cho = document.createElement('div');
             el_cho.dataset.jamo = cho;
             el_cho.classList.add('jamo');
             el_cho.innerText = cho;
+
             document.querySelector('#stage').appendChild(el_cho);
+            document.querySelector('#stage').appendChild(el_jung);
 
             let el_jong;
             if(jong !== '') {
@@ -251,42 +264,79 @@
             }
 
             let [dx, dy] = [0, 0];
+            let [tx, ty] = [0, 0];
             if(type_v.includes(jung)) {
-                dx = jamo_size * 0.75;
-                el_cho.style.transform = `translate(${x - dx}px, ${y}px)`;
-                el_cho.dataset.x = x - dx;
-                el_cho.dataset.y = y;
+                rx = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                ry = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                el_jung.dataset.x = tx = x + rx;
+                el_jung.dataset.y = ty = y + ry;
+                el_jung.style.transform = `translate(${tx}px, ${ty}px)`;
+
+                rx = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                ry = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                dx = jamo_size * 0.6;
+                el_cho.dataset.x = tx = x - dx + rx;
+                el_cho.dataset.y = ty = y + ry;
+                el_cho.style.transform = `translate(${tx}px, ${ty}px)`;
+                
                 if(el_jong) {
+                    rx = Math.random() * jamo_size * 0.1;
+                    ry = Math.random() * jamo_size * 0.1;
                     dx = jamo_size * 0.25;
                     dy = jamo_size * 0.9;
-                    el_jong.style.transform = `translate(${x - dx}px, ${y + dy}px)`;
-                    el_jong.dataset.x = x - dx;
-                    el_jong.dataset.y = y + dy;
+                    el_jong.dataset.x = tx = x - dx + rx;
+                    el_jong.dataset.y = ty = y + dy + ry;
+                    el_jong.style.transform = `translate(${tx}px, ${ty}px)`;                    
                 }               
             }
             else if(type_d.includes(jung)) {
+                rx = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                ry = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                x -= jamo_size * 0.25;
+                el_jung.dataset.x = tx = x + rx;
+                el_jung.dataset.y = ty = y + ry;
+                el_jung.style.transform = `translate(${tx}px, ${ty}px)`;
+
+                rx = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                ry = (Math.random() * 2 - 1) * jamo_size * 0.1;
                 dx = jamo_size * 0.25;
                 dy = jamo_size * 0.5;
-                el_cho.style.transform = `translate(${x - dx}px, ${y - dy}px)`;
-                el_cho.dataset.x = x - dx;
-                el_cho.dataset.y = y - dx; 
+                el_cho.dataset.x = tx = x - dx + rx;
+                el_cho.dataset.y = ty = y - dy + ry; 
+                el_cho.style.transform = `translate(${tx}px, ${ty}px)`;
+                
                 if(el_jong) {
+                    rx = Math.random() * jamo_size * 0.1;
+                    ry = Math.random() * jamo_size * 0.1;
                     dy = jamo_size * 0.8;
-                    el_jong.style.transform = `translate(${x}px, ${y + dy}px)`;
-                    el_jong.dataset.x = x;
-                    el_jong.dataset.y = y + dy;
+                    el_jong.dataset.x = tx = x + rx;
+                    el_jong.dataset.y = ty = y + dy + ry;
+                    el_jong.style.transform = `translate(${tx}px, ${ty}px)`;
                 } 
             }
             else if(type_h.includes(jung)) {
-                dy = jamo_size * 0.7;
-                el_cho.style.transform = `translate(${x}px, ${y - dy}px)`;
-                el_cho.dataset.x = x;
-                el_cho.dataset.y = y - dy;
+                rx = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                ry = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                x -= jamo_size * 0.5;
+                let dy0 = jamo_size * 0.25;
+                el_jung.dataset.x = tx = x + rx;
+                el_jung.dataset.y = ty = y + dy0 + ry;
+                el_jung.style.transform = `translate(${tx}px, ${ty}px)`;
+
+                rx = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                ry = (Math.random() * 2 - 1) * jamo_size * 0.1;
+                dy = jamo_size * 0.5;
+                el_cho.dataset.x = tx = x + rx;
+                el_cho.dataset.y = ty = y - dy + ry;
+                el_cho.style.transform = `translate(${tx}px, ${ty}px)`;
+                
                 if(el_jong) {
-                    dy = jamo_size * 0.75;
-                    el_jong.style.transform = `translate(${x}px, ${y + dy}px)`;
-                    el_jong.dataset.x = x;
-                    el_jong.dataset.y = y + dy;
+                    rx = Math.random() * jamo_size * 0.1;
+                    ry = Math.random() * jamo_size * 0.1;
+                    dy = jamo_size * 0.75 + dy0;
+                    el_jong.dataset.x = tx = x + rx;
+                    el_jong.dataset.y = ty = y + dy + ry;
+                    el_jong.style.transform = `translate(${tx}px, ${ty}px)`;
                 } 
             }
 
@@ -300,6 +350,8 @@
         }
 
         hide_answer();
+
+        compose();
     }
 
     document.querySelector('#quiz').addEventListener('click', () => {
@@ -407,6 +459,12 @@
         if(selectedJamo) {
             selectedJamo.style['-webkit-text-stroke'] = '';
             selectedJamo.style.color = '';
+            // if(speechSynthesis) {
+            //     utter.text = document.querySelector('#test').textContent;
+            //     if(utter.text) {
+            //         speechSynthesis.speak(utter);
+            //     }
+            // }
             is_correct();
         }
         selectedJamo = null;
@@ -432,6 +490,15 @@
 
     document.querySelector('#show-info').addEventListener('click', () => {
         document.querySelector('#info').style.display = 'block';
+    });
+
+    document.querySelector('#test').addEventListener('click', () => {
+        if(speechSynthesis) {
+            utter.text = document.querySelector('#test').textContent;
+            if(utter.text) {
+                speechSynthesis.speak(utter);
+            }
+        }
     });
 
     window.addEventListener('resize', (event) => {
@@ -615,6 +682,13 @@
             }
             show_answer();
             document.querySelector('#test').innerHTML = `<a href="https://ko.wikipedia.org/wiki/${ans}" target="_blank">${ans}</a>`;
+
+            if(speechSynthesis) {
+                utter.text = '정답입니다!, ' + ans;
+                if(utter.text) {
+                    speechSynthesis.speak( utter);
+                }
+            }
         }
         else {
             for(let el_jamo of document.querySelectorAll('.jamo')) {
