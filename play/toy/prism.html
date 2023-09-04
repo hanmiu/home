@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>각기둥 전개도</title>
+<style>
+    body{
+        margin: 0px;
+        overflow: hidden;
+        font-family: sans-serif;
+    }
+
+    #stage {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+    }
+
+    #svg {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+    }
+
+    polygon {
+        cursor: pointer;
+    }
+
+    polygon:hover {
+        fill: rgba(255, 255, 128, 0.5);
+    }
+
+    text {
+        display: none;
+    }
+
+    #ui-top {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        padding: 20px;
+    }
+
+    input, span {
+        margin-right: 10px;
+    }
+
+    @media print {
+        #ui-top {
+            display: none;
+        }
+    }
+}
+</style>
+<body>
+    <div id="stage"></div>
+    <div id="ui-top">
+        <div><input id="n-gon" type="range" min="3" max="10" value="3"><span id="desc-ngon">각형</span><button id="add">새로 추가</button></div>
+        <div><input id="sx" type="range" min="-10" max="10" value="-10"><span>가로</span></div>
+        <div><input id="sy" type="range" min="-10" max="10" value="-10"><span>세로</span></div>
+        <div><input id="height" type="range" min="0" max="6" value="2"><span>높이</span></div>
+        <div style="margin-top: 5px">
+            <button id="pillar-conn">이어진 기둥</button>
+            <button id="pillar-star">방사형 기둥</button>
+        </div>
+        <div style="margin-top: 5px">
+            <button id="print">인쇄</button>
+        </div>
+    </div>
+</body>
+<script>
+    const stage = document.getElementById('stage');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+    let selectedMovable = null;
+    let lastMovable = null;
+    let lastSelectedMovable = null;
+    let offsetX = 0, offsetY = 0;
+    let base_size = 100;
+    base_size = 173.20508075688772;
+
+    let ngon_id_count = 0;
+
+    // Set the SVG attributes to make it full-screen
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+    // Append the SVG to the container
+    stage.appendChild(svg);
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    });
+
+    function update_polygon(group, n, sx, sy) {
+        if(!group) return;
+        clear(group);
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        group.appendChild(polygon);
+
+        if(group.dataset['facet_ids']) {
+            let facet_ids = group.dataset['facet_ids'].split(',');
+            for(let i = 0; i < facet_ids.length; i++) {
+                let facet_id = facet_ids[i];
+                let facet = document.getElementById(facet_id);
+                if(facet) {
+                    facet.remove();
+                }
+            }
+        }
+
+        if(group.dataset['cap_id']) {
+            let cap_id = group.dataset['cap_id'];
+            let cap = document.getElementById(cap_id);
+            if(cap) {
+                cap.remove();
+            }
+        }
+
+        let x0 = Math.cos(0);
+        let y0 = Math.sin(0);
+        let x1 = Math.cos(2 * Math.PI / n);
+        let y1 = Math.sin(2 * Math.PI / n);
+        let dx = x1 - x0;
+        let dy = y1 - y0;
+        let a = Math.PI - Math.atan2(dy, dx);
+        let d = Math.sqrt(dx * dx + dy * dy);
+        let r = base_size / d;
+
+        // 각 포인트에 작은 원을 생성하고 번호를 붙임
+        let points = [];
+        for (let i = 0; i < n; i++) {
+            const theta = 2 * Math.PI * i / n + a;
+            const x = Math.cos(theta) * r * sx;
+            const y = Math.sin(theta) * r * sy;
+
+            // const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            // circle.setAttribute('cx', x);
+            // circle.setAttribute('cy', y);
+            // circle.setAttribute('r', '5');
+            // circle.setAttribute('fill', 'red');
+            // group.appendChild(circle);
+
+            // const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            // text.setAttribute('x', x);
+            // text.setAttribute('y', y);
+            // text.setAttribute('font-size', '20');
+            // text.setAttribute('text-anchor', 'middle');
+            // text.setAttribute('dominant-baseline', 'middle');
+            // text.textContent = i + 1;
+            // group.appendChild(text);
+
+            points.push([x, y]);
+        }
+        polygon.setAttribute('points', points.map(p => p.join(',')).join(' '));
+        polygon.setAttribute('fill', 'transparent');
+        polygon.setAttribute('stroke', 'black');
+        polygon.setAttribute('stroke-width', '1');
+    }
+
+    function add_polygon(n) {
+        //clear(svg);
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('id', `ngon-${ngon_id_count++}`);
+        group.classList.add('movable');
+        lastMovable = group;
+        svg.appendChild(group);
+        group.dataset.n = n;
+        group.dataset.type = 'ngon';
+
+        //update_polygon(group, n, sx, sy);
+        document.querySelector('#n-gon').value = n;
+        document.querySelector('#desc-ngon').textContent = n + '각형';
+        
+        group.setAttribute('transform', `translate(${window.innerWidth / 2}, ${window.innerHeight / 2})`);
+        group.dataset.x = window.innerWidth / 2;
+        group.dataset.y = window.innerHeight / 2;
+
+        update_sxsy();
+
+        lastSelectedMovable = group;
+        lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 2);
+    }
+
+    function clear(elem) {
+        if(elem) {
+            while (elem.firstChild) {
+                elem.removeChild(elem.firstChild);
+            }
+        }
+    }
+
+    function handleStart(event) {
+        let target = event.target;
+        let movable = false;
+        
+        while(target.parentElement) {
+            if(target.classList.contains('movable')) {
+                movable = true;
+                break;
+            }
+            target = target.parentElement;
+        }
+        
+        if(movable) {
+            selectedMovable = target;
+            if(lastSelectedMovable) {
+                lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 1);
+            }
+            if(selectedMovable.dataset.type === 'ngon') {
+                lastMovable = selectedMovable;
+                lastSelectedMovable = lastMovable;
+                lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 2);
+            }
+            let rect = selectedMovable.getBoundingClientRect();
+
+            if (event.type === 'mousedown') {
+                offsetX = event.pageX - parseFloat(target.dataset.x);
+                offsetY = event.pageY - parseFloat(target.dataset.y);
+            } else if (event.type === 'touchstart') {
+                offsetX = event.touches[0].pageX - parseFloat(target.dataset.x);
+                offsetY = event.touches[0].pageY - parseFloat(target.dataset.y);    
+            }
+            // selectedMovable.style['-webkit-text-stroke'] = '3px blue';
+            // selectedMovable.style.color = 'blue';
+        }
+        else {
+            if(lastSelectedMovable) {
+                lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 1);
+            }
+            lastSelectedMovable = null;
+        }
+    }
+
+    function handleMove(event) {
+        if(selectedMovable) {
+            let x, y;
+            if (event.type === 'mousemove') {
+                x = event.pageX - offsetX;
+                y = event.pageY - offsetY;
+            } else if (event.type === 'touchmove') {
+                // event.preventDefault();
+                x = event.touches[0].pageX - offsetX;
+                y = event.touches[0].pageY - offsetY;
+            }
+            //selectedMovable.style.transform = `translate(${x}px, ${y}px)`;
+            selectedMovable.setAttribute('transform', `translate(${x}, ${y})`);
+            selectedMovable.dataset.x = x;
+            selectedMovable.dataset.y = y;
+            // selectedMovable.style['-webkit-text-stroke'] = '3px blue';
+            // selectedMovable.style.color = 'blue';
+        }
+        else {
+            if(event.target.classList.contains('movable')) {
+                // event.target.style['-webkit-text-stroke'] = '3px blue';
+                // event.target.style.color = 'blue';
+            }
+        }
+    }
+
+    document.addEventListener('mouseout', (event) => {
+        if(event.target.classList.contains('movable')) {
+            // event.target.style['-webkit-text-stroke'] = '';
+            // event.target.style.color = '';
+        }
+    });
+
+    function handleEnd(event) {
+        if(selectedMovable) {
+            // selectedMovable.style['-webkit-text-stroke'] = '';
+            // selectedMovable.style.color = '';
+        }
+        selectedMovable = null;
+    }
+
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+
+    document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        //event.stopPropagation();
+    });
+
+    document.addEventListener('dragstart', (event) => {
+        event.preventDefault();
+    });
+
+    window.addEventListener('resize', () => {
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    });
+
+    document.querySelector('#n-gon').addEventListener('input', (event) => {
+        let n = parseInt(event.target.value);
+        document.querySelector('#desc-ngon').textContent = n + '각형';
+        let fx = parseFloat(document.querySelector('#sx').value) / 20;
+        let fy = parseFloat(document.querySelector('#sy').value) / 20;
+        let [sx, sy] = [1, 1];
+        if(fx < 0) {
+            sx = fx/4 + 0.75;
+        }
+        else {
+            sx = fx + 1;
+        }
+        if(fy < 0) {
+            sy = fy/4 + 0.75;
+        }
+        else {
+            sy = fy + 1;
+        }
+        if(!lastMovable) {
+            add_polygon(n);
+        }
+        else {
+            update_polygon(lastMovable, n, sx, sy);
+        }
+    });
+
+    function update_sxsy() {
+        let n = parseInt(document.querySelector('#n-gon').value);
+        let fx = parseFloat(document.querySelector('#sx').value) / 20;
+        let fy = parseFloat(document.querySelector('#sy').value) / 20;
+        let [sx, sy] = [1, 1];
+        if(fx < 0) {
+            sx = fx/4 + 0.75;
+        }
+        else {
+            sx = fx + 1;
+        }
+        if(fy < 0) {
+            sy = fy/4 + 0.75;
+        }
+        else {
+            sy = fy + 1;
+        }
+        if(lastMovable) {
+            update_polygon(lastMovable, n, sx, sy);
+        }
+    }
+
+    function build_pillar0() {
+        if(!lastMovable) return;
+
+        if(lastMovable.dataset['facet_ids']) {
+            let facet_ids = lastMovable.dataset['facet_ids'].split(',');
+            for(let i = 0; i < facet_ids.length; i++) {
+                let facet_id = facet_ids[i];
+                let facet = document.getElementById(facet_id);
+                if(facet) {
+                    facet.remove();
+                }
+            }
+        }
+
+        if(lastMovable.dataset['cap_id']) {
+            let cap_id = lastMovable.dataset['cap_id'];
+            let cap = document.getElementById(cap_id);
+            if(cap) {
+                cap.remove();
+            }
+        }
+
+        let ngon_id = lastMovable.getAttribute('id').split('-')[1];
+
+        let n = parseInt(lastMovable.dataset.n);
+        let points = lastMovable.querySelector('polygon').getAttribute('points').trim().split(' ').map((p) => {
+            let [x, y] = p.split(',');
+            return [parseFloat(x), parseFloat(y)];
+        });
+
+        let cx = points[1][0] + parseFloat(lastMovable.dataset.x);
+        let cy = points[1][1] + parseFloat(lastMovable.dataset.y);
+        facet_ids = [];
+        let ih = parseInt(document.querySelector('#height').value);
+        let h = [20, 50, 100, 150, 200, 250, 300][ih];
+        for(let i = 0; i < points.length; i++) {
+            let p0 = points[i];
+            let next = i + 1;
+            if(next >= points.length) {
+                next = 0;
+            }
+            let p1 = points[next];
+            let dx = p1[0] - p0[0];
+            let dy = p1[1] - p0[1];
+            let d = Math.sqrt(dx * dx + dy * dy);
+
+            let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('transform', `translate(${cx+d/2}, ${cy+h/2})`);
+            group.classList.add('movable');
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            let pts = [
+                [-d/2, -h/2],
+                [d/2, -h/2],
+                [d/2, h/2],
+                [-d/2, h/2]
+            ];
+            polygon.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+            polygon.setAttribute('fill', 'transparent');
+            polygon.setAttribute('stroke', 'black');
+            polygon.setAttribute('stroke-width', '1');
+
+            group.dataset.x = cx+d/2;
+            group.dataset.y = cy+h/2;
+            let facet_id = `facet-${ngon_id}-${i}`;
+            group.setAttribute('id', facet_id);
+            facet_ids.push(facet_id);
+            group.appendChild(polygon);
+            svg.appendChild(group);
+            cx += d;
+        }
+        lastMovable.dataset.facet_ids = facet_ids.join(',');
+
+        // cap
+        let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('id', `cap-${ngon_id}`);
+        group.dataset.x = lastMovable.dataset.x
+        group.dataset.y = cy + h + points[0][1];
+        group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y })`);
+        group.classList.add('movable');
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        let pts = points.map(p => [p[0], -p[1]]);
+        polygon.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+        polygon.setAttribute('fill', 'transparent');
+        polygon.setAttribute('stroke', 'black');
+        polygon.setAttribute('stroke-width', '1');
+        lastMovable.dataset.cap_id = group.getAttribute('id');
+        group.appendChild(polygon);
+        svg.appendChild(group);
+    }
+
+    function build_pillar() {
+        if(!lastMovable) return;
+
+        if(lastMovable.dataset['facet_ids']) {
+            let facet_ids = lastMovable.dataset['facet_ids'].split(',');
+            for(let i = 0; i < facet_ids.length; i++) {
+                let facet_id = facet_ids[i];
+                let facet = document.getElementById(facet_id);
+                if(facet) {
+                    facet.remove();
+                }
+            }
+        }
+
+        if(lastMovable.dataset['cap_id']) {
+            let cap_id = lastMovable.dataset['cap_id'];
+            let cap = document.getElementById(cap_id);
+            if(cap) {
+                cap.remove();
+            }
+        }
+
+        let ngon_id = lastMovable.getAttribute('id').split('-')[1];
+
+        let n = parseInt(lastMovable.dataset.n);
+        let points = lastMovable.querySelector('polygon').getAttribute('points').trim().split(' ').map((p) => {
+            let [x, y] = p.split(',');
+            return [parseFloat(x), parseFloat(y)];
+        });
+
+        // let cx = points[1][0] + parseFloat(lastMovable.dataset.x);
+        // let cy = points[1][1] + parseFloat(lastMovable.dataset.y);
+        let cx = parseFloat(lastMovable.dataset.x);
+        let cy = parseFloat(lastMovable.dataset.y);
+        facet_ids = [];
+        let ih = parseInt(document.querySelector('#height').value);
+        let h = [20, 50, 100, 150, 200, 250, 300][ih];
+        for(let i = 0; i < points.length; i++) {
+            let p0 = points[i];
+            let next = i + 1;
+            if(next >= points.length) {
+                next = 0;
+            }
+            let p1 = points[next];
+            let dx = p1[0] - p0[0];
+            let dy = p1[1] - p0[1];
+            let d = Math.sqrt(dx * dx + dy * dy);
+
+            let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.classList.add('movable');
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            let pts = [
+                [-d/2, -h/2],
+                [d/2, -h/2],
+                [d/2, h/2],
+                [-d/2, h/2]
+            ];
+            let theta = Math.atan2(dy, dx);
+            let angle = 180 - theta / Math.PI * 180;
+
+            polygon.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+            polygon.setAttribute('transform', `rotate(${angle})`);
+            polygon.setAttribute('fill', 'transparent');
+            polygon.setAttribute('stroke', 'black');
+            polygon.setAttribute('stroke-width', '1');
+
+            group.dataset.x = cx - (h/2 + points[0][1]) * Math.sin(theta);
+            group.dataset.y = cy - (h/2 + points[0][1]) * Math.cos(theta);
+            group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+
+            let facet_id = `facet-${ngon_id}-${i}`;
+            group.setAttribute('id', facet_id);
+            facet_ids.push(facet_id);
+            group.appendChild(polygon);
+            svg.appendChild(group);
+            //cx += d;
+        }
+        lastMovable.dataset.facet_ids = facet_ids.join(',');
+
+        // cap
+        let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('id', `cap-${ngon_id}`);
+        group.dataset.x = lastMovable.dataset.x
+        group.dataset.y = cy + h + 2 * points[0][1];
+        group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y })`);
+        group.classList.add('movable');
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        let pts = points.map(p => [p[0], -p[1]]);
+        polygon.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+        polygon.setAttribute('fill', 'transparent');
+        polygon.setAttribute('stroke', 'black');
+        polygon.setAttribute('stroke-width', '1');
+        lastMovable.dataset.cap_id = group.getAttribute('id');
+        group.appendChild(polygon);
+        svg.appendChild(group);
+    }
+
+    document.querySelector('#sx').addEventListener('input', (event) => {
+        if(lastMovable) {
+            update_sxsy();
+        }
+    });
+
+    document.querySelector('#sy').addEventListener('input', (event) => {
+        if(lastMovable) {
+            update_sxsy();
+        }
+    });
+
+    document.querySelector('#height').addEventListener('input', (event) => {
+        if(lastMovable) {
+            build_pillar();
+
+            if(lastMovable.dataset['facet_ids']) {
+                let facet_ids = lastMovable.dataset['facet_ids'].split(',');
+                for(let i = 1; i < facet_ids.length; i++) {
+                    let facet_id = facet_ids[i];
+                    let facet = document.getElementById(facet_id);
+                    if(facet) {
+                        facet.remove();
+                    }
+                }
+            }
+
+            if(lastMovable.dataset['cap_id']) {
+                let cap_id = lastMovable.dataset['cap_id'];
+                let cap = document.getElementById(cap_id);
+                if(cap) {
+                    cap.remove();
+                }
+            }
+        }
+    });
+
+    document.querySelector('#pillar-conn').addEventListener('click', (event) => {
+        build_pillar0();
+    });
+
+    document.querySelector('#pillar-star').addEventListener('click', (event) => {
+        build_pillar();
+    });
+
+    document.querySelector('#add').addEventListener('click', (event) => {
+        add_polygon(parseInt(document.querySelector('#n-gon').value));
+    });
+
+    document.querySelector('#print').addEventListener('click', (event) => {
+        window.print();
+    });
+
+    add_polygon(3);
+</script>
