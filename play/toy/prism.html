@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1">
 <title>각기둥 전개도</title>
 <style>
     body{
         margin: 0px;
         overflow: hidden;
         font-family: sans-serif;
+        user-select: none;
+        -webkit-user-select: none;
     }
 
     #stage {
@@ -55,9 +58,11 @@
 <body>
     <div id="stage"></div>
     <div id="ui-top">
-        <div><input id="n-gon" type="range" min="3" max="10" value="3"><span id="desc-ngon">각형</span><button id="add">새로 추가</button></div>
-        <div><input id="sx" type="range" min="-10" max="10" value="-10"><span>가로</span></div>
-        <div><input id="sy" type="range" min="-10" max="10" value="-10"><span>세로</span></div>
+        <div><input id="n-gon" type="range" min="3" max="10" value="3"><span id="desc-ngon">각형</span><button id="add">복제</button></div>
+        <div><input id="rot" type="range" min="0" max="360" value="0"><span id="desc-rot">회전: 0도</span></div>
+        <div><input id="sx" type="range" min="-10" max="10" value="-10"><span>가로 늘이기</span></div>
+        <div><input id="sy" type="range" min="-10" max="10" value="-10"><span>세로 늘이기</span></div>
+        <hr>
         <div><input id="height" type="range" min="0" max="6" value="2"><span>기둥 높이</span></div>
         <div style="margin-top: 5px">
             <button id="pillar-conn">이어진 전개도</button>
@@ -169,6 +174,8 @@
         lastMovable = group;
         svg.appendChild(group);
         group.dataset.n = n;
+        let rot = parseFloat(document.querySelector('#rot').value);
+        group.dataset.rot = rot;
         group.dataset.type = 'ngon';
 
         //update_polygon(group, n, sx, sy);
@@ -210,11 +217,21 @@
             if(lastSelectedMovable) {
                 lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 1);
             }
-            if(selectedMovable.dataset.type === 'ngon') {
-                lastMovable = selectedMovable;
-                lastSelectedMovable = lastMovable;
-                lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 2);
+            // if(selectedMovable.dataset.type === 'ngon') {
+            //     lastMovable = selectedMovable;
+            //     lastSelectedMovable = lastMovable;
+            //     lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 2);
+            // }
+            if(target.dataset.rot) {
+                let rot = parseFloat(target.dataset.rot);
+                document.querySelector('#rot').value = rot;
+                document.querySelector('#desc-rot').textContent = '회전: ' + Math.floor(rot) + '도';
             }
+
+            lastMovable = selectedMovable;
+            lastSelectedMovable = lastMovable;
+            lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 2);
+
             let rect = selectedMovable.getBoundingClientRect();
 
             if (event.type === 'mousedown') {
@@ -409,6 +426,7 @@
 
             group.dataset.x = cx+d/2;
             group.dataset.y = cy+h/2;
+            group.dataset.rot = 0;
             let facet_id = `facet-${ngon_id}-${i}`;
             group.setAttribute('id', facet_id);
             facet_ids.push(facet_id);
@@ -423,6 +441,7 @@
         group.setAttribute('id', `cap-${ngon_id}`);
         group.dataset.x = lastMovable.dataset.x
         group.dataset.y = cy + h + points[0][1];
+        group.dataset.rot = 0;
         group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y })`);
         group.classList.add('movable');
         const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -504,6 +523,7 @@
 
             group.dataset.x = cx - (h/2 + points[0][1]) * Math.sin(theta);
             group.dataset.y = cy - (h/2 + points[0][1]) * Math.cos(theta);
+            group.dataset.rot = angle;
             group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
 
             let facet_id = `facet-${ngon_id}-${i}`;
@@ -520,6 +540,7 @@
         group.setAttribute('id', `cap-${ngon_id}`);
         group.dataset.x = lastMovable.dataset.x
         group.dataset.y = cy + h + 2 * points[0][1];
+        group.dataset.rot = 0;
         group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y })`);
         group.classList.add('movable');
         const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -542,6 +563,16 @@
     document.querySelector('#sy').addEventListener('input', (event) => {
         if(lastMovable) {
             update_sxsy();
+        }
+    });
+
+    document.querySelector('#rot').addEventListener('input', (event) => {
+        if(lastMovable) {
+            let rot = parseFloat(event.target.value);
+            document.querySelector('#desc-rot').textContent = '회전: ' + Math.floor(rot) + '도';
+            let polygon = lastMovable.querySelector('polygon');
+            polygon.setAttribute('transform', `rotate(${rot})`);
+            lastMovable.dataset.rot = rot;
         }
     });
 
