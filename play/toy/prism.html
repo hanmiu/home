@@ -52,13 +52,17 @@
         #ui-top {
             display: none;
         }
+
+        .cross-hair {
+            display: none;
+        }
     }
 }
 </style>
 <body>
     <div id="stage"></div>
     <div id="ui-top">
-        <div><input id="n-gon" type="range" min="3" max="10" value="3"><span id="desc-ngon">각형</span><button id="add">복제</button></div>
+        <div><input id="n-gon" type="range" min="3" max="10" value="3"><span id="desc-ngon">각형</span><button id="duplicate">복제</button></div>
         <div><input id="rot" type="range" min="0" max="360" value="0"><span id="desc-rot">회전: 0도</span></div>
         <div><input id="sx" type="range" min="-10" max="10" value="-10"><span>가로 늘이기</span></div>
         <div><input id="sy" type="range" min="-10" max="10" value="-10"><span>세로 늘이기</span></div>
@@ -68,9 +72,13 @@
             <button id="pillar-conn">이어진 전개도</button>
             <button id="pillar-star">방사형 전개도</button>
         </div>
+        <hr>
         <div style="margin-top: 5px">
             <button id="print">인쇄</button>
+            <button id="save">저장</button>
         </div>
+        <hr>
+        <div><button id="clear">다시 시작</button></div>
     </div>
 </body>
 <script>
@@ -100,11 +108,41 @@
         svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
     });
 
-    function update_polygon(group, n, sx, sy) {
+    function update_movable(group) {
         if(!group) return;
         clear(group);
+
+        let n = parseInt(document.querySelector('#n-gon').value);
+        group.dataset.sx = document.querySelector('#sx').value;
+        group.dataset.sy = document.querySelector('#sy').value;
+        let fx = parseFloat(group.dataset.sx) / 20;
+        let fy = parseFloat(group.dataset.sy) / 20;
+        let [sx, sy] = [1, 1];
+        if(fx < 0) {
+            sx = fx/4 + 0.75;
+        }
+        else {
+            sx = fx + 1;
+        }
+        if(fy < 0) {
+            sy = fy/4 + 0.75;
+        }
+        else {
+            sy = fy + 1;
+        }
+
+        if(group.dataset.type === 'ngon') {
+            let cross_hair = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            cross_hair.setAttribute('d', 'M-5,0L5,0M0,-5L0,5');
+            cross_hair.setAttribute('stroke', 'blue');
+            cross_hair.classList.add('cross-hair');
+            group.appendChild(cross_hair);    
+        }
+
         const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
         group.appendChild(polygon);
+
+        group.dataset.n = n;
 
         if(group.dataset['facet_ids']) {
             let facet_ids = group.dataset['facet_ids'].split(',');
@@ -164,30 +202,46 @@
         polygon.setAttribute('fill', 'transparent');
         polygon.setAttribute('stroke', 'black');
         polygon.setAttribute('stroke-width', '1');
+
+        if(group.dataset.rot) {
+            let rot = parseFloat(group.dataset.rot);
+            polygon.setAttribute('transform', `rotate(${rot})`);
+        }
     }
 
-    function add_polygon(n) {
-        //clear(svg);
+    function add_movable(n) {
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.setAttribute('id', `ngon-${ngon_id_count++}`);
         group.classList.add('movable');
-        lastMovable = group;
         svg.appendChild(group);
         group.dataset.n = n;
         let rot = parseFloat(document.querySelector('#rot').value);
         group.dataset.rot = rot;
+        group.dataset.sx = parseFloat(document.querySelector('#sx').value);
+        group.dataset.sy = parseFloat(document.querySelector('#sy').value);
         group.dataset.type = 'ngon';
 
-        //update_polygon(group, n, sx, sy);
         document.querySelector('#n-gon').value = n;
         document.querySelector('#desc-ngon').textContent = n + '각형';
         
-        group.setAttribute('transform', `translate(${window.innerWidth / 2}, ${window.innerHeight / 2})`);
-        group.dataset.x = window.innerWidth / 2;
-        group.dataset.y = window.innerHeight / 2;
+        let last_points = '';
+        if(!lastMovable) {
+            group.dataset.x = window.innerWidth / 2;
+            group.dataset.y = window.innerHeight / 2;
+        }
+        else {
+            last_points = lastMovable.querySelector('polygon').getAttribute('points');
+            group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
+            group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
+        }
+        group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+        
+        update_movable(group);
+        if(last_points) {
+            group.querySelector('polygon').setAttribute('points', last_points);
+        }
 
-        update_sxsy();
-
+        lastMovable = group;
         lastSelectedMovable = group;
         lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 2);
     }
@@ -217,6 +271,10 @@
             if(lastSelectedMovable) {
                 lastSelectedMovable.querySelector('polygon').setAttribute('stroke-width', 1);
             }
+            document.querySelector('#n-gon').value = parseInt(target.dataset.n);
+            document.querySelector('#desc-ngon').textContent = target.dataset.n + '각형';
+            document.querySelector('#sx').value = target.dataset.sx;
+            document.querySelector('#sy').value = target.dataset.sy;
             // if(selectedMovable.dataset.type === 'ngon') {
             //     lastMovable = selectedMovable;
             //     lastSelectedMovable = lastMovable;
@@ -318,53 +376,58 @@
     document.querySelector('#n-gon').addEventListener('input', (event) => {
         let n = parseInt(event.target.value);
         document.querySelector('#desc-ngon').textContent = n + '각형';
-        let fx = parseFloat(document.querySelector('#sx').value) / 20;
-        let fy = parseFloat(document.querySelector('#sy').value) / 20;
-        let [sx, sy] = [1, 1];
-        if(fx < 0) {
-            sx = fx/4 + 0.75;
-        }
-        else {
-            sx = fx + 1;
-        }
-        if(fy < 0) {
-            sy = fy/4 + 0.75;
-        }
-        else {
-            sy = fy + 1;
-        }
+        // let fx = parseFloat(document.querySelector('#sx').value) / 20;
+        // let fy = parseFloat(document.querySelector('#sy').value) / 20;
+        // let [sx, sy] = [1, 1];
+        // if(fx < 0) {
+        //     sx = fx/4 + 0.75;
+        // }
+        // else {
+        //     sx = fx + 1;
+        // }
+        // if(fy < 0) {
+        //     sy = fy/4 + 0.75;
+        // }
+        // else {
+        //     sy = fy + 1;
+        // }
         if(!lastMovable) {
-            add_polygon(n);
+            add_movable(n);
         }
         else {
-            update_polygon(lastMovable, n, sx, sy);
+            update_movable(lastMovable);
         }
     });
 
-    function update_sxsy() {
-        let n = parseInt(document.querySelector('#n-gon').value);
-        let fx = parseFloat(document.querySelector('#sx').value) / 20;
-        let fy = parseFloat(document.querySelector('#sy').value) / 20;
-        let [sx, sy] = [1, 1];
-        if(fx < 0) {
-            sx = fx/4 + 0.75;
-        }
-        else {
-            sx = fx + 1;
-        }
-        if(fy < 0) {
-            sy = fy/4 + 0.75;
-        }
-        else {
-            sy = fy + 1;
-        }
-        if(lastMovable) {
-            update_polygon(lastMovable, n, sx, sy);
-        }
-    }
+    // function update_movable(elem) {
+    //     let n = parseInt(document.querySelector('#n-gon').value);
+    //     let fx = parseFloat(document.querySelector('#sx').value) / 20;
+    //     let fy = parseFloat(document.querySelector('#sy').value) / 20;
+    //     let [sx, sy] = [1, 1];
+    //     if(fx < 0) {
+    //         sx = fx/4 + 0.75;
+    //     }
+    //     else {
+    //         sx = fx + 1;
+    //     }
+    //     if(fy < 0) {
+    //         sy = fy/4 + 0.75;
+    //     }
+    //     else {
+    //         sy = fy + 1;
+    //     }
+    //     if(elem) {
+    //         update_polygon(elem, n, sx, sy);
+    //     }
+    // }
 
     function build_pillar0() {
         if(!lastMovable) return;
+        if(lastMovable.dataset.type !== 'ngon') return;
+
+        lastMovable.dataset.rot = 0;
+        lastMovable.querySelector('polygon').setAttribute('transform', `rotate(${lastMovable.dataset.rot})`);
+        document.querySelector('#rot').value = lastMovable.dataset.rot;
 
         if(lastMovable.dataset['facet_ids']) {
             let facet_ids = lastMovable.dataset['facet_ids'].split(',');
@@ -414,18 +477,22 @@
             group.classList.add('movable');
             const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             let pts = [
-                [-d/2, -h/2],
-                [d/2, -h/2],
                 [d/2, h/2],
-                [-d/2, h/2]
+                [-d/2, h/2],
+                [-d/2, -h/2],
+                [d/2, -h/2]
             ];
             polygon.setAttribute('points', pts.map(p => p.join(',')).join(' '));
             polygon.setAttribute('fill', 'transparent');
             polygon.setAttribute('stroke', 'black');
             polygon.setAttribute('stroke-width', '1');
 
+            group.dataset.type = 'facet';
+            group.dataset.n = pts.length;
             group.dataset.x = cx+d/2;
             group.dataset.y = cy+h/2;
+            group.dataset.sx = -10
+            group.dataset.sy = -10;
             group.dataset.rot = 0;
             let facet_id = `facet-${ngon_id}-${i}`;
             group.setAttribute('id', facet_id);
@@ -439,6 +506,8 @@
         // cap
         let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.setAttribute('id', `cap-${ngon_id}`);
+        group.dataset.type = 'cap';
+        group.dataset.n = n;
         group.dataset.x = lastMovable.dataset.x
         group.dataset.y = cy + h + points[0][1];
         group.dataset.rot = 0;
@@ -457,6 +526,11 @@
 
     function build_pillar() {
         if(!lastMovable) return;
+        if(lastMovable.dataset.type !== 'ngon') return;
+
+        lastMovable.dataset.rot = 0;
+        lastMovable.querySelector('polygon').setAttribute('transform', `rotate(${lastMovable.dataset.rot})`);
+        document.querySelector('#rot').value = lastMovable.dataset.rot;
 
         if(lastMovable.dataset['facet_ids']) {
             let facet_ids = lastMovable.dataset['facet_ids'].split(',');
@@ -507,10 +581,10 @@
             group.classList.add('movable');
             const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             let pts = [
-                [-d/2, -h/2],
-                [d/2, -h/2],
                 [d/2, h/2],
-                [-d/2, h/2]
+                [-d/2, h/2],
+                [-d/2, -h/2],
+                [d/2, -h/2]
             ];
             let theta = Math.atan2(dy, dx);
             let angle = 180 - theta / Math.PI * 180;
@@ -521,8 +595,12 @@
             polygon.setAttribute('stroke', 'black');
             polygon.setAttribute('stroke-width', '1');
 
+            group.dataset.type = 'facet';
+            group.dataset.n = pts.length;
             group.dataset.x = cx - (h/2 + points[0][1]) * Math.sin(theta);
             group.dataset.y = cy - (h/2 + points[0][1]) * Math.cos(theta);
+            group.dataset.sx = -10
+            group.dataset.sy = -10;
             group.dataset.rot = angle;
             group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
 
@@ -531,13 +609,14 @@
             facet_ids.push(facet_id);
             group.appendChild(polygon);
             svg.appendChild(group);
-            //cx += d;
         }
         lastMovable.dataset.facet_ids = facet_ids.join(',');
 
         // cap
         let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.setAttribute('id', `cap-${ngon_id}`);
+        group.dataset.type = 'cap';
+        group.dataset.n = n;
         group.dataset.x = lastMovable.dataset.x
         group.dataset.y = cy + h + 2 * points[0][1];
         group.dataset.rot = 0;
@@ -556,13 +635,13 @@
 
     document.querySelector('#sx').addEventListener('input', (event) => {
         if(lastMovable) {
-            update_sxsy();
+            update_movable(lastMovable);
         }
     });
 
     document.querySelector('#sy').addEventListener('input', (event) => {
         if(lastMovable) {
-            update_sxsy();
+            update_movable(lastMovable);
         }
     });
 
@@ -609,13 +688,30 @@
         build_pillar();
     });
 
-    document.querySelector('#add').addEventListener('click', (event) => {
-        add_polygon(parseInt(document.querySelector('#n-gon').value));
+    document.querySelector('#duplicate').addEventListener('click', (event) => {
+        add_movable(parseInt(document.querySelector('#n-gon').value));
     });
 
     document.querySelector('#print').addEventListener('click', (event) => {
         window.print();
     });
 
-    add_polygon(3);
+    document.querySelector('#clear').addEventListener('click', (event) => {
+        clear(svg);
+        lastMovable = null;
+        lastSelectedMovable = null;
+        add_movable(parseInt(document.querySelector('#n-gon').value));
+    });
+
+    // 백스페이스 눌렀을 때 선택된 movable 지우기
+    document.addEventListener('keydown', (event) => {
+        if(event.keyCode === 8) {
+            if(lastMovable) {
+                lastMovable.remove();
+                lastMovable = null;
+            }
+        }
+    });
+
+    add_movable(3);
 </script>
