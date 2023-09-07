@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1">
+<style>
+    body{
+        margin: 0px;
+        overflow: hidden;
+        font-family: sans-serif;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    #stage {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+    }
+
+    #svg {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+    }
+
+    #ui-top {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        padding: 30px;
+        box-sizing: border-box;
+        border-bottom: 1px solid black;
+    }
+
+    .jamo-button {
+        display: inline-block;
+        margin: 5px;
+        cursor: pointer;
+        border-radius: 50% 50%;
+        transform-origin: center center;
+        transition: transform 0.2s;
+    }
+
+    .jamo-button:hover {
+        transform: scale(1.25);
+    }
+
+    .jamo-button:active {
+        transform: scale(1.25);
+    }
+</style>
+<body>
+    <div id="stage">
+        <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" fill="none" transform="translate(50, 50)"></svg> -->
+    </div>
+    <div id="ui-top"></div>
+</body>
+<script>
+    const stage = document.getElementById('stage');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    stage.appendChild(svg);
+
+    let jamoset = {
+        'ᄀ': 'm -25,-25 50,0 0,50',
+        'ᄂ': 'm -25,-25 0,50 50,0',
+        'ᄃ': 'm 25,-25 -50,0 0,50 50,0',
+        'ᄅ': 'm -25,-25 50,0 0,25 -50,0 0,25 50,0',
+        'ᄆ': 'm -25,-25 50,0 0,50 -50,0 z',
+        'ᄇ': 'm -25,0 50,0 m -50,-25 0,50 50,0 0,-50',
+        'ᄉ': 'M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄋ': 'M 25,0 A 25,25 0 1 1 -25,0 25,25 0 1 1 25,0 z',
+        'ᄌ': 'm -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄎ': 'm 0,-40 0,10 m -25,5 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄏ': 'm -25,0 50,0 m -50,-25 50,0 0,50',
+        'ᄐ': 'm -25,0 50,0 m 0,-25 -50,0 0,50 50,0',
+        'ᄑ': 'm 15,-25 0,50 m -30,-50 0,50 m -10,0 50,0 m -50,-50 50,0',
+        'ᄒ': 'm 20,5 c 0,11 -9,20 -20,20 -11,0 -20,-9 -20,-20 0,-11 9,-20 20,-20 11,0 20,9 20,20 z M 0,-40 0,-30 m -25,5 50,0',
+        'ᅡ': 'M 0,0 20,0 M 0,-40 0,40',	
+        'ᅣ': 'm 0,15 20,0 M 0,-15 20,-15 M 0,-40 0,40',
+        'ᅥ': 'M -20,0 0,0 m 0,-40 0,80',
+        'ᅧ': 'm -20,15 20,0 m -20,-30 20,0 m 0,-25 0,80',
+        'ᅩ': 'M 0,-20 0,0 m -40,0 80,0',
+        'ᅭ': 'm 15,-20 0,20 m -30,-20 0,20 m -25,0 80,0',
+        'ᅮ': 'M 0,0 0,20 M -40,0 40,0',
+        'ᅲ': 'm 15,0 0,20 M -15,0 -15,20 M -40,0 40,0',
+        'ᅳ': 'M -40,0 40,0',
+        'ᅵ': 'M 0,-40 0,40' 
+    };
+
+    for (let jamo in jamoset) {        
+        let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="10" stroke-linecap="round" fill="none" transform="translate(50, 50)"></path></svg>`;
+
+        const svg_base64 = btoa(svg_string);
+        const img = document.createElement('img');
+        img.classList.add('jamo-button');
+        img.src = `data:image/svg+xml;base64,${svg_base64}`;
+        let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+        img.style = `width: ${size}px; height: ${size}px;`;
+        document.querySelector('#ui-top').appendChild(img);
+    }
+
+    function resize() {
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+        for(let jb of document.querySelectorAll('.jamo-button')) {
+            let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            jb.style = `width: ${size}px; height: ${size}px;`;
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        resize();
+    });
+
+    window.addEventListener("orientationchange", (event) => {
+        setTimeout(() => {
+            resize();
+        }, 100);
+    });
+
+    window.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+    });
+</script>

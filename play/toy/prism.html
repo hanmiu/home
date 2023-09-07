@@ -7,6 +7,7 @@
         margin: 0px;
         overflow: hidden;
         font-family: sans-serif;
+        touch-action: none;
         user-select: none;
         -webkit-user-select: none;
     }
@@ -88,6 +89,12 @@
     const stage = document.getElementById('stage');
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    // Set the SVG attributes to make it full-screen
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    // Append the SVG to the container
+    stage.appendChild(svg);
 
     let selectedMovable = null;
     let lastMovable = null;
@@ -97,14 +104,6 @@
     base_size = 173.20508075688772;
 
     let ngon_id_count = 0;
-
-    // Set the SVG attributes to make it full-screen
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
-    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
-
-    // Append the SVG to the container
-    stage.appendChild(svg);
 
     // Handle window resize
     window.addEventListener('resize', () => {
