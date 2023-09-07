@@ -122,6 +122,7 @@
     let lastMovable = null;
     let [offsetX, offsetY] = [0, 0];
     let jamo_id_count = 0;
+    let history = [];
 
     function init() {
         // top-ui 자모 선택
@@ -153,7 +154,7 @@
 
     function add_movable(jamo) {
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        group.setAttribute('id', `jamo-${jamo_id_count++}`);
+        // group.setAttribute('id', `jamo-${jamo_id_count++}`);
         group.classList.add('movable');
         svg.appendChild(group);
 
@@ -271,6 +272,7 @@
                 }
                 selectedMovable.remove();
             }
+            action();
         }
         selectedMovable = null;
     }
@@ -311,6 +313,7 @@
                 group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
                 group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
                 group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+                action();
             }
         }
 
@@ -319,6 +322,7 @@
             if(lastMovable) {
                 lastMovable.remove();
                 lastMovable = null;
+                action();
             }
         }
     });
@@ -334,6 +338,7 @@
                 let glyph = lastMovable.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
                 glyph.setAttribute('stroke-width', 10 / scale);
+                action();
             }
         }
         else if(event.keyCode === 40) {
@@ -345,6 +350,7 @@
                 let glyph = lastMovable.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
                 glyph.setAttribute('stroke-width', 10 / scale);
+                action();
             }
         }
         else if(event.keyCode === 37) { // 키보드 화살표 좌우를 눌렀을 때 rot 조절
@@ -355,6 +361,7 @@
                 lastMovable.dataset.rot = rot;
                 let glyph = lastMovable.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                action();
             }
         }
         else if(event.keyCode === 39) {
@@ -365,9 +372,21 @@
                 lastMovable.dataset.rot = rot;
                 let glyph = lastMovable.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                action();
             }
         }
     });
+
+    function action() {
+        history.push(svg.innerHTML);
+    }
+
+    function undo() {
+        if(history.length > 0) {
+            history.pop();
+            svg.innerHTML = history[history.length - 1];
+        }
+    }
     
     init();
     resize();
