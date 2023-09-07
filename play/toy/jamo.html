@@ -30,6 +30,10 @@
         cursor: move;
     }
 
+    .touch-aid {
+        cursor: move;
+    }
+
     #ui-top {
         position: absolute;
         left: 0px;
@@ -49,7 +53,7 @@
         padding: 30px;
         box-sizing: border-box;
         border-top: 1px solid black;
-        background-color: rgba(128, 128, 128, 0.25);
+        /* background-color: rgba(128, 128, 128, 0.25); */
     }
 
     .jamo-button {
@@ -149,15 +153,25 @@
         group.classList.add('movable');
         svg.appendChild(group);
 
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.classList.add('touch-aid');
+        circle.setAttribute('cx', '0');
+        circle.setAttribute('cy', '0');
+        circle.setAttribute('r', '25');
+        circle.setAttribute('stroke', 'none');
+        circle.setAttribute('fill', 'transparent');
+        group.appendChild(circle);
+
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.classList.add('glyph');
         path.setAttribute('d', jamoset[jamo]);
         path.setAttribute('stroke', 'black');
         path.setAttribute('stroke-width', '10');
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('fill', 'none');
-        //path.setAttribute('transform', 'translate(50, 50)');
         group.appendChild(path);
 
+        group.dataset.jamo = jamo;
         group.dataset.rot = 0;
         group.dataset.scale = 1;
         group.dataset.type = 'jamo';
@@ -284,6 +298,72 @@
         e.preventDefault();
     });
 
+    document.addEventListener('keyup', (event) => {
+        //  스페이스 눌렀을 때 선택된 movable 복제
+        if(event.keyCode === 32) {
+            if(lastMovable) {
+                let group = add_movable(lastMovable.dataset.jamo);
+                group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
+                group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
+                group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+            }
+        }
+
+        // 백스페이스 눌렀을 때 선택된 movable 지우기
+        if(event.keyCode === 8) {
+            if(lastMovable) {
+                lastMovable.remove();
+                lastMovable = null;
+            }
+        }
+    });
+
+    // 키보드 화살표 상하를 눌렀을 때 scale 조절
+    document.addEventListener('keydown', (event) => {
+        if(event.keyCode === 38) {
+            if(lastMovable) {
+                let scale = parseFloat(lastMovable.dataset.scale);
+                scale += 0.1;
+                if(scale > 2) scale = 2;
+                lastMovable.dataset.scale = scale;
+                let glyph = lastMovable.querySelector('.glyph');
+                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                glyph.setAttribute('stroke-width', 10 / scale);
+            }
+        }
+        else if(event.keyCode === 40) {
+            if(lastMovable) {
+                let scale = parseFloat(lastMovable.dataset.scale);
+                scale -= 0.1;
+                if(scale < 0.5) scale = 0.5;
+                lastMovable.dataset.scale = scale;
+                let glyph = lastMovable.querySelector('.glyph');
+                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                glyph.setAttribute('stroke-width', 10 / scale);
+            }
+        }
+        else if(event.keyCode === 37) { // 키보드 화살표 좌우를 눌렀을 때 rot 조절
+            if(lastMovable) {
+                let rot = parseFloat(lastMovable.dataset.rot);
+                rot -= 5;
+                if(rot < 0) rot += 360;
+                lastMovable.dataset.rot = rot;
+                let glyph = lastMovable.querySelector('.glyph');
+                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+            }
+        }
+        else if(event.keyCode === 39) {
+            if(lastMovable) {
+                let rot = parseFloat(lastMovable.dataset.rot);
+                rot += 5;
+                if(rot >= 360) rot -= 360;
+                lastMovable.dataset.rot = rot;
+                let glyph = lastMovable.querySelector('.glyph');
+                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+            }
+        }
+    });
+    
     init();
     resize();
 </script>
