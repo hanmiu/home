@@ -42,6 +42,7 @@
         cursor: pointer;
         user-select: none;
         -webkit-user-select: none;
+        background-size: contain;
         transform-origin: center center;
         transition: transform 0.2s;
     }
@@ -99,13 +100,15 @@
     for (let jamo in jamoset) {        
         let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="10" stroke-linecap="round" fill="none" transform="translate(50, 50)"></path></svg>`;
 
-        const svg_base64 = btoa(svg_string);
-        const img = document.createElement('img');
-        img.classList.add('jamo-button');
-        img.src = `data:image/svg+xml;base64,${svg_base64}`;
+        const encoded_svg = encodeURIComponent(svg_string);
+        const el = document.createElement('div');
+        el.classList.add('jamo-button');
+        el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
         let size = Math.max(window.innerWidth, window.innerHeight) / 25;
-        img.style = `width: ${size}px; height: ${size}px;`;
-        document.querySelector('#ui-top').appendChild(img);
+        el.style['width']= `${size}px`;
+        el.style['height'] = `${size}px`;
+        console.log(el.style['background-image'])
+        document.querySelector('#ui-top').appendChild(el);
     }
 
     function resize() {
