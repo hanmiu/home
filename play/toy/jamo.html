@@ -26,6 +26,10 @@
         top: 0px;
     }
 
+    .movable > path {
+        cursor: move;
+    }
+
     #ui-top {
         position: absolute;
         left: 0px;
@@ -34,6 +38,18 @@
         padding: 30px;
         box-sizing: border-box;
         border-bottom: 1px solid black;
+    }
+
+    #ui-bottom {
+        position: absolute;
+        left: 0px;
+        bottom: 0px;
+        width: 100%;
+        height: 100px;
+        padding: 30px;
+        box-sizing: border-box;
+        border-top: 1px solid black;
+        background-color: rgba(128, 128, 128, 0.25);
     }
 
     .jamo-button {
@@ -50,16 +66,13 @@
     .jamo-button:hover {
         transform: scale(1.25);
     }
-
-    .jamo-button:active {
-        transform: scale(1.25);
-    }
 </style>
 <body>
     <div id="stage">
         <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" fill="none" transform="translate(50, 50)"></svg> -->
     </div>
     <div id="ui-top"></div>
+    <div id="ui-bottom"></div>
 </body>
 <script>
     const stage = document.getElementById('stage');
@@ -97,27 +110,165 @@
         'ᅵ': 'M 0,-40 0,40' 
     };
 
-    for (let jamo in jamoset) {        
-        let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="10" stroke-linecap="round" fill="none" transform="translate(50, 50)"></path></svg>`;
+    let selectedMovable = null;
+    let lastMovable = null;
+    let [offsetX, offsetY] = [0, 0];
+    let jamo_id_count = 0;
 
-        const encoded_svg = encodeURIComponent(svg_string);
-        const el = document.createElement('div');
-        el.classList.add('jamo-button');
-        el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
-        let size = Math.max(window.innerWidth, window.innerHeight) / 25;
-        el.style['width']= `${size}px`;
-        el.style['height'] = `${size}px`;
-        console.log(el.style['background-image'])
-        document.querySelector('#ui-top').appendChild(el);
+    function init() {
+        // top-ui 자모 선택
+        for (let jamo in jamoset) {        
+            let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="10" stroke-linecap="round" fill="none" transform="translate(50, 50)"></path></svg>`;
+
+            const encoded_svg = encodeURIComponent(svg_string);
+            const el = document.createElement('div');
+            el.classList.add('jamo-button');
+            el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
+            let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            el.style['width']= `${size}px`;
+            el.style['height'] = `${size}px`;
+            el.dataset.jamo = jamo;
+            document.querySelector('#ui-top').appendChild(el);
+        }
     }
 
     function resize() {
+        let jamo_size = Math.max(window.innerWidth, window.innerHeight) / 25;
         svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
         for(let jb of document.querySelectorAll('.jamo-button')) {
-            let size = Math.max(window.innerWidth, window.innerHeight) / 25;
-            jb.style = `width: ${size}px; height: ${size}px;`;
+            jb.style['width']= `${jamo_size}px`;
+            jb.style['height'] = `${jamo_size}px`;
+        }
+
+        document.querySelector('#ui-bottom').style['height'] = `${jamo_size * 3}px`;
+    }
+
+    function add_movable(jamo) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('id', `jamo-${jamo_id_count++}`);
+        group.classList.add('movable');
+        svg.appendChild(group);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', jamoset[jamo]);
+        path.setAttribute('stroke', 'black');
+        path.setAttribute('stroke-width', '10');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('fill', 'none');
+        //path.setAttribute('transform', 'translate(50, 50)');
+        group.appendChild(path);
+
+        group.dataset.rot = 0;
+        group.dataset.scale = 1;
+        group.dataset.type = 'jamo';
+
+        return group;
+    }
+
+    function handleStart(event) {
+        let target = event.target;
+        let movable = false;
+
+        if(target.classList.contains('jamo-button')) {
+            movable = true;
+            let group = add_movable(target.dataset.jamo);
+            group.dataset.x = event.pageX;
+            group.dataset.y = event.pageY;
+            group.setAttribute('transform', `translate(${event.pageX}, ${event.pageY})`);
+            target = group;
+        }
+        
+        while(target.parentElement) {
+            if(target.classList.contains('movable')) {
+                movable = true;
+                break;
+            }
+            target = target.parentElement;
+        }
+        
+        if(movable) {
+            selectedMovable = target;
+            lastMovable = selectedMovable;
+
+            if (event.type === 'mousedown') {
+                offsetX = event.pageX - parseFloat(target.dataset.x);
+                offsetY = event.pageY - parseFloat(target.dataset.y);
+            } else if (event.type === 'touchstart') {
+                offsetX = event.touches[0].pageX - parseFloat(target.dataset.x);
+                offsetY = event.touches[0].pageY - parseFloat(target.dataset.y);    
+            }
+            // selectedMovable.style['-webkit-text-stroke'] = '3px blue';
+            // selectedMovable.style.color = 'blue';
+        }
+        else {
+            //---
         }
     }
+
+    function handleMove(event) {
+        if(selectedMovable) {
+            let x, y;
+            if (event.type === 'mousemove') {
+                x = event.pageX - offsetX;
+                y = event.pageY - offsetY;
+            } else if (event.type === 'touchmove') {
+                // event.preventDefault();
+                x = event.touches[0].pageX - offsetX;
+                y = event.touches[0].pageY - offsetY;
+            }
+            selectedMovable.setAttribute('transform', `translate(${x}, ${y})`);
+            selectedMovable.dataset.x = x;
+            selectedMovable.dataset.y = y;
+        }
+        else {
+            if(event.target.classList.contains('movable')) {
+                // event.target.style['-webkit-text-stroke'] = '3px blue';
+                // event.target.style.color = 'blue';
+            }
+        }
+    }
+
+    document.addEventListener('mouseout', (event) => {
+        if(event.target.classList.contains('movable')) {
+            // event.target.style['-webkit-text-stroke'] = '';
+            // event.target.style.color = '';
+        }
+    });
+
+    function handleEnd(event) {
+        if(selectedMovable) {
+            let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
+            if(selectedMovable.dataset.y < ui_top_rect.bottom) {
+                if(lastMovable === selectedMovable) {
+                    lastMovable = null;
+                }
+                selectedMovable.remove();
+            }
+
+            let ui_bottom_rect = document.querySelector('#ui-bottom').getBoundingClientRect();
+            if(selectedMovable.dataset.y > ui_bottom_rect.top) {
+                if(lastMovable === selectedMovable) {
+                    lastMovable = null;
+                }
+                selectedMovable.remove();
+            }
+        }
+        selectedMovable = null;
+    }
+
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+
+    document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        //event.stopPropagation();
+    });
 
     window.addEventListener('resize', () => {
         resize();
@@ -132,4 +283,7 @@
     window.addEventListener('dragstart', (e) => {
         e.preventDefault();
     });
+
+    init();
+    resize();
 </script>

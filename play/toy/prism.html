@@ -711,22 +711,20 @@
         add_movable(parseInt(document.querySelector('#n-gon').value));
     });
 
-    // 백스페이스 눌렀을 때 선택된 movable 지우기
-    document.addEventListener('keydown', (event) => {
-        if(event.keyCode === 8) {
-            if(lastMovable) {
-                lastMovable.remove();
-                lastMovable = null;
-            }
-        }
-    });
-
-    //  스페이스 눌렀을 때 선택된 movable 복제
-    document.addEventListener('keydown', (event) => {
+    document.addEventListener('keyup', (event) => {
+        //  스페이스 눌렀을 때 선택된 movable 복제
         if(event.keyCode === 32) {
             if(lastMovable) {
                 let n = parseInt(lastMovable.dataset.n);
                 add_movable(n);
+            }
+        }
+
+        // 백스페이스 눌렀을 때 선택된 movable 지우기
+        if(event.keyCode === 8) {
+            if(lastMovable) {
+                lastMovable.remove();
+                lastMovable = null;
             }
         }
     });
