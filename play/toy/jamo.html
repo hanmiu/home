@@ -121,8 +121,9 @@
     let selectedMovable = null;
     let lastMovable = null;
     let [offsetX, offsetY] = [0, 0];
-    let jamo_id_count = 0;
-    let history = [];
+    let action_history = [];
+    let action_history_buffer = [];
+    let last_acted_time = 0;
 
     function init() {
         // top-ui 자모 선택
@@ -154,7 +155,6 @@
 
     function add_movable(jamo) {
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        // group.setAttribute('id', `jamo-${jamo_id_count++}`);
         group.classList.add('movable');
         svg.appendChild(group);
 
@@ -301,10 +301,6 @@
         }, 100);
     });
 
-    window.addEventListener('dragstart', (e) => {
-        e.preventDefault();
-    });
-
     document.addEventListener('keyup', (event) => {
         //  스페이스 눌렀을 때 선택된 movable 복제
         if(event.keyCode === 32) {
@@ -312,7 +308,14 @@
                 let group = add_movable(lastMovable.dataset.jamo);
                 group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
                 group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
+                let scale = parseFloat(lastMovable.dataset.scale);
+                group.dataset.scale = scale;
+                group.dataset.rot = parseFloat(lastMovable.dataset.rot);
                 group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+                let glyph = group.querySelector('.glyph');
+                glyph.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+                glyph.setAttribute('stroke-width', 10 / scale);
+                lastMovable = group;
                 action();
             }
         }
@@ -378,15 +381,116 @@
     });
 
     function action() {
-        history.push(svg.innerHTML);
+        let acted_time = performance.now();
+        let elapsed_time = acted_time - last_acted_time;
+        last_acted_time = acted_time;
+        if(elapsed_time < 500) {
+            action_history.pop();
+        }
+        action_history.push(svg.innerHTML);
+        while(action_history_buffer.length > 0) {
+            action_history_buffer.pop();
+        }
     }
 
     function undo() {
-        if(history.length > 0) {
-            history.pop();
-            svg.innerHTML = history[history.length - 1];
+        if(action_history.length > 0) {
+            const popped = action_history.pop();
+            action_history_buffer.push(popped);
+            svg.innerHTML = action_history[action_history.length - 1];
+            lastMovable = null;
         }
     }
+
+    function redo() {
+        if(action_history_buffer.length > 0) {
+            const popped = action_history_buffer.pop();
+            action_history.push(popped);
+            svg.innerHTML = action_history[action_history.length - 1];
+            lastMovable = null;
+        }
+    }
+
+    function formatDateToString(date) {
+        // 년, 월, 일, 시, 분, 초를 추출합니다.
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');  // 월은 0-based, 따라서 +1을 해줍니다.
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+
+        // 파일명 포맷에 맞게 결합합니다.
+        return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+    }
+
+    function save_svg() {
+        // save 버튼을 누르면 svg를 xml형식으로 변환하여 파일로 다운로드
+        el_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        el_svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        el_svg.setAttribute('width', '100%');
+        el_svg.setAttribute('height', '100%');
+        el_svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+        el_svg.innerHTML = svg.innerHTML;
+        
+        for(let el of el_svg.querySelectorAll('.touch-aid')) {
+            el.remove();
+        }
+  
+        let svg_xml = new XMLSerializer().serializeToString(el_svg);
+        let blob = new Blob([svg_xml], {type: 'image/svg+xml'});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `jamo_${formatDateToString(new Date())}.svg`;
+        a.click();
+    }
+
+    // Listen for the dragover event
+    svg.addEventListener('dragover', function (event) {
+        event.preventDefault();
+    });
+
+    // Listen for the drop event
+    svg.addEventListener('drop', function (event) {
+        event.preventDefault();
+
+        // Get the files that were dragged
+        const files = event.dataTransfer.files;
+
+        // Process each file
+        for (const file of files) {
+            // Only work with SVG files
+            if (file.type === 'image/svg+xml') {
+                // Create a FileReader to read the file
+                const reader = new FileReader();
+                
+                reader.onload = function (e) {
+                    // Log the SVG string to the console
+                    //console.log(e.target.result);
+                    let div = document.createElement('div');
+                    div.innerHTML = e.target.result;
+                    let el_svg = div.querySelector('svg');
+                    for(let group of el_svg.querySelectorAll('.movable')) {
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.classList.add('touch-aid');
+                        circle.setAttribute('cx', '0');
+                        circle.setAttribute('cy', '0');
+                        circle.setAttribute('r', '25');
+                        circle.setAttribute('stroke', 'none');
+                        circle.setAttribute('fill', 'transparent');
+                        group.appendChild(circle);
+                        group.insertBefore(circle, group.firstChild);
+                    }
+                    svg.innerHTML = el_svg.innerHTML;
+                };
+
+                // Read the file as text
+                reader.readAsText(file);
+            }
+        }
+    });
     
     init();
     resize();
