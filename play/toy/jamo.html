@@ -199,6 +199,10 @@
             group.setAttribute('transform', `translate(${event.pageX}, ${event.pageY})`);
             target = group;
         }
+
+        document.querySelectorAll('.movable > .glyph').forEach((el) => {
+            el.style.filter = '';
+        });
         
         while(target.parentElement) {
             if(target.classList.contains('movable')) {
@@ -211,6 +215,8 @@
         if(movable) {
             selectedMovable = target;
             lastMovable = selectedMovable;
+            let scale = parseFloat(selectedMovable.dataset.scale);
+            selectedMovable.querySelector('.glyph').style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
 
             if (event.type === 'mousedown') {
                 offsetX = event.pageX - parseFloat(target.dataset.x);
@@ -307,6 +313,7 @@
         //  스페이스 눌렀을 때 선택된 movable 복제
         if(event.keyCode === 32) {
             if(lastMovable) {
+                lastMovable.querySelector('.glyph').style.filter = '';
                 let group = add_movable(lastMovable.dataset.jamo);
                 group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
                 group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
@@ -318,6 +325,7 @@
                 glyph.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
                 let stroke_width = base_stroke_width / scale;
                 glyph.setAttribute('stroke-width', stroke_width);
+                glyph.style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
                 lastMovable = group;
                 action();
             }
@@ -345,6 +353,9 @@
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
                 let stroke_width = base_stroke_width / scale;
                 glyph.setAttribute('stroke-width', stroke_width);
+                if(glyph.style.filter) {
+                    glyph.style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
+                }
                 action();
             }
         }
@@ -358,6 +369,9 @@
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
                 let stroke_width = base_stroke_width / scale;
                 glyph.setAttribute('stroke-width', stroke_width);
+                if(glyph.style.filter) {
+                    glyph.style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
+                }
                 action();
             }
         }
