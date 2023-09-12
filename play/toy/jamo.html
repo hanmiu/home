@@ -124,11 +124,12 @@
     let action_history = [];
     let action_history_buffer = [];
     let last_acted_time = 0;
+    let base_stroke_width = 10;
 
     function init() {
         // top-ui 자모 선택
         for (let jamo in jamoset) {        
-            let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path></svg>`;
+            let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path></svg>`;
 
             const encoded_svg = encodeURIComponent(svg_string);
             const el = document.createElement('div');
@@ -168,10 +169,11 @@
         group.appendChild(circle);
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let stroke_width = base_stroke_width;
         path.classList.add('glyph');
         path.setAttribute('d', jamoset[jamo]);
         path.setAttribute('stroke', 'black');
-        path.setAttribute('stroke-width', '10');
+        path.setAttribute('stroke-width', stroke_width);
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('fill', 'none');
@@ -314,7 +316,8 @@
                 group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
                 let glyph = group.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
-                glyph.setAttribute('stroke-width', 10 / scale);
+                let stroke_width = base_stroke_width / scale;
+                glyph.setAttribute('stroke-width', stroke_width);
                 lastMovable = group;
                 action();
             }
@@ -340,7 +343,8 @@
                 lastMovable.dataset.scale = scale;
                 let glyph = lastMovable.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
-                glyph.setAttribute('stroke-width', 10 / scale);
+                let stroke_width = base_stroke_width / scale;
+                glyph.setAttribute('stroke-width', stroke_width);
                 action();
             }
         }
@@ -352,7 +356,8 @@
                 lastMovable.dataset.scale = scale;
                 let glyph = lastMovable.querySelector('.glyph');
                 glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
-                glyph.setAttribute('stroke-width', 10 / scale);
+                let stroke_width = base_stroke_width / scale;
+                glyph.setAttribute('stroke-width', stroke_width);
                 action();
             }
         }
