@@ -496,7 +496,7 @@
         event.preventDefault();
     });
 
-    // Listen for the drop event
+    // Listen for the drop event, loading SVG
     svg.addEventListener('drop', function (event) {
         event.preventDefault();
 
@@ -541,6 +541,125 @@
             }
         }
     });
+
+    function judge() {
+        let consonants = 'ᄀᄂᄃᄅᄆᄇᄉᄋᄌᄎᄏᄐᄑᄒ'.split('');
+        let vowels = 'ᅡᅣᅥᅧᅩᅭᅮᅲᅳᅵ'.split('');
+        let movables = Array.from(document.querySelectorAll('.movable'));
+        let vowel_movables = movables.filter((el) => {
+            return vowels.includes(el.dataset.jamo);
+        }).sort((a, b) => {
+            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+        });
+
+        let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
+        let type_h = 'ᅩᅭᅮᅲᅳ'.split('');
+        let type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
+
+        let combined_vowels = {
+            'ᅡᅵ': 'ᅢ',
+            'ᅵᅥ': 'ᅢ',
+            'ᅣᅵ': 'ᅤ',
+            'ᅵᅧ': 'ᅤ',
+            'ᅥᅵ': 'ᅦ',
+            'ᅧᅵ': 'ᅨ',
+            'ᅩᅡ': 'ᅪ',
+            'ᅩᅢ': 'ᅫ',
+            'ᅩᅵ': 'ᅬ',
+            'ᅮᅥ': 'ᅯ',
+            'ᅮᅦ': 'ᅰ',
+            'ᅮᅵ': 'ᅱ',
+            'ᅳᅵ': 'ᅴ',
+        }
+
+        let thres_x = 80;
+        let thres_y = 80;
+
+        let valid_vowels = [];
+
+        // 모음 부터 파악
+        for(let i = 0; i < vowel_movables.length; i++) {
+            let prev_i = i - 1;
+            let el_vowel = vowel_movables[i];
+            if(prev_i > -1) {
+                let cx = 0;
+                let cy = 0;
+
+                let el_prev_vowel = vowel_movables[prev_i];
+                let linked_elements = [el_prev_vowel, el_vowel];
+                let x0 = parseFloat(el_prev_vowel.dataset.x);
+                let y0 = parseFloat(el_prev_vowel.dataset.y);
+                let x1 = parseFloat(el_vowel.dataset.x);
+                let y1 = parseFloat(el_vowel.dataset.y);
+                let dx = x1 - x0;
+                let dy = y1 - y0;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if(Math.abs(dx) < thres_x && Math.abs(dy) < thres_y) {
+                    let key = el_prev_vowel.dataset.jamo + el_vowel.dataset.jamo;
+                    let cx = (x0 + x1) / 2;
+                    let cy = (y0 + y1) / 2;
+                    // ᅫ, ᅰ 경우는 3개를 검사해야 함
+                    let combined_vowel = combined_vowels[key];
+                    if(i > 1 && (combined_vowel == 'ᅢ' || combined_vowel == 'ᅦ')) {
+                        let el_prev_prev_vowel = vowel_movables[i - 2];
+                        let x2 = parseFloat(el_prev_prev_vowel.dataset.x);
+                        let y2 = parseFloat(el_prev_prev_vowel.dataset.y);
+                        let dx2 = x2 - x0;
+                        let dy2 = y2 - y0;
+                        let dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                        if(Math.abs(dx2) < thres_x && Math.abs(dy2) < thres_y) {
+                            key = el_prev_prev_vowel.dataset.jamo + combined_vowel;
+                            cx = (x0 + x1 + x2) / 3;
+                            cy = (y0 + y1 + y2) / 3;
+                            linked_elements.unshift(el_prev_prev_vowel);
+                            valid_vowels.pop();
+                        }
+                    }
+                    if(combined_vowels[key]) {
+                        valid_vowels.push({
+                            'vowel': combined_vowels[key],
+                            'cx': cx,
+                            'cy': cy,
+                            'linked_elements': linked_elements
+                        });
+                    }
+
+                    el_prev_vowel.querySelector('.halo').setAttribute('stroke', 'red');
+                }
+                else {
+                    valid_vowels.push({
+                        'vowel': el_vowel.dataset.jamo,
+                        'cx': parseFloat(el_vowel.dataset.x),
+                        'cy': parseFloat(el_vowel.dataset.y),
+                        'linked_elements': [el_vowel]
+                    }); 
+                }   
+            }
+            else {
+                valid_vowels.push({
+                    'vowel': el_vowel.dataset.jamo,
+                    'cx': parseFloat(el_vowel.dataset.x),
+                    'cy': parseFloat(el_vowel.dataset.y),
+                    'linked_elements': [el_vowel]
+                });
+            }
+        }
+
+        // vaild_vowels를 순회해서 앞 요소의 linked_elements와 현재 요소의 linked_elements가 겹치는게 있으면 앞 요소를 제거
+        for (let i = 1; i < valid_vowels.length; i++) {
+            const currentVowel = valid_vowels[i];
+            const previousVowel = valid_vowels[i - 1];
+            const linkedElements = currentVowel.linked_elements;
+            const previousLinkedElements = previousVowel.linked_elements;
+            const intersection = linkedElements.filter((el) => previousLinkedElements.includes(el));
+            if (intersection.length > 0) {
+                valid_vowels.splice(i - 1, 1);
+                i--;
+            }
+        }
+
+        console.log(valid_vowels);
+    }
     
     init();
     resize();
