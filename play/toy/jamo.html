@@ -48,6 +48,25 @@
         border-bottom: 1px solid black;
     }
 
+    #ui-buttons {
+        position: absolute;
+        left: 0px;
+        padding: 30px;
+    }
+
+    .ui-button {
+        padding: 5px;
+        border-radius: 3px;
+        font-family: sans-serif;
+        font-size: 14px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .ui-button:disabled {
+        cursor: default;
+    }
+
     /* #ui-bottom {
         position: absolute;
         left: 0px;
@@ -89,6 +108,13 @@
         height: 20px;
         font-size: 20px;
         font-family: sans-serif;
+        cursor: pointer;
+    }
+
+    @media print {
+        #ui-top, #ui-buttons, #preview, #logotype {
+            display: none;
+        }
     }
 </style>
 <body>
@@ -97,6 +123,14 @@
         <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></svg> -->
     </div>
     <div id="ui-top"></div>
+    <div id="ui-buttons">
+        <button id="bt-clear" class="ui-button" style="background-color: red;">새로</button>
+        <button id="bt-undo" class="ui-button" style="background-color: orange;" disabled="true">취소</button>
+        <button id="bt-redo" class="ui-button" style="background-color: yellow;" disabled="true">다시</button>
+        <button id="bt-save" class="ui-button" style="background-color: rgb(173, 238, 44);">저장</button>
+        <button id="bt-print" class="ui-button" style="background-color: rgb(32, 197, 223);">인쇄</button>
+        <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
+    </div>
     <div id="preview"></div>
     <!-- <div id="ui-bottom"></div> -->
 </body>
@@ -146,6 +180,15 @@
     let selected_stroke_color = 'blue';
     let selected_stroke_width = 4;
 
+    let utter = null;
+    if(speechSynthesis) {
+        utter = new SpeechSynthesisUtterance();
+        utter.lang = 'ko';
+        utter.rate = 1.0;
+        utter.pitch = 1.0;
+        utter.volume = 1.0;
+    }
+
     function init() {
         // top-ui 자모 선택
         for (let jamo in jamoset) {        
@@ -170,6 +213,9 @@
             jb.style['width']= `${jamo_size}px`;
             jb.style['height'] = `${jamo_size}px`;
         }
+
+        let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
+        document.querySelector('#ui-buttons').style['top'] = `${ui_top_rect.bottom}px`;
 
         // document.querySelector('#ui-bottom').style['height'] = `${jamo_size * 3}px`;
     }
@@ -279,6 +325,9 @@
             selectedMovable.setAttribute('transform', `translate(${x}, ${y})`);
             selectedMovable.dataset.x = x;
             selectedMovable.dataset.y = y;
+
+            let print = judge();
+            document.querySelector('#preview').innerHTML = print;
         }
         else {
             if(event.target.classList.contains('movable')) {
@@ -436,6 +485,20 @@
             action_history_buffer.pop();
         }
 
+        if(action_history.length > 0) {
+            document.querySelector('#bt-undo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-undo').disabled = true;
+        }
+
+        if(action_history_buffer.length > 0) {
+            document.querySelector('#bt-redo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-redo').disabled = true;
+        }
+
         let print = judge();
         document.querySelector('#preview').innerHTML = print;
     }
@@ -450,6 +513,13 @@
             });
             lastMovable = null;
         }
+
+        if(action_history_buffer.length > 0) {
+            document.querySelector('#bt-redo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-redo').disabled = true;
+        }
     }
 
     function redo() {
@@ -461,6 +531,13 @@
                 el.setAttribute('stroke', 'transparent');
             });
             lastMovable = null;
+        }
+
+        if(action_history_buffer.length > 0) {
+            document.querySelector('#bt-redo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-redo').disabled = true;
         }
     }
 
@@ -878,6 +955,53 @@
         }
         //console.log(print);
         return print;
+    }
+
+    document.querySelector('#preview').addEventListener('click', (event) => {
+        if(utter) {
+            speechSynthesis.cancel();
+            utter.text = event.target.innerHTML; 
+            speechSynthesis.speak(utter);
+        }
+    });
+
+    document.querySelector('#bt-clear').addEventListener('click', (event) => {
+        svg.innerHTML = '';
+        lastMovable = null;
+        action();
+    });
+
+    document.querySelector('#bt-undo').addEventListener('click', (event) => {
+        undo();
+    });
+
+    document.querySelector('#bt-redo').addEventListener('click', (event) => {
+        redo();
+    });
+
+    document.querySelector('#bt-save').addEventListener('click', (event) => {
+        save_svg();
+    });
+
+    document.querySelector('#bt-print').addEventListener('click', (event) => {
+        document.querySelectorAll('.halo').forEach((el) => {
+            el.setAttribute('stroke', 'transparent');
+        });
+        window.print();
+        if(selectedMovable) {
+            selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
+        }
+    });
+
+    if(utter) {
+        document.querySelector('#bt-speak').addEventListener('click', (event) => {
+            speechSynthesis.cancel();
+            utter.text = document.querySelector('#preview').innerHTML; 
+            speechSynthesis.speak(utter);
+        });
+    }
+    else {
+        document.querySelector('#bt-speak').style.display = 'none';
     }
     
     init();
