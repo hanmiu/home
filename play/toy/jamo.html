@@ -551,6 +551,16 @@
         }).sort((a, b) => {
             return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
         });
+        let consonant_movables = movables.filter((el) => {
+            return consonants.includes(el.dataset.jamo);
+        }).sort((a, b) => {
+            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+        });
+
+        // 초성 (Leading consonants): U+1100 – U+1112 (19자)
+        // ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ
+        // 종성 (Trailing consonants): U+11A8 – U+11C2 (27자), U+11A7 (종성이 없는 경우)
+        // ᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ
 
         let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
         let type_h = 'ᅩᅭᅮᅲᅳ'.split('');
@@ -659,6 +669,7 @@
         }
 
         console.log(valid_vowels);
+        // 모음의 범위에 들어온 자음을 파악하고 그 리스트에서 쌍자음의 경우를 합치고, 위아래냐에 따라서 초성인지 종성인지를 체크한 후 최종 초중종성 자모를 한 글자로 합치기
     }
     
     init();
