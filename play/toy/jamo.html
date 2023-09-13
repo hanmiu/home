@@ -26,12 +26,12 @@
         top: 0px;
     }
 
-    .movable > path {
-        cursor: move;
+    .scalerot {
+        transition: 0.2s;
     }
 
-    .movable > .glyph {
-        transition: 0.2s;
+    .glyph {
+        cursor: move;
     }
 
     .touch-aid {
@@ -48,7 +48,7 @@
         border-bottom: 1px solid black;
     }
 
-    #ui-bottom {
+    /* #ui-bottom {
         position: absolute;
         left: 0px;
         bottom: 0px;
@@ -57,8 +57,7 @@
         padding: 30px;
         box-sizing: border-box;
         border-top: 1px solid black;
-        /* background-color: rgba(128, 128, 128, 0.25); */
-    }
+    } */
 
     .jamo-button {
         display: inline-block;
@@ -74,13 +73,22 @@
     .jamo-button:hover {
         transform: scale(1.25);
     }
+
+    #logotype {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        height: 20px;
+        opacity: 0.5;
+    }
 </style>
 <body>
+    <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     <div id="stage">
         <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></svg> -->
     </div>
     <div id="ui-top"></div>
-    <div id="ui-bottom"></div>
+    <!-- <div id="ui-bottom"></div> -->
 </body>
 <script>
     const stage = document.getElementById('stage');
@@ -125,6 +133,8 @@
     let action_history_buffer = [];
     let last_acted_time = 0;
     let base_stroke_width = 10;
+    let selected_stroke_color = 'blue';
+    let selected_stroke_width = 4;
 
     function init() {
         // top-ui 자모 선택
@@ -151,13 +161,17 @@
             jb.style['height'] = `${jamo_size}px`;
         }
 
-        document.querySelector('#ui-bottom').style['height'] = `${jamo_size * 3}px`;
+        // document.querySelector('#ui-bottom').style['height'] = `${jamo_size * 3}px`;
     }
 
     function add_movable(jamo) {
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.classList.add('movable');
         svg.appendChild(group);
+
+        const scalerot = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        scalerot.classList.add('scalerot');
+        group.appendChild(scalerot);
 
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.classList.add('touch-aid');
@@ -166,10 +180,10 @@
         circle.setAttribute('r', '25');
         circle.setAttribute('stroke', 'none');
         circle.setAttribute('fill', 'transparent');
-        group.appendChild(circle);
+        scalerot.appendChild(circle);
 
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         let stroke_width = base_stroke_width;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.classList.add('glyph');
         path.setAttribute('d', jamoset[jamo]);
         path.setAttribute('stroke', 'black');
@@ -177,7 +191,14 @@
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('fill', 'none');
-        group.appendChild(path);
+
+        let halo = path.cloneNode();
+        halo.classList.remove('glyph');
+        halo.classList.add('halo');
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-width', stroke_width + 1);
+        scalerot.appendChild(halo);
+        scalerot.appendChild(path);
 
         group.dataset.jamo = jamo;
         group.dataset.rot = 0;
@@ -200,8 +221,8 @@
             target = group;
         }
 
-        document.querySelectorAll('.movable > .glyph').forEach((el) => {
-            el.style.filter = '';
+        document.querySelectorAll('.halo').forEach((el) => {
+            el.setAttribute('stroke', 'transparent');
         });
         
         while(target.parentElement) {
@@ -216,7 +237,10 @@
             selectedMovable = target;
             lastMovable = selectedMovable;
             let scale = parseFloat(selectedMovable.dataset.scale);
-            selectedMovable.querySelector('.glyph').style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
+            let stroke_width = base_stroke_width / scale;
+            selectedMovable.querySelector('.halo').setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+            selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
+            selectedMovable.querySelector('.halo').setAttribute('stroke-opacity', 0.5);
 
             if (event.type === 'mousedown') {
                 offsetX = event.pageX - parseFloat(target.dataset.x);
@@ -225,8 +249,6 @@
                 offsetX = event.touches[0].pageX - parseFloat(target.dataset.x);
                 offsetY = event.touches[0].pageY - parseFloat(target.dataset.y);    
             }
-            // selectedMovable.style['-webkit-text-stroke'] = '3px blue';
-            // selectedMovable.style.color = 'blue';
         }
         else {
             //---
@@ -273,13 +295,13 @@
                 selectedMovable.remove();
             }
 
-            let ui_bottom_rect = document.querySelector('#ui-bottom').getBoundingClientRect();
-            if(selectedMovable.dataset.y > ui_bottom_rect.top) {
-                if(lastMovable === selectedMovable) {
-                    lastMovable = null;
-                }
-                selectedMovable.remove();
-            }
+            // let ui_bottom_rect = document.querySelector('#ui-bottom').getBoundingClientRect();
+            // if(selectedMovable.dataset.y > ui_bottom_rect.top) {
+            //     if(lastMovable === selectedMovable) {
+            //         lastMovable = null;
+            //     }
+            //     selectedMovable.remove();
+            // }
             action();
         }
         selectedMovable = null;
@@ -310,32 +332,41 @@
     });
 
     document.addEventListener('keyup', (event) => {
-        //  스페이스 눌렀을 때 선택된 movable 복제
-        if(event.keyCode === 32) {
-            if(lastMovable) {
-                lastMovable.querySelector('.glyph').style.filter = '';
+        if(lastMovable) {
+            let scale = parseFloat(lastMovable.dataset.scale);
+            let rot = parseFloat(lastMovable.dataset.rot);
+            let stroke_width = base_stroke_width / scale;
+            let acted = false;
+
+            // 스페이스 눌렀을 때 선택된 movable 복제
+            if(event.keyCode === 32) {
+                lastMovable.querySelector('.halo').setAttribute('stroke', 'transparent');
                 let group = add_movable(lastMovable.dataset.jamo);
+                let scalerot = group.querySelector('.scalerot');
+                let halo = group.querySelector('.halo');
+                let glyph = group.querySelector('.glyph');
                 group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
                 group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
-                let scale = parseFloat(lastMovable.dataset.scale);
                 group.dataset.scale = scale;
-                group.dataset.rot = parseFloat(lastMovable.dataset.rot);
+                group.dataset.rot = rot;
                 group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
-                let glyph = group.querySelector('.glyph');
-                glyph.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
-                let stroke_width = base_stroke_width / scale;
+                scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
                 glyph.setAttribute('stroke-width', stroke_width);
-                glyph.style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
+                halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+                halo.setAttribute('stroke', selected_stroke_color);
+                halo.setAttribute('stroke-opacity', 0.5);
                 lastMovable = group;
-                action();
+                acted = true;
             }
-        }
 
-        // 백스페이스 눌렀을 때 선택된 movable 지우기
-        if(event.keyCode === 8) {
-            if(lastMovable) {
+            // 백스페이스 눌렀을 때 선택된 movable 지우기
+            if(event.keyCode === 8) {
                 lastMovable.remove();
                 lastMovable = null;
+                acted = true;
+            }
+
+            if(acted) {
                 action();
             }
         }
@@ -343,57 +374,41 @@
 
     // 키보드 화살표 상하를 눌렀을 때 scale 조절
     document.addEventListener('keydown', (event) => {
-        if(event.keyCode === 38) {
-            if(lastMovable) {
-                let scale = parseFloat(lastMovable.dataset.scale);
+        if(lastMovable) {
+            let scale = parseFloat(lastMovable.dataset.scale);
+            let rot = parseFloat(lastMovable.dataset.rot);
+            let scalerot = lastMovable.querySelector('.scalerot');
+            let halo = lastMovable.querySelector('.halo');
+            let glyph = lastMovable.querySelector('.glyph');
+            let stroke_width = base_stroke_width / scale;
+            let acted = false;
+
+            if(event.keyCode === 38) {
                 scale += 0.1;
                 if(scale > 2) scale = 2;
-                lastMovable.dataset.scale = scale;
-                let glyph = lastMovable.querySelector('.glyph');
-                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
-                let stroke_width = base_stroke_width / scale;
-                glyph.setAttribute('stroke-width', stroke_width);
-                if(glyph.style.filter) {
-                    glyph.style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
-                }
-                action();
+                acted = true;
             }
-        }
-        else if(event.keyCode === 40) {
-            if(lastMovable) {
-                let scale = parseFloat(lastMovable.dataset.scale);
+            else if(event.keyCode === 40) {
                 scale -= 0.1;
-                if(scale < 0.5) scale = 0.5;
-                lastMovable.dataset.scale = scale;
-                let glyph = lastMovable.querySelector('.glyph');
-                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
-                let stroke_width = base_stroke_width / scale;
-                glyph.setAttribute('stroke-width', stroke_width);
-                if(glyph.style.filter) {
-                    glyph.style.filter = `drop-shadow(0px 0px ${3/scale}px blue)`;
-                }
-                action();
+                if(scale < 0.5) scale = 0.5;   
+                acted = true;
             }
-        }
-        else if(event.keyCode === 37) { // 키보드 화살표 좌우를 눌렀을 때 rot 조절
-            if(lastMovable) {
-                let rot = parseFloat(lastMovable.dataset.rot);
+            else if(event.keyCode === 37) { // 키보드 화살표 좌우를 눌렀을 때 rot 조절
                 rot -= 5;
-                //if(rot < 0) rot = 360 + rot;
-                lastMovable.dataset.rot = rot;
-                let glyph = lastMovable.querySelector('.glyph');
-                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
-                action();
+                acted = true;
             }
-        }
-        else if(event.keyCode === 39) {
-            if(lastMovable) {
-                let rot = parseFloat(lastMovable.dataset.rot);
+            else if(event.keyCode === 39) {
                 rot += 5;
-                //if(rot >= 360) rot = 360 - rot;
+                acted = true;
+            }
+
+            if(acted) {
+                lastMovable.dataset.scale = scale;
                 lastMovable.dataset.rot = rot;
-                let glyph = lastMovable.querySelector('.glyph');
-                glyph.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                scalerot.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+                halo.setAttribute('stroke-opacity', 0.5);
+                glyph.setAttribute('stroke-width', stroke_width);
                 action();
             }
         }
@@ -417,6 +432,9 @@
             const popped = action_history.pop();
             action_history_buffer.push(popped);
             svg.innerHTML = action_history[action_history.length - 1];
+            document.querySelectorAll('.halo').forEach((el) => {
+                el.setAttribute('stroke', 'transparent');
+            });
             lastMovable = null;
         }
     }
@@ -426,6 +444,9 @@
             const popped = action_history_buffer.pop();
             action_history.push(popped);
             svg.innerHTML = action_history[action_history.length - 1];
+            document.querySelectorAll('.halo').forEach((el) => {
+                el.setAttribute('stroke', 'transparent');
+            });
             lastMovable = null;
         }
     }
@@ -454,6 +475,10 @@
         el_svg.innerHTML = svg.innerHTML;
         
         for(let el of el_svg.querySelectorAll('.touch-aid')) {
+            el.remove();
+        }
+
+        for(let el of el_svg.querySelectorAll('.halo')) {
             el.remove();
         }
   
@@ -487,11 +512,12 @@
                 
                 reader.onload = function (e) {
                     // Log the SVG string to the console
-                    //console.log(e.target.result);
                     let div = document.createElement('div');
                     div.innerHTML = e.target.result;
                     let el_svg = div.querySelector('svg');
                     for(let group of el_svg.querySelectorAll('.movable')) {
+                        const scalerot = group.querySelector('.scalerot');
+                        const glyph = group.querySelector('.glyph');
                         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                         circle.classList.add('touch-aid');
                         circle.setAttribute('cx', '0');
@@ -499,8 +525,12 @@
                         circle.setAttribute('r', '25');
                         circle.setAttribute('stroke', 'none');
                         circle.setAttribute('fill', 'transparent');
-                        group.appendChild(circle);
-                        group.insertBefore(circle, group.firstChild);
+                        const halo = glyph.cloneNode();
+                        halo.classList.remove('glyph');
+                        halo.classList.add('halo');
+                        halo.setAttribute('stroke', 'transparent');
+                        scalerot.insertBefore(halo, scalerot.firstChild);
+                        scalerot.insertBefore(circle, scalerot.firstChild);
                     }
                     svg.innerHTML = el_svg.innerHTML;
                     action();
