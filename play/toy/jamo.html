@@ -99,6 +99,7 @@
         bottom: 20px;
         height: 20px;
         opacity: 0.5;
+        cursor: pointer;
     }
 
     #preview {
@@ -118,7 +119,6 @@
     }
 </style>
 <body>
-    <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     <div id="stage">
         <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></svg> -->
     </div>
@@ -132,6 +132,7 @@
         <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
     </div>
     <div id="preview"></div>
+    <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     <!-- <div id="ui-bottom"></div> -->
 </body>
 <script>
@@ -969,6 +970,10 @@
         if(selectedMovable) {
             selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
         }
+    });
+
+    document.querySelector('#logotype').addEventListener('click', (event) => {
+        window.open('https://www.hanmiu.cc', '_blank');
     });
 
     function check_buttons() {
