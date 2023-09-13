@@ -485,19 +485,7 @@
             action_history_buffer.pop();
         }
 
-        if(action_history.length > 0) {
-            document.querySelector('#bt-undo').disabled = false;
-        }
-        else {
-            document.querySelector('#bt-undo').disabled = true;
-        }
-
-        if(action_history_buffer.length > 0) {
-            document.querySelector('#bt-redo').disabled = false;
-        }
-        else {
-            document.querySelector('#bt-redo').disabled = true;
-        }
+        check_buttons();
 
         let print = judge();
         document.querySelector('#preview').innerHTML = print;
@@ -514,12 +502,7 @@
             lastMovable = null;
         }
 
-        if(action_history_buffer.length > 0) {
-            document.querySelector('#bt-redo').disabled = false;
-        }
-        else {
-            document.querySelector('#bt-redo').disabled = true;
-        }
+        check_buttons();
     }
 
     function redo() {
@@ -533,12 +516,7 @@
             lastMovable = null;
         }
 
-        if(action_history_buffer.length > 0) {
-            document.querySelector('#bt-redo').disabled = false;
-        }
-        else {
-            document.querySelector('#bt-redo').disabled = true;
-        }
+        check_buttons();
     }
 
     function formatDateToString(date) {
@@ -993,6 +971,35 @@
         }
     });
 
+    function check_buttons() {
+        if(action_history.length > 0) {
+            document.querySelector('#bt-undo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-undo').disabled = true;
+        }
+
+        if(action_history_buffer.length > 0) {
+            document.querySelector('#bt-redo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-redo').disabled = true;
+        }
+
+        if(svg.children.length > 0) {
+            document.querySelector('#bt-clear').disabled = false;
+            document.querySelector('#bt-save').disabled = false;
+            document.querySelector('#bt-print').disabled = false;
+            document.querySelector('#bt-speak').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-clear').disabled = true;
+            document.querySelector('#bt-save').disabled = true;
+            document.querySelector('#bt-print').disabled = true;
+            document.querySelector('#bt-speak').disabled = true;
+        }
+    }
+
     if(utter) {
         document.querySelector('#bt-speak').addEventListener('click', (event) => {
             speechSynthesis.cancel();
@@ -1006,4 +1013,5 @@
     
     init();
     resize();
+    check_buttons();
 </script>
