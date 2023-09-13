@@ -81,6 +81,15 @@
         height: 20px;
         opacity: 0.5;
     }
+
+    #preview {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        height: 20px;
+        font-size: 20px;
+        font-family: sans-serif;
+    }
 </style>
 <body>
     <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
@@ -88,6 +97,7 @@
         <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></svg> -->
     </div>
     <div id="ui-top"></div>
+    <div id="preview"></div>
     <!-- <div id="ui-bottom"></div> -->
 </body>
 <script>
@@ -425,6 +435,9 @@
         while(action_history_buffer.length > 0) {
             action_history_buffer.pop();
         }
+
+        let print = judge();
+        document.querySelector('#preview').innerHTML = print;
     }
 
     function undo() {
@@ -562,11 +575,11 @@
         // 종성 (Trailing consonants): U+11A8 – U+11C2 (27자), U+11A7 (종성이 없는 경우)
         // ᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ
 
-        let type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
-        let type_h = 'ᅩᅭᅮᅲᅳ'.split('');
-        let type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
+        const type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
+        const type_h = 'ᅩᅭᅮᅲᅳ'.split('');
+        const type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
 
-        let combined_vowels = {
+        const combined_jung = {
             'ᅡᅵ': 'ᅢ',
             'ᅵᅥ': 'ᅢ',
             'ᅣᅵ': 'ᅤ',
@@ -580,23 +593,71 @@
             'ᅮᅦ': 'ᅰ',
             'ᅮᅵ': 'ᅱ',
             'ᅳᅵ': 'ᅴ',
-        }
+        };
 
-        let thres_x = 80;
+        const combined_cho = {
+            'ᄀᄀ': 'ᄁ',
+            'ᄃᄃ': 'ᄄ',
+            'ᄇᄇ': 'ᄈ',
+            'ᄉᄉ': 'ᄊ',
+            'ᄌᄌ': 'ᄍ',
+        };
+
+        // ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ
+        // ᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ  
+        const combined_jong = {
+            'ᄀ': 'ᆨ',
+            'ᄀᄀ': 'ᆩ',
+            'ᄀᄉ': 'ᆪ',
+            'ᄂ': 'ᆫ',
+            'ᄂᄌ': 'ᆬ',
+            'ᄂᄒ': 'ᆭ',
+            'ᄃ': 'ᆮ',
+            'ᄅ': 'ᆯ',
+            'ᄅᄀ': 'ᆰ',
+            'ᄅᄆ': 'ᆱ',
+            'ᄅᄇ': 'ᆲ',
+            'ᄅᄉ': 'ᆳ',
+            'ᄅᄐ': 'ᆴ',
+            'ᄅᄒ': 'ᆶ',
+            'ᄆ': 'ᆷ',
+            'ᄇ': 'ᆸ',
+            'ᄇᄉ': 'ᆹ',
+            'ᄉ': 'ᆺ',
+            'ᄉᄉ': 'ᆻ',
+            'ᄋ': 'ᆼ',
+            'ᄌ': 'ᆽ',
+            'ᄎ': 'ᆾ',
+            'ᄏ': 'ᆿ',
+            'ᄐ': 'ᇀ',
+            'ᄑ': 'ᇁ',
+            'ᄒ': 'ᇂ',
+        };
+
+        let thres_x = 70;
         let thres_y = 80;
 
-        let valid_vowels = [];
+        let chars = [];
 
         // 모음 부터 파악
         for(let i = 0; i < vowel_movables.length; i++) {
             let prev_i = i - 1;
             let el_vowel = vowel_movables[i];
+            let char = {
+                cho: '',
+                jung: '',
+                jong: '',
+                cho_elements: [],
+                jung_elements: [],
+                jong_elements: []
+            };
+
             if(prev_i > -1) {
                 let cx = 0;
                 let cy = 0;
 
                 let el_prev_vowel = vowel_movables[prev_i];
-                let linked_elements = [el_prev_vowel, el_vowel];
+                char.jung_elements = [el_prev_vowel, el_vowel];
                 let x0 = parseFloat(el_prev_vowel.dataset.x);
                 let y0 = parseFloat(el_prev_vowel.dataset.y);
                 let x1 = parseFloat(el_vowel.dataset.x);
@@ -606,10 +667,8 @@
                 let dist = Math.sqrt(dx * dx + dy * dy);
                 if(Math.abs(dx) < thres_x && Math.abs(dy) < thres_y) {
                     let key = el_prev_vowel.dataset.jamo + el_vowel.dataset.jamo;
-                    let cx = (x0 + x1) / 2;
-                    let cy = (y0 + y1) / 2;
                     // ᅫ, ᅰ 경우는 3개를 검사해야 함
-                    let combined_vowel = combined_vowels[key];
+                    let combined_vowel = combined_jung[key];
                     if(i > 1 && (combined_vowel == 'ᅢ' || combined_vowel == 'ᅦ')) {
                         let el_prev_prev_vowel = vowel_movables[i - 2];
                         let x2 = parseFloat(el_prev_prev_vowel.dataset.x);
@@ -619,57 +678,206 @@
                         let dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
                         if(Math.abs(dx2) < thres_x && Math.abs(dy2) < thres_y) {
                             key = el_prev_prev_vowel.dataset.jamo + combined_vowel;
-                            cx = (x0 + x1 + x2) / 3;
-                            cy = (y0 + y1 + y2) / 3;
-                            linked_elements.unshift(el_prev_prev_vowel);
-                            valid_vowels.pop();
+                            char.jung_elements.unshift(el_prev_prev_vowel);
+                            chars.pop(); // 없어도?
                         }
                     }
-                    if(combined_vowels[key]) {
-                        valid_vowels.push({
-                            'vowel': combined_vowels[key],
-                            'cx': cx,
-                            'cy': cy,
-                            'linked_elements': linked_elements
-                        });
+                    if(combined_jung[key]) {
+                        char.jung = combined_jung[key];
+                        chars.push(char);
                     }
-
-                    el_prev_vowel.querySelector('.halo').setAttribute('stroke', 'red');
                 }
                 else {
-                    valid_vowels.push({
-                        'vowel': el_vowel.dataset.jamo,
-                        'cx': parseFloat(el_vowel.dataset.x),
-                        'cy': parseFloat(el_vowel.dataset.y),
-                        'linked_elements': [el_vowel]
-                    }); 
+                    char.jung = el_vowel.dataset.jamo;
+                    char.jung_elements = [el_vowel];
+                    chars.push(char);
                 }   
             }
             else {
-                valid_vowels.push({
-                    'vowel': el_vowel.dataset.jamo,
-                    'cx': parseFloat(el_vowel.dataset.x),
-                    'cy': parseFloat(el_vowel.dataset.y),
-                    'linked_elements': [el_vowel]
-                });
+                char.jung = el_vowel.dataset.jamo;
+                char.jung_elements = [el_vowel];
+                chars.push(char);
             }
         }
 
         // vaild_vowels를 순회해서 앞 요소의 linked_elements와 현재 요소의 linked_elements가 겹치는게 있으면 앞 요소를 제거
-        for (let i = 1; i < valid_vowels.length; i++) {
-            const currentVowel = valid_vowels[i];
-            const previousVowel = valid_vowels[i - 1];
-            const linkedElements = currentVowel.linked_elements;
-            const previousLinkedElements = previousVowel.linked_elements;
+        for (let i = 1; i < chars.length; i++) {
+            const currentVowel = chars[i];
+            const previousVowel = chars[i - 1];
+            const linkedElements = currentVowel.jung_elements;
+            const previousLinkedElements = previousVowel.jung_elements;
             const intersection = linkedElements.filter((el) => previousLinkedElements.includes(el));
             if (intersection.length > 0) {
-                valid_vowels.splice(i - 1, 1);
+                chars.splice(i - 1, 1);
                 i--;
             }
         }
 
-        console.log(valid_vowels);
+        //console.log(chars);
         // 모음의 범위에 들어온 자음을 파악하고 위아래냐에 따라서 초성인지 종성인지를 체크한 리스트를 만들고, 먼저 초성의 경우를 다룬 다음, 초성과 모음으로 종성이 들어갈 범위 산출. 그 리스트에서 왼쪽 거리가 가장 가까이에 있는 다른 초/종 리스트에서 쌍자음의 경우를 합치고, 최종 초중종성 자모를 한 글자로 합치기
+
+        document.querySelectorAll('.bound').forEach((el) => {
+            el.remove();
+        });
+
+        for(let char of chars) {
+            // char.jung_elements를 바탕으로 가장 왼쪽, 가장 오른쪽, 가장 위, 가장 아래의 좌표 left, right, top, bottom을 구한다.
+            let left = Number.MAX_VALUE;
+            let right = Number.MIN_VALUE;
+            let top = Number.MAX_VALUE;
+            let bottom = Number.MIN_VALUE;
+            for(let el of char.jung_elements) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                if(rect.left < left) left = rect.left;
+                if(rect.right > right) right = rect.right;
+                if(rect.top < top) top = rect.top;
+                if(rect.bottom > bottom) bottom = rect.bottom;
+            }
+
+            // let el_rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            // el_rect.classList.add('bound');
+            // el_rect.setAttribute('x', left);
+            // el_rect.setAttribute('y', top);
+            // el_rect.setAttribute('width', right - left);
+            // el_rect.setAttribute('height', bottom - top);
+            // el_rect.setAttribute('stroke', 'red');
+            // el_rect.setAttribute('stroke-width', '1');
+            // el_rect.setAttribute('fill', 'transparent');
+            // svg.appendChild(el_rect);
+
+            if(type_v.includes(char.jung)) {
+                // 왼쪽에 있는 자음의 중심이 top ~ bottom 사이에 있고 가장 가까운 것을 초성으로 선택
+                let cx = 0;
+                let cy = 0;
+                let min_dist = Number.MAX_VALUE;
+                let min_el = null;
+                for(let el of consonant_movables) {
+                    let rect = el.querySelector('.glyph').getBoundingClientRect();
+                    cx = (rect.left + rect.right) / 2;
+                    cy = (rect.top + rect.bottom) / 2;
+                    if(top < cy && cy < bottom) {
+                        let dist = Math.abs(cx - left);
+                        if(dist < min_dist) {
+                            min_dist = dist;
+                            min_el = el;
+                        }
+                    }
+                }
+                if(min_el) {
+                    char.cho = min_el.dataset.jamo;
+                    char.cho_elements = [min_el];
+                }
+            }
+            if(type_h.includes(char.jung) || type_d.includes(char.jung)) {
+                // 위쪽에 있는 자음의 중심이 left ~ right 사이에 있고 가장 가까운 것을 초성으로 선택
+                let cx = 0;
+                let cy = 0;
+                let min_dist = Number.MAX_VALUE;
+                let min_el = null;
+                for(let el of consonant_movables) {
+                    let rect = el.querySelector('.glyph').getBoundingClientRect();
+                    cx = (rect.left + rect.right) / 2;
+                    cy = (rect.top + rect.bottom) / 2;
+                    if(left < cx && cx < right) {
+                        let dist = Math.abs(cy - top);
+                        if(dist < min_dist) {
+                            min_dist = dist;
+                            min_el = el;
+                        }
+                    }
+                }
+                if(min_el) {
+                    char.cho = min_el.dataset.jamo;
+                    char.cho_elements = [min_el];
+                }
+            }
+            // 다른 자음 중에 현재 초성의 왼쪽에 있으면서 가장 가까운 것 중에 거리가 80 이내인 것을 쌍자음 후보로 선택
+            for(let el of consonant_movables) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (rect.left + rect.right) / 2;
+                let cy = (rect.top + rect.bottom) / 2;
+                if(char.cho_elements.length === 0) continue;
+                let rect_cho = char.cho_elements[0].querySelector('.glyph').getBoundingClientRect();
+                let rect_cho_cx = (rect_cho.left + rect_cho.right) / 2;
+                let rect_cho_cy = (rect_cho.top + rect_cho.bottom) / 2;
+                let dist = Math.abs(cx - rect_cho_cx);
+                if(el !== char.cho_elements[0]) {
+                    if(dist < thres_x && cy > rect_cho.top && cy < rect_cho.bottom) {
+                        char.cho_elements.unshift(el);
+                        char.cho_elements.sort((a, b) => {
+                            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+                        });
+                        let key = char.cho_elements.map((el) => el.dataset.jamo).join('');
+                        if(combined_cho[key]) {
+                            char.cho = combined_cho[key];
+                        }
+                    }
+                }
+            }
+
+            // cho_elements의 모든 요소의 rect와 jung_elements의 모든 요소의 rect의 합집합이 되는 큰 rect를 구한다.
+            for(let el of char.cho_elements) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                if(rect.left < left) left = rect.left;
+                if(rect.right > right) right = rect.right;
+                if(rect.top < top) top = rect.top;
+                if(rect.bottom > bottom) bottom = rect.bottom;
+            }
+            // let el_rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            // el_rect.classList.add('bound');
+            // el_rect.setAttribute('x', left);
+            // el_rect.setAttribute('y', top);
+            // el_rect.setAttribute('width', right - left);
+            // el_rect.setAttribute('height', bottom - top);
+            // el_rect.setAttribute('stroke', 'red');
+            // el_rect.setAttribute('stroke-width', '1');
+            // el_rect.setAttribute('fill', 'transparent');
+            // svg.appendChild(el_rect);
+
+            // 모든 자음의 중심이 left ~ right 사이에 있고 bottom 보다 아래 있으면서 가장 가까운 자음을 종성으로 선택
+            for(let el of consonant_movables) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (rect.left + rect.right) / 2;
+                let cy = (rect.top + rect.bottom) / 2;
+                if(left < cx && cx < right && cy > bottom) {
+                    let dist = Math.abs(cy - bottom);
+                    if(dist < thres_y) {
+                        char.jong = combined_jong[el.dataset.jamo];
+                        char.jong_elements = [el];
+                    }
+                }
+            }
+            for(let el of consonant_movables) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (rect.left + rect.right) / 2;
+                let cy = (rect.top + rect.bottom) / 2;
+                if(char.jong_elements.length === 0) continue;
+                let rect_jong = char.jong_elements[0].querySelector('.glyph').getBoundingClientRect();
+                let rect_jong_cx = (rect_jong.left + rect_jong.right) / 2;
+                let rect_jong_cy = (rect_jong.top + rect_jong.bottom) / 2;
+                let dist = Math.abs(cx - rect_jong_cx);
+                if(el !== char.jong_elements[0]) {
+                    if(dist < thres_x && cy > rect_jong.top && cy < rect_jong.bottom) {
+                        char.jong_elements.unshift(el);
+                        char.jong_elements.sort((a, b) => {
+                            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+                        });
+                        let key = char.jong_elements.map((el) => el.dataset.jamo).join('');
+                        if(combined_jong[key]) {
+                            char.jong = combined_jong[key];
+                        }
+                    }
+                }
+            }
+        }
+        //console.log(chars);
+        let print = '';
+        for(let char of chars) {
+            let ch = (char.cho + char.jung + char.jong).normalize('NFC');
+            print += ch;
+        }
+        //console.log(print);
+        return print;
     }
     
     init();
