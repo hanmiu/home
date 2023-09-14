@@ -181,6 +181,7 @@
     let selected_stroke_color = 'blue';
     let selected_stroke_width = 4;
     let last_vaild_chars = null;
+    let speak_time_ids = [];
 
     let utter = null;
     if(speechSynthesis) {
@@ -941,10 +942,14 @@
 
     document.querySelector('#preview').addEventListener('click', (event) => {
         if(utter) {
+            while(speak_time_ids.length > 0) {
+                clearTimeout(speak_time_ids.shift());
+            }
             speechSynthesis.cancel();
             utter.rate = 0.8;
             utter.text = event.target.textContent; 
             speechSynthesis.speak(utter);
+            document.querySelector('#bt-speak').disabled = false;
         }
     });
 
@@ -1010,13 +1015,12 @@
         document.querySelector('#preview').textContent = judge();
     }
 
-    let speak_time_ids = [];
     if(utter) {
         document.querySelector('#bt-speak').addEventListener('click', (event) => {
             document.querySelector('#bt-speak').disabled = true;
-            // while(speak_time_ids.length > 0) {
-            //     clearTimeout(speak_time_ids.shift());
-            // }
+            while(speak_time_ids.length > 0) {
+                clearTimeout(speak_time_ids.shift());
+            }
 
             utter.rate = 0.8;
             let chars = document.querySelector('#preview').textContent.split('');
@@ -1047,16 +1051,15 @@
                                     el.querySelector('.glyph').setAttribute('stroke', 'black');
                                 });
                             }, 500);
-
-                            if(i == chars.length - 1) {
-                                setTimeout(() => {
-                                    document.querySelector('#bt-speak').disabled = false;
-                                }, 500);
-                            }
                         }
                     }
                 }, i * 1000);
                 speak_time_ids.push(tid);
+                if(i == chars.length - 1) {
+                    setTimeout(() => {
+                        document.querySelector('#bt-speak').disabled = false;
+                    }, i * 1000 + 500);
+                }
             }
         });
     }
