@@ -180,6 +180,7 @@
     let base_stroke_width = 10;
     let selected_stroke_color = 'blue';
     let selected_stroke_width = 4;
+    let last_vaild_chars = null;
 
     let utter = null;
     if(speechSynthesis) {
@@ -933,13 +934,16 @@
             print += ch;
         }
         //console.log(print);
+
+        last_vaild_chars = chars;
         return print;
     }
 
     document.querySelector('#preview').addEventListener('click', (event) => {
         if(utter) {
             speechSynthesis.cancel();
-            utter.text = event.target.innerHTML; 
+            utter.rate = 0.8;
+            utter.text = event.target.textContent; 
             speechSynthesis.speak(utter);
         }
     });
@@ -1007,9 +1011,37 @@
 
     if(utter) {
         document.querySelector('#bt-speak').addEventListener('click', (event) => {
-            speechSynthesis.cancel();
-            utter.text = document.querySelector('#preview').innerHTML; 
-            speechSynthesis.speak(utter);
+            utter.rate = 0.8;
+            let chars = document.querySelector('#preview').textContent.split('');
+            for(let i = 0; i < chars.length; i++) {
+                setTimeout(() => {
+                    utter.text = chars[i];
+                    speechSynthesis.speak(utter);
+                    if(last_vaild_chars) {
+                        let elem = last_vaild_chars[i];
+                        elem.cho_elements.forEach((el) => {
+                            el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
+                        });
+                        elem.jung_elements.forEach((el) => {
+                            el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
+                        });
+                        elem.jong_elements.forEach((el) => {
+                            el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
+                        });
+                        setTimeout(() => {
+                            elem.cho_elements.forEach((el) => {
+                                el.querySelector('.glyph').setAttribute('stroke', 'black');
+                            });
+                            elem.jung_elements.forEach((el) => {
+                                el.querySelector('.glyph').setAttribute('stroke', 'black');
+                            });
+                            elem.jong_elements.forEach((el) => {
+                                el.querySelector('.glyph').setAttribute('stroke', 'black');
+                            });
+                        }, 500);
+                    }
+                }, i * 1000);
+            }
         });
     }
     else {
