@@ -259,6 +259,7 @@
         scalerot.appendChild(halo);
         scalerot.appendChild(path);
 
+        group.dataset.ojamo = jamo;
         group.dataset.jamo = jamo;
         group.dataset.rot = 0;
         group.dataset.scale = 1;
@@ -329,8 +330,7 @@
             selectedMovable.dataset.x = x;
             selectedMovable.dataset.y = y;
 
-            let print = judge();
-            document.querySelector('#preview').innerHTML = print;
+            judge();
         }
         else {
             if(event.target.classList.contains('movable')) {
@@ -458,10 +458,14 @@
             else if(event.keyCode === 37) { // 키보드 화살표 좌우를 눌렀을 때 rot 조절
                 rot -= 5;
                 acted = true;
+                jamo_rotation_applied(lastMovable);
+                judge();
             }
             else if(event.keyCode === 39) {
                 rot += 5;
                 acted = true;
+                jamo_rotation_applied(lastMovable);
+                judge();
             }
 
             if(acted) {
@@ -490,8 +494,7 @@
 
         check_buttons();
 
-        let print = judge();
-        document.querySelector('#preview').innerHTML = print;
+        judge();
     }
 
     function undo() {
@@ -937,6 +940,7 @@
         //console.log(print);
 
         last_vaild_chars = chars;
+        document.querySelector('#preview').innerHTML = print;
         return print;
     }
 
@@ -1012,7 +1016,7 @@
             document.querySelector('#bt-print').disabled = true;
             document.querySelector('#bt-speak').disabled = true;
         }
-        document.querySelector('#preview').textContent = judge();
+        judge();
     }
 
     if(utter) {
@@ -1065,6 +1069,87 @@
     }
     else {
         document.querySelector('#bt-speak').style.display = 'none';
+    }
+
+    function pie4(str, f) {
+        let arr = str.split('');
+        
+    }
+
+    function pie4(str, f) {
+        let arr = str.split('');
+        let pie = '';
+
+        if(arr.length === 4) {
+            for(let i = 0; i < arr.length; i++) {
+                if(f >= 0 && f <0.125) {
+                    pie = arr[0];
+                }
+                else if(f >= 0.125 && f < 0.375) {
+                    pie = arr[1];
+                }
+                else if(f >= 0.375 && f < 0.625) {
+                    pie = arr[2];
+                }
+                else if(f >= 0.625 && f < 0.875) {
+                    pie = arr[3];
+                }
+                else if(f >= 0.875 && f <= 1) {
+                    pie = arr[0];
+                }
+            }
+        }
+        return pie;
+    }
+
+    function jamo_rotation_applied(el) {
+        let rot = parseFloat(el.dataset.rot) % 360;
+        if(rot < 0) {
+            rot += 360;
+        }
+        rot = rot / 360;
+        let ojamo = el.dataset.ojamo;
+        let jamo = el.dataset.ojamo;
+        // ᄀᄂ
+        // ᅡᅣᅥᅧᅩᅭᅮᅲᅳᅵ
+        if(ojamo === 'ᅡ') {
+            jamo = pie4('ᅡᅮᅥᅩ', rot);
+        }
+        else if(ojamo === 'ᅣ') {
+            jamo = pie4('ᅣᅲᅧᅭ', rot);
+        }
+        else if(ojamo === 'ᅥ') {
+            jamo = pie4('ᅥᅩᅡᅮ', rot);
+        }
+        else if(ojamo === 'ᅧ') {
+            jamo = pie4('ᅧᅭᅣᅲ', rot);
+        }
+        else if(ojamo === 'ᅩ') {
+            jamo = pie4('ᅩᅡᅮᅥ', rot);
+        }
+        else if(ojamo === 'ᅭ') {
+            jamo = pie4('ᅭᅣᅲᅧ', rot);
+        }
+        else if(ojamo === 'ᅮ') {
+            jamo = pie4('ᅮᅥᅩᅡ', rot);
+        }
+        else if(ojamo === 'ᅲ') {
+            jamo = pie4('ᅲᅧᅭᅣ', rot);
+        }
+        else if(ojamo === 'ᅳ') {
+            jamo = pie4('ᅳᅵᅳᅵ', rot);
+        }
+        else if(ojamo === 'ᅵ') {
+            jamo = pie4('ᅵᅳᅵᅳ', rot);
+        }
+        else if(ojamo === 'ᄀ') {
+            jamo = pie4('ᄀᄀᄂᄂ', rot);
+        }
+        else if(ojamo === 'ᄂ') {
+            jamo = pie4('ᄂᄂᄀᄀ', rot);
+        }
+        el.dataset.jamo = jamo;
+        return jamo;
     }
     
     init();
