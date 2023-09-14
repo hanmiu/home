@@ -112,6 +112,22 @@
         cursor: pointer;
     }
 
+    #info {
+        position: absolute;
+        left: 0px;
+        top: 90px;
+        padding-left: 30px;
+        padding-right: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        font-family: sans-serif;
+    }
+
+    #info > ul > li {
+        margin-top: 0.3em;
+        line-height: 1.25em;
+        font-size: 0.8em;
+    }
+
     @media print {
         #ui-top, #ui-buttons, #preview, #logotype {
             display: none;
@@ -134,6 +150,21 @@
     <div id="preview"></div>
     <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     <!-- <div id="ui-bottom"></div> -->
+    <div id="info" style="display: none;">
+        <h4>놀이 방법</h4>
+        <ul>
+            <li>위의 한글 자모를 끌어다가 아래쪽에 배치해 보세요.</li>
+            <li>선택한 자모를 선 위로 끌어 올리면 지워집니다.</li>
+            <li>빨간색 ~ 보라색의 버튼의 기능도 활용해 보세요.</li>
+            <li>키보드가 있는 경우는 화살표(크기/회전), 스페이스(복제), 백스페이스(지우기) 기능을 사용할 수 있습니다.</li>
+            <li>'읽기'버튼은 또박또박 읽고, 우하단의 조합된 글을 클릭하면 연음으로 읽습니다.</li>
+            <li><a href="https://www.hanmiu.cc" target="_blank">한미유치원</a> 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !</li>
+        </ul>
+        <div style="text-align: right; font-size: 0.8em; margin: 20px 0px 10px 0px;">창작: 미디어아티스트 최승준</div>
+        <div style="text-align: right; padding-top: 10px; border-top: 1px solid gray;">
+            <button id="close-info">놀이 방법 닫기</button>
+        </div>
+    </div>
 </body>
 <script>
     const stage = document.getElementById('stage');
@@ -1155,4 +1186,20 @@
     init();
     resize();
     check_buttons();
+
+    let rect_ui_top = document.querySelector('#ui-top').getBoundingClientRect();
+    if(!localStorage.jamo_visited_count) {
+        localStorage.jamo_visited_count = 1;
+        document.querySelector('#info').style.display = 'block';
+        document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
+    }
+    else {
+        let visited_count = parseInt(localStorage.jamo_visited_count);
+        visited_count += 1;
+        if(visited_count <= 3) {
+            document.querySelector('#info').style.display = 'block';
+            document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
+        }
+        localStorage.jamo_visited_count = visited_count;
+    }
 </script>
