@@ -753,7 +753,7 @@
                 let y1 = parseFloat(el_vowel.dataset.y);
                 let dx = x1 - x0;
                 let dy = y1 - y0;
-                let dist = Math.sqrt(dx * dx + dy * dy);
+                //let dist = Math.sqrt(dx * dx + dy * dy);
                 if(Math.abs(dx) < thres_x && Math.abs(dy) < thres_y) {
                     let key = el_prev_vowel.dataset.jamo + el_vowel.dataset.jamo;
                     // ᅫ, ᅰ 경우는 3개를 검사해야 함
@@ -764,7 +764,7 @@
                         let y2 = parseFloat(el_prev_prev_vowel.dataset.y);
                         let dx2 = x2 - x0;
                         let dy2 = y2 - y0;
-                        let dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                        //let dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
                         if(Math.abs(dx2) < thres_x && Math.abs(dy2) < thres_y) {
                             key = el_prev_prev_vowel.dataset.jamo + combined_vowel;
                             char.jung_elements.unshift(el_prev_prev_vowel);
@@ -846,7 +846,7 @@
                     cy = (rect.top + rect.bottom) / 2;
                     if(top < cy && cy < bottom) {
                         let dist = Math.abs(cx - left);
-                        if(dist < min_dist) {
+                        if(dist < min_dist && cx < left) {
                             min_dist = dist;
                             min_el = el;
                         }
@@ -857,7 +857,7 @@
                     char.cho_elements = [min_el];
                 }
             }
-            if(type_h.includes(char.jung) || type_d.includes(char.jung)) {
+            else if(type_h.includes(char.jung) || type_d.includes(char.jung)) {
                 // 위쪽에 있는 자음의 중심이 left ~ right 사이에 있고 가장 가까운 것을 초성으로 선택
                 let cx = 0;
                 let cy = 0;
@@ -868,8 +868,8 @@
                     cx = (rect.left + rect.right) / 2;
                     cy = (rect.top + rect.bottom) / 2;
                     if(left < cx && cx < right) {
-                        let dist = Math.abs(cy - top);
-                        if(dist < min_dist) {
+                        let dist = Math.abs(cy - bottom);
+                        if(dist < min_dist && cy < bottom) {
                             min_dist = dist;
                             min_el = el;
                         }
@@ -881,6 +881,7 @@
                 }
             }
             // 다른 자음 중에 현재 초성의 왼쪽에 있으면서 가장 가까운 것 중에 거리가 80 이내인 것을 쌍자음 후보로 선택
+            let min_cho_el = char.cho_elements[0];
             for(let el of consonant_movables) {
                 let rect = el.querySelector('.glyph').getBoundingClientRect();
                 let cx = (rect.left + rect.right) / 2;
@@ -890,15 +891,19 @@
                 let rect_cho_cx = (rect_cho.left + rect_cho.right) / 2;
                 let rect_cho_cy = (rect_cho.top + rect_cho.bottom) / 2;
                 let dist = Math.abs(cx - rect_cho_cx);
-                if(el !== char.cho_elements[0]) {
+                if(el !== min_cho_el) {
                     if(dist < thres_x && cy > rect_cho.top && cy < rect_cho.bottom) {
                         char.cho_elements.unshift(el);
                         char.cho_elements.sort((a, b) => {
                             return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
                         });
                         let key = char.cho_elements.map((el) => el.dataset.jamo).join('');
-                        if(combined_cho[key]) {
+                        if(combined_cho.hasOwnProperty(key)) {
                             char.cho = combined_cho[key];
+                        }
+                        else {
+                            char.cho_elements.shift();
+                            char.cho = char.cho_elements[char.cho_elements.length - 1].dataset.jamo;
                         }
                     }
                 }
@@ -936,6 +941,7 @@
                     }
                 }
             }
+            let min_jong_el = char.jong_elements[0];
             for(let el of consonant_movables) {
                 let rect = el.querySelector('.glyph').getBoundingClientRect();
                 let cx = (rect.left + rect.right) / 2;
@@ -945,15 +951,19 @@
                 let rect_jong_cx = (rect_jong.left + rect_jong.right) / 2;
                 let rect_jong_cy = (rect_jong.top + rect_jong.bottom) / 2;
                 let dist = Math.abs(cx - rect_jong_cx);
-                if(el !== char.jong_elements[0]) {
+                if(el !== min_jong_el) {
                     if(dist < thres_x && cy > rect_jong.top && cy < rect_jong.bottom) {
                         char.jong_elements.unshift(el);
                         char.jong_elements.sort((a, b) => {
                             return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
                         });
                         let key = char.jong_elements.map((el) => el.dataset.jamo).join('');
-                        if(combined_jong[key]) {
+                        if(combined_jong.hasOwnProperty(key)) {
                             char.jong = combined_jong[key];
+                        }
+                        else {
+                            char.jong_elements.shift();
+                            char.jong = char.jong_elements[char.jong_elements.length - 1].dataset.jamo;
                         }
                     }
                 }
