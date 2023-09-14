@@ -232,7 +232,8 @@
             const el = document.createElement('div');
             el.classList.add('jamo-button');
             el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
-            let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            //let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            let size = 45;
             el.style['width']= `${size}px`;
             el.style['height'] = `${size}px`;
             el.dataset.jamo = jamo;
@@ -241,12 +242,12 @@
     }
 
     function resize() {
-        let jamo_size = Math.max(window.innerWidth, window.innerHeight) / 25;
+        //let jamo_size = Math.max(window.innerWidth, window.innerHeight) / 25;
         svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
-        for(let jb of document.querySelectorAll('.jamo-button')) {
-            jb.style['width']= `${jamo_size}px`;
-            jb.style['height'] = `${jamo_size}px`;
-        }
+        // for(let jb of document.querySelectorAll('.jamo-button')) {
+        //     jb.style['width']= `${jamo_size}px`;
+        //     jb.style['height'] = `${jamo_size}px`;
+        // }
 
         let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
         document.querySelector('#ui-buttons').style['top'] = `${ui_top_rect.bottom}px`;
@@ -303,12 +304,21 @@
         let target = event.target;
         let movable = false;
 
+        let [pageX, pageY] = [0, 0];
+        if (event.type === 'mousedown') {
+            pageX = event.pageX;
+            pageY = event.pageY;
+        } else if (event.type === 'touchstart') {
+            pageX = event.touches[0].pageX;
+            pageY = event.touches[0].pageY;
+        }
+
         if(target.classList.contains('jamo-button')) {
             movable = true;
             let group = add_movable(target.dataset.jamo);
-            group.dataset.x = event.pageX;
-            group.dataset.y = event.pageY;
-            group.setAttribute('transform', `translate(${event.pageX}, ${event.pageY})`);
+            group.dataset.x = pageX;
+            group.dataset.y = pageY;
+            group.setAttribute('transform', `translate(${pageX}, ${pageY})`);
             target = group;
         }
 
@@ -333,13 +343,8 @@
             selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
             selectedMovable.querySelector('.halo').setAttribute('stroke-opacity', 0.5);
 
-            if (event.type === 'mousedown') {
-                offsetX = event.pageX - parseFloat(target.dataset.x);
-                offsetY = event.pageY - parseFloat(target.dataset.y);
-            } else if (event.type === 'touchstart') {
-                offsetX = event.touches[0].pageX - parseFloat(target.dataset.x);
-                offsetY = event.touches[0].pageY - parseFloat(target.dataset.y);    
-            }
+            offsetX = pageX - parseFloat(target.dataset.x);
+            offsetY = pageY - parseFloat(target.dataset.y);
         }
         else {
             //---
@@ -387,14 +392,6 @@
                 }
                 selectedMovable.remove();
             }
-
-            // let ui_bottom_rect = document.querySelector('#ui-bottom').getBoundingClientRect();
-            // if(selectedMovable.dataset.y > ui_bottom_rect.top) {
-            //     if(lastMovable === selectedMovable) {
-            //         lastMovable = null;
-            //     }
-            //     selectedMovable.remove();
-            // }
             action();
         }
         selectedMovable = null;
