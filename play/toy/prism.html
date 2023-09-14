@@ -701,7 +701,52 @@
     });
 
     document.querySelector('#print').addEventListener('click', (event) => {
+        lastMovable = null;
+        lastSelectedMovable = null;
+        selectedMovable = null;
+
+        let temp_svg_inner_string = svg.innerHTML;
+        let temp_width = svg.getAttribute('width');
+        let temp_height = svg.getAttribute('height');
+        let temp_viewBox = svg.getAttribute('viewBox');
+        let svg_print = svg.cloneNode(true);
+
+        let left = Number.MAX_VALUE;
+        let top = Number.MAX_VALUE;
+        let right = Number.MIN_VALUE;
+        let bottom = Number.MIN_VALUE;
+
+        let polygons = svg.querySelectorAll('polygon');
+        for(let p of polygons) {
+            let rect = p.getBoundingClientRect();
+            if(rect.left < left) left = rect.left;
+            if(rect.top < top) top = rect.top;
+            if(rect.right > right) right = rect.right;
+            if(rect.bottom > bottom) bottom = rect.bottom;
+        }
+
+        svg_print.innerHTML = '';
+        let g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.innerHTML = temp_svg_inner_string;
+        let scale = 1.5;
+        // svg_print.setAttribute('width', (right - left));
+        // svg_print.setAttribute('height', (bottom - top));
+        // svg_print.setAttribute('viewBox', `${0} ${0} ${right - left} ${bottom - top}`);
+        g.setAttribute('transform', `scale(${scale}, ${scale}) translate(${-left}, ${-top})`);
+        svg_print.appendChild(g);
+        let w = 210 * 4;
+        let h = 297 * 4;
+        svg.setAttribute('width', w);
+        svg.setAttribute('height', h);
+        svg.setAttribute('viewBox', `${0} ${0} ${w} ${h}`);
+        svg.innerHTML = svg_print.innerHTML;
+        
         window.print();
+        svg_print.remove();
+        svg.setAttribute('width', temp_width);
+        svg.setAttribute('height', temp_height);
+        svg.setAttribute('viewBox', temp_viewBox);
+        svg.innerHTML = temp_svg_inner_string;
     });
 
     document.querySelector('#clear').addEventListener('click', (event) => {
