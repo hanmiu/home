@@ -1020,6 +1020,10 @@
         window.open('https://www.hanmiu.cc', '_blank');
     });
 
+    document.querySelector('#close-info').addEventListener('click', () => {
+        document.querySelector('#info').style.display = 'none';
+    });
+
     function check_buttons() {
         if(action_history.length > 0) {
             document.querySelector('#bt-undo').disabled = false;
