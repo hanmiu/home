@@ -1007,40 +1007,56 @@
             document.querySelector('#bt-print').disabled = true;
             document.querySelector('#bt-speak').disabled = true;
         }
+        document.querySelector('#preview').textContent = judge();
     }
 
+    let speak_time_ids = [];
     if(utter) {
         document.querySelector('#bt-speak').addEventListener('click', (event) => {
+            document.querySelector('#bt-speak').disabled = true;
+            // while(speak_time_ids.length > 0) {
+            //     clearTimeout(speak_time_ids.shift());
+            // }
+
             utter.rate = 0.8;
             let chars = document.querySelector('#preview').textContent.split('');
             for(let i = 0; i < chars.length; i++) {
-                setTimeout(() => {
+                let tid = setTimeout(() => {
                     utter.text = chars[i];
                     speechSynthesis.speak(utter);
                     if(last_vaild_chars) {
                         let elem = last_vaild_chars[i];
-                        elem.cho_elements.forEach((el) => {
-                            el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
-                        });
-                        elem.jung_elements.forEach((el) => {
-                            el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
-                        });
-                        elem.jong_elements.forEach((el) => {
-                            el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
-                        });
-                        setTimeout(() => {
+                        if(elem) {
                             elem.cho_elements.forEach((el) => {
-                                el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
                             });
                             elem.jung_elements.forEach((el) => {
-                                el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
                             });
                             elem.jong_elements.forEach((el) => {
-                                el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
                             });
-                        }, 500);
+                            setTimeout(() => {
+                                elem.cho_elements.forEach((el) => {
+                                    el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                });
+                                elem.jung_elements.forEach((el) => {
+                                    el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                });
+                                elem.jong_elements.forEach((el) => {
+                                    el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                });
+                            }, 500);
+
+                            if(i == chars.length - 1) {
+                                setTimeout(() => {
+                                    document.querySelector('#bt-speak').disabled = false;
+                                }, 500);
+                            }
+                        }
                     }
                 }, i * 1000);
+                speak_time_ids.push(tid);
             }
         });
     }
