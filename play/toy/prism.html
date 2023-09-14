@@ -739,6 +739,15 @@
         svg.setAttribute('width', w);
         svg.setAttribute('height', h);
         svg.setAttribute('viewBox', `${0} ${0} ${w} ${h}`);
+        svg_print.querySelectorAll('.cross-hair').forEach((elem) => {
+            elem.remove();
+        });
+        svg_print.querySelectorAll('.seg').forEach((elem) => {
+            elem.remove();
+        });
+        svg_print.querySelectorAll('polygon').forEach((elem) => {
+            elem.setAttribute('stroke-width', 1);
+        });
         svg.innerHTML = svg_print.innerHTML;
         
         window.print();
@@ -830,15 +839,38 @@
         }
     });
 
+    function formatDateToString(date) {
+        // 년, 월, 일, 시, 분, 초를 추출합니다.
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');  // 월은 0-based, 따라서 +1을 해줍니다.
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+
+        // 파일명 포맷에 맞게 결합합니다.
+        return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+    }
+
     document.querySelector('#save').addEventListener('click', (event) => {
         // save 버튼을 누르면 svg를 xml형식으로 변환하여 파일로 다운로드
-        let svg = document.querySelector('svg');
-        let svg_xml = new XMLSerializer().serializeToString(svg);
+        const svg_save = svg.cloneNode(true);
+        svg_save.querySelectorAll('.cross-hair').forEach((elem) => {
+            elem.remove();
+        });
+        svg_save.querySelectorAll('.seg').forEach((elem) => {
+            elem.remove();
+        });
+        svg_save.querySelectorAll('polygon').forEach((elem) => {
+            elem.setAttribute('stroke-width', 1);
+        });
+        let svg_xml = new XMLSerializer().serializeToString(svg_save);
+        svg_save.remove();
         let blob = new Blob([svg_xml], {type: 'image/svg+xml'});
         let url = URL.createObjectURL(blob);
         let a = document.createElement('a');
         a.href = url;
-        a.download = 'pillar.svg';
+        a.download = `prism_${formatDateToString(new Date())}.svg`;
         a.click();
     });
     
