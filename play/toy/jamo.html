@@ -892,7 +892,8 @@
                 let rect_cho_cy = (rect_cho.top + rect_cho.bottom) / 2;
                 let dist = Math.abs(cx - rect_cho_cx);
                 if(el !== min_cho_el) {
-                    if(dist < thres_x && cy > rect_cho.top && cy < rect_cho.bottom) {
+                    let scale = Math.max(parseFloat(el.dataset.scale), 1);
+                    if(dist < thres_x * 1.25 * scale && cy > rect_cho.top && cy < rect_cho.bottom) {
                         char.cho_elements.unshift(el);
                         char.cho_elements.sort((a, b) => {
                             return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
@@ -952,7 +953,8 @@
                 let rect_jong_cy = (rect_jong.top + rect_jong.bottom) / 2;
                 let dist = Math.abs(cx - rect_jong_cx);
                 if(el !== min_jong_el) {
-                    if(dist < thres_x && cy > rect_jong.top && cy < rect_jong.bottom) {
+                    let scale = Math.max(parseFloat(el.dataset.scale), 1);
+                    if(dist < thres_x * 1.25 * scale && cy > rect_jong.top && cy < rect_jong.bottom) {
                         char.jong_elements.unshift(el);
                         char.jong_elements.sort((a, b) => {
                             return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
@@ -1190,7 +1192,9 @@
         else if(ojamo === 'ᄂ') {
             jamo = pie4('ᄂᄂᄀᄀ', rot);
         }
-        el.dataset.jamo = jamo;
+        if(jamo) {
+            el.dataset.jamo = jamo;
+        }
         return jamo;
     }
     
