@@ -225,8 +225,16 @@
         utter.volume = 1.0;
     }
 
+    function setJamoButtonColor() {
+        let color = document.querySelector('#color-picker').value;
+        document.querySelectorAll('.jamo-button').forEach((el) => {
+            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
+        });
+    }
+
     function init() {
         // top-ui 자모 선택
+        /*
         for (let jamo in jamoset) {        
             let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path></svg>`;
 
@@ -234,12 +242,44 @@
             const el = document.createElement('div');
             el.classList.add('jamo-button');
             el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
+            //el.style['background-image'] = `url("data:image/svg+xml;utf-8,${svg_string}")`;
             //let size = Math.max(window.innerWidth, window.innerHeight) / 25;
             let size = 45;
             el.style['width']= `${size}px`;
             el.style['height'] = `${size}px`;
             el.dataset.jamo = jamo;
             document.querySelector('#ui-top').appendChild(el);
+            if(jamo === 'ᄒ') {
+                let br = document.createElement('br');
+                document.querySelector('#ui-top').appendChild(br);
+            }
+        }
+        */
+        for (let jamo in jamoset) {        
+            let inner_svg_string = `<path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width+2}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path>
+            <path class="front" d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path>`;
+
+            let bt_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            bt_svg.setAttribute('width', '100%');
+            bt_svg.setAttribute('height', '100%');
+            bt_svg.setAttribute('viewBox', `0 0 100 100`);
+            bt_svg.innerHTML = inner_svg_string;
+            bt_svg.style['pointer-events'] = 'none';
+            const el = document.createElement('div');
+            el.classList.add('jamo-button');
+            //el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
+            //el.style['background-image'] = `url("data:image/svg+xml;utf-8,${svg_string}")`;
+            //let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            el.appendChild(bt_svg);
+            let size = 45;
+            el.style['width']= `${size}px`;
+            el.style['height'] = `${size}px`;
+            el.dataset.jamo = jamo;
+            document.querySelector('#ui-top').appendChild(el);
+            // if(jamo === 'ᄒ') {
+            //     let br = document.createElement('br');
+            //     document.querySelector('#ui-top').appendChild(br);
+            // }
         }
 
         let el_logotype = document.querySelector('#logotype');
@@ -359,6 +399,7 @@
             offsetY = pageY - parseFloat(target.dataset.y);
 
             document.querySelector('#color-picker').value = selectedMovable.dataset.color;
+            setJamoButtonColor();
         }
         else {
             //---
@@ -1046,6 +1087,7 @@
 
     document.querySelector('#color-picker').addEventListener('input', (event) => {
         let color = event.target.value;
+        setJamoButtonColor();
         if(lastMovable) {
             lastMovable.dataset.color = color;
             lastMovable.querySelector('.glyph').setAttribute('stroke', color);
