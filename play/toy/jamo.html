@@ -566,11 +566,13 @@
     });
 
     function action() {
-        if(action_history.length > 0) {
-            if(action_history[action_history.length - 1] === svg.innerHTML) {
-                return;
-            }
-        }
+        // if(action_history.length > 0) {
+        //     if(action_history[action_history.length - 1] === svg.innerHTML) {
+        //         console.log('!!!');
+        //         return;
+        //     }
+        // }
+
         let acted_time = performance.now();
         let elapsed_time = acted_time - last_acted_time;
         last_acted_time = acted_time;
@@ -1094,9 +1096,11 @@
         let color = event.target.value;
         setJamoButtonColor();
         if(lastMovable) {
-            lastMovable.dataset.color = color;
-            lastMovable.querySelector('.glyph').setAttribute('stroke', color);
-            action();
+            if(lastMovable.dataset.color !== color) {
+                lastMovable.dataset.color = color;
+                lastMovable.querySelector('.glyph').setAttribute('stroke', color);
+                action();
+            }
         }
     });
 
