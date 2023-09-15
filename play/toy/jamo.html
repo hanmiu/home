@@ -566,6 +566,11 @@
     });
 
     function action() {
+        if(action_history.length > 0) {
+            if(action_history[action_history.length - 1] === svg.innerHTML) {
+                return;
+            }
+        }
         let acted_time = performance.now();
         let elapsed_time = acted_time - last_acted_time;
         last_acted_time = acted_time;
