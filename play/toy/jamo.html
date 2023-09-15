@@ -59,7 +59,8 @@
         border-radius: 3px;
         font-family: sans-serif;
         font-size: 14px;
-        margin-right: 10px;
+        margin-right: 5px;
+        margin-bottom: 5px;
         cursor: pointer;
     }
 
@@ -146,9 +147,10 @@
         <button id="bt-save" class="ui-button" style="background-color: rgb(173, 238, 44);">저장</button>
         <button id="bt-print" class="ui-button" style="background-color: rgb(32, 197, 223);">인쇄</button>
         <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
+        <input type="color" id="color-picker" value="purple">
     </div>
     <div id="preview"></div>
-    <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
+    <img id="logotype">
     <!-- <div id="ui-bottom"></div> -->
     <div id="info" style="display: none;">
         <h4>놀이 방법</h4>
@@ -239,6 +241,10 @@
             el.dataset.jamo = jamo;
             document.querySelector('#ui-top').appendChild(el);
         }
+
+        let el_logotype = document.querySelector('#logotype');
+        let logo_svg_str = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 305 100" version="1.1" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;"><g transform="matrix(0.132046,0,0,0.132046,-275.898,-181.837)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:31.55px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,-215.341,-148.706)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-234.97,-149.014)"><path d="M2555.2,1518.19L2555.2,1842.53" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-231.778,-165.71)"><path d="M2142.87,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-36.6926,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-27.4323,-152.336)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.167914,0,0,-0.167914,-121.496,319.866)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:24.81px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,21.1762,-165.445)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,198.954,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,2.37791,-149.014)"><path d="M2555.2,1518.19L2555.2,1872.19" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,199.935,-138.281)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-59.8431,-148.992)"><path d="M2703.12,1753.94C2845.41,1760.9 2927.01,1766.21 2998.72,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.173765,0,0,0.168083,-145.561,-229.091)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:24.37px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-45.8206,-149.203)"><path d="M1736.22,1991.09C1736.22,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1753.84 1564.35,1718.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,361.661,-149.151)"><path d="M1736.76,1991.09C1736.76,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1759.84 1564.35,1724.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.0782,-149.568)"><path d="M2289.38,1553.11C2289.38,1553.11 2308.91,1670.79 2289.38,1724.47C2269.72,1778.49 2171.6,1875.79 2171.44,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,466.598,-149.568)"><path d="M2290.86,1724.47L2173.04,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-56.4968,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.1885,-162.323)"><path d="M2172.41,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-172.361,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113459,0,0,0.103146,-35.0422,-129.724)"><rect x="991.31" y="1548.04" width="202.433" height="324.155" style="fill:none;stroke:black;stroke-width:38.43px;"></rect></g></svg>`;
+        el_logotype.src = `data:image/svg+xml;utf8,${logo_svg_str}`;
     }
 
     function resize() {
@@ -260,6 +266,13 @@
         group.classList.add('movable');
         svg.appendChild(group);
 
+        group.dataset.ojamo = jamo;
+        group.dataset.jamo = jamo;
+        group.dataset.rot = 0;
+        group.dataset.scale = 1;
+        group.dataset.color = document.querySelector('#color-picker').value;
+        group.dataset.type = 'jamo';
+
         const scalerot = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         scalerot.classList.add('scalerot');
         group.appendChild(scalerot);
@@ -277,7 +290,7 @@
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.classList.add('glyph');
         path.setAttribute('d', jamoset[jamo]);
-        path.setAttribute('stroke', 'black');
+        path.setAttribute('stroke', group.dataset.color);
         path.setAttribute('stroke-width', stroke_width);
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
@@ -290,12 +303,6 @@
         halo.setAttribute('stroke-width', stroke_width + 1);
         scalerot.appendChild(halo);
         scalerot.appendChild(path);
-
-        group.dataset.ojamo = jamo;
-        group.dataset.jamo = jamo;
-        group.dataset.rot = 0;
-        group.dataset.scale = 1;
-        group.dataset.type = 'jamo';
 
         return group;
     }
@@ -322,9 +329,14 @@
             target = group;
         }
 
-        document.querySelectorAll('.halo').forEach((el) => {
-            el.setAttribute('stroke', 'transparent');
-        });
+        if(target.parentElement) {
+            if(target.parentElement.id !== 'ui-buttons') {
+                document.querySelectorAll('.halo').forEach((el) => {
+                    el.setAttribute('stroke', 'transparent');
+                });
+                lastMovable = null;
+            }
+        }
         
         while(target.parentElement) {
             if(target.classList.contains('movable')) {
@@ -345,6 +357,8 @@
 
             offsetX = pageX - parseFloat(target.dataset.x);
             offsetY = pageY - parseFloat(target.dataset.y);
+
+            document.querySelector('#color-picker').value = selectedMovable.dataset.color;
         }
         else {
             //---
@@ -439,8 +453,10 @@
                 group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
                 group.dataset.scale = scale;
                 group.dataset.rot = rot;
+                group.dataset.color = lastMovable.dataset.color;
                 group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
                 scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+                glyph.setAttribute('stroke', group.dataset.color);
                 glyph.setAttribute('stroke-width', stroke_width);
                 halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
                 halo.setAttribute('stroke', selected_stroke_color);
@@ -633,6 +649,9 @@
                         halo.setAttribute('stroke', 'transparent');
                         scalerot.insertBefore(halo, scalerot.firstChild);
                         scalerot.insertBefore(circle, scalerot.firstChild);
+                        if(!group.hasAttribute('color')) {
+                            group.dataset.color = black;
+                        }
                     }
                     svg.innerHTML = el_svg.innerHTML;
                     action();
@@ -1025,6 +1044,15 @@
         }
     });
 
+    document.querySelector('#color-picker').addEventListener('input', (event) => {
+        let color = event.target.value;
+        if(lastMovable) {
+            lastMovable.dataset.color = color;
+            lastMovable.querySelector('.glyph').setAttribute('stroke', color);
+            action();
+        }
+    });
+
     document.querySelector('#logotype').addEventListener('click', (event) => {
         window.open('https://www.hanmiu.cc', '_blank');
     });
@@ -1090,13 +1118,13 @@
                             });
                             setTimeout(() => {
                                 elem.cho_elements.forEach((el) => {
-                                    el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                    el.querySelector('.glyph').setAttribute('stroke', el.dataset.color);
                                 });
                                 elem.jung_elements.forEach((el) => {
-                                    el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                    el.querySelector('.glyph').setAttribute('stroke', el.dataset.color);
                                 });
                                 elem.jong_elements.forEach((el) => {
-                                    el.querySelector('.glyph').setAttribute('stroke', 'black');
+                                    el.querySelector('.glyph').setAttribute('stroke', el.dataset.color);
                                 });
                             }, 500);
                         }
