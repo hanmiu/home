@@ -248,12 +248,12 @@
     }
 
     function resize() {
-        //let jamo_size = Math.max(window.innerWidth, window.innerHeight) / 25;
+        let jamo_size = Math.max(Math.min(Math.min(window.innerWidth, window.innerHeight) / 25, 45), 25);
         svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
-        // for(let jb of document.querySelectorAll('.jamo-button')) {
-        //     jb.style['width']= `${jamo_size}px`;
-        //     jb.style['height'] = `${jamo_size}px`;
-        // }
+        for(let jb of document.querySelectorAll('.jamo-button')) {
+            jb.style['width']= `${jamo_size}px`;
+            jb.style['height'] = `${jamo_size}px`;
+        }
 
         let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
         document.querySelector('#ui-buttons').style['top'] = `${ui_top_rect.bottom}px`;
@@ -1225,10 +1225,6 @@
         }
         return jamo;
     }
-    
-    init();
-    resize();
-    check_buttons();
 
     let rect_ui_top = document.querySelector('#ui-top').getBoundingClientRect();
     if(!localStorage.jamo_visited_count) {
@@ -1245,4 +1241,8 @@
         }
         localStorage.jamo_visited_count = visited_count;
     }
+
+    init();
+    resize();
+    check_buttons();
 </script>
