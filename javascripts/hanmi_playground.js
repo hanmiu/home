@@ -2,6 +2,15 @@ html['playground'] = `
   <div>어린이의 동시대 환경인 디지털</div>
   <br>
   
+  <div class="subtle"><a href="https://hanmiu.cc/play/toy/jamo.html" target="_blank"><strong>
+  한글 자모 창작
+  </strong></div>
+  <a class="no-underline" href="https://hanmiu.cc/play/toy/jamo.html">
+    <img class="full" src="./images/2023/jamo.jpg">
+  </a>
+  <div class="subtle">한미유치원의 각 반에서는 어린이들이 호기심을 따라 탐험과 맥락이 있는 놀이를 통해 한글을 알아갑니다. 그 여정을 지원하기 위해 만들었습니다.</div>
+  <br><br>
+
   <div class="subtle"><a href="https://hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank"><strong>
   뾰족산의 보물
   </strong></div>
@@ -16,6 +25,7 @@ html['playground'] = `
     <li><span><a href="https://bit.ly/3Hne94r" target="_blank">&lt;뾰족산의 보물&gt; 플레이 방법과 더 자세한 소개</a></li>
     <li><span><a href="https://good-pike-738.notion.site/5-ab1ce4b1f7044a8ea6cc4c269159b0b3" target="_blank">&lt;디지털 리터러시&gt;를 포함한 2021학년도 &lt;다양한 문해력&gt; 화두에 연결되어 있는 놀이</a></li>
   </ul>
+  </div>
   <br><br>
 
   <!--

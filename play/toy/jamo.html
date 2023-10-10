@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-<title>한글 자모</title>
+<title>한글 자모 창작</title>
 <style>
     body{
         margin: 0px;
@@ -215,6 +215,9 @@
     let selected_stroke_width = 4;
     let last_vaild_chars = null;
     let speak_time_ids = [];
+
+    let frames = [];
+    let curr_frame_idx = 0;
 
     let utter = null;
     if(speechSynthesis) {
@@ -483,6 +486,12 @@
             let stroke_width = base_stroke_width / scale;
             let acted = false;
 
+            //console.log(event.key); 
+            // 13은 Enter, 16은 Shift
+            if(event.key === 'Enter') {
+                frames.push(svg.innerHTML);
+            }
+
             // 스페이스 눌렀을 때 선택된 movable 복제
             if(event.keyCode === 32) {
                 lastMovable.querySelector('.halo').setAttribute('stroke', 'transparent');
@@ -562,6 +571,17 @@
                 glyph.setAttribute('stroke-width', stroke_width);
                 action();
             }
+        }
+
+        if(event.key === '<') {
+            curr_frame_idx -= 1;
+            if(curr_frame_idx < 0) curr_frame_idx = 0;
+            svg.innerHTML = frames[curr_frame_idx];
+        }
+        else if(event.key === '>') {
+            curr_frame_idx += 1;
+            if(curr_frame_idx >= frames.length) curr_frame_idx = frames.length - 1;
+            svg.innerHTML = frames[curr_frame_idx];
         }
     });
 
@@ -698,7 +718,7 @@
                         scalerot.insertBefore(halo, scalerot.firstChild);
                         scalerot.insertBefore(circle, scalerot.firstChild);
                         if(!group.hasAttribute('color')) {
-                            group.dataset.color = black;
+                            group.dataset.color = 'black';
                         }
                     }
                     svg.innerHTML = el_svg.innerHTML;
@@ -1277,21 +1297,23 @@
         return jamo;
     }
 
-    let rect_ui_top = document.querySelector('#ui-top').getBoundingClientRect();
-    if(!localStorage.jamo_visited_count) {
-        localStorage.jamo_visited_count = 1;
-        document.querySelector('#info').style.display = 'block';
-        document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
-    }
-    else {
-        let visited_count = parseInt(localStorage.jamo_visited_count);
-        visited_count += 1;
-        if(visited_count <= 3) {
+    setTimeout(() => {
+        let rect_ui_top = document.querySelector('#ui-top').getBoundingClientRect();
+        if(!localStorage.jamo_visited_count) {
+            localStorage.jamo_visited_count = 1;
             document.querySelector('#info').style.display = 'block';
             document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
         }
-        localStorage.jamo_visited_count = visited_count;
-    }
+        else {
+            let visited_count = parseInt(localStorage.jamo_visited_count);
+            visited_count += 1;
+            if(visited_count <= 3) {
+                document.querySelector('#info').style.display = 'block';
+                document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
+            }
+            localStorage.jamo_visited_count = visited_count;
+        }
+    }, 200);
 
     init();
     resize();
