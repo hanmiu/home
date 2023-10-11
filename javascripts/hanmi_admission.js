@@ -60,7 +60,7 @@ html['admission'] = `
 <strong>교육 설명회 2024</strong>
 <div class="subtle">
   <ul class="leaf">
-    <li>우선 모집: 11/1(수) 16시 30분</li>
+    <li>우선 모집: 10/31(화), 11/01(수) 16시 30분</li>
     <!--<li>일반 모집: 11/14(월) 16시 30분, <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a>  (← 클릭) </li>-->
   </ul>
   <!--<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)-->
