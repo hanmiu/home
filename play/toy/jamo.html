@@ -147,7 +147,7 @@
         <button id="bt-save" class="ui-button" style="background-color: rgb(173, 238, 44);">저장</button>
         <button id="bt-print" class="ui-button" style="background-color: rgb(32, 197, 223);">인쇄</button>
         <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
-        <input type="color" id="color-picker" value="purple">
+        <input type="color" id="color-picker" value="#000000">
     </div>
     <div id="preview"></div>
     <img id="logotype">
@@ -585,21 +585,49 @@
         }
     });
 
-    function action() {
-        // if(action_history.length > 0) {
-        //     if(action_history[action_history.length - 1] === svg.innerHTML) {
-        //         console.log('!!!');
-        //         return;
-        //     }
-        // }
+    function state_svg_to_array() {
+        let state = [];
+        for(let el of svg.querySelectorAll('.movable')) {
+            state.push({...el.dataset});
+        }
+        return state;
+    }
 
+    function dataset_to_movable(dataset) {
+        let group = add_movable(dataset.jamo);
+        let scalerot = group.querySelector('.scalerot');
+        let halo = group.querySelector('.halo');
+        let glyph = group.querySelector('.glyph');
+        for(let key in dataset) {
+            group.dataset[key] = dataset[key];
+        }
+        group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+        scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+        glyph.setAttribute('stroke', group.dataset.color);
+        glyph.setAttribute('stroke-width', base_stroke_width / group.dataset.scale);
+        halo.setAttribute('stroke-width', base_stroke_width / group.dataset.scale + selected_stroke_width / group.dataset.scale);
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-opacity', 0.5);
+        return group;
+    }
+
+    function state_array_to_svg(state) {
+        if(state) {
+            svg.innerHTML = '';
+            for(let dataset of state) {
+                dataset_to_movable(dataset);
+            }
+        }
+    }
+
+    function action() {
         let acted_time = performance.now();
         let elapsed_time = acted_time - last_acted_time;
         last_acted_time = acted_time;
         if(elapsed_time < 500) {
             action_history.pop();
         }
-        action_history.push(svg.innerHTML);
+        action_history.push(state_svg_to_array());
         while(action_history_buffer.length > 0) {
             action_history_buffer.pop();
         }
@@ -613,7 +641,12 @@
         if(action_history.length > 0) {
             const popped = action_history.pop();
             action_history_buffer.push(popped);
-            svg.innerHTML = action_history[action_history.length - 1];
+            if(action_history.length > 0) {
+                state_array_to_svg(action_history[action_history.length - 1]);
+            }
+            else {
+                svg.innerHTML = '';
+            }
             document.querySelectorAll('.halo').forEach((el) => {
                 el.setAttribute('stroke', 'transparent');
             });
@@ -627,7 +660,7 @@
         if(action_history_buffer.length > 0) {
             const popped = action_history_buffer.pop();
             action_history.push(popped);
-            svg.innerHTML = action_history[action_history.length - 1];
+            state_array_to_svg(action_history[action_history.length - 1]);
             document.querySelectorAll('.halo').forEach((el) => {
                 el.setAttribute('stroke', 'transparent');
             });
@@ -718,7 +751,7 @@
                         scalerot.insertBefore(halo, scalerot.firstChild);
                         scalerot.insertBefore(circle, scalerot.firstChild);
                         if(!group.hasAttribute('color')) {
-                            group.dataset.color = 'black';
+                            group.dataset.color = '#000000';
                         }
                     }
                     svg.innerHTML = el_svg.innerHTML;
