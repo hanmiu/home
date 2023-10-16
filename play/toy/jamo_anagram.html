@@ -215,6 +215,13 @@
         document.querySelector('#answer').value = words2[0];
     }
 
+    let mix = true;
+    if(params.has('mix')) {
+        if(params.get('mix') === '0') {
+            mix = false;
+        }
+    }
+
     function quiz_(answer) {
         clear();
         let chars = answer.split('');
@@ -249,6 +256,18 @@
     function quiz(answer) {
         clear();
         let chars = mix_jamo(answer);
+        // mix === 0 섞지 않음
+        if(!mix) {
+            chars = [];
+            for(ch of answer) {
+                let jms = ch.normalize('NFD').split('');
+                if(jms.length < 3) {
+                    jms.push('');
+                }
+                chars.push(jms);
+            }
+        }
+
         let x = jamo_size * 2, y = 250;
 
         for(let ch of chars) {
