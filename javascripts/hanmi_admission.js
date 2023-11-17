@@ -60,11 +60,12 @@ html['admission'] = `
 <strong>교육 설명회 2024</strong>
 <div class="subtle">
   <ul class="leaf">
+    <li>우선 모집: 10/31(화), 11/01(수) 16시 30분</li>
     <li>일반 모집: 11/14(화) 16시 30분</li>
     <!--<li>일반 모집: 11/14(월) 16시 30분, <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a>  (← 클릭) </li>-->
   </ul>
   <!--<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)-->
-  <a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank">2023학년도 설명회 자료 및 모집 요강</a>에서 작년에 다뤘던 내용도 살펴보실 수 있습니다.<br>2024학년도 우선 모집 설명회 때 소개드렸던 <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>도 참고해 주세요.
+  <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">2024학년도 설명회 자료 및 모집 요강</a>에서 한미유치원의 교육과 환경에 관한 이야기를 살펴보실 수 있습니다. <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>에도 다양한 사례가 있으니 참고해 주세요.
   <br><br><br>
 
 <strong>시설 참관</strong>
