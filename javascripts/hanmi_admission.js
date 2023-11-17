@@ -144,7 +144,7 @@ html['admission'] = `
 <div>그 밖의 정보</div>
 <br>
 <div class="subtle">
-<strong><a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank">설명회 자료의 유아모집 요강</a></strong>에서 관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간, 교육비 등의 내용을 확인할 수 있습니다. <strong><a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a></strong>을 통해 2023학년도 현재 환경 사진과 간추린 교실 이야기 등 설명회 자료에 넣지 못한 다양한 이미지를 공유하고 있습니다.<br><br>
+<strong><a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">설명회 자료의 유아모집 요강</a></strong>에서 관련 제출서류, 방과후과정반, 특성화활동, 통학차량 및 등하원 시간 등의 내용을 확인할 수 있습니다. <strong><a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a></strong>을 통해 2023학년도 현재 환경 사진과 간추린 교실 이야기 등 설명회 자료에 넣지 못한 다양한 이미지를 공유하고 있습니다.<br><br>
   <ul class="musical">
     <li>2024학년도 <strong>방과후 과정 참여</strong>가 필요한 맞벌이 가정과 돌봄이 필요한 가정은 <strong>누구나 신청</strong>할 수 있습니다.</li>
   </ul>
