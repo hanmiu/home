@@ -15,13 +15,6 @@ html['admission'] = `
 </div>
 <br>
 
-<div>2023학년도 입학 원서</div>
-<br>
-<div class="subtle">
-입학 확정 후 <a href="https://forms.gle/B6S3iemZqbknvAbH8" target="_blank">2022학년도 입학원서</a>를 클릭하여 온라인으로 작성해 주시기 바랍니다.  
-</div>
-<br>
-
 모집 대상
 <div class="subtle">
 <ul class="flower">
@@ -45,9 +38,9 @@ html['admission'] = `
     <li>2018년생 (만4세) 37명</li>
     <li>2017년생 (만5세) 12명</li>
     -->
-    <li>2020년생 (3세) 54명</li>
-    <li>2019년생 (4세) 17명</li>
-    <li>2018년생 (5세) 10명</li>
+    <li>2020년생 (3세) 약간명</li>
+    <li>2019년생 (4세) 대기 가능</li>
+    <li>2018년생 (5세) 약간명</li>
   </ul>
 </div>
 
@@ -56,8 +49,15 @@ html['admission'] = `
 </div>
 <br>
 
+<strong>2024학년도 입학 원서</strong>
+<br><br>
+<div class="subtle">
+입학 확정 후 <a href="https://forms.gle/Kfa7BndVgcBPPWCN8" target="_blank">2024학년도 입학원서</a>를 클릭하여 온라인으로 작성해 주시기 바랍니다.  
+</div>
+<br>
 
-<strong>교육 설명회 2024</strong>
+
+<div>교육 설명회 2024</div>
 <div class="subtle">
   <ul class="leaf">
     <li>우선 모집: 10/31(화), 11/01(수) 16시 30분</li>
@@ -68,7 +68,7 @@ html['admission'] = `
   <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">2024학년도 설명회 자료 및 모집 요강</a>에서 한미유치원의 교육과 환경에 관한 이야기를 살펴보실 수 있습니다. <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>에도 다양한 사례가 있으니 참고해 주세요.
   <br><br><br>
 
-<strong>시설 참관</strong>
+<div>시설 참관</div>
 <div class="subtle">
   <ul class="leaf">
     <li>10월 30일 (월) ~ 11월 03일 (금) 16시 30분 ~ 18시</li>
