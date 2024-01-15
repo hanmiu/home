@@ -2,603 +2,619 @@
 <meta charset="utf-8">
 <title>생활기록부</title>
 <style>
-  table {
-    width: 100%;
-    border: 1px solid black;
-    border-collapse: collapse;
-  }
-  
-  td {
-    border: 1px solid black;
-    padding: 5px;
-  }
-  
-  td:first-child {
-    width: 100px;
-  }
-  
-  #ui {
-    position: fixed;
-    left: 0px;
-    top: 0px;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 20px;
-    z-index: 100;
-    text-align: center;
-    background-color: azure;
-  }
-  
-  button {
-    margin-left: 5px;
-    margin-right: 5px;
-  }
-  
-  .page {
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 130px;
-    width: 800px;
-  }
-  
-  .사진파일명 {
-    width: 99px;
-    height: 127px;
-  }
-  
-  .download {
-    margin-bottom: 5px;
-  }
+    table {
+        width: 100%;
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+    
+    td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: center;
+    }
+    
+    td:first-child {
+        width: 100px;
+    }
+    
+    #ui {
+        position: fixed;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 20px;
+        z-index: 100;
+        text-align: center;
+        background-color: azure;
+    }
+
+    .ui-row {
+        margin-bottom: 10px;
+    }
+    
+    button {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    
+    .page {
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 50px;
+        margin-bottom: 50px;
+        width: 800px;
+    }
+    
+    .사진파일명 {
+        width: 99px;
+        height: 127px;
+    }
+    
+    .download {
+        margin-bottom: 5px;
+    }
 </style>
 <body>
-  <div id="ui">
-    <div style="margin-bottom: 5px">하늘색 빈 공간에 tsv파일 또는 이미지 파일 드래그 드롭. 작성 <a href="https://drive.google.com/file/d/19wVu-18BiKzn2HXzi0RsaGnUFA3W37YU/view?usp=sharing" target="_blank">예시1</a>, <a href="https://drive.google.com/file/d/167MvlxguFUudU8oLPJdUM2v6vR8h2qWX/view?usp=sharing" target="_blank">예시2</a></div>
-    <div>
-      <label>어린이 이름 목록: </label>
-      <textarea id="children" type="text" value="" style="width: 400px"></textarea>
-      <button id="add">추가</button>
+    <div id="ui">
+        <div class="ui-row">하늘색 빈 공간에 tsv파일 또는 이미지 파일 드래그 드롭. <a href="https://good-pike-738.notion.site/2023-9e5dd137c57142619627e6c713d993ea" target="_blank">기재 요령</a></div>
+        <div class="ui-row">
+            <label>연령</label>
+            <!-- 3, 4, 5 를 고를 수 있는 드롭다운-->
+            <select id="age">
+                <option value="3">3세</option>
+                <option value="4">4세</option>
+                <option value="5">5세</option>
+            </select>
+            &nbsp;
+            <label>반</label>
+            <input id="class-name" type="text" value="" style="width: 80px">
+            &nbsp;
+            <label>담임</label>
+            <input id="teacher-name" type="text" value="" style="width: 80px">
+        </div>
+        <div class="ui-row">
+            <label>어린이 이름 목록: </label>
+            <textarea id="children" type="text" value="" style="width: 400px"></textarea>
+            <button id="add">추가</button>
+        </div>
+        <button id="clear">전부 비우기(주의!)</button>
+        <button id="load">자동 저장 불러오기</button>
+        <button id="download_tsv">tsv 다운로드</button>
     </div>
-    <button id="clear">전부 비우기(주의!)</button>
-    <button id="load">자동 저장 불러오기</button>
-    <button id="download_tsv">tsv 다운로드</button>
-  </div>
+    <div id="pages"></div>
 </body>
 <script src="build_page.js"></script>
 <script src="build_hml.js"></script>
 <script src="jamo.js"></script>
 <script>
-  let parser = new DOMParser();
-  let g = document.createElement('canvas').getContext('2d');
-  
-  let all_fields = ["어린이이름","사진파일명","어린이성별","어린이생년월일","주소1","주소2","주소3","부성명","부생년월일","모성명","모생년월일","대장3세","반3세","담임3세","대장4세","반4세","담임4세","대장5세","반5세","담임5세","학적날짜1","학적내용1","학적특기1","학적날짜2","학적내용2","학적특기2","학적날짜3","학적내용3","학적특기3","학적날짜4","학적내용4","학적특기4","학적날짜5","학적내용5","학적특기5","학적날짜6","학적내용6","학적특기6","학적날짜7","학적내용7","학적특기7","졸업후의상황","수업일3세","출석일3세","결석일3세","출결특기3","수업일4세","출석일4세","결석일4세","출결특기4","수업일5세","출석일5세","결석일5세","출결특기5","검사일3세","키3세","몸무게3세","검사일4세","키4세","몸무게4세","검사일5세","키5세","몸무게5세","검진일3세","검진기관3세","검진특기3세","검진일4세","검진기관4세","검진특기4세","검진일5세","검진기관5세","검진특기5세","발달상황3세","발달상황4세","발달상황5세"];
-  
-  let check_document_number_strings = '대장3세,대장4세,대장5세'.split(',');
-  let check_name_strings = '어린이이름,부성명,모성명'.split(',');
-  let check_date_strings = '어린이생년월일,부생년월일,모생년월일,학적날짜1,학적날짜2,학적날짜3,학적날짜4,학적날짜5,학적날짜6,학적날짜7,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
-  let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
-  let check_develop_strings = '발달상황3세,발달상황4세,발달상황5세'.split(',');
-  
-  let el_ui = document.querySelector('#ui');
-  let el_children = document.querySelector('#children'); 
-  let bt_clear = document.querySelector('#clear');
-  
-  let download_link = document.createElement('a');
-  
-  let reader = new FileReader();
-  
-  let photo_holders = [];
-  
-  let timeout_id = -1;
-  
-  function read_tsv(file) {
-    let pages = document.querySelectorAll('.page')
-    for(let page of pages) {
-      page.remove();
-    }
-    reader.readAsText(file);
-    reader.onload = function() {
-      parseAll(reader.result);
-    };
-  }
-  
-  function read_photo(file, holder) {
-    if(holder) {
-      if(holder.textContent.length > 0) {
-        holder.setAttribute('alt', holder.textContent);
-      }
-      holder.textContent = '';
-      let img = new Image();
-      img.className = 'photo';
-      img.src = URL.createObjectURL(file);
-      holder.appendChild(img);
-      /*
-      // ----- for localStorage
-      console.log('!!!');
-      img.addEventListener('load', (e) => {
-        g.canvas.width = img.width;
-        g.canvas.height = img.height;
-        g.clearRect(0, 0, g.canvas.width, g.canvas.height);
-        g.drawImage(img, 0, 0);
-        //data:image/png;base64,
-        console.log(g.canvas.toDataURL('image/png').slice(22)); 
-      });
-      */
-    }
-    else {
-      for(let photo_holder of photo_holders) {
-        let for_mac_file = '';
-        for(let i = 0; i < photo_holder.textContent.length; i++) {
-          let ch = photo_holder.textContent[i];
-          let decompo = decomposeHangul(ch);
-          if(decompo.length > 0) {
-            for_mac_file += decompo.join('');
-          }
-          else {
-            for_mac_file += ch;
-          }
-        }
-        if(photo_holder.textContent === file.name || for_mac_file === file.name) {
-          if(photo_holder.textContent.length > 0) {
-            photo_holder.setAttribute('alt', photo_holder.textContent);
-          }
-          photo_holder.textContent = '';
-          let img = new Image();
-          img.className = 'photo';
-          img.src = URL.createObjectURL(file);
-          photo_holder.appendChild(img);
-        }
-      }
-    }
-  }
-  
-  function dropHandler(ev) {
-    ev.preventDefault();
-
-    if(ev.target.className === '사진파일명') {
-       if (ev.dataTransfer.items) {
-        for (let i = 0; i < ev.dataTransfer.items.length; i++) {
-          // If dropped items aren't files, reject them
-          if (ev.dataTransfer.items[i].kind === 'file') {
-            let file = ev.dataTransfer.items[i].getAsFile();
-            let ext = file.name.split('.').pop().toLowerCase();
-            if(ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
-              read_photo(file, ev.target);
-            }
-          }
-        }
-      } else {
-        // Use DataTransfer interface to access the file(s)
-        for (let i = 0; i < ev.dataTransfer.files.length; i++) {
-          console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
-        }
-      }
-    }
-    else {
-      if (ev.dataTransfer.items) {
-        photo_holders = Array.prototype.slice.call(document.querySelectorAll('.사진파일명'));
-        for (let i = 0; i < ev.dataTransfer.items.length; i++) {
-          // If dropped items aren't files, reject them
-          if (ev.dataTransfer.items[i].kind === 'file') {
-            let file = ev.dataTransfer.items[i].getAsFile();
-            let ext = file.name.split('.').pop().toLowerCase();
-            if(ext === 'tsv') {
-              read_tsv(file);
-            }
-
-            if(ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
-              read_photo(file);
-            }
-          }
-        }
-      } else {
-        // Use DataTransfer interface to access the file(s)
-        for (let i = 0; i < ev.dataTransfer.files.length; i++) {
-          console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
-        }
-      }
-    }
-  }
-  
-  document.body.addEventListener('drop', dropHandler); 
-  document.body.addEventListener('dragover', (ev) => {
-    ev.preventDefault();
-  });
-  
-  function check_indent(el) {
-    let text = el.textContent;
-    if(text.length > 0) {
-      let is_valid = true;
-      if(text[0] === ' ') {
-        is_valid = false;
-      }
-
-      if(is_valid) {
-        el.style.backgroundColor = '';
-      }
-      else {
-        el.style.backgroundColor = 'yellow';
-      }
-    }
-    else {
-      el.style.backgroundColor = '';
-    }
-  }
-  
-  function check_name(el) {
-    let text = el.textContent;
-    if(text.length > 0) {
-      let is_valid = true;
-      let ts = text.split(' ');
-      if(ts.length !== 1) {
-        is_valid = false;
-      }
-
-      if(is_valid) {
-        el.style.backgroundColor = '';
-      }
-      else {
-        el.style.backgroundColor = 'yellow';
-      }
-    }
-    else {
-      el.style.backgroundColor = '';
-    }
-  }
-  
-  function check_document_number(el) {
-    let text = el.textContent;
-    if(text.length > 0) {
-      let is_valid = true;
-      let ts = text.split('-');
-      if(ts.length !== 2) {
-        is_valid = false;
-      }
-      else {
-        if(ts[0][ts[0].length-1] === ' ' || ts[1][0] === ' ') {
-          is_valid = false;
-        }
-      }
-
-      if(is_valid) {
-        el.style.backgroundColor = '';
-      }
-      else {
-        el.style.backgroundColor = 'yellow';
-      }
-    }
-    else {
-      el.style.backgroundColor = '';
-    }
-  }
-
-  function check_date(el) {
-    let text = el.textContent;
-    if(text.length > 0) {
-      let is_valid = true;
-      let ts = text.split('.');
-      if(ts.length !== 4) {
-        is_valid = false;
-      }
-      else {
-        if(ts[0].length !== 4 || ts[1].length !== 2 || ts[2].length !== 2) {
-          is_valid = false;
-        }
-      }
-
-      if(is_valid) {
-        el.style.backgroundColor = '';
-      }
-      else {
-        el.style.backgroundColor = 'yellow';
-      }
-    }
-    else {
-      el.style.backgroundColor = '';
-    }
-  }
-
-  function check_metric(el) {
-    let text = el.textContent;
-    if(text.length > 0) {
-      let is_valid = true;
-      let ts = text.split('.');
-      if(ts.length !== 2) {
-        is_valid = false;
-      }
-      else {
-        if(ts[1].length !== 1) {
-          is_valid = false;
-        }
-      }
-
-      if(is_valid) {
-        el.style.backgroundColor = '';
-      }
-      else {
-        el.style.backgroundColor = 'yellow';
-      }
-    }
-    else {
-      el.style.backgroundColor = '';
-    }
-  }
-  
-  function check_develop(el) {
-    let text = el.textContent;
-    if(text.length > 0) {
-      let is_valid = true;
-      if(text.length > 200) {
-        is_valid = false;
-      }
-      
-      let tr = text.trim();
-      if(tr[tr.length - 1] !== '.') {
-        is_valid = false;
-      }
-
-      if(is_valid) {
-        el.style.backgroundColor = '';
-      }
-      else {
-        el.style.backgroundColor = '#ACFFF9';
-      }
-    }
-    else {
-      el.style.backgroundColor = '';
-    }
-  }
-  
-  function check_all(el) {
-    //들여쓰기
-    check_indent(el);
+    let parser = new DOMParser();
+    let g = document.createElement('canvas').getContext('2d');
     
-    // 대장번호
-    if(check_document_number_strings.includes(el.className)) {
-      check_document_number(el);
-    }
-
-    // 이름 붙여쓰기
-    if(check_name_strings.includes(el.className)) {
-      check_name(el);
-    }
-
-    // 날짜
-    if(check_date_strings.includes(el.className)) {
-      check_date(el);
-    }
+    let all_fields = ["어린이이름","사진파일명","어린이성별","주민등록번호","주소1","주소2","주소3","주소4","대장3세","반3세","담임3세","대장4세","반4세","담임4세","대장5세","반5세","담임5세","학적날짜1","학적내용1","학적특기1","학적날짜2","학적내용2","학적특기2","학적날짜3","학적내용3","학적특기3","학적날짜4","학적내용4","학적특기4","학적날짜5","학적내용5","학적특기5","학적날짜6","학적내용6","학적특기6","학적날짜7","학적내용7","학적특기7","졸업후의상황","수업일3세","출석일3세","결석일질병3세","결석일기타3세","결석일미인정3세","결석일소계3세","출결특기3세","수업일4세","출석일4세","결석일질병4세","결석일기타4세","결석일미인정4세","결석일소계4세","출결특기4세","수업일5세","출석일5세","결석일질병5세","결석일기타5세","결석일미인정5세","결석일소계5세",,"출결특기5세","검사일3세","키3세","몸무게3세","검사일4세","키4세","몸무게4세","검사일5세","키5세","몸무게5세","검진일3세","검진기관3세","검진특기3세","검진일4세","검진기관4세","검진특기4세","검진일5세","검진기관5세","검진특기5세","발달상황3세","발달상황4세","발달상황5세"];
     
-    // 키, 몸무게
-    if(check_metric_strings.includes(el.className)) {
-      check_metric(el);
-    }
+    let check_document_number_strings = '대장3세,대장4세,대장5세'.split(',');
+    let check_name_strings = '어린이이름'.split(',');
+    let check_date_strings = '어린이생년월일,학적날짜1,학적날짜2,학적날짜3,학적날짜4,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
+    let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
+    let check_attend_strings = '수업일3세,결석일질병3세,결석일기타3세,결석일미인정3세,수업일4세,결석일질병4세,결석일기타4세,결석일미인정4세,수업일5세,결석일질병5세,결석일기타5세,결석일미인정5세'.split(',');
+    let check_develop_strings = '발달상황3세,발달상황4세,발달상황5세'.split(',');
     
-    // 발달상황
-    if(check_develop_strings.includes(el.className)) {
-      check_develop(el);
-    }
-  }
-  
-  function split(text) {
-    let result = [text];
-    if(text.match(',')) {
-      result = text.split(',').map(x => x.trim()).filter(x => x.length > 0);
-    }
-    else if(text.match(' ')) {
-      result = text.split(' ').map(x => x.trim()).filter(x => x.length > 0);
-    }
-    return result;
-  }
-
-  /*
-  function extra_hakjuck(date, content, special) {
-    return `<ROW>
-							<CELL BorderFill="7" ColAddr="0" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="9069">
-								<CELLMARGIN Bottom="141" Left="141" Right="141" Top="141"/>
-								<PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">
-									<P ParaShape="35" Style="36">
-										<TEXT CharShape="12">
-											<CHAR>${date}</CHAR>
-										</TEXT>
-									</P>
-								</PARALIST>
-							</CELL>
-							<CELL BorderFill="7" ColAddr="1" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="27494">
-								<CELLMARGIN Bottom="141" Left="141" Right="141" Top="141"/>
-								<PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">
-									<P ParaShape="34" Style="36">
-										<TEXT CharShape="12">
-											<CHAR>${content}</CHAR>
-										</TEXT>
-									</P>
-								</PARALIST>
-							</CELL>
-							<CELL BorderFill="7" ColAddr="2" ColSpan="1" Dirty="false" Editable="false" HasMargin="false" Header="false" Height="1466" Protect="false" RowAddr="4" RowSpan="1" Width="11054">
-								<CELLMARGIN Bottom="141" Left="141" Right="141" Top="141"/>
-								<PARALIST LineWrap="Break" LinkListID="0" LinkListIDNext="0" TextDirection="0" VertAlign="Center">
-									<P ParaShape="35" Style="36">
-										<TEXT CharShape="12">
-											<CHAR>${special}</CHAR>
-										</TEXT>
-									</P>
-								</PARALIST>
-							</CELL>
-						</ROW>`;
-  }
-  */
-  
-  async function download(el_page) {
-    let d = {};
-    let tds = Array.prototype.slice.call(el_page.querySelectorAll('td')).filter(el => el.className);
-    for(let td of tds) {
-      d[td.className] = td.textContent;
-    }
+    let el_ui = document.querySelector('#ui');
+    let el_children = document.querySelector('#children'); 
+    let bt_clear = document.querySelector('#clear');
     
-    let 담임3세 = split(d['담임3세'].trim());
-    if(담임3세.length === 1) {
-      d['담임3세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임3세'].trim()}</CHAR></TEXT></P>`;
-    }
-    else if(담임3세.length === 2) {
-      for(let i = 0; i < 2; i++) {
-        let v = 담임3세[i] ? 담임3세[i] : '';
-        d['담임3세'+(i+1)] = v;
-      }
-      d['담임3세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임3세1']}</CHAR></TEXT></P><P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임3세2']}</CHAR></TEXT></P>`;
-    }
-
-    let 담임4세 = split(d['담임4세'].trim());
-    if(담임4세.length === 1) {
-      d['담임4세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임4세'].trim()}</CHAR></TEXT></P>`;
-    }
-    else if(담임4세.length === 2) {
-      for(let i = 0; i < 2; i++) {
-        let v = 담임4세[i] ? 담임4세[i] : '';
-        d['담임4세'+(i+1)] = v;
-      }
-      d['담임4세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임4세1']}</CHAR></TEXT></P><P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임4세2']}</CHAR></TEXT></P>`;
-    }
-
-    let 담임5세 = split(d['담임5세'].trim());
-    if(담임5세.length === 1) {
-      d['담임5세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임5세'].trim()}</CHAR></TEXT></P>`;
-    }
-    else if(담임5세.length === 2) {
-      for(let i = 0; i < 2; i++) {
-        let v = 담임5세[i] ? 담임5세[i] : '';
-        d['담임5세'+(i+1)] = v;
-      }
-      d['담임5세T'] = `<P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임5세1']}</CHAR></TEXT></P><P ParaShape="25" Style="0"><TEXT CharShape="7"><CHAR>${d['담임5세2']}</CHAR></TEXT></P>`;
-    }
-
-    d['성'] = d['어린이성별'];
-
-    /*
-    d['추가학적'] = '';
-    if(d['학적날짜5']) {
-      d['추가학적'] += extra_hakjuck(d['학적날짜5'], d['학적내용5'], d['학적특기5']);     
-    }
-    */
+    let download_link = document.createElement('a');
     
-    let img = el_page.querySelector('.photo');
-    if(img) {
-      await img.decode();
-      g.canvas.width = img.width;
-      g.canvas.height = img.height;
-      g.clearRect(0, 0, g.canvas.width, g.canvas.height);
-      g.drawImage(img, 0, 0);
-      //data:image/png;base64,
-      d['사진'] = g.canvas.toDataURL('image/png').slice(22); 
-    }
+    let reader = new FileReader();
     
-    let hml = build_hml(d);
+    let photo_holders = [];
     
-    download_link.download = `${d['어린이이름']}_${d['어린이생년월일'].split('.').join('')}.hml`;;
-    download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(hml);
-    download_link.click();
-  }
-  
-  function build_tsv() {
-    let lines = [all_fields.join('\t')];
-    let pages = document.querySelectorAll('.page');
-    for(let page of pages) {
-      let line = [];
-      for(let field of all_fields) {
-        let el_field = page.querySelector(`.${field}`);
-        if(el_field) { // 학적칸이 늘어나는 경우를 대비 (최대 학적은 7칸)
-          if(el_field.getAttribute('alt')) {
-            line.push(el_field.getAttribute('alt'));  
-          }
-          else {
-            line.push(el_field.textContent);
-          }
-        }
-        else {
-          line.push(' ');
-        }
-      }
-      lines.push(line.join('\t'));
-    }
+    let timeout_id = -1;
     
-    let tsv = lines.join('\n');
-    return tsv;
-  }
-  
-  function download_tsv() {
-    let tsv = build_tsv();
-    localStorage.setItem('tsv', tsv);
-    
-    download_link.download = `생활기록부.tsv`;
-    download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(tsv);
-    download_link.click();
-  }
-  
-  window.addEventListener('input', (e) => {
-    if(e.target.tagName === 'TD') {
-      // 자동 저장
-      clearTimeout(timeout_id);
-      timeout_id = setTimeout(() => {
-        localStorage.setItem('tsv', build_tsv());
-      }, 2000);
-    }
-    check_all(e.target);
-  });
-  
-  window.addEventListener('click', (e) => {
-    if(e.target.className === 'download') {
-      let el_page = e.target.parentElement;
-      download(el_page);
-    }
-    
-    if(e.target.id === 'clear') {
-      if(window.confirm('정말 비우겠습니까?')) {
+    function read_tsv(file) {
         let pages = document.querySelectorAll('.page')
         for(let page of pages) {
-          page.remove();
-        }
-      }
-    }
-    
-    if(e.target.id === 'load') {
-      if(window.confirm('정말 불러오겠습니까?')) {
-        let tsv = localStorage.getItem('tsv');
-        if(tsv) {
-          let pages = document.querySelectorAll('.page')
-          for(let page of pages) {
             page.remove();
-          }
-          parseAll(tsv);
         }
-      }
+        reader.readAsText(file);
+        reader.onload = function() {
+            parseAll(reader.result);
+        };
     }
     
-    if(e.target.id === 'add') {
-      let members = el_children.value.split(',').map(x => x.trim()).filter(x => x.length > 0);
-      let idx = all_fields.indexOf('어린이이름');
-      for(let member of members) {
-        let infos = Array(all_fields.length).fill('');
-        infos[idx] = member;
-        build_page(all_fields, infos);
-      }
+    function read_photo(file, holder) {
+        if(holder) {
+            if(holder.textContent.length > 0) {
+                holder.setAttribute('alt', holder.textContent);
+            }
+            holder.textContent = '';
+            let img = new Image();
+            img.className = 'photo';
+            img.src = URL.createObjectURL(file);
+            holder.appendChild(img);
+            /*
+            // ----- for localStorage
+            console.log('!!!');
+            img.addEventListener('load', (e) => {
+                g.canvas.width = img.width;
+                g.canvas.height = img.height;
+                g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+                g.drawImage(img, 0, 0);
+                //data:image/png;base64,
+                console.log(g.canvas.toDataURL('image/png').slice(22)); 
+            });
+            */
+        }
+        else {
+            for(let photo_holder of photo_holders) {
+                let for_mac_file = '';
+                for(let i = 0; i < photo_holder.textContent.length; i++) {
+                    let ch = photo_holder.textContent[i];
+                    let decompo = decomposeHangul(ch);
+                    if(decompo.length > 0) {
+                        for_mac_file += decompo.join('');
+                    }
+                    else {
+                        for_mac_file += ch;
+                    }
+                }
+                if(photo_holder.textContent === file.name || for_mac_file === file.name) {
+                    if(photo_holder.textContent.length > 0) {
+                        photo_holder.setAttribute('alt', photo_holder.textContent);
+                    }
+                    photo_holder.textContent = '';
+                    let img = new Image();
+                    img.className = 'photo';
+                    img.src = URL.createObjectURL(file);
+                    photo_holder.appendChild(img);
+                }
+            }
+        }
     }
     
-    if(e.target.id === 'download_tsv') {
-      download_tsv();
+    function dropHandler(ev) {
+        ev.preventDefault();
+        
+        if(ev.target.className === '사진파일명') {
+            if (ev.dataTransfer.items) {
+                for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                    // If dropped items aren't files, reject them
+                    if (ev.dataTransfer.items[i].kind === 'file') {
+                        let file = ev.dataTransfer.items[i].getAsFile();
+                        let ext = file.name.split('.').pop().toLowerCase();
+                        if(ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+                            read_photo(file, ev.target);
+                        }
+                    }
+                }
+            } else {
+                // Use DataTransfer interface to access the file(s)
+                for (let i = 0; i < ev.dataTransfer.files.length; i++) {
+                    console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+                }
+            }
+        }
+        else {
+            if (ev.dataTransfer.items) {
+                photo_holders = Array.prototype.slice.call(document.querySelectorAll('.사진파일명'));
+                for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                    // If dropped items aren't files, reject them
+                    if (ev.dataTransfer.items[i].kind === 'file') {
+                        let file = ev.dataTransfer.items[i].getAsFile();
+                        let ext = file.name.split('.').pop().toLowerCase();
+                        if(ext === 'tsv') {
+                            read_tsv(file);
+                        }
+                        
+                        if(ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+                            read_photo(file);
+                        }
+                    }
+                }
+            } else {
+                // Use DataTransfer interface to access the file(s)
+                for (let i = 0; i < ev.dataTransfer.files.length; i++) {
+                    console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+                }
+            }
+        }
     }
-  });
-
-  /*
-  fetch('소나무.tsv')
-  .then(stream => stream.text())
-  .then(text => {
-    parseAll(text);
-  });
-  */
-
-  function parseAll(tsv) {
-    let lines = tsv.split('\n');
-    let cols = lines.shift().split('\t').map(x => x.trim());
-    for(let line of lines) {
-      let infos = line.split('\t').map(x => x.trim());
-      build_page(cols, infos);
+    
+    document.body.addEventListener('drop', dropHandler); 
+    document.body.addEventListener('dragover', (ev) => {
+        ev.preventDefault();
+    });
+    
+    function check_indent(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            if(text[0] === ' ') {
+                is_valid = false;
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
     }
-  }
+    
+    function check_name(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            let ts = text.split(' ');
+            if(ts.length !== 1) {
+                is_valid = false;
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+    }
+    
+    function check_document_number(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            let ts = text.split('-');
+            if(ts.length !== 2) {
+                is_valid = false;
+            }
+            else {
+                if(ts[0][ts[0].length-1] === ' ' || ts[1][0] === ' ') {
+                    is_valid = false;
+                }
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+    }
+    
+    function check_date(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            let ts = text.split('.');
+            if(ts.length !== 4) {
+                is_valid = false;
+            }
+            if(text.split(' ').length !== 3) {
+                is_valid = false;
+            }
+            if(is_valid) {
+                // if(ts[0].length !== 4 || ts[1].length !== 2 || ts[2].length !== 2) {
+                //     is_valid = false;
+                // }
+                if(ts[0].length !== 4) {
+                    is_valid = false;
+                }
+                if(ts[1].length < 2 || ts[1].length > 3) {
+                    is_valid = false;
+                }
+                if(ts[2].length < 2 || ts[2].length > 3) {
+                    is_valid = false;
+                }
+                if(ts[1].trim()[0] === '0') {
+                    is_valid = false;
+                }
+                if(ts[2].trim()[0] === '0') {
+                    is_valid = false;
+                }
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+    }
+    
+    function check_metric(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            let ts = text.split('.');
+            if(ts.length !== 2) {
+                is_valid = false;
+            }
+            else {
+                if(ts[1].length !== 1) {
+                    is_valid = false;
+                }
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+    }
+
+    function check_attend(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let tds = Array.from(el.parentElement.querySelectorAll('td'));
+            // td1:수업일, td2:출석일, td3:결석질병, td4:결석기타, td5:결석미인정, td6:결석소계
+            let td1 = tds[1].textContent != '' ? parseInt(tds[1].textContent) : 0;
+            let td3 = tds[3].textContent != '' ? parseInt(tds[3].textContent) : 0;
+            let td4 = tds[4].textContent != '' ? parseInt(tds[4].textContent) : 0;
+            let td5 = tds[5].textContent != '' ? parseInt(tds[5].textContent) : 0;
+            let td6 = td3 + td4 + td5;
+            let td2 = td1 - td6;
+            tds[2].textContent = td2;
+            tds[6].textContent = td6;
+        }
+    }
+    
+    function check_develop(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            if(text.length > 200) {
+                is_valid = false;
+            }
+            
+            let tr = text.trim();
+            if(tr[tr.length - 1] !== '.') {
+                is_valid = false;
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = '#ACFFF9';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+    }
+    
+    function check_all(el) {
+        //들여쓰기
+        check_indent(el);
+        
+        // 대장번호
+        if(check_document_number_strings.includes(el.className)) {
+            check_document_number(el);
+        }
+        
+        // 이름 붙여쓰기
+        if(check_name_strings.includes(el.className)) {
+            check_name(el);
+        }
+        
+        // 날짜
+        if(check_date_strings.includes(el.className)) {
+            check_date(el);
+        }
+        
+        // 키, 몸무게
+        if(check_metric_strings.includes(el.className)) {
+            check_metric(el);
+        }
+
+        // 출결
+        if(check_attend_strings.includes(el.className)) {
+            check_attend(el);
+        }
+        
+        // 발달상황
+        if(check_develop_strings.includes(el.className)) {
+            check_develop(el);
+        }
+    }
+    
+    function split(text) {
+        let result = [text];
+        if(text.match(',')) {
+            result = text.split(',').map(x => x.trim()).filter(x => x.length > 0);
+        }
+        else if(text.match(' ')) {
+            result = text.split(' ').map(x => x.trim()).filter(x => x.length > 0);
+        }
+        return result;
+    }
+    
+    async function download(el_page) {
+        let d = {};
+        let tds = Array.prototype.slice.call(el_page.querySelectorAll('td')).filter(el => el.className);
+        for(let td of tds) {
+            d[td.className] = td.textContent;
+        }
+        
+        let img = el_page.querySelector('.photo');
+        if(img) {
+            await img.decode();
+            g.canvas.width = img.width;
+            g.canvas.height = img.height;
+            g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+            g.drawImage(img, 0, 0);
+            //data:image/png;base64,
+            d['사진'] = g.canvas.toDataURL('image/png').slice(22); 
+        }
+        
+        let hml = build_hml(d);
+        
+        download_link.download = `${d['어린이이름']}_${d['주민등록번호'].split('-')[0]}.hml`;
+        download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(hml);
+        download_link.click();
+    }
+    
+    function build_tsv() {
+        let lines = [all_fields.join('\t')];
+        let pages = document.querySelectorAll('.page');
+        for(let page of pages) {
+            let line = [];
+            for(let field of all_fields) {
+                let el_field = page.querySelector(`.${field}`);
+                if(el_field) { // 학적칸이 늘어나는 경우를 대비 (최대 학적은 7칸)
+                    if(el_field.getAttribute('alt')) {
+                        line.push(el_field.getAttribute('alt'));  
+                    }
+                    else {
+                        line.push(el_field.textContent);
+                    }
+                }
+                else {
+                    line.push(' ');
+                }
+            }
+            lines.push(line.join('\t'));
+        }
+        
+        let tsv = lines.join('\n');
+        return tsv;
+    }
+    
+    function download_tsv() {
+        let tsv = build_tsv();
+        localStorage.setItem('tsv', tsv);
+        
+        download_link.download = `생활기록부.tsv`;
+        download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(tsv);
+        download_link.click();
+    }
+    
+    window.addEventListener('input', (e) => {
+        if(e.target.tagName === 'TD') {
+            // 자동 저장
+            clearTimeout(timeout_id);
+            timeout_id = setTimeout(() => {
+                localStorage.setItem('tsv', build_tsv());
+            }, 2000);
+        }
+        check_all(e.target);
+    });
+    
+    window.addEventListener('click', (e) => {
+        if(e.target.className === 'download') {
+            let el_page = e.target.parentElement;
+            download(el_page);
+        }
+        
+        if(e.target.id === 'clear') {
+            if(window.confirm('정말 비우겠습니까?')) {
+                let pages = document.querySelectorAll('.page')
+                for(let page of pages) {
+                    page.remove();
+                }
+                let hrs = document.querySelectorAll('hr');
+                for(let hr of hrs) {
+                    hr.remove();
+                }
+            }
+        }
+        
+        if(e.target.id === 'load') {
+            if(window.confirm('정말 불러오겠습니까?')) {
+                let tsv = localStorage.getItem('tsv');
+                if(tsv) {
+                    let pages = document.querySelectorAll('.page')
+                    for(let page of pages) {
+                        page.remove();
+                    }
+                    parseAll(tsv);
+                }
+            }
+        }
+        
+        if(e.target.id === 'add') {
+            let lines = el_children.value.split('\n').filter(x => x.length > 0);
+            if(lines.length === 1) { // 한 줄로 콤마로만 구분한 경우
+                let members = el_children.value.split(',').map(x => x.trim()).filter(x => x.length > 0);
+                for(let member of members) {
+                    let infos = Array(all_fields.length).fill('');
+                    infos[all_fields.indexOf('어린이이름')] = member;
+                    build_page(all_fields, infos);
+                }    
+            }
+            else if(lines.length > 1) { // 생기부 색인에서 가져온 경우
+                for(let line of lines) {
+                    let cols = line.split('\t').map(x => x.trim());
+                    let infos = Array(all_fields.length).fill('');
+                    // 이름
+                    infos[all_fields.indexOf('어린이이름')] = cols[1];
+                    infos[all_fields.indexOf('어린이성별')] = cols[2];
+                    // 사진파일명
+                    infos[all_fields.indexOf('사진파일명')] = cols[1] + '.jpg';
+                    // 주민번호는 생년월일로
+                    let bday = cols[3].split('.').map(x => x.trim());
+                    infos[all_fields.indexOf('주민등록번호')] = `${bday[0].substring(2,4)}${bday[1].padStart(2, '0')}${bday[2].padStart(2, '0')}-`;
+                    // bday가 3이면 03 꼴로 
+                    // age option에 따라
+                    if(document.querySelector('#age').value === '3') {
+                        if(cols[0]) {
+                            infos[all_fields.indexOf('대장3세')] = cols[0];
+                        }
+                        infos[all_fields.indexOf('반3세')] = document.querySelector('#class-name').value.trim();
+                        infos[all_fields.indexOf('담임3세')] = document.querySelector('#teacher-name').value.trim();
+                    }
+                    else if(document.querySelector('#age').value === '4') {
+                        if(cols[0]) {
+                            infos[all_fields.indexOf('대장4세')] = cols[0];
+                        }
+                        infos[all_fields.indexOf('반4세')] = document.querySelector('#class-name').value.trim();
+                        infos[all_fields.indexOf('담임4세')] = document.querySelector('#teacher-name').value.trim();
+                    }
+                    else if(document.querySelector('#age').value === '5') {
+                        if(cols[0]) {
+                            infos[all_fields.indexOf('대장5세')] = cols[0];
+                        }
+                        infos[all_fields.indexOf('반5세')] = document.querySelector('#class-name').value.trim();
+                        infos[all_fields.indexOf('담임5세')] = document.querySelector('#teacher-name').value.trim();
+                    }
+                    build_page(all_fields, infos);
+                }
+            }
+        }
+        
+        if(e.target.id === 'download_tsv') {
+            download_tsv();
+        }
+    });
+    
+    function parseAll(tsv) {
+        let lines = tsv.split('\n');
+        let cols = lines.shift().split('\t').map(x => x.trim());
+        for(let line of lines) {
+            let infos = line.split('\t').map(x => x.trim());
+            build_page(cols, infos);
+        }
+    }
 </script>
