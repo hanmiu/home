@@ -374,9 +374,9 @@
 
     function check_attend(el) {
         let text = el.textContent;
-        if(text.length > 0) {
-            let tds = Array.from(el.parentElement.querySelectorAll('td'));
-            // td1:수업일, td2:출석일, td3:결석질병, td4:결석기타, td5:결석미인정, td6:결석소계
+        // td1:수업일, td2:출석일, td3:결석질병, td4:결석기타, td5:결석미인정, td6:결석소계
+        let tds = Array.from(el.parentElement.querySelectorAll('td'));
+        if(tds[1].textContent !== '') {
             if(tds[3].textContent === '') {
                 tds[3].textContent = '0';
             }
@@ -386,6 +386,8 @@
             if(tds[5].textContent === '') {
                 tds[5].textContent = '0';
             }
+        }
+        if(text.length > 0) {
             let td1 = tds[1].textContent != '' ? parseInt(tds[1].textContent) : 0;
             let td3 = tds[3].textContent != '' ? parseInt(tds[3].textContent) : 0;
             let td4 = tds[4].textContent != '' ? parseInt(tds[4].textContent) : 0;
