@@ -430,6 +430,41 @@
             el.style.backgroundColor = '';
         }
     }
+
+    function isValidKoreanSSN(ssn) {
+        const ssnPattern = /^\d{6}-\d{7}$/;
+        if (!ssnPattern.test(ssn)) {
+            return false;
+        }
+
+        const digits = ssn.replace('-', '').split('').map(num => parseInt(num, 10));
+        const multipliers = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+        let sum = digits.slice(0, 12).reduce((acc, digit, idx) => acc + (digit * multipliers[idx]), 0);
+        
+        const remainder = (11 - (sum % 11)) % 10;
+
+        return remainder === digits[12];
+    }
+
+    function check_ssn(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            if(!isValidKoreanSSN(text)) {
+                is_valid = false;
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+    }
     
     function check_all(el) {
         //들여쓰기
@@ -443,6 +478,11 @@
         // 이름 붙여쓰기
         if(check_name_strings.includes(el.className)) {
             check_name(el);
+        }
+
+        // 주민등록번호
+        if(el.className === '주민등록번호') {
+            check_ssn(el);
         }
         
         // 날짜
@@ -481,7 +521,7 @@
         let d = {};
         let tds = Array.prototype.slice.call(el_page.querySelectorAll('td')).filter(el => el.className);
         for(let td of tds) {
-            d[td.className] = td.textContent;
+            d[td.className] = td.textContent.trim();
         }
         
         let img = el_page.querySelector('.photo');
