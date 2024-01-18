@@ -2,6 +2,10 @@
 <meta charset="utf-8">
 <title>생활기록부</title>
 <style>
+    .small {
+        font-size: 0.8em;
+    }
+
     table {
         width: 100%;
         border: 1px solid black;
@@ -92,10 +96,10 @@
     let parser = new DOMParser();
     let g = document.createElement('canvas').getContext('2d');
     
-    let all_fields = ["어린이이름","사진파일명","어린이성별","주민등록번호","주소1","주소2","주소3","주소4","대장3세","반3세","담임3세","대장4세","반4세","담임4세","대장5세","반5세","담임5세","학적날짜1","학적내용1","학적특기1","학적날짜2","학적내용2","학적특기2","학적날짜3","학적내용3","학적특기3","학적날짜4","학적내용4","학적특기4","학적날짜5","학적내용5","학적특기5","학적날짜6","학적내용6","학적특기6","학적날짜7","학적내용7","학적특기7","졸업후의상황","수업일3세","출석일3세","결석일질병3세","결석일기타3세","결석일미인정3세","결석일소계3세","출결특기3세","수업일4세","출석일4세","결석일질병4세","결석일기타4세","결석일미인정4세","결석일소계4세","출결특기4세","수업일5세","출석일5세","결석일질병5세","결석일기타5세","결석일미인정5세","결석일소계5세",,"출결특기5세","검사일3세","키3세","몸무게3세","검사일4세","키4세","몸무게4세","검사일5세","키5세","몸무게5세","검진일3세","검진기관3세","검진특기3세","검진일4세","검진기관4세","검진특기4세","검진일5세","검진기관5세","검진특기5세","발달상황3세","발달상황4세","발달상황5세"];
+    let all_fields = ["어린이이름","사진파일명","어린이성별","주민등록번호","주소1","주소2","주소3","주소4","대장3세","반3세","담임3세","대장4세","반4세","담임4세","대장5세","반5세","담임5세","학적날짜1","학적내용1","학적특기1","학적날짜2","학적내용2","학적특기2","학적날짜3","학적내용3","학적특기3","학적날짜4","학적내용4","학적특기4","학적날짜5","학적내용5","학적특기5","학적날짜6","학적내용6","학적특기6","학적날짜7","학적내용7","학적특기7","수업일3세","출석일3세","결석일질병3세","결석일기타3세","결석일미인정3세","결석일소계3세","출결특기3세","수업일4세","출석일4세","결석일질병4세","결석일기타4세","결석일미인정4세","결석일소계4세","출결특기4세","수업일5세","출석일5세","결석일질병5세","결석일기타5세","결석일미인정5세","결석일소계5세",,"출결특기5세","검사일3세","키3세","몸무게3세","검사일4세","키4세","몸무게4세","검사일5세","키5세","몸무게5세","검진일3세","검진기관3세","검진특기3세","검진일4세","검진기관4세","검진특기4세","검진일5세","검진기관5세","검진특기5세","발달상황3세","발달상황4세","발달상황5세"];
     
     let check_document_number_strings = '대장3세,대장4세,대장5세'.split(',');
-    let check_name_strings = '어린이이름'.split(',');
+    let check_name_strings = '어린이이름,담임3세,담임4세,담임5세,검진기관3세,검진기관4세,검진기관5세'.split(',');
     let check_date_strings = '어린이생년월일,학적날짜1,학적날짜2,학적날짜3,학적날짜4,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
     let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
     let check_attend_strings = '수업일3세,결석일질병3세,결석일기타3세,결석일미인정3세,수업일4세,결석일질병4세,결석일기타4세,결석일미인정4세,수업일5세,결석일질병5세,결석일기타5세,결석일미인정5세'.split(',');
@@ -117,6 +121,10 @@
         let pages = document.querySelectorAll('.page')
         for(let page of pages) {
             page.remove();
+        }
+        let hrs = document.querySelectorAll('hr');
+        for(let hr of hrs) {
+            hr.remove();
         }
         reader.readAsText(file);
         reader.onload = function() {
@@ -369,6 +377,15 @@
         if(text.length > 0) {
             let tds = Array.from(el.parentElement.querySelectorAll('td'));
             // td1:수업일, td2:출석일, td3:결석질병, td4:결석기타, td5:결석미인정, td6:결석소계
+            if(tds[3].textContent === '') {
+                tds[3].textContent = '0';
+            }
+            if(tds[4].textContent === '') {
+                tds[4].textContent = '0';
+            }
+            if(tds[5].textContent === '') {
+                tds[5].textContent = '0';
+            }
             let td1 = tds[1].textContent != '' ? parseInt(tds[1].textContent) : 0;
             let td3 = tds[3].textContent != '' ? parseInt(tds[3].textContent) : 0;
             let td4 = tds[4].textContent != '' ? parseInt(tds[4].textContent) : 0;
@@ -383,8 +400,15 @@
     function check_develop(el) {
         let text = el.textContent;
         if(text.length > 0) {
+            let num_sentences = text.split('.').length - 1;
+            let el_info = el.parentElement.firstElementChild.querySelector('.small');
+            el_info.innerHTML = `<br>글자수: ${text.length}<br>문장수: ${num_sentences}`;
+
             let is_valid = true;
-            if(text.length > 200) {
+            if(text.length < 470 || text.length > 500) {
+                is_valid = false;
+            }
+            if(num_sentences < 4 || num_sentences > 6) {
                 is_valid = false;
             }
             
@@ -397,7 +421,7 @@
                 el.style.backgroundColor = '';
             }
             else {
-                el.style.backgroundColor = '#ACFFF9';
+                el.style.backgroundColor = 'rgb(217, 255, 252)';
             }
         }
         else {
@@ -548,6 +572,10 @@
                     let pages = document.querySelectorAll('.page')
                     for(let page of pages) {
                         page.remove();
+                    }
+                    let hrs = document.querySelectorAll('hr');
+                    for(let hr of hrs) {
+                        hr.remove();
                     }
                     parseAll(tsv);
                 }
