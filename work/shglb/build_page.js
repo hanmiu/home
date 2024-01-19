@@ -2,7 +2,11 @@ function build_page(cols, infos) {
     let html = `
 <h2>유치원생활기록부</h2>
 <button class="download">hml 다운로드</button>
-<h3>1. 기본사항 <span a class="small">( <a target="_blank" href="https://good-pike-738.notion.site/6a815b2d7fd04e1982edeb51a3a569bf">기재 예시</a> )</span></h3>
+<h3>1. 기본사항 
+    <span a class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/6a815b2d7fd04e1982edeb51a3a569bf">기재 예시</a> )
+    </span>
+</h3>
 <table>
     <thead>
         <tr>
@@ -35,7 +39,11 @@ function build_page(cols, infos) {
         </tr>
     </tbody>
 </table>
-<h3>2. 인적사항 <span a class="small">( <a target="_blank" href="https://good-pike-738.notion.site/7eb6cb73c8da4759971bc95743286bab">기재 예시</a> )</span></h3>
+<h3>2. 인적사항 
+    <span a class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/7eb6cb73c8da4759971bc95743286bab">기재 예시</a> )
+    </span>
+</h3>
 <table>
     <thead>
         <tr>
@@ -63,7 +71,11 @@ function build_page(cols, infos) {
         </tr>
     </tbody>
 </table>
-<h3>3. 학적사항 <span a class="small">( <a target="_blank" href="https://good-pike-738.notion.site/c4effe7f4a6b4e46af5172e438e07b3a">기재 예시</a> )</span></h3>
+<h3>3. 학적사항 
+    <span a class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/c4effe7f4a6b4e46af5172e438e07b3a">기재 예시</a> )
+    </span>
+</h3>
 <table>
     <thead>
         <tr>
@@ -95,7 +107,11 @@ function build_page(cols, infos) {
         </tr>
     </tbody>
 </table>
-<h3>4. 출결상황 <span a class="small">( <a target="_blank" href="https://good-pike-738.notion.site/ad5b727bf80c4292b5c65790ec448c14">기재 예시</a> )</span></h3>
+<h3>4. 출결상황 
+    <span a class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/ad5b727bf80c4292b5c65790ec448c14">기재 예시</a> )
+    </span>
+</h3>
 <table>
     <thead>
         <tr>
@@ -145,7 +161,11 @@ function build_page(cols, infos) {
         </tr>
     </tbody>
 </table>
-<h3>5. 신체발달상황 <span a class="small">( <a target="_blank" href="https://good-pike-738.notion.site/098cd591bfb54202b61dd0023c9b5293">기재 예시</a> )</span></h3>
+<h3>5. 신체발달상황 
+    <span a class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/098cd591bfb54202b61dd0023c9b5293">기재 예시</a> )
+    </span>
+</h3>
 <table>
     <thead>
         <tr>
@@ -176,7 +196,11 @@ function build_page(cols, infos) {
         </tr>
     </tbody>
 </table>
-<h3>6. 건강검진 <span a class="small">( <a target="_blank" href="https://good-pike-738.notion.site/77f8ba98c6c446daa8daca0fa43b76f2">기재 예시</a> )</span></h3>
+<h3>6. 건강검진 
+    <span a class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/77f8ba98c6c446daa8daca0fa43b76f2">기재 예시</a> )
+    </span>
+</h3>
 <table>
     <thead>
         <tr>
@@ -208,8 +232,8 @@ function build_page(cols, infos) {
     </tbody>
 </table>
 <h3>7. 유아발달상황 
-    <span class="small">( 
-        <a target="_blank" href="https://good-pike-738.notion.site/232aafc0cbf04bcfbcc0cbc5d870e310">기재 예시</a>, 
+    <span class="small">
+        ( <a target="_blank" href="https://good-pike-738.notion.site/232aafc0cbf04bcfbcc0cbc5d870e310">기재 예시</a>, 
         <a target="_blank" href="http://speller.cs.pusan.ac.kr">맞춤법 검사</a> )
     </span>
 </h3>
@@ -217,7 +241,7 @@ function build_page(cols, infos) {
     <thead>
         <tr>
             <td>연령</td>
-            <td>발달상황<span class="small" style="margin-bottom: 5px;"> : 5문장 내외, 500자 이하 (470 ~ 500)</span></td>
+            <td>발달상황<span class="small" style="margin-bottom: 5px;"> : 5문장 내외, 500자 이하 (430 ~ 500)</span></td>
         </tr>
     </thead>
     <tbody>

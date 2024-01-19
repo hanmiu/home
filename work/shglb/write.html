@@ -104,6 +104,7 @@
     let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
     let check_attend_strings = '수업일3세,결석일질병3세,결석일기타3세,결석일미인정3세,수업일4세,결석일질병4세,결석일기타4세,결석일미인정4세,수업일5세,결석일질병5세,결석일기타5세,결석일미인정5세'.split(',');
     let check_develop_strings = '발달상황3세,발달상황4세,발달상황5세'.split(',');
+    let register_strings = '입학,재학,재입학,편입학,전입학,전출,휴학,면제,유예,복학,재취학,자퇴,퇴학,수료,졸업'.split(',');
     
     let el_ui = document.querySelector('#ui');
     let el_children = document.querySelector('#children'); 
@@ -235,23 +236,29 @@
         ev.preventDefault();
     });
     
-    function check_indent(el) {
+    function check_trim(el) {
         let text = el.textContent;
         if(text.length > 0) {
             let is_valid = true;
             if(text[0] === ' ') {
                 is_valid = false;
             }
+            if(text[text.length - 1] === ' ') {
+                is_valid = false;
+            }
+            if(/\s{2,}/.test(text)) {
+                is_valid = false;
+            }
             
             if(is_valid) {
-                el.style.backgroundColor = '';
+                //el.style.backgroundColor = '';
             }
             else {
                 el.style.backgroundColor = 'yellow';
             }
         }
         else {
-            el.style.backgroundColor = '';
+            //el.style.backgroundColor = '';
         }
     }
     
@@ -274,6 +281,7 @@
         else {
             el.style.backgroundColor = '';
         }
+        check_trim(el);
     }
     
     function check_document_number(el) {
@@ -300,6 +308,7 @@
         else {
             el.style.backgroundColor = '';
         }
+        check_trim(el);
     }
     
     function check_date(el) {
@@ -344,6 +353,7 @@
         else {
             el.style.backgroundColor = '';
         }
+        check_trim(el);
     }
     
     function check_metric(el) {
@@ -359,6 +369,9 @@
                     is_valid = false;
                 }
             }
+            if(text.includes(' ')) {
+                is_valid = false;
+            }
             
             if(is_valid) {
                 el.style.backgroundColor = '';
@@ -370,6 +383,34 @@
         else {
             el.style.backgroundColor = '';
         }
+        check_trim(el);
+    }
+
+    function check_register(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let is_valid = true;
+            let ts = text.split(' ');
+            if(ts.length !== 3) {
+                is_valid = false;
+            }
+            else {
+                if(!register_strings.includes(ts[2])) {
+                    is_valid = false;
+                }
+            }
+            
+            if(is_valid) {
+                el.style.backgroundColor = '';
+            }
+            else {
+                el.style.backgroundColor = 'yellow';
+            }
+        }
+        else {
+            el.style.backgroundColor = '';
+        }
+        check_trim(el);
     }
 
     function check_attend(el) {
@@ -397,6 +438,7 @@
             tds[2].textContent = td2;
             tds[6].textContent = td6;
         }
+        check_trim(el);
     }
     
     function check_develop(el) {
@@ -407,12 +449,12 @@
             el_info.innerHTML = `<br>글자수: ${text.length}<br>문장수: ${num_sentences}`;
 
             let is_valid = true;
-            if(text.length < 470 || text.length > 500) {
+            if(text.length < 430 || text.length > 500) {
                 is_valid = false;
             }
-            if(num_sentences < 4 || num_sentences > 6) {
-                is_valid = false;
-            }
+            // if(num_sentences < 4 || num_sentences > 6) {
+            //     is_valid = false;
+            // }
             
             let tr = text.trim();
             if(tr[tr.length - 1] !== '.') {
@@ -429,6 +471,7 @@
         else {
             el.style.backgroundColor = '';
         }
+        check_trim(el);
     }
 
     function isValidKoreanSSN(ssn) {
@@ -464,11 +507,12 @@
         else {
             el.style.backgroundColor = '';
         }
+        check_trim(el);
     }
     
     function check_all(el) {
-        //들여쓰기
-        check_indent(el);
+        // 앞뒤로 공백이 있는지
+        check_trim(el);
         
         // 대장번호
         if(check_document_number_strings.includes(el.className)) {
@@ -488,6 +532,11 @@
         // 날짜
         if(check_date_strings.includes(el.className)) {
             check_date(el);
+        }
+
+        //학적
+        if(el.className.includes('학적내용')) {
+            check_register(el);
         }
         
         // 키, 몸무게
@@ -536,8 +585,10 @@
         }
         
         let hml = build_hml(d);
+
+        let nth = String(Array.from(document.querySelectorAll('.page')).indexOf(el_page) + 1).padStart(2, '0');
         
-        download_link.download = `${d['어린이이름']}_${d['주민등록번호'].split('-')[0]}.hml`;
+        download_link.download = `${nth}_${d['어린이이름']}_${d['주민등록번호'].split('-')[0]}.hml`;
         download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(hml);
         download_link.click();
     }
@@ -571,6 +622,9 @@
     function download_tsv() {
         let tsv = build_tsv();
         localStorage.setItem('tsv', tsv);
+        localStorage.setItem('age', document.querySelector('#age').value);
+        localStorage.setItem('class-name', document.querySelector('#class-name').value);
+        localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
         
         download_link.download = `생활기록부.tsv`;
         download_link.href = "data:text/plain;charset=UTF-8,"  + encodeURIComponent(tsv);
@@ -583,6 +637,9 @@
             clearTimeout(timeout_id);
             timeout_id = setTimeout(() => {
                 localStorage.setItem('tsv', build_tsv());
+                localStorage.setItem('age', document.querySelector('#age').value);
+                localStorage.setItem('class-name', document.querySelector('#class-name').value);
+                localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
             }, 2000);
         }
         check_all(e.target);
@@ -610,6 +667,12 @@
         if(e.target.id === 'load') {
             if(window.confirm('정말 불러오겠습니까?')) {
                 let tsv = localStorage.getItem('tsv');
+                // localStorage.setItem('age', document.querySelector('#age').value);
+                // localStorage.setItem('class-name', document.querySelector('#class-name').value);
+                // localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
+                document.querySelector('#age').value = localStorage.getItem('age');
+                document.querySelector('#class-name').value = localStorage.getItem('class-name');
+                document.querySelector('#teacher-name').value = localStorage.getItem('teacher-name');
                 if(tsv) {
                     let pages = document.querySelectorAll('.page')
                     for(let page of pages) {
@@ -673,9 +736,44 @@
                 }
             }
         }
+
+        if(e.target.className === 'date-apply') {
+            let el = e.target.parentElement;
+            let input = el.querySelector('input');
+            let date = input.value;
+            if(date.length === 10) {
+                let tds = Array.from(el.parentElement.querySelectorAll('td'));
+                let td = tds[tds.length - 3];
+                let ymd = date.split('-');
+                td.textContent = `${parseInt(ymd[0])}. ${parseInt(ymd[1])}. ${parseInt(ymd[2])}.`;
+                td.focus();
+                td.setAttribute('contenteditable', 'true');
+            }
+        }
         
         if(e.target.id === 'download_tsv') {
             download_tsv();
+        }
+    });
+
+    window.addEventListener('dblclick', (e) => {
+        let el = e.target;
+        if(check_date_strings.includes(el.className)) {
+            if(el.textContent.length === 0) {
+                el.innerHTML = `<input type="date"><button class="date-apply">적용</button>`;
+                el.querySelector('input').focus();
+                el.setAttribute('contenteditable', 'false');
+            }
+        }
+
+        if(el.className.includes('주소')) {
+            if(el.textContent.length > 0) {
+                console.log('주소');
+                let el_a = document.createElement('a');
+                el_a.href = `https://map.kakao.com/link/search/${el.textContent}`;
+                el_a.target = '_blank';
+                el_a.click();
+            }
         }
     });
     
