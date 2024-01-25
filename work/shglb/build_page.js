@@ -234,7 +234,8 @@ function build_page(cols, infos) {
 <h3>7. 유아발달상황 
     <span class="small">
         ( <a target="_blank" href="https://good-pike-738.notion.site/232aafc0cbf04bcfbcc0cbc5d870e310">기재 예시</a>, 
-        <a target="_blank" href="http://speller.cs.pusan.ac.kr">맞춤법 검사</a> )
+        <a target="_blank" href="http://speller.cs.pusan.ac.kr">맞춤법 검사</a>,
+        <a target="_blank" href="https://www.notion.so/ChatGPT-dc455d67167f4f3abdbb87c7dcfb5fcb">GPT 도움</a> )
     </span>
 </h3>
 <table>
