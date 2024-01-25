@@ -647,8 +647,33 @@
     
     window.addEventListener('click', (e) => {
         if(e.target.className === 'download') {
-            let el_page = e.target.parentElement;
+            let el_page = e.target.parentElement.parentElement;
             download(el_page);
+        }
+
+        if(e.target.className === 'remove') {
+            let el_page = e.target.parentElement.parentElement;
+            let name = el_page.querySelector('.어린이이름').textContent;
+            if(window.confirm(`정말 ${name} 생기부를 삭제하겠습니까? tsv 파일을 저장했는지 확인하세요.`)) {
+                if(el_page.nextElementSibling) {
+                    if(el_page.nextElementSibling.tagName === 'HR') {
+                        el_page.nextElementSibling.remove();
+                    }    
+                }
+                else {
+                    if(el_page.previousElementSibling) {
+                        if(el_page.previousElementSibling.tagName === 'HR') {
+                            el_page.previousElementSibling.remove();
+                        }    
+                    }
+                }
+                el_page.remove();
+                let all_pages = document.querySelectorAll('.page');
+                if(all_pages.length > 0) {
+                    let first_page = all_pages[0];
+                    first_page.style.marginTop = document.querySelector('#ui').getBoundingClientRect().height + 50 + 'px';
+                }
+            }
         }
         
         if(e.target.id === 'clear') {
@@ -694,6 +719,19 @@
                 for(let member of members) {
                     let infos = Array(all_fields.length).fill('');
                     infos[all_fields.indexOf('어린이이름')] = member;
+                    // age option에 따라
+                    if(document.querySelector('#age').value === '3') {
+                        infos[all_fields.indexOf('반3세')] = document.querySelector('#class-name').value.trim();
+                        infos[all_fields.indexOf('담임3세')] = document.querySelector('#teacher-name').value.trim();
+                    }
+                    else if(document.querySelector('#age').value === '4') {
+                        infos[all_fields.indexOf('반4세')] = document.querySelector('#class-name').value.trim();
+                        infos[all_fields.indexOf('담임4세')] = document.querySelector('#teacher-name').value.trim();
+                    }
+                    else if(document.querySelector('#age').value === '5') {
+                        infos[all_fields.indexOf('반5세')] = document.querySelector('#class-name').value.trim();
+                        infos[all_fields.indexOf('담임5세')] = document.querySelector('#teacher-name').value.trim();
+                    }
                     build_page(all_fields, infos);
                 }    
             }

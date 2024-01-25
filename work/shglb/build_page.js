@@ -1,7 +1,13 @@
 function build_page(cols, infos) {
     let html = `
 <h2>유치원생활기록부</h2>
-<button class="download">hml 다운로드</button>
+<div>
+    <button class="up">⬆️</button>
+    <button class="down">⬇️</button>
+    <button class="download">hml 다운로드</button>
+    <span style="margin-left: 20px; color: gray;">|</span>
+    <button class="remove" style="margin-left: 20px">삭제</button>
+</div>
 <h3>1. 기본사항 
     <span a class="small">
         ( <a target="_blank" href="https://good-pike-738.notion.site/6a815b2d7fd04e1982edeb51a3a569bf">기재 예시</a> )
@@ -281,8 +287,8 @@ function build_page(cols, infos) {
     }
     
     let name = el_page.querySelector('.어린이이름').textContent;
-    let bt_downlaod = el_page.querySelector('.download');
-    bt_downlaod.textContent = `${name} hml 다운로드`;
+    el_page.querySelector('.download').textContent = `${name} hml 다운로드`;
+    el_page.querySelector('.remove').textContent = `${name} 삭제`;
     
     el_page.querySelector('h2').textContent = `${name} 유치원생활기록부`;
 
