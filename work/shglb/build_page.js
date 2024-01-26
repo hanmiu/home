@@ -2,8 +2,8 @@ function build_page(cols, infos) {
     let html = `
 <h2>유치원생활기록부</h2>
 <div class="control">
-    <button class="go-up">⬆️</button>
-    <button class="go-down">⬇️</button>
+    <button class="go-up">⤒</button>
+    <button class="go-down">⤓</button>
     <button class="download">hml 다운로드</button>
     <span style="margin-left: 20px; color: gray;">|</span>
     <button class="remove" style="margin-left: 20px">삭제</button>
