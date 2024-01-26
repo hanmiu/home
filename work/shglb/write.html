@@ -77,10 +77,13 @@
             &nbsp;
             <label>담임</label>
             <input id="teacher-name" type="text" value="" style="width: 80px">
+            &nbsp;
+            <input type="checkbox" class="by-age">
         </div>
         <div class="ui-row">
             <label>어린이 이름 목록: </label>
-            <textarea id="children" type="text" value="" style="width: 400px"></textarea>
+            <textarea id="children" type="text" value="" style="width: 400px" spellcheck="false" rows="1"></textarea>
+            <!--<input id="children" type="text" value="" style="width: 400px" spellcheck="false">-->
             <button id="add">추가</button>
         </div>
         <button id="clear">전부 비우기(주의!)</button>
@@ -100,6 +103,7 @@
     
     let check_document_number_strings = '대장3세,대장4세,대장5세'.split(',');
     let check_name_strings = '어린이이름,담임3세,담임4세,담임5세,검진기관3세,검진기관4세,검진기관5세'.split(',');
+    let check_cname_strings = '반3세,반4세,반5세'.split(',');
     let check_date_strings = '어린이생년월일,학적날짜1,학적날짜2,학적날짜3,학적날짜4,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
     let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
     let check_attend_strings = '수업일3세,결석일질병3세,결석일기타3세,결석일미인정3세,수업일4세,결석일질병4세,결석일기타4세,결석일미인정4세,수업일5세,결석일질병5세,결석일기타5세,결석일미인정5세'.split(',');
@@ -237,9 +241,9 @@
     });
     
     function check_trim(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             if(text[0] === ' ') {
                 is_valid = false;
             }
@@ -249,72 +253,73 @@
             if(/\s{2,}/.test(text)) {
                 is_valid = false;
             }
-            
-            if(is_valid) {
-                //el.style.backgroundColor = '';
-            }
-            else {
-                el.style.backgroundColor = 'yellow';
-            }
         }
-        else {
-            //el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('trim', text);
         }
+        return is_valid;
     }
     
     function check_name(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             let ts = text.split(' ');
             if(ts.length !== 1) {
                 is_valid = false;
             }
-            
-            if(is_valid) {
-                el.style.backgroundColor = '';
+        }
+        if(!is_valid) {
+            console.log('name', text);
+        }
+        return is_valid;
+    }
+
+    function check_cname(el) {
+        let is_valid = true;
+        let text = el.textContent;
+        if(text.length > 0) {
+            let ts = text.split(' ');
+            if(ts.length !== 1) {
+                is_valid = false;
             }
-            else {
-                el.style.backgroundColor = 'yellow';
+            if(text[text.length - 1] !== '반') {
+                is_valid = false;
             }
         }
-        else {
-            el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('cname', text);
         }
-        check_trim(el);
+        return is_valid;
     }
     
     function check_document_number(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             let ts = text.split('-');
             if(ts.length !== 2) {
                 is_valid = false;
             }
             else {
-                if(ts[0][ts[0].length-1] === ' ' || ts[1][0] === ' ') {
+                if(ts[0].length !== 4 || ts[1].length !== 4) {
+                    is_valid = false;
+                }
+                if(isNaN(parseInt(ts[0])) || isNaN(parseInt(ts[1]))) {
                     is_valid = false;
                 }
             }
-            
-            if(is_valid) {
-                el.style.backgroundColor = '';
-            }
-            else {
-                el.style.backgroundColor = 'yellow';
-            }
         }
-        else {
-            el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('document_number', text);
         }
-        check_trim(el);
+        return is_valid;
     }
     
     function check_date(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             let ts = text.split('.');
             if(ts.length !== 4) {
                 is_valid = false;
@@ -342,24 +347,17 @@
                     is_valid = false;
                 }
             }
-            
-            if(is_valid) {
-                el.style.backgroundColor = '';
-            }
-            else {
-                el.style.backgroundColor = 'yellow';
-            }
         }
-        else {
-            el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('date', text);
         }
-        check_trim(el);
+        return is_valid;
     }
     
     function check_metric(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             let ts = text.split('.');
             if(ts.length !== 2) {
                 is_valid = false;
@@ -372,24 +370,17 @@
             if(text.includes(' ')) {
                 is_valid = false;
             }
-            
-            if(is_valid) {
-                el.style.backgroundColor = '';
-            }
-            else {
-                el.style.backgroundColor = 'yellow';
-            }
         }
-        else {
-            el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('metric', text);
         }
-        check_trim(el);
+        return is_valid;
     }
 
     function check_register(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             let ts = text.split(' ');
             if(ts.length !== 3) {
                 is_valid = false;
@@ -399,21 +390,15 @@
                     is_valid = false;
                 }
             }
-            
-            if(is_valid) {
-                el.style.backgroundColor = '';
-            }
-            else {
-                el.style.backgroundColor = 'yellow';
-            }
         }
-        else {
-            el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('register', text);
         }
-        check_trim(el);
+        return is_valid;
     }
 
     function check_attend(el) {
+        let is_valid = true;
         let text = el.textContent;
         // td1:수업일, td2:출석일, td3:결석질병, td4:결석기타, td5:결석미인정, td6:결석소계
         let tds = Array.from(el.parentElement.querySelectorAll('td'));
@@ -437,18 +422,22 @@
             let td2 = td1 - td6;
             tds[2].textContent = td2;
             tds[6].textContent = td6;
+            is_valid = isNaN(parseInt(text)) ? false : true;
         }
-        check_trim(el);
+        if(!is_valid) {
+            console.log('attend', text);
+        }
+        return is_valid;
     }
     
     function check_develop(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
             let num_sentences = text.split('.').length - 1;
             let el_info = el.parentElement.firstElementChild.querySelector('.small');
             el_info.innerHTML = `<br>글자수: ${text.length}<br>문장수: ${num_sentences}`;
 
-            let is_valid = true;
             if(text.length < 430 || text.length > 500) {
                 is_valid = false;
             }
@@ -460,18 +449,11 @@
             if(tr[tr.length - 1] !== '.') {
                 is_valid = false;
             }
-            
-            if(is_valid) {
-                el.style.backgroundColor = '';
-            }
-            else {
-                el.style.backgroundColor = 'rgb(217, 255, 252)';
-            }
         }
-        else {
-            el.style.backgroundColor = '';
+        if(!is_valid) {
+            console.log('develop', text);
         }
-        check_trim(el);
+        return is_valid;
     }
 
     function isValidKoreanSSN(ssn) {
@@ -490,9 +472,9 @@
     }
 
     function check_ssn(el) {
+        let is_valid = true;
         let text = el.textContent;
         if(text.length > 0) {
-            let is_valid = true;
             if(!isValidKoreanSSN(text)) {
                 is_valid = false;
             }
@@ -507,51 +489,74 @@
         else {
             el.style.backgroundColor = '';
         }
-        check_trim(el);
+        if(!is_valid) {
+            console.log('ssn', text);
+        }
+        return is_valid;
     }
     
     function check_all(el) {
-        // 앞뒤로 공백이 있는지
-        check_trim(el);
-        
+        let is_valid = true;
         // 대장번호
         if(check_document_number_strings.includes(el.className)) {
-            check_document_number(el);
+            is_valid = is_valid && check_document_number(el);
         }
         
         // 이름 붙여쓰기
         if(check_name_strings.includes(el.className)) {
-            check_name(el);
+            is_valid = is_valid && check_name(el);
+        }
+
+        // 반이름
+        if(check_cname_strings.includes(el.className)) {
+            is_valid = is_valid && check_cname(el);
         }
 
         // 주민등록번호
         if(el.className === '주민등록번호') {
-            check_ssn(el);
+            is_valid = is_valid && check_ssn(el);
+        }
+
+        // 성별
+        if(el.className === '어린이성별') {
+            if(el.textContent.length > 0) {
+                is_valid = is_valid && (el.textContent === '남' || el.textContent === '여');
+            }
         }
         
         // 날짜
         if(check_date_strings.includes(el.className)) {
-            check_date(el);
+            is_valid = is_valid && check_date(el);
         }
 
         //학적
         if(el.className.includes('학적내용')) {
-            check_register(el);
+            is_valid = is_valid && check_register(el);
         }
         
         // 키, 몸무게
         if(check_metric_strings.includes(el.className)) {
-            check_metric(el);
+            is_valid = is_valid && check_metric(el);
         }
 
         // 출결
         if(check_attend_strings.includes(el.className)) {
-            check_attend(el);
+            is_valid = is_valid && check_attend(el);
         }
         
         // 발달상황
         if(check_develop_strings.includes(el.className)) {
-            check_develop(el);
+            is_valid = is_valid && check_develop(el);
+        }
+
+        // 앞뒤로 공백이 있는지
+        is_valid = is_valid && check_trim(el);
+
+        if(is_valid) {
+            el.style.backgroundColor = 'white';
+        }
+        else {
+            el.style.backgroundColor = 'yellow';
         }
     }
     
@@ -641,11 +646,36 @@
                 localStorage.setItem('class-name', document.querySelector('#class-name').value);
                 localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
             }, 2000);
+            check_all(e.target);
         }
-        check_all(e.target);
     });
     
     window.addEventListener('click', (e) => {
+        if(e.target.className === 'go-up') {
+            let el_page = e.target.parentElement.parentElement;
+            let all_pages = Array.from(document.querySelector('#pages').querySelectorAll('.page'));
+            let prev_page = all_pages[all_pages.indexOf(el_page) - 1];
+            if(prev_page) {
+                prev_page.insertAdjacentElement('beforebegin', el_page);
+            }
+            arrange_pages();
+            e.target.scrollIntoView();
+        }
+        if(e.target.className === 'go-down') {
+            // let hrs = document.querySelectorAll('hr');
+            // for(let hr of hrs) {
+            //     hr.remove();
+            // }
+            let el_page = e.target.parentElement.parentElement;
+            let all_pages = Array.from(document.querySelector('#pages').querySelectorAll('.page'));
+            let next_page = all_pages[all_pages.indexOf(el_page) + 1];
+            if(next_page) {
+                next_page.insertAdjacentElement('afterend', el_page);
+            }
+            arrange_pages();
+            e.target.scrollIntoView();
+        }
+
         if(e.target.className === 'download') {
             let el_page = e.target.parentElement.parentElement;
             download(el_page);
@@ -655,24 +685,8 @@
             let el_page = e.target.parentElement.parentElement;
             let name = el_page.querySelector('.어린이이름').textContent;
             if(window.confirm(`정말 ${name} 생기부를 삭제하겠습니까? tsv 파일을 저장했는지 확인하세요.`)) {
-                if(el_page.nextElementSibling) {
-                    if(el_page.nextElementSibling.tagName === 'HR') {
-                        el_page.nextElementSibling.remove();
-                    }    
-                }
-                else {
-                    if(el_page.previousElementSibling) {
-                        if(el_page.previousElementSibling.tagName === 'HR') {
-                            el_page.previousElementSibling.remove();
-                        }    
-                    }
-                }
                 el_page.remove();
-                let all_pages = document.querySelectorAll('.page');
-                if(all_pages.length > 0) {
-                    let first_page = all_pages[0];
-                    first_page.style.marginTop = document.querySelector('#ui').getBoundingClientRect().height + 50 + 'px';
-                }
+                arrange_pages();
             }
         }
         
@@ -682,19 +696,13 @@
                 for(let page of pages) {
                     page.remove();
                 }
-                let hrs = document.querySelectorAll('hr');
-                for(let hr of hrs) {
-                    hr.remove();
-                }
+                arrange_pages();
             }
         }
         
         if(e.target.id === 'load') {
             if(window.confirm('정말 불러오겠습니까?')) {
                 let tsv = localStorage.getItem('tsv');
-                // localStorage.setItem('age', document.querySelector('#age').value);
-                // localStorage.setItem('class-name', document.querySelector('#class-name').value);
-                // localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
                 document.querySelector('#age').value = localStorage.getItem('age');
                 document.querySelector('#class-name').value = localStorage.getItem('class-name');
                 document.querySelector('#teacher-name').value = localStorage.getItem('teacher-name');
@@ -733,7 +741,8 @@
                         infos[all_fields.indexOf('담임5세')] = document.querySelector('#teacher-name').value.trim();
                     }
                     build_page(all_fields, infos);
-                }    
+                }
+                arrange_pages();    
             }
             else if(lines.length > 1) { // 생기부 색인에서 가져온 경우
                 for(let line of lines) {
@@ -772,6 +781,7 @@
                     }
                     build_page(all_fields, infos);
                 }
+                arrange_pages();
             }
         }
 
@@ -786,6 +796,56 @@
                 td.textContent = `${parseInt(ymd[0])}. ${parseInt(ymd[1])}. ${parseInt(ymd[2])}.`;
                 td.focus();
                 td.setAttribute('contenteditable', 'true');
+            }
+            check_all(el);
+        }
+
+        if(e.target.className.length === 7) {
+            let ts = e.target.className.split('-');
+            if(ts[0] === 'focus') {
+                let n = parseInt(ts[1]);
+                for(let i = 1; i <= 7; i++) {
+                    let sections = Array.from(document.querySelector('#pages').querySelectorAll(`.section-${i}`));
+                    if(e.target.checked) {
+                        if(n === i) {
+                            for(let section of sections) {
+                                section.style.display = '';
+                            }
+                        }
+                        else {
+                            for(let section of sections) {
+                                section.style.display = 'none';
+                            }
+                        }
+                        document.querySelectorAll(`.${e.target.className}`).forEach(x => x.checked = true);
+                    }
+                    else {
+                        for(let section of sections) {
+                            section.style.display = '';
+                        }
+                        document.querySelectorAll(`.${e.target.className}`).forEach(x => x.checked = false);
+                    }
+                }
+            }
+        }
+
+        if(e.target.className === 'by-age') {
+            let age = parseInt(document.querySelector('#age').value);
+            if(e.target.checked) {
+                for(let i = 3; i <= 5; i++) {
+                    if(i === age) {
+                        document.querySelectorAll(`.age-${i}`).forEach(x => x.style.display = '');
+                    }
+                    else {
+                        document.querySelectorAll(`.age-${i}`).forEach(x => x.style.display = 'none');
+                    
+                    }
+                }
+            }
+            else {
+                document.querySelectorAll(`.age-3`).forEach(x => x.style.display = '');
+                document.querySelectorAll(`.age-4`).forEach(x => x.style.display = '');
+                document.querySelectorAll(`.age-5`).forEach(x => x.style.display = '');
             }
         }
         
@@ -821,6 +881,33 @@
         for(let line of lines) {
             let infos = line.split('\t').map(x => x.trim());
             build_page(cols, infos);
+        }
+
+        arrange_pages();
+    }
+
+    function arrange_pages() {
+        let hrs = document.querySelector('#pages').querySelectorAll('hr');
+        for(let hr of hrs) {
+            hr.remove();
+        }
+
+        let pages = Array.from(document.querySelector('#pages').querySelectorAll('.page'));
+        if(pages.length > 0) {
+            for(let i = 0; i < pages.length; i++) {
+                if(i === 0) {
+                    pages[i].style.marginTop = document.querySelector('#ui').getBoundingClientRect().height + 50 + 'px';
+                }
+                else {
+                    pages[i].style.marginTop = '50px';
+                }
+            }
+        }
+
+        // page 사이에 hr 만들어서 다시 넣기
+        for(let i = 0; i < pages.length - 1; i++) {
+            let hr = document.createElement('hr');
+            pages[i].insertAdjacentElement('afterend', hr);
         }
     }
 </script>
