@@ -130,8 +130,16 @@
     }
 
     @media print {
+        body {
+            margin: 0;
+        }
         #ui-top, #ui-buttons, #preview, #logotype {
             display: none;
+        }
+        #stage {
+            /* A4 210mm x 297mm */
+            width: 210mm;
+            height: 297mm;
         }
     }
 </style>
@@ -1139,7 +1147,80 @@
         document.querySelectorAll('.halo').forEach((el) => {
             el.setAttribute('stroke', 'transparent');
         });
+
+        let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        // 모든 movable의 rect를 구해서 전체를 감싸는 사각형 구하기
+        let left = Number.MAX_VALUE;
+        let right = Number.MIN_VALUE;
+        let top = Number.MAX_VALUE;
+        let bottom = Number.MIN_VALUE;
+        for(let el of document.querySelectorAll('.movable')) {
+            let rect = el.querySelector('.glyph').getBoundingClientRect();
+            if(rect.left < left) left = rect.left;
+            if(rect.right > right) right = rect.right;
+            if(rect.top < top) top = rect.top;
+            if(rect.bottom > bottom) bottom = rect.bottom;
+        }
+        //console.log(left, right, top, bottom);
+        
+        let scale = 1;
+        let width = right - left;
+        let height = bottom - top;
+        // a4_width 는 devicePixelRatio를 고려하면?
+        let dpi = 96;
+        let inch2mm = 25.4
+        let a4_width = 210 * 96 / inch2mm;
+        let a4_height = 297 * 96 / inch2mm;
+        let a4_center_x = a4_width / 2;
+        let a4_center_y = a4_height / 2;
+        let center_x = (left + right) / 2;
+        let center_y = (top + bottom) / 2;
+        let a4_ratio = a4_width / a4_height;
+        let ratio = width / height;
+        if(ratio > a4_ratio) {
+            scale = a4_width * 0.9 / width;
+        }
+        else {
+            scale = a4_height * 0.9 / height;
+        }
+        
+        //group.setAttribute('transform', `translate(${a4_center_x - center_x * scale}, ${a4_center_y - center_y * scale}) scale(${scale})`);
+        group.setAttribute('transform', `translate(${a4_center_x}, ${a4_center_y}) scale(${scale}) translate(${-center_x}, ${-center_y})`);
+    
+        for(let el of document.querySelectorAll('.movable')) {
+            group.appendChild(el.cloneNode(true));
+        }
+        svg.innerHTML = '';
+        svg.appendChild(group);
+
+        // svg의 attribute를 a4 크기에 맞게 조절, viewBox도 조절
+        svg.setAttribute('width', a4_width);
+        svg.setAttribute('height', a4_height);
+        svg.setAttribute('viewBox', `0 0 ${a4_width} ${a4_height}`);
+
+        // a4 크기를 채우는 사각형 그리기
+        // let el_rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        // el_rect.setAttribute('x', 0);
+        // el_rect.setAttribute('y', 0);
+        // el_rect.setAttribute('width', a4_width * window.devicePixelRatio);
+        // el_rect.setAttribute('height', a4_height * window.devicePixelRatio) ;
+        // el_rect.setAttribute('stroke', 'black');
+        // el_rect.setAttribute('stroke-width', '10');
+        // el_rect.setAttribute('fill', 'transparent');
+        // svg.appendChild(el_rect);
+
         window.print();
+        // 인쇄 후 다시 원래대로
+        svg.innerHTML = '';
+        for(let el of group.querySelectorAll('.movable')) {
+            svg.appendChild(el);
+        }
+
+        // svg의 attribute를 원래대로
+        svg.setAttribute('width', window.innerWidth);
+        svg.setAttribute('height', window.innerHeight);
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
         if(selectedMovable) {
             selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
         }
