@@ -1178,13 +1178,19 @@
         let center_y = (top + bottom) / 2;
         let a4_ratio = a4_width / a4_height;
         let ratio = width / height;
-        let len = Math.max(width, height);
+        let len = Math.min(width, height);
         if(ratio >= 1) {
             scale = a4_width * 0.9 / len;
             rotation = 90;
+            if(scale * width > a4_height) {
+                scale = a4_height * 0.9 / width;
+            }
         }
         else {
             scale = a4_height * 0.9 / len;
+            if(scale * height > a4_height) {
+                scale = a4_height * 0.9 / height;
+            }
         }
         
         //group.setAttribute('transform', `translate(${a4_center_x - center_x * scale}, ${a4_center_y - center_y * scale}) scale(${scale})`);
