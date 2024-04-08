@@ -1164,6 +1164,7 @@
         //console.log(left, right, top, bottom);
         
         let scale = 1;
+        let rotation = 0;
         let width = right - left;
         let height = bottom - top;
         // a4_width 는 devicePixelRatio를 고려하면?
@@ -1177,15 +1178,17 @@
         let center_y = (top + bottom) / 2;
         let a4_ratio = a4_width / a4_height;
         let ratio = width / height;
-        if(ratio > a4_ratio) {
-            scale = a4_width * 0.9 / width;
+        let len = Math.max(width, height);
+        if(ratio >= 1) {
+            scale = a4_width * 0.9 / len;
+            rotation = 90;
         }
         else {
-            scale = a4_height * 0.9 / height;
+            scale = a4_height * 0.9 / len;
         }
         
         //group.setAttribute('transform', `translate(${a4_center_x - center_x * scale}, ${a4_center_y - center_y * scale}) scale(${scale})`);
-        group.setAttribute('transform', `translate(${a4_center_x}, ${a4_center_y}) scale(${scale}) translate(${-center_x}, ${-center_y})`);
+        group.setAttribute('transform', `translate(${a4_center_x}, ${a4_center_y}) scale(${scale}) rotate(${rotation}) translate(${-center_x}, ${-center_y})`);
     
         for(let el of document.querySelectorAll('.movable')) {
             group.appendChild(el.cloneNode(true));
