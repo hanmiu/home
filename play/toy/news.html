@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>한미 뉴스</title>
+<style>
+    #title {
+        color: gray;
+        font-size: 30px;
+        margin-left: 50px;
+        margin-top: 50px;
+    }
+    
+    #ui {
+        margin-left: 50px;
+        margin-top: 20px;
+    }
+    
+    #ui button {
+        font-size: 20px;
+        margin: 5px;
+    }
+    
+    #hangul-input {
+        margin-top: 10px;
+        position: relative;
+    }
+    
+    #compo {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 120px;
+        height: 120px;
+        font-size: 80px;
+        line-height: 120px;
+        text-align: center;
+        background-color: azure;
+        user-select: none;
+        cursor: pointer;
+    }
+    
+    #jamos {
+        position: absolute;
+        left: 120px;
+        top: 0px;
+    }
+    
+    #cho .jamo {
+        background-color: #f5f5dc;
+    }
+    
+    #jung .jamo {
+        background-color: #f0f0ae;
+    }
+    
+    #jong .jamo {
+        background-color: #e8e884;
+    }
+    
+    .jamo {
+        display: inline-block;
+        box-sizing: border-box;
+        margin: 5px;
+        font-size: 20px;
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        border: 1px solid gray;
+        line-height: 30px;
+        text-align: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    #cho .jamo:active {
+        background-color: burlywood;
+    }
+    
+    #jung .jamo:active {
+        background-color: burlywood;
+    }
+    
+    #jong .jamo:active {
+        background-color: burlywood;
+    }
+    
+    #panel {
+        position: relative;
+        overflow-y: scroll;
+        margin-top: 150px;
+        margin-left: 50px;
+        margin-right: 50px;
+        height: 328px;
+    }
+    
+    #page {
+        
+    }
+    
+    .letter {
+        display: inline-block;
+        padding-bottom: 1px;
+        padding-left: 2px;
+        padding-right: 2px;
+        border-bottom: 1px solid transparent;
+        margin-bottom: 3px;
+        font-size: 30px;
+        width: 30px;
+        user-select: none;
+        transition: 0.5s;
+    }
+    
+    .letter.interim {
+        color: silver;
+    }
+    
+    .letter.selected {
+        /* background-color: aquamarine; */
+    }
+    
+    #cursor {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        border-right: 2px solid black;
+        height: 30px;
+        animation: blink 0.5s infinite alternate;
+    }
+    
+    #print-content {
+        display: none;
+        font-size: 30px;
+    }
+    
+    @keyframes blink {
+        0% {
+            opacity: 1;
+        }
+        
+        100%{
+            opacity: 0;
+        }
+    }
+    
+    @media print {
+        #ui {
+            display: none;
+        }
+        
+        #cursor {
+            display: none;
+        }
+        
+        #panel {
+            display: none;
+        }
+        
+        #print-content {
+            display: block;
+            margin: 50px;
+        }
+    }
+</style>
+<body>
+    <div id="title">한미유치원 OO반 뉴스</div>
+    <pre id="print-content"></pre>
+    <div id="ui">
+        <button id="bt-recog">받아쓰기</button>
+        <button id="bt-speak">읽기</button>
+        <button id="bt-print">인쇄</button>
+        <button id="bt-clear">다 지우기</button>
+        <div id="hangul-input">
+            <div id="compo"></div>
+            <div id="jamos">
+                <div id="cho"></div>
+                <div id="jung"></div>
+                <div id="jong"></div>
+            </div>
+        </div>
+    </div>
+    <div id="panel">
+        <div id="page"></div>
+        <div id="cursor"></div>
+    </div>
+</body>
+<script>
+    const elPanel = document.querySelector('#panel');
+    const elPage = document.querySelector('#page');
+    const elCursor = document.querySelector('#cursor');
+    const elCompo = document.querySelector('#compo');
+    const btRecog = document.querySelector('#bt-recog');
+    const btSpeak = document.querySelector('#bt-speak');
+    const btPrint = document.querySelector('#bt-print');
+    const btClear = document.querySelector('#bt-clear');
+    
+    let elPos = null;
+    let cursorMode = '';
+    let mDownLR = '';
+    let mDown = false;
+    let selStartEl = null;
+    let selectedLetters = null;
+    let textForUtter = '';
+    
+    const utter = new SpeechSynthesisUtterance();
+    utter.lang = 'ko';
+    utter.rate = 0.8;
+    
+    const numberKeys = Array(10).fill(0).map((x, i) => 48 + i);
+    
+    function placeCursor(el, lr) {
+        if (elPage.childElementCount === 0) {
+            elCursor.style.left = '0px';
+            elCursor.style.top = '0px';
+            elPos = null;
+            cursorMode = '';
+        } else {
+            const rectPanel = elPanel.getBoundingClientRect();
+            if (el) {
+                elPos = el;
+                if (lr === 'L') {
+                    if (el.previousElementSibling) {
+                        elPos = el.previousElementSibling;
+                        cursorMode = 'R';
+                    } else {
+                        cursorMode = 'L';
+                    }
+                } else if (lr === 'R') {
+                    cursorMode = 'R';
+                }
+                
+                const rect = elPos.getBoundingClientRect();
+                if (cursorMode === 'L') {
+                    elCursor.style.left = `${elPanel.scrollLeft + rect.left - rectPanel.left}px`;
+                } else if (cursorMode === 'R') {
+                    elCursor.style.left = `${elPanel.scrollLeft + rect.right - rectPanel.left}px`;
+                }
+                elCursor.style.top = `${elPanel.scrollTop + rect.top - rectPanel.top}px`;
+                if (rect.bottom > rectPanel.bottom) {
+                    elPanel.scrollTop += rect.bottom - rectPanel.bottom;
+                }
+                if (rect.top < rectPanel.top) {
+                    elPanel.scrollTop -= rectPanel.top - rect.top;
+                }
+            }
+        }
+    }
+    
+    function clearSelects() {
+        const selects = elPage.querySelectorAll('.letter.selected');
+        for (const el of selects) {
+            el.className = 'letter';
+            el.style.backgroundColor = 'transparent';
+        }
+    }
+    
+    window.onmousedown = function (e) {
+        mDown = true;
+        if (e.target.className === 'letter' || e.target.className === 'letter selected') {
+            clearSelects();
+        }
+        
+        if (e.target.className === 'letter') {
+            const el = e.target;
+            const rect = el.getBoundingClientRect();
+            const cx = (rect.left + rect.right) / 2;
+            if (e.pageX < cx) {
+                placeCursor(el, 'L');
+                mDownLR = 'L';
+            } else {
+                placeCursor(el, 'R');
+                mDownLR = 'R';
+            }
+            selStartEl = el;
+        }
+        
+        if (recognizing) {
+            recognition.stop();
+        }
+    };
+    
+    window.onmouseup = function () {
+        mDown = false;
+    };
+    
+    window.onmousemove = function (e) {
+        if (mDown) {
+            if (e.target.className === 'letter' || e.target.className === 'letter selected') {
+                if (selStartEl) {
+                    const rect = e.target.getBoundingClientRect();
+                    const cx = (rect.left + rect.right) / 2;
+                    const mMoveLR = e.pageX < cx ? 'L' : 'R';
+                    
+                    const els = [...elPage.children];
+                    const startIdx = els.indexOf(selStartEl);
+                    const endIdx = els.indexOf(e.target);
+                    let sIdx = 0;
+                    let eIdx = 0;
+                    clearSelects();
+                    const dir = endIdx < startIdx ? -1 : 1;
+                    if (dir > 0) {
+                        sIdx = startIdx;
+                        eIdx = endIdx;
+                        if (mDownLR === 'R') {
+                            if (elPage.children[sIdx + 1]) sIdx += 1;
+                        }
+                        if (mMoveLR === 'L') {
+                            if (elPage.children[eIdx - 1]) eIdx -= 1;
+                        }
+                    } else {
+                        sIdx = endIdx;
+                        eIdx = startIdx;
+                        if (mDownLR === 'L') {
+                            if (elPage.children[eIdx - 1]) eIdx -= 1;
+                        }
+                        if (mMoveLR === 'R') {
+                            if (elPage.children[sIdx + 1]) sIdx += 1;
+                        }
+                    }
+                    for (let i = sIdx; i <= eIdx; i++) {
+                        elPage.children[i].className = 'letter selected';
+                        const t = (i - sIdx) / (eIdx - sIdx);
+                        const hRange = Math.min((eIdx - sIdx) * 10, 70);
+                        const hue = (60 + hRange * t) | 0;
+                        elPage.children[i].style.backgroundColor = `hsl(${hue},100%,75%)`;
+                    }
+                    
+                    if (e.pageX < cx) {
+                        placeCursor(e.target, 'L');
+                    } else {
+                        placeCursor(e.target, 'R');
+                    }
+                }
+            }
+        }
+    };
+    
+    function insertLetter(letter, className) {
+        const el = document.createElement('div');
+        el.className = className;
+        el.innerHTML = letter;
+        if (elPage.childElementCount === 0) {
+            elPage.appendChild(el);
+        } else if (elPos) {
+            if (cursorMode === 'L') {
+                elPage.insertBefore(el, elPos);
+            } else if (cursorMode === 'R') {
+                const elNext = elPos.nextElementSibling;
+                if (elNext) {
+                    elPage.insertBefore(el, elNext);
+                } else {
+                    elPage.appendChild(el);
+                }
+            }
+        }
+        placeCursor(el, 'R');
+        return el;
+    }
+    
+    window.onkeydown = function (e) {
+        e.preventDefault();
+        
+        console.log(e.keyCode);
+        if (e.keyCode === 8) {
+            // delete, backspace
+            const selects = elPage.querySelectorAll('.letter.selected');
+            if (selects.length > 0) {
+                const elBefore = selects[0].previousElementSibling;
+                const elAfter = selects[selects.length - 1].nextElementSibling;
+                for (const el of selects) {
+                    el.remove();
+                }
+                if (elBefore) {
+                    placeCursor(elBefore, 'R');
+                } else if (elAfter) {
+                    placeCursor(elAfter, 'L');
+                } else {
+                    placeCursor(null, '');
+                }
+            } else {
+                if (elPos && cursorMode === 'R') {
+                    const elPrev = elPos.previousElementSibling;
+                    elPos.remove();
+                    if (elPrev) {
+                        placeCursor(elPrev, 'R');
+                    } else {
+                        placeCursor(elPage.firstElementChild, 'L');
+                    }
+                }
+            }
+        } else if (e.keyCode === 37) {
+            // left
+            if (elPos) {
+                const elPrev = elPos.previousElementSibling;
+                if (elPrev) {
+                    placeCursor(elPrev, 'R');
+                } else {
+                    if (elPage.firstElementChild) {
+                        placeCursor(elPage.firstElementChild, 'L');
+                    }
+                }
+            }
+        } else if (e.keyCode === 38) {
+            // up
+            if (elPos) {
+                const rect0 = elPos.getBoundingClientRect();
+                let elPrev = elPos.previousElementSibling;
+                while (elPrev) {
+                    const rect1 = elPrev.getBoundingClientRect();
+                    if (Math.abs(rect0.left - rect1.left) < 1) {
+                        elPos = elPrev;
+                        placeCursor(elPos, cursorMode);
+                        break;
+                    }
+                    elPrev = elPrev.previousElementSibling;
+                }
+                if (elPrev === null) {
+                    if (elPage.firstElementChild) {
+                        placeCursor(elPage.firstElementChild, 'L');
+                    }
+                }
+            }
+        } else if (e.keyCode === 40) {
+            // down
+            if (!elPos) {
+                if (elPage.childElementCount > 0) {
+                    placeCursor(elPage.firstElementChild, 'R');
+                }
+            } else {
+                const rect0 = elPos.getBoundingClientRect();
+                let elNext = elPos.nextElementSibling;
+                while (elNext) {
+                    const rect1 = elNext.getBoundingClientRect();
+                    if (Math.abs(rect0.left - rect1.left) < 1) {
+                        placeCursor(elNext, cursorMode);
+                        break;
+                    }
+                    elNext = elNext.nextElementSibling;
+                }
+                if (elNext === null) {
+                    if (elPage.firstElementChild !== null) {
+                        placeCursor(elPage.firstElementChild, 'R');
+                    }
+                    if (elPage.lastElementChild !== null) {
+                        placeCursor(elPage.lastElementChild, 'R');
+                    }
+                }
+            }
+        } else if (e.keyCode === 39) {
+            // right
+            if (elPos) {
+                let elNext = null;
+                if (cursorMode === 'L') {
+                    elNext = elPos;
+                } else {
+                    elNext = elPos.nextElementSibling;
+                }
+                if (elNext) {
+                    placeCursor(elNext, 'R');
+                }
+                if (elNext === null) {
+                    if (elPage.firstElementChild !== null) {
+                        placeCursor(elPage.firstElementChild, 'R');
+                    }
+                    if (elPage.lastElementChild !== null) {
+                        placeCursor(elPage.lastElementChild, 'R');
+                    }
+                }
+            } else {
+                placeCursor(elPage.firstElementChild, 'R');
+            }
+        } else if (e.keyCode === 32) {
+            // space
+            insertLetter('&nbsp;', 'letter');
+        } else if (e.keyCode === 188) {
+            // ,
+            insertLetter(',', 'letter');
+        } else if (e.keyCode === 190) {
+            // .
+            insertLetter('.', 'letter');
+        } else if (e.keyCode === 191) {
+            // ?
+            insertLetter('?', 'letter');
+        } else {
+            const n = numberKeys.indexOf(e.keyCode);
+            if (n !== -1) {
+                insertLetter(n, 'letter');
+            }
+        }
+    };
+    
+    elPanel.onfocus = function () {
+        elCursor.style.visibility = 'visible';
+    };
+    
+    elPanel.onblur = function () {
+        elCursor.style.visibility = 'hidden';
+    };
+    
+    function addSentence(text) {
+        for (let i = 0; i < text.length; i++) {
+            let ch = text[i];
+            const el = document.createElement('div');
+            el.className = 'letter';
+            if (ch === ' ') {
+                ch = '&nbsp;';
+            }
+            el.innerHTML = ch;
+            el.onclick = onclick;
+            elPage.appendChild(el);
+            placeCursor(el, 'R');
+        }
+    }
+    
+    utter.onboundary = function (e) {
+        if (textForUtter.length > 0) {
+            let endIndex = -1;
+            for (let i = e.charIndex; i < textForUtter.length; i++) {
+                if (textForUtter[i] === ' ') {
+                    endIndex = i - 1;
+                    if (endIndex < e.charIndex) {
+                        endIndex = e.charIndex;
+                    }
+                    break;
+                }
+            }
+            if (endIndex === -1) {
+                endIndex = textForUtter.length - 1;
+            }
+            let el = null;
+            for (let i = e.charIndex; i <= endIndex; i++) {
+                el = selectedLetters[i];
+                const bgcolor = getComputedStyle(el)['background-color'];
+                const anim = [
+                { backgroundColor: bgcolor, offset: 0.0 },
+                { backgroundColor: 'rgb(72, 203, 252)', offset: 0.2 },
+                { backgroundColor: bgcolor, offset: 1.0 },
+                ];
+                el.animate(anim, {
+                    duration: 1000 + (endIndex - e.charIndex) * 200,
+                });
+            }
+            placeCursor(el, 'R');
+            if (endIndex === textForUtter.length - 2) {
+                if (textForUtter[textForUtter.length - 1] === ' ') {
+                    el = selectedLetters[selectedLetters.length - 1];
+                    placeCursor(el, 'R');
+                }
+            }
+        }
+    };
+    
+    utter.onend = function () {};
+    
+    function speak() {
+        selectedLetters = elPage.querySelectorAll('.letter.selected');
+        textForUtter = '';
+        if (selectedLetters.length > 0) {
+            for (const el of selectedLetters) {
+                textForUtter += el.textContent;
+            }
+        } else {
+            selectedLetters = elPage.querySelectorAll('.letter');
+            textForUtter = elPage.textContent;
+        }
+        if (textForUtter) {
+            utter.text = textForUtter;
+            speechSynthesis.speak(utter);
+        }
+    }
+    
+    function speakPartial(text) {
+        if (text.length > 0) {
+            utter.text = text;
+            speechSynthesis.speak(utter);
+        }
+    }
+    
+    let finalTranscript = '';
+    let interimTranscript = '';
+    let recognizing = false;
+    let ignoreOnend;
+    let startTimestamp;
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'ko';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    
+    recognition.onstart = function () {
+        recognizing = true;
+    };
+    
+    recognition.onerror = function (event) {
+        if (event.error === 'no-speech') {
+            ignoreOnend = true;
+        }
+        if (event.error === 'audio-capture') {
+            ignoreOnend = true;
+        }
+        if (event.error === 'not-allowed') {
+            if (event.timeStamp - startTimestamp < 100) {
+            } else {
+            }
+            ignoreOnend = true;
+        }
+    };
+    
+    recognition.onend = function () {
+        recognizing = false;
+        if (ignoreOnend) {
+            return;
+        }
+    };
+    
+    recognition.onresult = function (event) {
+        interimTranscript = '';
+        finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            } else {
+                interimTranscript += event.results[i][0].transcript;
+            }
+        }
+        
+        const interims = elPage.querySelectorAll('.interim-holder');
+        if (interims.length > 0) {
+            for (let i = 0; i < interims.length; i++) {
+                interims[i].remove();
+            }
+        }
+        
+        if (interimTranscript) {
+            interimTranscript = interimTranscript.trim();
+            const holder = document.createElement('span');
+            holder.className = 'interim-holder';
+            for (let i = 0; i < interimTranscript.length; i++) {
+                let letter = interimTranscript[i];
+                if (letter === ' ') {
+                    letter = '&nbsp;';
+                }
+                const el = document.createElement('div');
+                el.className = 'letter interim';
+                el.innerHTML = letter;
+                holder.appendChild(el);
+            }
+            
+            if (elPage.childElementCount === 0) {
+                elPage.appendChild(holder);
+            } else {
+                if (cursorMode === 'L') {
+                    if (elPos) {
+                        elPage.insertBefore(holder, elPos);
+                    } else {
+                        elPage.insertBefore(holder, elPage.firstElementChild);
+                    }
+                } else if (cursorMode === 'R') {
+                    elPage.insertBefore(holder, elPos.nextElementSibling);
+                }
+            }
+        }
+        
+        if (finalTranscript) {
+            if (cursorMode === 'L') {
+                if (elPos) {
+                    elPos = elPos.previousElementSibling;
+                    cursorMode = 'R';
+                } else {
+                    elPos = elPage.firstElementChild;
+                    placeCursor(elPos, 'L');
+                }
+            }
+            finalTranscript = finalTranscript.trim();
+            for (let i = 0; i < finalTranscript.length; i++) {
+                let letter = finalTranscript[i];
+                if (letter === ' ') {
+                    letter = '&nbsp;';
+                }
+                const el = insertLetter(letter, 'letter');
+                const anim = [
+                { color: 'silver', offset: 0.0 },
+                { color: 'black', offset: 1.0 },
+                ];
+                el.animate(anim, {
+                    duration: 1000,
+                });
+            }
+        }
+    };
+    
+    btRecog.onclick = function () {
+        if (!recognizing) {
+            recognition.start();
+        }
+    };
+    
+    btSpeak.onclick = function () {
+        recognition.stop();
+        speak();
+    };
+    
+    btPrint.onclick = function () {
+        const el = document.querySelector('#print-content');
+        el.textContent = elPage.textContent;
+        
+        window.print();
+    };
+    
+    btClear.onclick = function () {
+        if (window.confirm('정말 다 지울까요?')) {
+            while (elPage.childElementCount > 0) {
+                elPage.children[0].remove();
+            }
+            placeCursor(null, 'L');
+        }
+    };
+    
+    const cho = Array(19).fill(0).map((x, i) => String.fromCharCode(0x1100 + i));
+    const jung = Array(21).fill(0).map((x, i) => String.fromCharCode(0x1161 + i));
+    const jong = Array(27).fill(0).map((x, i) => String.fromCharCode(0x11A8 + i));
+    jong.unshift('&nbsp;');
+    
+    function composeHangul(chs) {
+        let ch_L = 0;
+        let ch_V = 0;
+        let ch_T = 0;
+        if (chs[0]) {
+            ch_L = (chs[0].charCodeAt(0) - 0x1100) * 21 * 28;
+        }
+        if (chs[1]) {
+            ch_V = (chs[1].charCodeAt(0) - 0x1100 - 0x61) * 28;
+        }
+        if (chs[2]) {
+            ch_T = chs[2].charCodeAt(0) - 0x1100 - 0xA7;
+        }
+        
+        return String.fromCharCode(0xAC00 + ch_L + ch_V + ch_T);
+    }
+    
+    function decomposeHangul(ch) {
+        const n_ch = ch.charCodeAt(0);
+        const o = [];
+        if (n_ch >= 0xAC00 && n_ch <= 0xD7A3) {
+            const ch_T = (n_ch - 0xAC00) % 28;
+            const ch_V = Math.floor((n_ch - 0xAC00) / 28) % 21;
+            const ch_L = Math.floor(Math.floor((n_ch - 0xAC00) / 28) / 21);
+            
+            o.push(String.fromCharCode(ch_L + 0x1100));
+            o.push(String.fromCharCode(ch_V + 0x1100 + 0x61));
+            if (ch_T !== 0) {
+                o.push(String.fromCharCode(ch_T + 0x1100 + 0xA7));
+            }
+        }
+        return o;
+    }
+    
+    let currCho = '';
+    let currJung = '';
+    let currJong = '';
+    
+    function buildHangul() {
+        const letter = composeHangul([currCho, currJung, currJong]);
+        if (letter) {
+            elCompo.textContent = letter;
+            speakPartial(letter);
+        } else {
+            elCompo.textContent = '';
+        }
+    }
+    
+    function onChoClick(e) {
+        currCho = e.target.textContent;
+        const jamos = document.querySelectorAll('#cho .jamo');
+        for (const el of jamos) {
+            el.style.backgroundColor = '';
+        }
+        e.target.style.backgroundColor = 'aqua';
+        buildHangul();
+    }
+    
+    function onJungClick(e) {
+        currJung = e.target.textContent;
+        const jamos = document.querySelectorAll('#jung .jamo');
+        for (const el of jamos) {
+            el.style.backgroundColor = '';
+        }
+        e.target.style.backgroundColor = 'aqua';
+        buildHangul();
+    }
+    
+    function onJongClick(e) {
+        currJong = e.target.textContent;
+        const jamos = document.querySelectorAll('#jong .jamo');
+        for (const el of jamos) {
+            el.style.backgroundColor = '';
+        }
+        e.target.style.backgroundColor = 'aqua';
+        if (currJong.charCodeAt(0) === 160) {
+            currJong = '';
+        }
+        buildHangul();
+    }
+    
+    function init() {
+        const elCho = document.querySelector('#cho');
+        for (const c of cho) {
+            const el = document.createElement('div');
+            el.onclick = onChoClick;
+            el.className = 'jamo';
+            el.innerHTML = c;
+            elCho.appendChild(el);
+        }
+        const elJung = document.querySelector('#jung');
+        for (const c of jung) {
+            const el = document.createElement('div');
+            el.onclick = onJungClick;
+            el.className = 'jamo';
+            el.innerHTML = c;
+            elJung.appendChild(el);
+        }
+        const elJong = document.querySelector('#jong');
+        for (const c of jong) {
+            const el = document.createElement('div');
+            el.onclick = onJongClick;
+            el.className = 'jamo';
+            el.innerHTML = c;
+            elJong.appendChild(el);
+        }
+        
+        elCompo.onclick = function () {
+            insertLetter(elCompo.textContent, 'letter');
+            speakPartial(elCompo.textContent);
+        };
+        
+        const days = '일,월,화,수,목,금,토'.split(',');
+        const dt = new Date();
+        const year = dt.getFullYear();
+        const month = dt.getMonth() + 1;
+        const date = dt.getDate();
+        const day = days[dt.getDay()];
+        
+        const dateString = `${year}년 ${month}월 ${date}일 ${day}요일`;
+        document.querySelector('#title').textContent = dateString;
+        addSentence(dateString);
+    }
+    
+    function layout() {
+        const jamosRect = document.querySelector('#jamos').getBoundingClientRect();
+        elPanel.style.marginTop = `${jamosRect.height + 20}px`;
+        const panelRect = elPanel.getBoundingClientRect();
+        const dh = 41;
+        const nh = (window.innerHeight - panelRect.top - 50) / dh | 0;
+        elPanel.style.height = `${dh * nh}px`;
+        placeCursor(elPos, 'R');
+    }
+    
+    window.onresize = layout;
+    
+    init();
+    layout();
+</script>
