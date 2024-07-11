@@ -6,7 +6,6 @@
     <title>한글 획수 맞추기</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
-
         body {
             font-family: 'Jua', sans-serif;
             display: flex;
@@ -15,6 +14,7 @@
             height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            font-size: 120%;
         }
         .game-container {
             background-color: white;
@@ -22,48 +22,78 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
         }
         h1 {
             color: #333;
+            font-size: 2.4em;
         }
         #character {
-            font-size: 6rem;
+            font-size: 7.2rem;
             margin: 1rem 0;
             color: #4a4a4a;
         }
-        input[type="text"], input[type="number"] {
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            width: calc(100% - 1rem);
-            margin: 0.5rem 0;
+        input[type="text"] {
+            font-size: 1.44rem;
+            padding: 0.6rem;
+            width: calc(100% - 1.2rem);
+            margin: 0.6rem 0;
             border: 2px solid #ddd;
             border-radius: 5px;
+            font-family: 'Jua', sans-serif;
+        }
+        input[type="number"] {
+            font-size: 1.2rem;
+            padding: 0.4rem;
+            width: 80px;
+            margin: 0.6rem auto;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Jua', sans-serif;
+            text-align: center;
+            display: block;
         }
         button {
-            font-size: 1rem;
-            padding: 0.5rem 1rem;
+            font-size: 1.2rem;
+            padding: 0.6rem 1.2rem;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
-            margin: 0.5rem;
+            margin: 0.6rem;
+            font-family: 'Jua', sans-serif;
         }
         button:hover {
             background-color: #45a049;
         }
         #result {
-            margin-top: 1rem;
+            margin-top: 1.2rem;
             font-weight: bold;
+            font-size: 1.44rem;
         }
         #next, #game-area {
             display: none;
         }
         #input-area {
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        #characters-display {
+            margin-top: 1.2rem;
+            font-size: 1.8rem;
+            letter-spacing: 0.2rem;
+            color: #999;
+            word-break: break-all;
+        }
+        .highlighted {
+            color: #4CAF50;
+        }
+        #button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.2rem;
         }
     </style>
 </head>
@@ -72,27 +102,37 @@
         <h1>한글 획수 맞추기</h1>
         <div id="input-area">
             <input type="text" id="sentence" placeholder="문장을 입력하세요">
-            <button onclick="startGame('custom')">문제 내기</button>
+            <button onclick="startGame('custom')">문제 만들기</button>
             <button onclick="startGame('random')">랜덤 문제</button>
         </div>
         <div id="game-area">
             <div id="character"></div>
             <p>이 글자는 몇 획일까요?</p>
-            <input type="number" id="guess" min="1" max="30">
+            <input type="number" id="guess" min="0" max="30" value="0">
             <button onclick="checkGuess()">확인</button>
             <div id="result"></div>
+            <div id="characters-display"></div>
+        </div>
+        <div id="button-container">
             <button id="next" onclick="nextQuestion()">다음 문제</button>
         </div>
     </div>
 
     <script>
-        const cho = {'ㄱ': 1, 'ㄲ': 2, 'ㄴ': 1, 'ㄷ': 2, 'ㄸ': 4, 'ㄹ': 3, 'ㅁ': 3, 'ㅂ': 4, 'ㅃ': 8, 'ㅅ': 2, 'ㅆ': 4, 'ㅇ': 1, 'ㅈ': 3, 'ㅉ': 6, 'ㅊ': 4, 'ㅋ': 2, 'ㅌ': 3, 'ㅍ': 4, 'ㅎ': 3};
-        const jung = {'ㅏ': 2, 'ㅐ': 3, 'ㅑ': 3, 'ㅒ': 4, 'ㅓ': 2, 'ㅔ': 3, 'ㅕ': 3, 'ㅖ': 4, 'ㅗ': 2, 'ㅘ': 4, 'ㅙ': 5, 'ㅚ': 3, 'ㅛ': 3, 'ㅜ': 2, 'ㅝ': 4, 'ㅞ': 5, 'ㅟ': 3, 'ㅠ': 3, 'ㅡ': 1, 'ㅢ': 2, 'ㅣ': 1};
-        const jong = {'': 0, 'ㄱ': 1, 'ㄲ': 2, 'ㄳ': 3, 'ㄴ': 1, 'ㄵ': 4, 'ㄶ': 4, 'ㄷ': 2, 'ㄹ': 3, 'ㄺ': 4, 'ㄻ': 6, 'ㄼ': 7, 'ㄽ': 5, 'ㄾ': 6, 'ㄿ': 7, 'ㅀ': 6, 'ㅁ': 3, 'ㅂ': 4, 'ㅄ': 6, 'ㅅ': 2, 'ㅆ': 4, 'ㅇ': 1, 'ㅈ': 3, 'ㅊ': 4, 'ㅋ': 2, 'ㅌ': 3, 'ㅍ': 4, 'ㅎ': 3};
-
-        const choList = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-        const jungList = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
-        const jongList = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+        const jamo = {
+            cho: {
+                list: ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'],
+                strokes: {'ㄱ': 1, 'ㄲ': 2, 'ㄴ': 1, 'ㄷ': 2, 'ㄸ': 4, 'ㄹ': 3, 'ㅁ': 3, 'ㅂ': 4, 'ㅃ': 8, 'ㅅ': 2, 'ㅆ': 4, 'ㅇ': 1, 'ㅈ': 3, 'ㅉ': 6, 'ㅊ': 4, 'ㅋ': 2, 'ㅌ': 3, 'ㅍ': 4, 'ㅎ': 3}
+            },
+            jung: {
+                list: ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'],
+                strokes: {'ㅏ': 2, 'ㅐ': 3, 'ㅑ': 3, 'ㅒ': 4, 'ㅓ': 2, 'ㅔ': 3, 'ㅕ': 3, 'ㅖ': 4, 'ㅗ': 2, 'ㅘ': 4, 'ㅙ': 5, 'ㅚ': 3, 'ㅛ': 3, 'ㅜ': 2, 'ㅝ': 4, 'ㅞ': 5, 'ㅟ': 3, 'ㅠ': 3, 'ㅡ': 1, 'ㅢ': 2, 'ㅣ': 1}
+            },
+            jong: {
+                list: ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'],
+                strokes: {'': 0, 'ㄱ': 1, 'ㄲ': 2, 'ㄳ': 3, 'ㄴ': 1, 'ㄵ': 4, 'ㄶ': 4, 'ㄷ': 2, 'ㄹ': 3, 'ㄺ': 4, 'ㄻ': 6, 'ㄼ': 7, 'ㄽ': 5, 'ㄾ': 6, 'ㄿ': 7, 'ㅀ': 6, 'ㅁ': 3, 'ㅂ': 4, 'ㅄ': 6, 'ㅅ': 2, 'ㅆ': 4, 'ㅇ': 1, 'ㅈ': 3, 'ㅊ': 4, 'ㅋ': 2, 'ㅌ': 3, 'ㅍ': 4, 'ㅎ': 3}
+            }
+        };
 
         const randomSentences = [
             "안녕하세요 반갑습니다",
@@ -105,6 +145,7 @@
         let characters = [];
         let currentChar;
         let currentStrokes;
+        let solvedChars = new Set();
 
         function startGame(mode) {
             let sentence;
@@ -117,27 +158,39 @@
             } else {
                 sentence = randomSentences[Math.floor(Math.random() * randomSentences.length)];
             }
-            characters = sentence.split('').filter(char => /[가-힣]/.test(char));
+            characters = sentence.split('');
+            solvedChars.clear();
             document.getElementById('input-area').style.display = 'none';
             document.getElementById('game-area').style.display = 'block';
+            document.getElementById('button-container').style.display = 'flex';
+            document.getElementById('next').style.display = 'none';
+            updateCharactersDisplay();
             nextQuestion();
         }
 
+        function updateCharactersDisplay() {
+            const display = document.getElementById('characters-display');
+            display.innerHTML = characters.map(char => 
+                `<span class="${solvedChars.has(char) ? 'highlighted' : ''}">${char}</span>`
+            ).join('');
+        }
+
         function selectRandomChar() {
-            if (characters.length === 0) {
-                document.getElementById('character').textContent = "게임 종료!";
+            const unsolved = characters.filter(char => !solvedChars.has(char) && /[가-힣]/.test(char));
+            if (unsolved.length === 0) {
+                document.getElementById('character').textContent = "🎉";
                 document.getElementById('result').textContent = "모든 글자를 다 맞혔습니다!";
                 document.getElementById('result').style.color = "blue";
                 document.getElementById('guess').style.display = 'none';
-                document.getElementById('next').textContent = "새 게임 시작";
+                document.getElementById('next').textContent = "새로 시작";
                 document.getElementById('next').onclick = resetGame;
                 document.getElementById('next').style.display = 'inline-block';
-                return;
+                return false;
             }
-            let index = Math.floor(Math.random() * characters.length);
-            currentChar = characters.splice(index, 1)[0];
+            currentChar = unsolved[Math.floor(Math.random() * unsolved.length)];
             document.getElementById('character').textContent = currentChar;
             currentStrokes = countStrokes(currentChar);
+            return true;
         }
 
         function countStrokes(char) {
@@ -146,7 +199,9 @@
                 const choIndex = Math.floor(code / 588);
                 const jungIndex = Math.floor((code % 588) / 28);
                 const jongIndex = code % 28;
-                return cho[choList[choIndex]] + jung[jungList[jungIndex]] + jong[jongList[jongIndex]];
+                return jamo.cho.strokes[jamo.cho.list[choIndex]] + 
+                       jamo.jung.strokes[jamo.jung.list[jungIndex]] + 
+                       jamo.jong.strokes[jamo.jong.list[jongIndex]];
             }
             return 0;  // 한글이 아닌 경우
         }
@@ -157,6 +212,8 @@
             if (guess === currentStrokes) {
                 resultElement.textContent = "맞았습니다!";
                 resultElement.style.color = "green";
+                solvedChars.add(currentChar);
+                updateCharactersDisplay();
                 document.getElementById('next').style.display = 'inline-block';
             } else {
                 resultElement.textContent = "조금 더 고민해보세요!";
@@ -165,22 +222,27 @@
         }
 
         function nextQuestion() {
-            document.getElementById('guess').value = '';
+            document.getElementById('guess').value = '0';
             document.getElementById('result').textContent = '';
+            document.getElementById('guess').style.display = 'block';
             document.getElementById('next').style.display = 'none';
-            document.getElementById('guess').style.display = 'inline-block';
-            selectRandomChar();
+            if (!selectRandomChar()) {
+                document.getElementById('next').style.display = 'inline-block';
+            }
         }
 
         function resetGame() {
             document.getElementById('input-area').style.display = 'block';
             document.getElementById('game-area').style.display = 'none';
+            document.getElementById('button-container').style.display = 'none';
             document.getElementById('sentence').value = '';
             document.getElementById('character').textContent = '';
             document.getElementById('result').textContent = '';
-            document.getElementById('guess').style.display = 'inline-block';
+            document.getElementById('guess').style.display = 'block';
+            document.getElementById('guess').value = '0';
             document.getElementById('next').textContent = "다음 문제";
             document.getElementById('next').onclick = nextQuestion;
+            document.getElementById('characters-display').innerHTML = '';
         }
     </script>
 </body>
