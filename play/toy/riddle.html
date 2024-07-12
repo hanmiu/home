@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수수께끼</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #quiz-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        #riddle {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2c3e50;
+        }
+        .option {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #3498db;
+            background-color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .option:hover {
+            background-color: #e0f3ff;
+        }
+        .option.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        #message {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+        #progress {
+            text-align: center;
+            margin-top: 10px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container">
+        <h1>수수께끼</h1>
+        <div id="riddle"></div>
+        <div id="options"></div>
+        <div id="message"></div>
+        <div id="progress"></div>
+    </div>
+
+    <script>
+        const url = 'https://docs.google.com/spreadsheets/d/1nEq8Sdh6FcGuxruw7zcNkxty6EqpiHx-bV45VWJ7Ylc/gviz/tq?tqx=out:csv&sheet=Sheet%201';
+        let riddles = [];
+        let currentRiddle = null;
+        let remainingRiddles = [];
+
+        // DOM 요소
+        const riddleEl = document.getElementById('riddle');
+        const optionsEl = document.getElementById('options');
+        const messageEl = document.getElementById('message');
+        const progressEl = document.getElementById('progress');
+
+        // 데이터 가져오기
+        async function fetchData() {
+            try {
+                const response = await fetch(url);
+                const csvText = await response.text();
+                riddles = parseCSV(csvText);
+                console.log('Parsed riddles:', riddles);  // 디버깅용
+                if (riddles.length > 0) {
+                    remainingRiddles = [...riddles];
+                    selectRandomRiddle();
+                } else {
+                    throw new Error('No riddles found in the data');
+                }
+            } catch (error) {
+                console.error('Error fetching or parsing data:', error);
+                messageEl.textContent = '데이터를 불러오는 중 오류가 발생했습니다.';
+            }
+        }
+
+        // CSV 파싱
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(header => removeQuotes(header.trim()));
+            return lines.slice(1).map(line => {
+                const values = line.split(',').map(removeQuotes);
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index] || '';
+                    return obj;
+                }, {});
+            });
+        }
+
+        // 따옴표 제거 함수
+        function removeQuotes(str) {
+            return str.replace(/^["']|["']$/g, '').trim();
+        }
+
+        // 랜덤 수수께끼 선택
+        function selectRandomRiddle() {
+            if (remainingRiddles.length === 0) {
+                showCompletionMessage();
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * remainingRiddles.length);
+            currentRiddle = remainingRiddles.splice(randomIndex, 1)[0];
+            console.log('Selected riddle:', currentRiddle);  // 디버깅용
+            displayRiddle();
+            updateProgress();
+        }
+
+        // 수수께끼 표시
+        function displayRiddle() {
+            riddleEl.textContent = currentRiddle['수수께끼'];
+            const options = shuffleArray([currentRiddle['정답'], currentRiddle['보기1'], currentRiddle['보기2']]);
+            optionsEl.innerHTML = '';
+            options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = `${option}`;
+                button.className = 'option';
+                button.onclick = () => selectOption(option);
+                optionsEl.appendChild(button);
+            });
+            messageEl.textContent = '';
+        }
+
+        // 배열 섞기
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // 옵션 선택
+        function selectOption(selectedAnswer) {
+            if (selectedAnswer === currentRiddle['정답']) {
+                messageEl.textContent = '정답입니다!';
+                messageEl.style.color = '#2ecc71';
+                setTimeout(() => {
+                    messageEl.textContent = '';
+                    selectRandomRiddle();
+                }, 1000);
+            } else {
+                messageEl.textContent = '틀렸습니다. 다시 시도해보세요.';
+                messageEl.style.color = '#e74c3c';
+            }
+        }
+
+        // 진행 상황 업데이트
+        function updateProgress() {
+            const total = riddles.length;
+            const solved = total - remainingRiddles.length;
+            progressEl.textContent = `진행 상황: ${solved}/${total}`;
+        }
+
+        // 완료 메시지 표시
+        function showCompletionMessage() {
+            riddleEl.textContent = "축하합니다. 모든 문제를 풀었습니다!";
+            optionsEl.innerHTML = '';
+            messageEl.textContent = '';
+            progressEl.textContent = `총 문제 수: ${riddles.length}`;
+        }
+
+        // 초기 데이터 로드
+        fetchData();
+    </script>
+</body>
+</html>
