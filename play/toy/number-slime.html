@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-    <title>숫자 슬라임</title>
+    <title>Clustered Slime with Eyes</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
         canvas {
-            background-color: white;
-            flex: 1;
             width: 100vw;
             height: 100vh;
         }
@@ -49,11 +44,16 @@
             font-size: 16px;
             cursor: pointer;
         }
+        #container { position: relative; }
+        canvas { position: absolute; top: 0; left: 0; }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <div class="controls">
+    <div id="container">
+        <canvas id="webglCanvas"></canvas>
+        <canvas id="canvas"></canvas>
+    </div>
+    <div class="controls" style="display: none;">
         <div class="control">
             <label for="particleCount">Particle Count:</label>
             <input type="number" id="particleCount" min="10" max="1000" value="20">
@@ -82,16 +82,57 @@
             <label for="clusterMinPts">Cluster Min Points:</label>
             <input type="number" id="clusterMinPts" min="1" max="10" value="1">
         </div>
-        <div class="control">
-            <label for="cellSize">Cell Size: <span id="cellSizeValue">5</span></label>
-            <input type="range" id="cellSize" min="5" max="50" value="5">
-        </div>
-        <div class="control">
-            <label for="threshold">Threshold: <span id="thresholdValue">1.0</span></label>
-            <input type="range" id="threshold" min="0.1" max="2" step="0.1" value="1.0">
-        </div>
     </div>
-    <button id="pauseResume" style="display: none;">Pause</button>
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform vec2 u_resolution;
+        uniform vec2 u_circles[20];
+        uniform vec3 u_colors[20];
+        uniform int u_circleCount;
+        uniform float u_tightness;
+
+        float metaball(vec2 p, vec2 center, float radius) {
+            return radius * radius / dot(p - center, p - center);
+        }
+
+        vec3 backgroundGradient(vec2 uv) {
+            float t = uv.y;
+            return mix(vec3(0.1, 0.2, 0.3), vec3(0.5, 0.7, 0.9), t);
+        }
+
+        void main() {
+            vec2 uv = (2.0 * gl_FragCoord.xy - u_resolution) / u_resolution.y;
+            float sum = 0.0;
+            vec3 blobColor = vec3(0.0);
+            float maxInfluence = 0.0;
+
+            for (int i = 0; i < 20; i++) {
+                if (i >= u_circleCount) break;
+                float influence = metaball(uv, u_circles[i], 0.05);
+                sum += influence;
+                if (influence > maxInfluence) {
+                    maxInfluence = influence;
+                    blobColor = u_colors[i];
+                }
+            }
+
+            float threshold = u_tightness;
+            float value = smoothstep(threshold - 0.05, threshold, sum);
+
+            vec3 backgroundColor = backgroundGradient(uv * 0.5 + 0.5);
+            blobColor = mix(blobColor, vec3(1.0), value * 0.5); // Lighten the blob color
+
+            gl_FragColor = vec4(mix(backgroundColor, blobColor, value), 1.0);
+        }
+    </script>
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -108,15 +149,18 @@
         const attractionFactorInput = document.getElementById('attractionFactor');
         const clusterEpsilonInput = document.getElementById('clusterEpsilon');
         const clusterMinPtsInput = document.getElementById('clusterMinPts');
-        const cellSizeSlider = document.getElementById('cellSize');
-        const thresholdSlider = document.getElementById('threshold');
-        const pauseResumeButton = document.getElementById('pauseResume');
+
+        const webglCanvas = document.getElementById('webglCanvas');
+        const gl = webglCanvas.getContext('webgl');
+        let tightness = 1;
+        let randerGL = null;
 
         class Particle {
-            constructor(x, y, size) {
+            constructor(x, y, size, color) {
                 this.x = x;
                 this.y = y;
                 this.size = size;
+                this.color = color;
                 this.vx = 0;
                 this.vy = 0;
                 this.cluster = -1; // -1 means no cluster
@@ -141,10 +185,11 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size *0.5, 0, Math.PI * 2);
-                ctx.fillStyle = this === selectedParticle ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)';
+                ctx.fillStyle = this === selectedParticle ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.0)';
                 ctx.fill();
                 ctx.strokeStyle = this === selectedParticle ? 'red' : 'rgba(0, 0, 255, 1)';
-                ctx.stroke();
+                ctx.closePath();
+                //ctx.stroke();
             }
 
             isPointInside(x, y) {
@@ -162,9 +207,12 @@
                 particles.push(new Particle(
                     Math.random() * (canvas.width - 2 * size) + size,
                     Math.random() * (canvas.height - 2 * size) + size,
-                    size
+                    size,
+                    generateBrightGreenColor()
                 ));
             }
+
+            initWebGL();
         }
 
         function applyForces() {
@@ -285,8 +333,6 @@
             applyForces();
             dbscan();
 
-            //drawMetaballs();
-
             for (let particle of particles) {
                 particle.update();
                 particle.draw();
@@ -297,9 +343,20 @@
             ctx.fillStyle = 'black';
             for (let cluster of clusters) {
                 // count particles in this cluster using .filter
-                let count =particles.filter(p => p.cluster === cluster.index).length;
+                let count = particles.filter(p => p.cluster === cluster.index).length;
                 //ctx.fillText(cluster.index, cluster.x, cluster.y);
                 ctx.fillText(count, cluster.x, cluster.y);
+
+                // Draw eyes if there are at least 2 particles in the cluster
+                if (count >= 2) {
+                    let clusterParticles = particles.filter(p => p.cluster === cluster.index);
+                    drawEye(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y);
+                    drawEye(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y);
+                }
+            }
+
+            if(renderGL) {
+                renderGL();
             }
 
             requestAnimationFrame(update);
@@ -393,237 +450,6 @@
         particleCountInput.addEventListener('change', initParticles);
         particleSizeInput.addEventListener('change', initParticles);
 
-        function drawMetaballs() {
-            const cellSize = parseInt(cellSizeSlider.value);
-            const threshold = parseFloat(thresholdSlider.value);
-            const numRows = Math.ceil(canvas.height / cellSize);
-            const numCols = Math.ceil(canvas.width / cellSize);
-            
-            const samples = Array.from({ length: numRows + 1 }, (_, row) =>
-                Array.from({ length: numCols + 1 }, (_, col) =>
-                    metaball(col * cellSize, row * cellSize)
-                )
-            );
-            const thresholdedSamples = applyThreshold(samples, threshold);
-            const cellTypes = classifyCells(thresholdedSamples);
-
-            ctx.fillStyle = "rgba(144,238,144, 0.5)";
-            ctx.beginPath();
-            drawSmoothContours(cellTypes, samples, cellSize, threshold);
-            ctx.fill();
-            drawCuteSlimes();
-        }
-
-        function metaball(x, y) {
-            return particles.reduce((sum, p) => {
-                const dx = x - p.x;
-                const dy = y - p.y;
-                return sum + p.size * p.size / (dx * dx + dy * dy);
-            }, 0);
-        }
-
-        function applyThreshold(grid, threshold) {
-            return grid.map(row => row.map(value => value > threshold));
-        }
-
-        function classifyCells(corners) {
-            return corners.slice(0, -1).map((row, i) =>
-                row.slice(0, -1).map((_, j) =>
-                    (corners[i+1][j] ? 1 : 0) +
-                    (corners[i+1][j+1] ? 2 : 0) +
-                    (corners[i][j+1] ? 4 : 0) +
-                    (corners[i][j] ? 8 : 0)
-                )
-            );
-        }
-
-        function lerp(x0, x1, y0, y1, x) {
-            return x0 === x1 ? 0.5 : (x - x0) / (x1 - x0);
-        }
-
-        function drawSmoothContours(cellTypes, samples, cellSize, threshold) {
-            const cellTypeToPolyCorners = {
-                0: [], 1: ["W", "S"], 2: ["E", "S"], 3: ["W", "E"],
-                4: ["N", "E"], 5: ["N", "W", "S", "E"], 6: ["N", "S"], 7: ["N", "W"],
-                8: ["N", "W"], 9: ["N", "S"], 10: ["N", "E", "S", "W"], 11: ["N", "E"],
-                12: ["E", "W"], 13: ["E", "S"], 14: ["S", "W"], 15: []
-            };
-
-            cellTypes.forEach((row, i) => {
-                row.forEach((cellType, j) => {
-                    const polyCorners = cellTypeToPolyCorners[cellType];
-                    const [NW, NE, SW, SE] = [samples[i][j], samples[i][j+1], samples[i+1][j], samples[i+1][j+1]];
-                    
-                    const getOffset = (a, b) => lerp(a, b, 0, 1, threshold);
-
-                    const compassCoords = {
-                        "N": [j + getOffset(NW, NE), i],
-                        "E": [j + 1, i + getOffset(NE, SE)],
-                        "S": [j + getOffset(SW, SE), i + 1],
-                        "W": [j, i + getOffset(NW, SW)]
-                    };
-
-                    if (polyCorners.length === 2 || polyCorners.length === 4) {
-                        ctx.moveTo(compassCoords[polyCorners[0]][0] * cellSize, compassCoords[polyCorners[0]][1] * cellSize);
-                        ctx.lineTo(compassCoords[polyCorners[1]][0] * cellSize, compassCoords[polyCorners[1]][1] * cellSize);
-                        if (polyCorners.length === 4) {
-                            ctx.moveTo(compassCoords[polyCorners[2]][0] * cellSize, compassCoords[polyCorners[2]][1] * cellSize);
-                            ctx.lineTo(compassCoords[polyCorners[3]][0] * cellSize, compassCoords[polyCorners[3]][1] * cellSize);
-                        }
-                    }
-                });
-            });
-        }
-
-        function drawCuteSlimes() {
-            const cellSize = parseInt(cellSizeSlider.value);
-            const threshold = parseFloat(thresholdSlider.value);
-            const numRows = Math.ceil(canvas.height / cellSize);
-            const numCols = Math.ceil(canvas.width / cellSize);
-
-            const samples = Array.from({ length: numRows + 1 }, (_, row) =>
-                Array.from({ length: numCols + 1 }, (_, col) =>
-                    metaball(col * cellSize, row * cellSize)
-                )
-            );
-            const thresholdedSamples = applyThreshold(samples, threshold);
-            const cellTypes = classifyCells(thresholdedSamples);
-
-            const allContourPoints = getContourPoints(cellTypes, samples, cellSize, threshold);
-            const connectedPaths = findConnectedPaths(allContourPoints);
-
-            connectedPaths.forEach(path => {
-                const sortedPoints = sortContourPoints(path);
-
-                const pathCenter = calculatePathCenter(sortedPoints);
-                const gradient = ctx.createRadialGradient(pathCenter.x, pathCenter.y, 0, pathCenter.x, pathCenter.y, 100);
-                gradient.addColorStop(0, "rgba(144,238,144, 0.5)");
-                gradient.addColorStop(1, "rgba(34,139,34, 0.5)");
-
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.moveTo(sortedPoints[0].x, sortedPoints[0].y);
-                sortedPoints.forEach(point => {
-                    ctx.lineTo(point.x, point.y);
-                });
-                ctx.closePath();
-                ctx.fill();
-
-                const particlesInCluster = findParticlesInCluster(pathCenter);
-                if (particlesInCluster.length >= 2) {
-                    drawEye(particlesInCluster[0].x, particlesInCluster[0].y, particlesInCluster[1].x, particlesInCluster[1].y);
-                    drawEye(particlesInCluster[1].x, particlesInCluster[1].y, particlesInCluster[0].x, particlesInCluster[0].y);
-                }
-            });
-        }
-
-        function getContourPoints(cellTypes, samples, cellSize, threshold) {
-            const points = [];
-            const cellTypeToPolyCorners = {
-                0: [], 1: ["W", "S"], 2: ["E", "S"], 3: ["W", "E"],
-                4: ["N", "E"], 5: ["N", "W", "S", "E"], 6: ["N", "S"], 7: ["N", "W"],
-                8: ["N", "W"], 9: ["N", "S"], 10: ["N", "E", "S", "W"], 11: ["N", "E"],
-                12: ["E", "W"], 13: ["E", "S"], 14: ["S", "W"], 15: []
-            };
-
-            cellTypes.forEach((row, i) => {
-                row.forEach((cellType, j) => {
-                    const polyCorners = cellTypeToPolyCorners[cellType];
-                    const [NW, NE, SW, SE] = [samples[i][j], samples[i][j + 1], samples[i + 1][j], samples[i + 1][j + 1]];
-
-                    const getOffset = (a, b) => lerp(a, b, 0, 1, threshold);
-
-                    const compassCoords = {
-                        "N": { x: (j + getOffset(NW, NE)) * cellSize, y: i * cellSize },
-                        "E": { x: (j + 1) * cellSize, y: (i + getOffset(NE, SE)) * cellSize },
-                        "S": { x: (j + getOffset(SW, SE)) * cellSize, y: (i + 1) * cellSize },
-                        "W": { x: j * cellSize, y: (i + getOffset(NW, SW)) * cellSize }
-                    };
-
-                    if (polyCorners.length === 2 || polyCorners.length === 4) {
-                        points.push(compassCoords[polyCorners[0]]);
-                        points.push(compassCoords[polyCorners[1]]);
-                        if (polyCorners.length === 4) {
-                            points.push(compassCoords[polyCorners[2]]);
-                            points.push(compassCoords[polyCorners[3]]);
-                        }
-                    }
-                });
-            });
-
-            return points;
-        }
-
-        function findConnectedPaths(points) {
-            const paths = [];
-            const visited = new Set();
-
-            function dfs(point, path) {
-                path.push(point);
-                visited.add(point);
-
-                points.forEach(neighbor => {
-                    if (!visited.has(neighbor) && isNeighbor(point, neighbor)) {
-                        dfs(neighbor, path);
-                    }
-                });
-            }
-
-            points.forEach(point => {
-                if (!visited.has(point)) {
-                    const path = [];
-                    dfs(point, path);
-                    paths.push(path);
-                }
-            });
-
-            return paths;
-        }
-
-        function isNeighbor(point1, point2) {
-            const distance = Math.hypot(point1.x - point2.x, point1.y - point2.y);
-            return distance < 10;
-        }
-
-        function sortContourPoints(points) {
-            if (points.length <= 2) return points;
-
-            const sortedPoints = [points[0]];
-            points.splice(0, 1);
-
-            while (points.length > 0) {
-                const lastPoint = sortedPoints[sortedPoints.length - 1];
-                let closestPointIndex = 0;
-                let closestDistance = Number.MAX_SAFE_INTEGER;
-                for (let i = 0; i < points.length; i++) {
-                    const distance = Math.hypot(points[i].x - lastPoint.x, points[i].y - lastPoint.y);
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        closestPointIndex = i;
-                    }
-                }
-                sortedPoints.push(points[closestPointIndex]);
-                points.splice(closestPointIndex, 1);
-            }
-
-            return sortedPoints;
-        }
-
-        function calculatePathCenter(points) {
-            let sumX = 0, sumY = 0;
-            points.forEach(point => {
-                sumX += point.x;
-                sumY += point.y;
-            });
-            return { x: sumX / points.length, y: sumY / points.length };
-        }
-
-        function findParticlesInCluster(center) {
-            return particles
-                .filter(p => Math.hypot(p.x - center.x, p.y - center.y) < 100)
-                .slice(0, 2);
-        }
-
         function drawEye(x, y, otherX, otherY) {
             ctx.fillStyle = "white";
             ctx.beginPath();
@@ -639,10 +465,135 @@
             ctx.fill();
         }
 
-        pauseResumeButton.addEventListener('click', () => {
-            paused = !paused;
-            pauseResumeButton.textContent = paused ? 'Resume' : 'Pause';
-        });
+        //----
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            return shader;
+        }
+
+        function createProgram(gl, vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            return program;
+        }
+
+        function initWebGL() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            webglCanvas.width = canvas.width = width;
+            webglCanvas.height = canvas.height = height;
+            gl.viewport(0, 0, width, height);
+
+            const vertexShaderSource = document.getElementById('vertexShader').text;
+            const fragmentShaderSource = document.getElementById('fragmentShader').text;
+
+            const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+            const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+            const program = createProgram(gl, vertexShader, fragmentShader);
+            gl.useProgram(program);
+
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const positions = [-1, -1, 1, -1, -1, 1, 1, 1];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+            const resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+            gl.uniform2f(resolutionUniformLocation, width, height);
+
+            const circlesUniformLocation = gl.getUniformLocation(program, "u_circles");
+            const colorsUniformLocation = gl.getUniformLocation(program, "u_colors");
+            const circleCountUniformLocation = gl.getUniformLocation(program, "u_circleCount");
+            const tightnessUniformLocation = gl.getUniformLocation(program, "u_tightness");
+
+            //createCircles(circleCount);
+
+            function render() {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                const circlePositions = new Float32Array(particles.flatMap(c => [
+                    (2.0 * c.x - width) / height,
+                    (2.0 * (height - c.y) - height) / height
+                ]));
+                gl.uniform2fv(circlesUniformLocation, circlePositions);
+
+                const circleColors = new Float32Array(particles.flatMap(c => [
+                    c.color.r / 255,
+                    c.color.g / 255,
+                    c.color.b / 255
+                ]));
+                gl.uniform3fv(colorsUniformLocation, circleColors);
+
+                gl.uniform1i(circleCountUniformLocation, particles.length);
+                gl.uniform1f(tightnessUniformLocation, tightness);
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+
+            renderGL = render;
+
+            //render();
+        }
+
+        // function createCircles(count) {
+        //     circles = [];
+        //     for (let i = 0; i < count; i++) {
+        //         circles.push({
+        //             x: Math.random() * webglCanvas.width,
+        //             y: Math.random() * webglCanvas.height,
+        //             radius: 20,
+        //             color: generateBrightGreenColor()
+        //         });
+        //     }
+        // }
+
+        function generateBrightGreenColor() {
+            const h = 80 + Math.random() * 60; // Hue range from 80 to 140 (yellow-green to green-cyan)
+            const s = 70 + Math.random() * 30; // Saturation range from 70% to 100%
+            const l = 40 + Math.random() * 30; // Lightness range from 40% to 70%
+            return hslToRgb(h, s, l);
+        }
+
+        function hslToRgb(h, s, l) {
+            h /= 360;
+            s /= 100;
+            l /= 100;
+            let r, g, b;
+
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+
+            return {
+                r: Math.round(r * 255),
+                g: Math.round(g * 255),
+                b: Math.round(b * 255)
+            };
+        }
     </script>
 </body>
 </html>
