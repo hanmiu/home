@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBSCAN Clustering with Metaball Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background-color: white;
+            flex: 1;
+            width: 100vw;
+            height: 100vh;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            width: 100%;
+            position: fixed;
+            bottom: 0;
+            z-index: 10;
+        }
+        .control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        label {
+            margin-bottom: 5px;
+        }
+        input[type="range"], input[type="number"] {
+            width: 100px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="controls">
+        <div class="control">
+            <label for="particleCount">Particle Count:</label>
+            <input type="number" id="particleCount" min="10" max="1000" value="20">
+        </div>
+        <div class="control">
+            <label for="particleSize">Particle Size:</label>
+            <input type="range" id="particleSize" min="2" max="20" value="20">
+        </div>
+        <div class="control">
+            <label for="repulsionFactor">Repulsion Factor:</label>
+            <input type="range" id="repulsionFactor" min="0" max="100" value="79">
+        </div>
+        <div class="control">
+            <label for="attractionDistance">Attraction Distance:</label>
+            <input type="range" id="attractionDistance" min="0" max="200" value="73">
+        </div>
+        <div class="control">
+            <label for="attractionFactor">Attraction Factor:</label>
+            <input type="range" id="attractionFactor" min="0" max="100" value="76">
+        </div>
+        <div class="control">
+            <label for="clusterEpsilon">Cluster Epsilon:</label>
+            <input type="range" id="clusterEpsilon" min="10" max="100" value="50">
+        </div>
+        <div class="control">
+            <label for="clusterMinPts">Cluster Min Points:</label>
+            <input type="number" id="clusterMinPts" min="1" max="10" value="1">
+        </div>
+        <div class="control">
+            <label for="cellSize">Cell Size: <span id="cellSizeValue">5</span></label>
+            <input type="range" id="cellSize" min="5" max="50" value="5">
+        </div>
+        <div class="control">
+            <label for="threshold">Threshold: <span id="thresholdValue">1.0</span></label>
+            <input type="range" id="threshold" min="0.1" max="2" step="0.1" value="1.0">
+        </div>
+    </div>
+    <button id="pauseResume" style="display: none;">Pause</button>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let selectedParticle = null;
+        let clusters = [];
+        let lastMousePos = { x: 0, y: 0 };
+        let mouseVelocity = { x: 0, y: 0 };
+        let paused = false;
+        const particleCountInput = document.getElementById('particleCount');
+        const particleSizeInput = document.getElementById('particleSize');
+        const repulsionFactorInput = document.getElementById('repulsionFactor');
+        const attractionDistanceInput = document.getElementById('attractionDistance');
+        const attractionFactorInput = document.getElementById('attractionFactor');
+        const clusterEpsilonInput = document.getElementById('clusterEpsilon');
+        const clusterMinPtsInput = document.getElementById('clusterMinPts');
+        const cellSizeSlider = document.getElementById('cellSize');
+        const thresholdSlider = document.getElementById('threshold');
+        const pauseResumeButton = document.getElementById('pauseResume');
+
+        class Particle {
+            constructor(x, y, size) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.vx = 0;
+                this.vy = 0;
+                this.cluster = -1; // -1 means no cluster
+            }
+
+            update() {
+                if (this !== selectedParticle && !paused) {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < this.size*2 || this.x > canvas.width - this.size*2) this.vx *= -0.5;
+                    if (this.y < this.size*2 || this.y > canvas.height - this.size*2) this.vy *= -0.5;
+
+                    this.x = Math.max(this.size*2, Math.min(canvas.width - this.size*2, this.x));
+                    this.y = Math.max(this.size*2, Math.min(canvas.height - this.size*2, this.y));
+
+                    this.vx *= 0.99;
+                    this.vy *= 0.99;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size *0.5, 0, Math.PI * 2);
+                ctx.fillStyle = this === selectedParticle ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)';
+                ctx.fill();
+                ctx.strokeStyle = this === selectedParticle ? 'red' : 'rgba(0, 0, 255, 0)';
+                ctx.stroke();
+            }
+
+            isPointInside(x, y) {
+                const dx = this.x - x;
+                const dy = this.y - y;
+                return dx * dx + dy * dy <= this.size * this.size;
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = parseInt(particleCountInput.value);
+            const size = parseInt(particleSizeInput.value);
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(
+                    Math.random() * (canvas.width - 2 * size) + size,
+                    Math.random() * (canvas.height - 2 * size) + size,
+                    size
+                ));
+            }
+        }
+
+        function applyForces() {
+            const repulsionFactor = parseFloat(repulsionFactorInput.value) / 1000;
+            const attractionDist = parseFloat(attractionDistanceInput.value);
+            const attractionFactor = parseFloat(attractionFactorInput.value) / 10000;
+
+            for (let i = 0; i < particles.length - 1; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    if (particles[i] === selectedParticle || particles[j] === selectedParticle) continue;
+
+                    const dx = particles[j].x - particles[i].x;
+                    const dy = particles[j].y - particles[i].y;
+                    const distSq = dx * dx + dy * dy;
+                    const dist = Math.sqrt(distSq);
+                    const minDist = particles[i].size + particles[j].size;
+
+                    if (dist < minDist) {
+                        // Strong repulsion to prevent overlap
+                        const force = repulsionFactor * (minDist - dist) / dist;
+                        const fx = dx * force;
+                        const fy = dy * force;
+                        particles[i].vx -= fx;
+                        particles[i].vy -= fy;
+                        particles[j].vx += fx;
+                        particles[j].vy += fy;
+                    } else if (dist < attractionDist) {
+                        // Weak attraction
+                        const force = attractionFactor * (dist - minDist) / dist;
+                        const fx = dx * force;
+                        const fy = dy * force;
+                        particles[i].vx += fx;
+                        particles[i].vy += fy;
+                        particles[j].vx -= fx;
+                        particles[j].vy -= fy;
+                    }
+                }
+            }
+        }
+
+        function dbscan() {
+            const epsilon = parseFloat(clusterEpsilonInput.value);
+            const minPts = parseInt(clusterMinPtsInput.value);
+            let clusterIndex = 0;
+            clusters = [];
+
+            // Reset all clusters
+            for (let particle of particles) {
+                particle.cluster = -1;
+            }
+
+            for (let particle of particles) {
+                if (particle.cluster !== -1) continue;
+
+                const neighborPts = getNeighbors(particle, epsilon);
+                if (neighborPts.length < minPts) {
+                    particle.cluster = -1; // Noise
+                } else {
+                    expandCluster(particle, neighborPts, clusterIndex, epsilon, minPts);
+                    clusterIndex++;
+                }
+            }
+
+            // Calculate cluster centers
+            for (let i = 0; i < clusterIndex; i++) {
+                let sumX = 0, sumY = 0, count = 0;
+                for (let particle of particles) {
+                    if (particle.cluster === i) {
+                        sumX += particle.x;
+                        sumY += particle.y;
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    clusters.push({x: sumX / count, y: sumY / count, index: i});
+                }
+            }
+        }
+
+        function getNeighbors(particle, epsilon) {
+            return particles.filter(p => 
+                p !== particle && 
+                Math.sqrt((p.x - particle.x)**2 + (p.y - particle.y)**2) <= epsilon
+            );
+        }
+
+        function expandCluster(particle, neighborPts, clusterIndex, epsilon, minPts) {
+            particle.cluster = clusterIndex;
+
+            for (let i = 0; i < neighborPts.length; i++) {
+                let neighborParticle = neighborPts[i];
+                if (neighborParticle.cluster === -1) {
+                    neighborParticle.cluster = clusterIndex;
+                    let neighborNeighborPts = getNeighbors(neighborParticle, epsilon);
+                    if (neighborNeighborPts.length >= minPts) {
+                        neighborPts = neighborPts.concat(neighborNeighborPts);
+                    }
+                }
+            }
+        }
+
+        function moveCluster(particle, dx, dy) {
+            const speed = Math.sqrt(dx*dx + dy*dy);
+            const maxSpeed = 5; // Adjust this value to change the threshold for cluster separation
+            const moveFactor = Math.max(0, 1 - speed / maxSpeed);
+
+            for (let p of particles) {
+                if (p.cluster === particle.cluster && p !== particle) {
+                    p.x += dx * moveFactor;
+                    p.y += dy * moveFactor;
+                }
+            }
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            applyForces();
+            dbscan();
+
+            drawMetaballs();
+
+            for (let particle of particles) {
+                particle.update();
+                particle.draw();
+            }
+
+            // Draw cluster indices
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'black';
+            for (let cluster of clusters) {
+                // count particles in this cluster using .filter
+                let count =particles.filter(p => p.cluster === cluster.index).length;
+                //ctx.fillText(cluster.index, cluster.x, cluster.y);
+                ctx.fillText(count, cluster.x, cluster.y);
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+
+        function getTouchPos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.touches[0].clientX - rect.left,
+                y: evt.touches[0].clientY - rect.top
+            };
+        }
+
+        function onDown(e) {
+            const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
+            for (let particle of particles) {
+                if (particle.isPointInside(pos.x, pos.y)) {
+                    selectedParticle = particle;
+                    lastMousePos = pos;
+                    break;
+                }
+            }
+        }
+
+        function onMove(e) {
+            if (selectedParticle) {
+                const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
+                const dx = pos.x - lastMousePos.x;
+                const dy = pos.y - lastMousePos.y;
+
+                selectedParticle.x = pos.x;
+                selectedParticle.y = pos.y;
+                selectedParticle.vx = 0;
+                selectedParticle.vy = 0;
+
+                moveCluster(selectedParticle, dx, dy);
+
+                mouseVelocity = {
+                    x: dx,
+                    y: dy
+                };
+
+                lastMousePos = pos;
+            }
+        }
+
+        function onUp() {
+            if (selectedParticle) {
+                selectedParticle.vx = mouseVelocity.x;
+                selectedParticle.vy = mouseVelocity.y;
+            }
+            selectedParticle = null;
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        canvas.addEventListener('mousedown', onDown);
+        canvas.addEventListener('mousemove', onMove);
+        canvas.addEventListener('mouseup', onUp);
+        canvas.addEventListener('mouseleave', onUp);
+        
+        canvas.addEventListener('touchstart', onDown);
+        canvas.addEventListener('touchmove', onMove);
+        canvas.addEventListener('touchend', onUp);
+
+        resizeCanvas();
+        initParticles();
+        update();
+
+        particleCountInput.addEventListener('change', initParticles);
+        particleSizeInput.addEventListener('change', initParticles);
+
+        function drawMetaballs() {
+            const cellSize = parseInt(cellSizeSlider.value);
+            const threshold = parseFloat(thresholdSlider.value);
+            const numRows = Math.ceil(canvas.height / cellSize);
+            const numCols = Math.ceil(canvas.width / cellSize);
+            
+            const samples = Array.from({ length: numRows + 1 }, (_, row) =>
+                Array.from({ length: numCols + 1 }, (_, col) =>
+                    metaball(col * cellSize, row * cellSize)
+                )
+            );
+            const thresholdedSamples = applyThreshold(samples, threshold);
+            const cellTypes = classifyCells(thresholdedSamples);
+
+            ctx.fillStyle = "rgba(144,238,144, 0.5)";
+            ctx.beginPath();
+            drawSmoothContours(cellTypes, samples, cellSize, threshold);
+            ctx.fill();
+            drawCuteSlimes();
+        }
+
+        function metaball(x, y) {
+            return particles.reduce((sum, p) => {
+                const dx = x - p.x;
+                const dy = y - p.y;
+                return sum + p.size * p.size / (dx * dx + dy * dy);
+            }, 0);
+        }
+
+        function applyThreshold(grid, threshold) {
+            return grid.map(row => row.map(value => value > threshold));
+        }
+
+        function classifyCells(corners) {
+            return corners.slice(0, -1).map((row, i) =>
+                row.slice(0, -1).map((_, j) =>
+                    (corners[i+1][j] ? 1 : 0) +
+                    (corners[i+1][j+1] ? 2 : 0) +
+                    (corners[i][j+1] ? 4 : 0) +
+                    (corners[i][j] ? 8 : 0)
+                )
+            );
+        }
+
+        function lerp(x0, x1, y0, y1, x) {
+            return x0 === x1 ? 0.5 : (x - x0) / (x1 - x0);
+        }
+
+        function drawSmoothContours(cellTypes, samples, cellSize, threshold) {
+            const cellTypeToPolyCorners = {
+                0: [], 1: ["W", "S"], 2: ["E", "S"], 3: ["W", "E"],
+                4: ["N", "E"], 5: ["N", "W", "S", "E"], 6: ["N", "S"], 7: ["N", "W"],
+                8: ["N", "W"], 9: ["N", "S"], 10: ["N", "E", "S", "W"], 11: ["N", "E"],
+                12: ["E", "W"], 13: ["E", "S"], 14: ["S", "W"], 15: []
+            };
+
+            cellTypes.forEach((row, i) => {
+                row.forEach((cellType, j) => {
+                    const polyCorners = cellTypeToPolyCorners[cellType];
+                    const [NW, NE, SW, SE] = [samples[i][j], samples[i][j+1], samples[i+1][j], samples[i+1][j+1]];
+                    
+                    const getOffset = (a, b) => lerp(a, b, 0, 1, threshold);
+
+                    const compassCoords = {
+                        "N": [j + getOffset(NW, NE), i],
+                        "E": [j + 1, i + getOffset(NE, SE)],
+                        "S": [j + getOffset(SW, SE), i + 1],
+                        "W": [j, i + getOffset(NW, SW)]
+                    };
+
+                    if (polyCorners.length === 2 || polyCorners.length === 4) {
+                        ctx.moveTo(compassCoords[polyCorners[0]][0] * cellSize, compassCoords[polyCorners[0]][1] * cellSize);
+                        ctx.lineTo(compassCoords[polyCorners[1]][0] * cellSize, compassCoords[polyCorners[1]][1] * cellSize);
+                        if (polyCorners.length === 4) {
+                            ctx.moveTo(compassCoords[polyCorners[2]][0] * cellSize, compassCoords[polyCorners[2]][1] * cellSize);
+                            ctx.lineTo(compassCoords[polyCorners[3]][0] * cellSize, compassCoords[polyCorners[3]][1] * cellSize);
+                        }
+                    }
+                });
+            });
+        }
+
+        function drawCuteSlimes() {
+            const cellSize = parseInt(cellSizeSlider.value);
+            const threshold = parseFloat(thresholdSlider.value);
+            const numRows = Math.ceil(canvas.height / cellSize);
+            const numCols = Math.ceil(canvas.width / cellSize);
+
+            const samples = Array.from({ length: numRows + 1 }, (_, row) =>
+                Array.from({ length: numCols + 1 }, (_, col) =>
+                    metaball(col * cellSize, row * cellSize)
+                )
+            );
+            const thresholdedSamples = applyThreshold(samples, threshold);
+            const cellTypes = classifyCells(thresholdedSamples);
+
+            const allContourPoints = getContourPoints(cellTypes, samples, cellSize, threshold);
+            const connectedPaths = findConnectedPaths(allContourPoints);
+
+            connectedPaths.forEach(path => {
+                const sortedPoints = sortContourPoints(path);
+
+                const pathCenter = calculatePathCenter(sortedPoints);
+                const gradient = ctx.createRadialGradient(pathCenter.x, pathCenter.y, 0, pathCenter.x, pathCenter.y, 100);
+                gradient.addColorStop(0, "rgba(144,238,144, 0.5)");
+                gradient.addColorStop(1, "rgba(34,139,34, 0.5)");
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(sortedPoints[0].x, sortedPoints[0].y);
+                sortedPoints.forEach(point => {
+                    ctx.lineTo(point.x, point.y);
+                });
+                ctx.closePath();
+                ctx.fill();
+
+                const particlesInCluster = findParticlesInCluster(pathCenter);
+                if (particlesInCluster.length >= 2) {
+                    drawEye(particlesInCluster[0].x, particlesInCluster[0].y, particlesInCluster[1].x, particlesInCluster[1].y);
+                    drawEye(particlesInCluster[1].x, particlesInCluster[1].y, particlesInCluster[0].x, particlesInCluster[0].y);
+                }
+            });
+        }
+
+        function getContourPoints(cellTypes, samples, cellSize, threshold) {
+            const points = [];
+            const cellTypeToPolyCorners = {
+                0: [], 1: ["W", "S"], 2: ["E", "S"], 3: ["W", "E"],
+                4: ["N", "E"], 5: ["N", "W", "S", "E"], 6: ["N", "S"], 7: ["N", "W"],
+                8: ["N", "W"], 9: ["N", "S"], 10: ["N", "E", "S", "W"], 11: ["N", "E"],
+                12: ["E", "W"], 13: ["E", "S"], 14: ["S", "W"], 15: []
+            };
+
+            cellTypes.forEach((row, i) => {
+                row.forEach((cellType, j) => {
+                    const polyCorners = cellTypeToPolyCorners[cellType];
+                    const [NW, NE, SW, SE] = [samples[i][j], samples[i][j + 1], samples[i + 1][j], samples[i + 1][j + 1]];
+
+                    const getOffset = (a, b) => lerp(a, b, 0, 1, threshold);
+
+                    const compassCoords = {
+                        "N": { x: (j + getOffset(NW, NE)) * cellSize, y: i * cellSize },
+                        "E": { x: (j + 1) * cellSize, y: (i + getOffset(NE, SE)) * cellSize },
+                        "S": { x: (j + getOffset(SW, SE)) * cellSize, y: (i + 1) * cellSize },
+                        "W": { x: j * cellSize, y: (i + getOffset(NW, SW)) * cellSize }
+                    };
+
+                    if (polyCorners.length === 2 || polyCorners.length === 4) {
+                        points.push(compassCoords[polyCorners[0]]);
+                        points.push(compassCoords[polyCorners[1]]);
+                        if (polyCorners.length === 4) {
+                            points.push(compassCoords[polyCorners[2]]);
+                            points.push(compassCoords[polyCorners[3]]);
+                        }
+                    }
+                });
+            });
+
+            return points;
+        }
+
+        function findConnectedPaths(points) {
+            const paths = [];
+            const visited = new Set();
+
+            function dfs(point, path) {
+                path.push(point);
+                visited.add(point);
+
+                points.forEach(neighbor => {
+                    if (!visited.has(neighbor) && isNeighbor(point, neighbor)) {
+                        dfs(neighbor, path);
+                    }
+                });
+            }
+
+            points.forEach(point => {
+                if (!visited.has(point)) {
+                    const path = [];
+                    dfs(point, path);
+                    paths.push(path);
+                }
+            });
+
+            return paths;
+        }
+
+        function isNeighbor(point1, point2) {
+            const distance = Math.hypot(point1.x - point2.x, point1.y - point2.y);
+            return distance < 10;
+        }
+
+        function sortContourPoints(points) {
+            if (points.length <= 2) return points;
+
+            const sortedPoints = [points[0]];
+            points.splice(0, 1);
+
+            while (points.length > 0) {
+                const lastPoint = sortedPoints[sortedPoints.length - 1];
+                let closestPointIndex = 0;
+                let closestDistance = Number.MAX_SAFE_INTEGER;
+                for (let i = 0; i < points.length; i++) {
+                    const distance = Math.hypot(points[i].x - lastPoint.x, points[i].y - lastPoint.y);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestPointIndex = i;
+                    }
+                }
+                sortedPoints.push(points[closestPointIndex]);
+                points.splice(closestPointIndex, 1);
+            }
+
+            return sortedPoints;
+        }
+
+        function calculatePathCenter(points) {
+            let sumX = 0, sumY = 0;
+            points.forEach(point => {
+                sumX += point.x;
+                sumY += point.y;
+            });
+            return { x: sumX / points.length, y: sumY / points.length };
+        }
+
+        function findParticlesInCluster(center) {
+            return particles
+                .filter(p => Math.hypot(p.x - center.x, p.y - center.y) < 100)
+                .slice(0, 2);
+        }
+
+        function drawEye(x, y, otherX, otherY) {
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            const angle = Math.atan2(otherY - y, otherX - x);
+            const pupilX = x + Math.cos(angle) * 3;
+            const pupilY = y + Math.sin(angle) * 3;
+            ctx.fillStyle = "blue";
+            ctx.beginPath();
+            ctx.arc(pupilX, pupilY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        pauseResumeButton.addEventListener('click', () => {
+            paused = !paused;
+            pauseResumeButton.textContent = paused ? 'Resume' : 'Pause';
+        });
+    </script>
+</body>
+</html>
