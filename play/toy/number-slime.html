@@ -323,6 +323,7 @@
 
         function onDown(e) {
             const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
+            if(e.touches) e.preventDefault();
             for (let particle of particles) {
                 if (particle.isPointInside(pos.x, pos.y)) {
                     selectedParticle = particle;
