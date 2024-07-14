@@ -111,26 +111,28 @@
         void main() {
             vec2 uv = (2.0 * gl_FragCoord.xy - u_resolution) / u_resolution.y;
             float sum = 0.0;
-            vec3 blobColor = vec3(0.0);
-            float maxInfluence = 0.0;
+            vec3 mixedColor = vec3(0.0);
+            float totalWeight = 0.0;
 
             for (int i = 0; i < 20; i++) {
                 if (i >= u_circleCount) break;
                 float influence = metaball(uv, u_circles[i], 0.05);
                 sum += influence;
-                if (influence > maxInfluence) {
-                    maxInfluence = influence;
-                    blobColor = u_colors[i];
-                }
+                mixedColor += influence * u_colors[i];
+                totalWeight += influence;
             }
 
             float threshold = u_tightness;
             float value = smoothstep(threshold - 0.05, threshold, sum);
 
             vec3 backgroundColor = backgroundGradient(uv * 0.5 + 0.5);
-            blobColor = mix(blobColor, vec3(1.0), value * 0.5); // Lighten the blob color
+            if (totalWeight > 0.0) {
+                mixedColor /= totalWeight; // Normalize the mixed color by the total influence
+            }
 
-            gl_FragColor = vec4(mix(backgroundColor, blobColor, value), 1.0);
+            mixedColor = mix(mixedColor, vec3(1.0), value * 0.5); // Lighten the mixed color
+
+            gl_FragColor = vec4(mix(backgroundColor, mixedColor, value), 1.0);
         }
     </script>
     <script>
