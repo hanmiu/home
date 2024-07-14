@@ -149,7 +149,9 @@
         let particles = [];
         let selectedParticle = null;
         let clusters = [];
+        let nearestCluster = null;
         let lastMousePos = { x: 0, y: 0 };
+        let mousePos = { x: 0, y: 0 };
         let mouseVelocity = { x: 0, y: 0 };
         let paused = false;
         const particleCountInput = document.getElementById('particleCount');
@@ -344,6 +346,20 @@
             applyForces();
             dbscan();
 
+            if (nearestCluster && Math.random() < 0.1) {
+                const pos = mousePos;
+                for (let particle of particles) {
+                    if (particle.cluster === nearestCluster.index) {
+                        let dx = pos.x - particle.x;
+                        let dy = pos.y - particle.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        let force = 1 / dist;
+                        particle.vx = dx * force;
+                        particle.vy = dy * force;
+                    }
+                }
+            }
+
             ctx.font = '25px Days One';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -431,7 +447,9 @@
 
         function onDown(e) {
             const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
+            mousePos = pos;
             if(e.touches) e.preventDefault();
+            selectedParticle = null;
             for (let particle of particles) {
                 // if (particle.isPointInside(pos.x, pos.y)) {
                 //     selectedParticle = particle;
@@ -442,17 +460,44 @@
                 let dx = particle.x - pos.x;
                 let dy = particle.y - pos.y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 100 && (!selectedParticle || dist < selectedParticle.dist)) {
+                if (dist < 50 && (!selectedParticle || dist < selectedParticle.dist)) {
                     selectedParticle = particle;
                     selectedParticle.dist = dist;
                     lastMousePos = pos;
                 }
             }
+            if(!selectedParticle) {
+                // nearest cluster
+                nearestCluster = null;
+                let minDist = Number.MAX_VALUE;
+                for (let cluster of clusters) {
+                    let dx = cluster.x - pos.x;
+                    let dy = cluster.y - pos.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < minDist && dist < 500) {
+                        minDist = dist;
+                        nearestCluster = cluster;
+                    }
+                }
+                if (nearestCluster) {
+                    for (let particle of particles) {
+                        if (particle.cluster === nearestCluster.index) {
+                            let dx = pos.x - particle.x;
+                            let dy = pos.y - particle.y;
+                            let dist = Math.sqrt(dx * dx + dy * dy);
+                            let force = 1 / dist;
+                            particle.vx = dx * force;
+                            particle.vy = dy * force;
+                        }
+                    }
+                }
+            }
         }
 
         function onMove(e) {
+            const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
+            mousePos = pos;
             if (selectedParticle) {
-                const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
                 if(e.touches) e.preventDefault();
                 const dx = pos.x - lastMousePos.x;
                 const dy = pos.y - lastMousePos.y;
@@ -479,6 +524,7 @@
                 selectedParticle.vy = mouseVelocity.y;
             }
             selectedParticle = null;
+            nearestCluster = null;
         }
 
         function resizeCanvas() {
