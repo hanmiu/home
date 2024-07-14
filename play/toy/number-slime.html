@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
     <title>Clustered Slime with Eyes</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Days+One&display=swap');
         body {
             margin: 0;
             padding: 0;
@@ -106,33 +107,40 @@
         vec3 backgroundGradient(vec2 uv) {
             float t = uv.y;
             return mix(vec3(0.1, 0.2, 0.3), vec3(0.5, 0.7, 0.9), t);
+            // return vec3(1.0);
         }
 
         void main() {
             vec2 uv = (2.0 * gl_FragCoord.xy - u_resolution) / u_resolution.y;
-            float sum = 0.0;
+            vec3 blobColor = vec3(0.0);
             vec3 mixedColor = vec3(0.0);
+            float maxInfluence = 0.0;
             float totalWeight = 0.0;
-
+            float influence = 0.0;
             for (int i = 0; i < 20; i++) {
                 if (i >= u_circleCount) break;
-                float influence = metaball(uv, u_circles[i], 0.05);
-                sum += influence;
+                influence = metaball(uv, u_circles[i], 0.05); 
+                if (influence > maxInfluence) {
+                    maxInfluence = influence;
+                    blobColor = u_colors[i];
+                }
                 mixedColor += influence * u_colors[i];
                 totalWeight += influence;
             }
 
             float threshold = u_tightness;
-            float value = smoothstep(threshold - 0.05, threshold, sum);
+            float value = smoothstep(threshold - 0.05, threshold, totalWeight);
+            value = clamp(value, 0.0, 1.0);
 
             vec3 backgroundColor = backgroundGradient(uv * 0.5 + 0.5);
+            float smoothValue = 0.0;
             if (totalWeight > 0.0) {
                 mixedColor /= totalWeight; // Normalize the mixed color by the total influence
+                blobColor = mix(blobColor, mixedColor, smoothValue); // Mix the blob color with the mixed color
             }
+            //blobColor = mix(backgroundColor, vec3(influence), value);
 
-            mixedColor = mix(mixedColor, vec3(1.0), value * 0.5); // Lighten the mixed color
-
-            gl_FragColor = vec4(mix(backgroundColor, mixedColor, value), 1.0);
+            gl_FragColor = vec4(mix(backgroundColor, blobColor, value), 1.0);
         }
     </script>
     <script>
@@ -322,6 +330,7 @@
             const moveFactor = Math.max(0, 1 - speed / maxSpeed);
 
             for (let p of particles) {
+                if(p.cluster === -1) continue;
                 if (p.cluster === particle.cluster && p !== particle) {
                     p.x += dx * moveFactor;
                     p.y += dy * moveFactor;
@@ -335,25 +344,65 @@
             applyForces();
             dbscan();
 
+            ctx.font = '25px Days One';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
             for (let particle of particles) {
                 particle.update();
                 particle.draw();
+                if(particle.cluster == -1) {
+                    ctx.fillStyle = 'black';
+                    ctx.fillText('1', particle.x, particle.y);
+                }
             }
 
             // Draw cluster indices
-            ctx.font = '12px Arial';
-            ctx.fillStyle = 'black';
             for (let cluster of clusters) {
-                // count particles in this cluster using .filter
-                let count = particles.filter(p => p.cluster === cluster.index).length;
-                //ctx.fillText(cluster.index, cluster.x, cluster.y);
-                ctx.fillText(count, cluster.x, cluster.y);
+                let clusterParticles = particles.filter(p => p.cluster === cluster.index);
+                let count = clusterParticles.length;             
 
                 // Draw eyes if there are at least 2 particles in the cluster
                 if (count >= 2) {
-                    let clusterParticles = particles.filter(p => p.cluster === cluster.index);
+                    let [x0, y0] = [clusterParticles[0].x, clusterParticles[0].y];
+                    let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
                     drawEye(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y);
                     drawEye(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y);
+                
+                    ctx.fillStyle = 'black';
+                    //ctx.fillText(count, cluster.x, cluster.y);
+                    //ctx.fillText(count, (x0 + x1) * 0.5, Math.min(y0, y1) - 20);
+
+                     // Calculate midpoint
+                    let mx = (x0 + x1) / 2;
+                    let my = (y0 + y1) / 2;
+
+                    // Calculate the vector (x1 - x0, y1 - y0)
+                    let dx = x1 - x0;
+                    let dy = y1 - y0;
+
+                    // Calculate orthogonal vector
+                    // Use (-dy, dx) or (dy, -dx)
+                    let orthoX = dy;
+                    let orthoY = -dx;
+
+                    // Determine which direction to move in
+                    let o0 = [-dy, dx];
+                    let o1 = [dy, -dx];
+
+                    // Normalize the orthogonal vector to 30 units length
+                    let length = Math.sqrt(orthoX * orthoX + orthoY * orthoY);
+                    let factor = 30 / length;
+                    orthoX *= factor;
+                    orthoY *= factor;
+
+                    // Calculate new position for fillText
+                    let fx = mx + orthoX;
+                    let fy = my + orthoY;
+
+                    // Draw text
+                    ctx.fillStyle = 'black';
+                    ctx.fillText(count, fx, fy);
                 }
             }
 
@@ -384,10 +433,19 @@
             const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
             if(e.touches) e.preventDefault();
             for (let particle of particles) {
-                if (particle.isPointInside(pos.x, pos.y)) {
+                // if (particle.isPointInside(pos.x, pos.y)) {
+                //     selectedParticle = particle;
+                //     lastMousePos = pos;
+                //     break;
+                // }
+                // radius 100px 안에 있는 입자 중 pos와 가장 가까운 입자 선택
+                let dx = particle.x - pos.x;
+                let dy = particle.y - pos.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100 && (!selectedParticle || dist < selectedParticle.dist)) {
                     selectedParticle = particle;
+                    selectedParticle.dist = dist;
                     lastMousePos = pos;
-                    break;
                 }
             }
         }
@@ -559,7 +617,8 @@
         // }
 
         function generateBrightGreenColor() {
-            const h = 80 + Math.random() * 60; // Hue range from 80 to 140 (yellow-green to green-cyan)
+            //const h = 80 + Math.random() * 60; // Hue range from 80 to 140 (yellow-green to green-cyan)
+            const h = 0 + Math.random() * 360; // Hue range from 80 to 140 (yellow-green to green-cyan)
             const s = 70 + Math.random() * 30; // Saturation range from 70% to 100%
             const l = 40 + Math.random() * 30; // Lightness range from 40% to 70%
             return hslToRgb(h, s, l);
