@@ -148,14 +148,8 @@
         const ctx = canvas.getContext('2d');
         let particles = [];
         let selectedParticle = null;
-        let clusters = [];
-        
-        let slimes = [];
-        
-        let old_clusters = clusters;
-        let currentClusterId = 0;
+        let clusters = []; 
         let nearestCluster = null;
-        
         let lastMousePos = { x: 0, y: 0 };
         let mousePos = { x: 0, y: 0 };
         let mouseOffset = { x: 0, y: 0 };
@@ -285,9 +279,6 @@
             const epsilon = parseFloat(clusterEpsilonInput.value);
             const minPts = parseInt(clusterMinPtsInput.value);
             let clusterIndex = 0;
-            if(clusters.length > 0) {
-                old_clusters = clusters;
-            }
             clusters = [];
 
             // Reset all clusters
@@ -402,15 +393,11 @@
                 if (count >= 2) {
                     let [x0, y0] = [clusterParticles[0].x, clusterParticles[0].y];
                     let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
-                    // drawEye(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y);
-                    // drawEye(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y);
-                    // drawEye2(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y);
-                    // drawEye2(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y);
                     drawEye3(clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y);
                     drawEye3(clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y);
 
-                    // ctx.fillStyle = 'red';
-                    // ctx.fillText(cluster.id, cluster.x, cluster.y);
+                    ctx.fillStyle = 'red';
+                    ctx.fillText(cluster.id, cluster.x, cluster.y);
                     ctx.fillStyle = 'black';
 
                      // Calculate midpoint
