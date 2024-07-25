@@ -12,10 +12,10 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
-        canvas {
+        /* canvas {
             width: 100vw;
             height: 100vh;
-        }
+        } */
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -558,8 +558,9 @@
         }
 
         function resizeCanvas() {
-            canvas.width = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-            canvas.height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const height = 
             webglCanvas.width = canvas.width;
             webglCanvas.height = canvas.height;
             if(gl && main_program) {
