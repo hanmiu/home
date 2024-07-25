@@ -149,9 +149,13 @@
         let particles = [];
         let selectedParticle = null;
         let clusters = [];
+        
+        let slimes = [];
+        
         let old_clusters = clusters;
         let currentClusterId = 0;
         let nearestCluster = null;
+        
         let lastMousePos = { x: 0, y: 0 };
         let mousePos = { x: 0, y: 0 };
         let mouseOffset = { x: 0, y: 0 };
@@ -314,23 +318,8 @@
                     }
                 }
                 if (count > 0) {
-                    let nearestCluster = null;
-                    if(old_clusters.length > 0) {
-                        let minDist = Number.MAX_VALUE;
-                        for (let j = 0; j < old_clusters.length; j++) {
-                            let dx = old_clusters[j].x - sumX / count;
-                            let dy = old_clusters[j].y - sumY / count;
-                            let dist = Math.sqrt(dx * dx + dy * dy);
-                            if (dist < minDist) {
-                                minDist = dist;
-                                nearestCluster = old_clusters[j];
-                            }
-                        }
-                    }
-                    // if (nearestCluster) {
-                        
-                    // }
-                    clusters.push({x: sumX / count, y: sumY / count, index: i, id: -1});
+                    let cluster = {x: sumX / count, y: sumY / count, index: i, id: i};
+                    clusters.push(cluster);
                 }
             }
         }
@@ -569,8 +558,8 @@
         }
 
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+            canvas.height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             webglCanvas.width = canvas.width;
             webglCanvas.height = canvas.height;
             if(gl && main_program) {
