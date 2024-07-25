@@ -47,15 +47,6 @@
         }
         #container { position: relative; }
         canvas { position: absolute; top: 0; left: 0; }
-
-        #logotype {
-            position: absolute;
-            left: 20px;
-            bottom: 20px;
-            height: 20px;
-            opacity: 0.5;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -93,7 +84,6 @@
             <input type="number" id="clusterMinPts" min="1" max="10" value="1">
         </div>
     </div>
-    <img id="logotype">
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec2 a_position;
         void main() {
@@ -154,21 +144,17 @@
         }
     </script>
     <script>
-        let el_logotype = document.querySelector('#logotype');
-        let logo_svg_str = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 305 100" version="1.1" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;"><g transform="matrix(0.132046,0,0,0.132046,-275.898,-181.837)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:31.55px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,-215.341,-148.706)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-234.97,-149.014)"><path d="M2555.2,1518.19L2555.2,1842.53" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-231.778,-165.71)"><path d="M2142.87,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-36.6926,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-27.4323,-152.336)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.167914,0,0,-0.167914,-121.496,319.866)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:24.81px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,21.1762,-165.445)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,198.954,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,2.37791,-149.014)"><path d="M2555.2,1518.19L2555.2,1872.19" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,199.935,-138.281)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-59.8431,-148.992)"><path d="M2703.12,1753.94C2845.41,1760.9 2927.01,1766.21 2998.72,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.173765,0,0,0.168083,-145.561,-229.091)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:24.37px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-45.8206,-149.203)"><path d="M1736.22,1991.09C1736.22,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1753.84 1564.35,1718.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,361.661,-149.151)"><path d="M1736.76,1991.09C1736.76,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1759.84 1564.35,1724.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.0782,-149.568)"><path d="M2289.38,1553.11C2289.38,1553.11 2308.91,1670.79 2289.38,1724.47C2269.72,1778.49 2171.6,1875.79 2171.44,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,466.598,-149.568)"><path d="M2290.86,1724.47L2173.04,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-56.4968,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.1885,-162.323)"><path d="M2172.41,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-172.361,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113459,0,0,0.103146,-35.0422,-129.724)"><rect x="991.31" y="1548.04" width="202.433" height="324.155" style="fill:none;stroke:black;stroke-width:38.43px;"></rect></g></svg>`;
-        el_logotype.src = `data:image/svg+xml;utf8,${logo_svg_str}`;
-        document.querySelector('#logotype').addEventListener('click', (event) => {
-            window.open('https://www.hanmiu.cc', '_blank');
-        });
-
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
         let selectedParticle = null;
         let clusters = [];
+        let old_clusters = clusters;
+        let currentClusterId = 0;
         let nearestCluster = null;
         let lastMousePos = { x: 0, y: 0 };
         let mousePos = { x: 0, y: 0 };
+        let mouseOffset = { x: 0, y: 0 };
         let mouseVelocity = { x: 0, y: 0 };
         let paused = false;
         const particleCountInput = document.getElementById('particleCount');
@@ -295,6 +281,9 @@
             const epsilon = parseFloat(clusterEpsilonInput.value);
             const minPts = parseInt(clusterMinPtsInput.value);
             let clusterIndex = 0;
+            if(clusters.length > 0) {
+                old_clusters = clusters;
+            }
             clusters = [];
 
             // Reset all clusters
@@ -325,7 +314,23 @@
                     }
                 }
                 if (count > 0) {
-                    clusters.push({x: sumX / count, y: sumY / count, index: i});
+                    let nearestCluster = null;
+                    if(old_clusters.length > 0) {
+                        let minDist = Number.MAX_VALUE;
+                        for (let j = 0; j < old_clusters.length; j++) {
+                            let dx = old_clusters[j].x - sumX / count;
+                            let dy = old_clusters[j].y - sumY / count;
+                            let dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                nearestCluster = old_clusters[j];
+                            }
+                        }
+                    }
+                    // if (nearestCluster) {
+                        
+                    // }
+                    clusters.push({x: sumX / count, y: sumY / count, index: i, id: -1});
                 }
             }
         }
@@ -360,8 +365,8 @@
             for (let p of particles) {
                 if(p.cluster === -1) continue;
                 if (p.cluster === particle.cluster && p !== particle) {
-                    p.x += dx * moveFactor;
-                    p.y += dy * moveFactor;
+                    p.vx = dx * moveFactor;
+                    p.vy = dy * moveFactor;
                 }
             }
         }
@@ -379,9 +384,9 @@
                         let dx = pos.x - particle.x;
                         let dy = pos.y - particle.y;
                         let dist = Math.sqrt(dx * dx + dy * dy);
-                        let force = 1 / dist;
-                        particle.vx = dx * force * 3;
-                        particle.vy = dy * force * 3;
+                        let force = 1 / dist * 3;
+                        particle.vx = dx * force;
+                        particle.vy = dy * force;
                     }
                 }
             }
@@ -408,12 +413,16 @@
                 if (count >= 2) {
                     let [x0, y0] = [clusterParticles[0].x, clusterParticles[0].y];
                     let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
-                    drawEye(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y);
-                    drawEye(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y);
-                
+                    // drawEye(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y);
+                    // drawEye(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y);
+                    // drawEye2(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y);
+                    // drawEye2(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y);
+                    drawEye3(clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y);
+                    drawEye3(clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y);
+
+                    // ctx.fillStyle = 'red';
+                    // ctx.fillText(cluster.id, cluster.x, cluster.y);
                     ctx.fillStyle = 'black';
-                    //ctx.fillText(count, cluster.x, cluster.y);
-                    //ctx.fillText(count, (x0 + x1) * 0.5, Math.min(y0, y1) - 20);
 
                      // Calculate midpoint
                     let mx = (x0 + x1) / 2;
@@ -484,14 +493,10 @@
             const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
             mousePos = pos;
             if(e.touches) e.preventDefault();
+            mouseOffset = { x: 0, y: 0 };
             selectedParticle = null;
             for (let particle of particles) {
-                // if (particle.isPointInside(pos.x, pos.y)) {
-                //     selectedParticle = particle;
-                //     lastMousePos = pos;
-                //     break;
-                // }
-                // radius 100px 안에 있는 입자 중 pos와 가장 가까운 입자 선택
+                // radius 50px 안에 있는 입자 중 pos와 가장 가까운 입자 선택
                 let dx = particle.x - pos.x;
                 let dy = particle.y - pos.y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
@@ -499,6 +504,7 @@
                     selectedParticle = particle;
                     selectedParticle.dist = dist;
                     lastMousePos = pos;
+                    mouseOffset = { x: pos.x - particle.x, y: pos.y - particle.y };
                 }
             }
             if(!selectedParticle) {
@@ -537,8 +543,8 @@
                 const dx = pos.x - lastMousePos.x;
                 const dy = pos.y - lastMousePos.y;
 
-                selectedParticle.x = pos.x;
-                selectedParticle.y = pos.y;
+                selectedParticle.x = pos.x - mouseOffset.x;
+                selectedParticle.y = pos.y - mouseOffset.y;
                 selectedParticle.vx = 0;
                 selectedParticle.vy = 0;
 
@@ -609,6 +615,53 @@
             const angle = Math.atan2(otherY - y, otherX - x);
             const pupilX = x + Math.cos(angle) * 3;
             const pupilY = y + Math.sin(angle) * 3;
+            ctx.fillStyle = "blue";
+            ctx.beginPath();
+            ctx.arc(pupilX, pupilY, 7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawEye2(x, y, otherX, otherY, targetX, targetY) {
+            // 눈 전체 그리기
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 시선 방향 계산
+            const eyeCenterX = (x + otherX) / 2;
+            const eyeCenterY = (y + otherY) / 2;
+            const angle = Math.atan2(targetY - eyeCenterY, targetX - eyeCenterX);
+
+            // 눈동자 위치 계산
+            const maxDistance = 3; // 눈동자가 움직일 수 있는 최대 거리
+            const pupilX = x + Math.cos(angle) * maxDistance;
+            const pupilY = y + Math.sin(angle) * maxDistance;
+
+            // 눈동자 그리기
+            ctx.fillStyle = "blue";
+            ctx.beginPath();
+            ctx.arc(pupilX, pupilY, 7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawEye3(x, y, targetX, targetY) {
+            // 눈 전체 그리기
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 시선 방향 계산
+            const angle = Math.atan2(targetY - y, targetX - x);
+
+            // 눈동자 위치 계산
+            const maxDistance = 3; // 눈동자가 움직일 수 있는 최대 거리
+            let distance = Math.min(maxDistance, Math.hypot(targetX - x, targetY - y) / 10);
+            const pupilX = x + Math.cos(angle) * distance;
+            const pupilY = y + Math.sin(angle) * distance;
+
+            // 눈동자 그리기
             ctx.fillStyle = "blue";
             ctx.beginPath();
             ctx.arc(pupilX, pupilY, 7, 0, Math.PI * 2);
