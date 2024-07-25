@@ -12,10 +12,6 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
-        /* canvas {
-            width: 100vw;
-            height: 100vh;
-        } */
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -150,6 +146,7 @@
         let selectedParticle = null;
         let clusters = []; 
         let nearestCluster = null;
+        let slimes = [];
         let lastMousePos = { x: 0, y: 0 };
         let mousePos = { x: 0, y: 0 };
         let mouseOffset = { x: 0, y: 0 };
@@ -168,6 +165,22 @@
         let main_program = null;
         let tightness = 1;
         let randerGL = null;
+
+        const eye_colors = [
+            'blue',
+            'teal',
+            'green',
+            'navy',
+            'purple',
+            'red',
+            'yellow',
+            'olive',
+            'cyan',
+            'lime',
+            'aqua',
+            'maroon',
+            'fuchsia',
+        ];
 
         class Particle {
             constructor(x, y, size, hsl, to_hsl) {
@@ -309,8 +322,7 @@
                     }
                 }
                 if (count > 0) {
-                    let cluster = {x: sumX / count, y: sumY / count, index: i, id: i};
-                    clusters.push(cluster);
+                    clusters.push({x: sumX / count, y: sumY / count, index: i});
                 }
             }
         }
@@ -384,6 +396,8 @@
                 }
             }
 
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
             // Draw cluster indices
             for (let cluster of clusters) {
                 let clusterParticles = particles.filter(p => p.cluster === cluster.index);
@@ -393,11 +407,12 @@
                 if (count >= 2) {
                     let [x0, y0] = [clusterParticles[0].x, clusterParticles[0].y];
                     let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
-                    drawEye3(clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y);
-                    drawEye3(clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y);
+
+                    drawEye4(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y, cluster.index);
+                    drawEye4(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y, cluster.index);
 
                     // ctx.fillStyle = 'red';
-                    // ctx.fillText(cluster.id, cluster.x, cluster.y);
+                    // ctx.fillText(cluster.index, cluster.x, cluster.y);
                     ctx.fillStyle = 'black';
 
                      // Calculate midpoint
@@ -622,7 +637,7 @@
             ctx.fill();
         }
 
-        function drawEye3(x, y, targetX, targetY) {
+        function drawEye3(x, y, targetX, targetY, index) {
             // 눈 전체 그리기
             ctx.fillStyle = "white";
             ctx.beginPath();
@@ -639,10 +654,63 @@
             const pupilY = y + Math.sin(angle) * distance;
 
             // 눈동자 그리기
-            ctx.fillStyle = "blue";
+            // ctx.fillStyle = "blue";
+            ctx.fillStyle = eye_colors[index];
             ctx.beginPath();
             ctx.arc(pupilX, pupilY, 7, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        function drawEye4(x, y, otherX, otherY, targetX, targetY, index) {
+            // 시선 방향 계산
+            const angle = Math.atan2(targetY - y, targetX - x);
+            // 다른 눈과의 각도 계산
+            const direction = Math.atan2(otherY - y, otherX - x) + Math.PI/2;
+
+            const isOpened = Math.sin(performance.now()*0.001 + index) > 0;
+
+            ctx.lineWidth = 3; // 선의 두께 설정
+            ctx.strokeStyle = "black"; // 선의 색상 설정
+
+            if (isOpened) {
+                // 눈 전체 그리기
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 눈동자 위치 계산
+                const maxDistance = 3; // 눈동자가 움직일 수 있는 최대 거리
+                let distance = Math.min(maxDistance, Math.hypot(targetX - x, targetY - y) / 10);
+                const pupilX = x + Math.cos(angle) * distance;
+                const pupilY = y + Math.sin(angle) * distance;
+
+                // 눈동자 그리기
+                ctx.fillStyle = eye_colors[index];
+                ctx.beginPath();
+                ctx.arc(pupilX, pupilY, 7, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.save();
+                ctx.translate(x, y);
+                // 왼쪽 눈인지 오른쪽 눈인지 판단하여 회전 방향 조정
+                if (otherX > x) { // 왼쪽 눈
+                    ctx.rotate(direction - Math.PI/2);
+                } else { // 오른쪽 눈
+                    ctx.rotate(direction + Math.PI/2);
+                }
+                ctx.strokeStyle = 'white';
+                // 눈을 감은 상태 그리기
+                ctx.beginPath();
+                ctx.moveTo(-10, 0);
+                ctx.quadraticCurveTo(0, 5, 10, 0); // 아래 눈꺼풀
+                // ctx.moveTo(-10, 0);
+                // ctx.quadraticCurveTo(0, -5, 10, 0); // 위 눈꺼풀
+                ctx.stroke();
+                ctx.restore(); 
+            }
+
+            ctx.lineWidth = 1;
         }
 
         //----
