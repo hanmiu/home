@@ -111,8 +111,8 @@
 
         vec3 backgroundGradient(vec2 uv) {
             float t = uv.y;
-            return mix(vec3(0.1, 0.2, 0.3), vec3(0.5, 0.7, 0.9), t);
-            // return vec3(1.0);
+            // return mix(vec3(0.1, 0.2, 0.3), vec3(0.5, 0.7, 0.9), t);
+            return vec3(0.0);
         }
 
         void main() {
@@ -304,6 +304,7 @@
             }
         }
 
+        let currentSlimeId = 0;
         function dbscan() {
             const epsilon = parseFloat(clusterEpsilonInput.value);
             const minPts = parseInt(clusterMinPtsInput.value);
@@ -340,6 +341,76 @@
                 if (count > 0) {
                     clusters.push({x: sumX / count, y: sumY / count, index: i});
                 }
+            }
+
+            // slimes 관리
+            if(slimes.length == 0) {
+                slimes = clusters.map(cluster => ({
+                    id: currentSlimeId++,
+                    x: cluster.x,
+                    y: cluster.y,
+                    index: cluster.index,
+                    tick: 0,
+                }));
+            }
+            if(slimes.length < clusters.length) {
+                // clusters 순회해서 반경 10 이하인 것들만 slime에 추가
+                for(let cluster of clusters) {
+                    let isExist = false;
+                    for(let slime of slimes) {
+                        let dx = cluster.x - slime.x;
+                        let dy = cluster.y - slime.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if(dist < 10) {
+                            isExist = true;
+                            break;
+                        }
+                    }
+                    if(!isExist) {
+                        slimes.push({
+                            id: currentSlimeId++,
+                            x: cluster.x,
+                            y: cluster.y,
+                            index: cluster.index,
+                            tick: 0,
+                        });
+                    }
+                }
+            }
+            if(slimes.length > clusters.length) {
+                // slimes 순회해서 clusters에 없는 것들 제거
+                for(let i = slimes.length - 1; i >= 0; i--) {
+                    let isExist = false;
+                    for(let cluster of clusters) {
+                        let dx = cluster.x - slimes[i].x;
+                        let dy = cluster.y - slimes[i].y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if(dist < 10) {
+                            isExist = true;
+                            break;
+                        }
+                    }
+                    if(!isExist) {
+                        slimes.splice(i, 1);
+                    }
+                }
+            }
+            // slimes를 순회해서 가장 가까운 cluster로 slime 정보를 업데이트
+            for(let slime of slimes) {
+                let minDist = Number.MAX_VALUE;
+                let minCluster = null;
+                for(let cluster of clusters) {
+                    let dx = cluster.x - slime.x;
+                    let dy = cluster.y - slime.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if(dist < minDist) {
+                        minDist = dist;
+                        minCluster = cluster;
+                    }
+                }
+                slime.x = minCluster.x;
+                slime.y = minCluster.y;
+                slime.index = minCluster.index;
             }
         }
 
@@ -407,7 +478,7 @@
                 particle.update();
                 particle.draw();
                 if(particle.cluster == -1) {
-                    ctx.fillStyle = 'black';
+                    ctx.fillStyle = 'white';
                     ctx.fillText('1', particle.x, particle.y);
                 }
             }
@@ -415,6 +486,7 @@
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
             // Draw cluster indices
+            /*
             for (let cluster of clusters) {
                 let clusterParticles = particles.filter(p => p.cluster === cluster.index);
                 let count = clusterParticles.length;             
@@ -471,6 +543,73 @@
                         p.to_hsl = { h, s, l };
                     });
                 }
+            }
+            */
+
+            for(let i = 0; i < slimes.length; i++) {
+                let slime = slimes[i];
+                slime.tick += 1;
+
+                let cluster = clusters[slime.index];
+                let clusterParticles = particles.filter(p => p.cluster === cluster.index);
+                let count = clusterParticles.length;             
+
+                // Draw eyes if there are at least 2 particles in the cluster
+                if (count >= 2) {
+                    let [x0, y0] = [clusterParticles[0].x, clusterParticles[0].y];
+                    let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
+
+                    if(slime.tick > 60) {
+                        drawEye4(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y, cluster.index);
+                        drawEye4(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y, cluster.index);
+                    }
+
+                    ctx.fillStyle = 'white';
+
+                     // Calculate midpoint
+                    let mx = (x0 + x1) / 2;
+                    let my = (y0 + y1) / 2;
+
+                    // Calculate the vector (x1 - x0, y1 - y0)
+                    let dx = x1 - x0;
+                    let dy = y1 - y0;
+
+                    // Calculate orthogonal vector
+                    // Use (-dy, dx) or (dy, -dx)
+                    let orthoX = dy;
+                    let orthoY = -dx;
+
+                    // Determine which direction to move in
+                    let o0 = [-dy, dx];
+                    let o1 = [dy, -dx];
+
+                    // Normalize the orthogonal vector to 30 units length
+                    let length = Math.sqrt(orthoX * orthoX + orthoY * orthoY);
+                    let factor = 30 / length;
+                    orthoX *= factor;
+                    orthoY *= factor;
+
+                    // Calculate new position for fillText
+                    let fx = mx + orthoX;
+                    let fy = my + orthoY;
+
+                    // Draw text
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(count, fx, fy);
+
+                    // color change
+                    let f = count / 19;
+                    let h = f * 0.9;
+                    clusterParticles.forEach(p => {
+                        let s = p.hsl.s;
+                        let l = p.hsl.l;
+                        p.to_hsl = { h, s, l };
+                    });
+                }
+
+
+                // ctx.fillStyle = 'red';
+                // ctx.fillText(slime.id, slime.x, slime.y);
             }
 
             if(renderGL) {
