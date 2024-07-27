@@ -679,7 +679,7 @@
                     for(let particle of divider.members) {
                         let factor = 1;
                         if(clusters[particle.cluster]) {
-                            factor = (1 + clusters[particle.cluster].size / (20 - 1)) * 2;
+                            factor = (1 + clusters[particle.cluster].size / (20 - 1)) * 1.25;
                         }
                         particle.x += divider.vx * 3 * f * factor;
                         particle.y += divider.vy * 3 * f * factor;
@@ -897,8 +897,9 @@
                     let dy = cluster.y - mouseInfo.trail[j].y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
                     if(dist < cluster.radius) {
-                        targetClusters.push(cluster.index);
-                        break;
+                        if(!targetClusters.includes(cluster.index)) {
+                            targetClusters.push(cluster.index);
+                        }
                     }
                 }
             }
@@ -926,32 +927,58 @@
                             // particle과 p0, p0와 p1을 연결하는 두 벡터를 만들고 두 벡터의 외적을 구해서 particle을 두 그룹으로 나눈다.
                             let v0 = {x: p0.x - particle.x, y: p0.y - particle.y};
                             let v1 = {x: p1.x - p0.x, y: p1.y - p0.y};
+                            // atna2로 v1의 각도를 구하면
+                            let angle_dir = Math.atan2(v1.y, v1.x) / Math.PI;
+                            if(angle_dir < 0) {
+                                v1.x = -v1.x;
+                                v1.y = -v1.y;
+                            }
                             let cross = v0.x * v1.y - v0.y * v1.x;
                             if(cross > 0) {
                                 group0.members.push(particle);
+                                group0.x += particle.x;
+                                group0.y += particle.y;
                             }
                             else {
                                 group1.members.push(particle);
+                                group1.x += particle.x;
+                                group1.y += particle.y;
                             }
                         }
                     }
                     
                     if(group0.members.length > 0 && group1.members.length > 0) {
                         processed = true;
-                        // trail의 시작점과 끝점 사이의 벡터를 구해서 이것에 직교하는 두 벡터를 dividing vector로 사용한다. 이때 dividing vector의 방향은 두 그룹의 중점과 cluster의 중점이 만드는 벡터와 내적이 같은 방향으로 한다.
+                        group0.x /= group0.members.length;
+                        group0.y /= group0.members.length;
+                        group1.x /= group1.members.length;
+                        group1.y /= group1.members.length;
+
                         let p0 = mouseInfo.trail[0];
                         let p1 = mouseInfo.trail[mouseInfo.trail.length - 1];
                         let v = {x: p1.x - p0.x, y: p1.y - p0.y};
                         let dividingCenter = {x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2};
-                        let dividingVector0 = {x: v.y, y: -v.x};
-                        let dx = dividingCenter.x - targetCluster.x;
-                        let dy = dividingCenter.y - targetCluster.y;
-                        let cross = dx * dividingVector0.y - dy * dividingVector0.x;
-                        if(cross < 0) {
-                            dividingVector0.x = -dividingVector0.x;
-                            dividingVector0.y = -dividingVector0.y;
+
+                        // dividing center와 group0, group1의 중심을 연결하는 두 벡터를 설정
+                        let dir = {x: group0.x - dividingCenter.x, y: group0.y - dividingCenter.y};
+
+                        let dividingVector0 = {x: 0, y: 0};
+                        let dividingVector1 = {x: 0, y: 0};
+
+                        // dir0와 방향이 같은 벡터를 선택
+                        let dot = dir.x * v.y + dir.y * (-v.x);
+                        if(dot > 0) {
+                            dividingVector0.x = v.y;
+                            dividingVector0.y = -v.x;
+                            dividingVector1.x = -v.y;
+                            dividingVector1.y = v.x;
                         }
-                        let dividingVector1 = {x: -dividingVector0.x, y: -dividingVector0.y};
+                        else {
+                            dividingVector0.x = -v.y;
+                            dividingVector0.y = v.x;
+                            dividingVector1.x = v.y;
+                            dividingVector1.y = -v.x;
+                        }
 
                         // normalize dividing vectors
                         let length0 = Math.sqrt(dividingVector0.x * dividingVector0.x + dividingVector0.y * dividingVector0.y);
@@ -960,19 +987,7 @@
                         dividingVector0.y /= length0 + 1e-3;
                         dividingVector1.x /= length1 + 1e-3;
                         dividingVector1.y /= length1 + 1e-3;
-                        // console.log(dividingCenter, dividingVector0, dividingVector1);
-                        // dividing vector0, dividing vector1을 각각의 그룹에 속한 입자들에게 적용한다.
-                        // let factor = 100;
-                        // for(let i = 0; i < group0.members.length; i++) {
-                        //     let particle = group0.members[i];
-                        //     particle.x += dividingVector0.x * factor;
-                        //     particle.y += dividingVector0.y * factor;
-                        // }
-                        // for(let i = 0; i < group1.members.length; i++) {
-                        //     let particle = group1.members[i];
-                        //     particle.x += dividingVector1.x * factor;
-                        //     particle.y += dividingVector1.y * factor;
-                        // }
+                        
                         let span = 30;
                         dividers.push({
                             vx: dividingVector0.x,
