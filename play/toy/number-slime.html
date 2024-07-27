@@ -200,6 +200,8 @@
             tick: 0,
             trail: [],
             tail: [],
+            dragPower: 0,
+            toDragPower: 0,
         };
         let dividers = [];
         let paused = false;
@@ -562,20 +564,6 @@
             applyForces();
             dbscan();
 
-            // if (nearestCluster && Math.random() < 0.1) {
-            //     const pos = mousePos;
-            //     for (let particle of particles) {
-            //         if (particle.cluster === nearestCluster.index) {
-            //             let dx = pos.x - particle.x;
-            //             let dy = pos.y - particle.y;
-            //             let dist = Math.sqrt(dx * dx + dy * dy);
-            //             let force = 1 / dist * 3;
-            //             particle.vx = dx * force;
-            //             particle.vy = dy * force;
-            //         }
-            //     }
-            // }
-
             ctx.font = '25px Days One';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -644,15 +632,12 @@
                     ctx.fillText(count, fx, fy);
 
                     // color change
-                    let f = count / 19;
-                    let h = f * 0.9;
-                    clusterParticles.forEach((p, j) => {
-                        // let s = p.hsl.s;
-                        // let l = p.hsl.l;
-                        // p.to_hsl = { h, s, l };
-                        let colors = color_map[count - 1];
-                        p.to_hsl = colors[j];
-                    });
+                    if(slime.tick > 60) {
+                        clusterParticles.forEach((p, j) => {
+                            let colors = color_map[count - 1];
+                            p.to_hsl = colors[j];
+                        });
+                    }
                 }
 
                 // ctx.fillStyle = 'red';
@@ -684,6 +669,9 @@
             while(toRemoveDividers.length > 0) {
                 dividers.splice(dividers.indexOf(toRemoveDividers.shift()), 1);
             }
+
+            mouseInfo.dragPower += (mouseInfo.toDragPower - mouseInfo.dragPower) * 0.02;
+            mouseInfo.toDragPower *= 0.9;
             
             if(mouseInfo.isDown) {
                 // draw mouse trail
@@ -790,18 +778,6 @@
                         nearestCluster = cluster;
                     }
                 }
-                // if (nearestCluster) {
-                //     for (let particle of particles) {
-                //         if (particle.cluster === nearestCluster.index) {
-                //             let dx = pos.x - particle.x;
-                //             let dy = pos.y - particle.y;
-                //             let dist = Math.sqrt(dx * dx + dy * dy);
-                //             let force = 1 / dist;
-                //             particle.vx = dx * force;
-                //             particle.vy = dy * force;
-                //         }
-                //     }
-                // }
             }
         }
 
@@ -832,12 +808,13 @@
                     }
                 }
                 if(!mouseInfo.isDividingMode && mouseInfo.tick > 5) {
+                    mouseInfo.toDragPower = 1;
                     for (let particle of particles) {
                         if (particle.cluster === nearestCluster.index) {
                             let dx = pos.x - particle.x;
                             let dy = pos.y - particle.y;
                             let dist = Math.sqrt(dx * dx + dy * dy);
-                            let force = 1 / dist * 3;
+                            let force = 1 / dist * 3 * mouseInfo.dragPower;
                             particle.vx = dx * force;
                             particle.vy = dy * force;
                         }
@@ -872,23 +849,7 @@
             mouseInfo.isDown = false;
             mouseInfo.trail = [];
             mouseInfo.tail = [];
-        }
-
-        function divideSlime0() {
-            if(mouseInfo.trail.length > 10) {
-                for(let i = 0; i < particles.length; i++) {
-                    let particle = particles[i];    
-                    for(let j = 0; j < mouseInfo.trail.length; j++) {
-                        const dx = particle.x - mouseInfo.trail[j].x;
-                        const dy = particle.y - mouseInfo.trail[j].y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if(dist < particle.size) {
-                            particle.x += dx;
-                            particle.y += dy;
-                        }
-                    }
-                }
-            }
+            mouseInfo.toDragPower = 0;
         }
 
         function divideSlime() {
