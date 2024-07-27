@@ -159,7 +159,7 @@
             value = clamp(value, 0.0, 1.0);
 
             vec3 backgroundColor = backgroundGradient(uv);
-            float smoothValue = 1.0;
+            float smoothValue = 0.0;
             if (totalWeight > 0.0) {
                 mixedColor /= totalWeight; // Normalize the mixed color by the total influence
                 blobColor = mix(blobColor, mixedColor, smoothValue); // Mix the blob color with the mixed color
@@ -252,6 +252,14 @@
                     }
                     colors.push(hsl);
                 }
+                if(Math.random() < 0.5) {
+                    let hue_start = Math.random() * 0.3;
+                    let hue_range = 0.4 + Math.random() * 0.3;
+                    for(let j = 0; j < colors.length; j++) {
+                        let f = j / (colors.length - 1);
+                        colors[j].h = hue_start + hue_range * f;
+                    }
+                }
             } else {
                 for(let j = 0; j < i+1; j++) {
                     let hsl = {
@@ -276,6 +284,7 @@
                 this.vx = 0;
                 this.vy = 0;
                 this.cluster = -1; // -1 means no cluster
+                this.speed = 0.5 + Math.random() * 1.5;
             }
 
             update() {
@@ -293,9 +302,9 @@
                     this.vy *= 0.99;
                 }
 
-                this.hsl.h += (this.to_hsl.h - this.hsl.h) * 0.02;
-                this.hsl.s += (this.to_hsl.s - this.hsl.s) * 0.02;
-                this.hsl.l += (this.to_hsl.l - this.hsl.l) * 0.02;
+                this.hsl.h += (this.to_hsl.h - this.hsl.h) * 0.02 * this.speed;
+                this.hsl.s += (this.to_hsl.s - this.hsl.s) * 0.02 * this.speed;
+                this.hsl.l += (this.to_hsl.l - this.hsl.l) * 0.02 * this.speed;
                 this.color = hslToNormalizedRgb(this.hsl.h, this.hsl.s, this.hsl.l);
             }
 
