@@ -42,7 +42,12 @@
             cursor: pointer;
         }
         #container { position: relative; }
-        canvas { position: absolute; top: 0; left: 0; }
+        canvas { 
+            position: absolute; 
+            top: 0; 
+            left: 0;
+            cursor: crosshair;
+        }
         #logotype {
             position: absolute;
             left: 20px;
@@ -154,7 +159,7 @@
             value = clamp(value, 0.0, 1.0);
 
             vec3 backgroundColor = backgroundGradient(uv);
-            float smoothValue = 0.5;
+            float smoothValue = 1.0;
             if (totalWeight > 0.0) {
                 mixedColor /= totalWeight; // Normalize the mixed color by the total influence
                 blobColor = mix(blobColor, mixedColor, smoothValue); // Mix the blob color with the mixed color
@@ -230,6 +235,36 @@
             'fuchsia',
         ];
 
+        // color map
+        let color_map = [];
+        for(let i = 0; i < 20; i++) {
+            let colors = [];
+            if(Math.random() > 0.3) {
+                for(let j = 0; j < i+1; j++) {
+                    let hsl = {
+                        h: Math.random(),
+                        s: 0.9 + Math.random() * 0.1,
+                        l: 0.4 + Math.random() * 0.2,
+                    };
+                    if(Math.random() < 0.2) {
+                        hsl.s = 0.2;
+                        hsl.l = 0.7;
+                    }
+                    colors.push(hsl);
+                }
+            } else {
+                for(let j = 0; j < i+1; j++) {
+                    let hsl = {
+                        h: Math.random(),
+                        s: 0,
+                        l: 0.2 + Math.random() * 0.8,
+                    };
+                    colors.push(hsl);
+                }
+            }
+            color_map.push(colors);
+        }
+
         class Particle {
             constructor(x, y, size, hsl, to_hsl) {
                 this.x = x;
@@ -258,9 +293,9 @@
                     this.vy *= 0.99;
                 }
 
-                this.hsl.h += (this.to_hsl.h - this.hsl.h) * 0.1;
-                this.hsl.s += (this.to_hsl.s - this.hsl.s) * 0.1;
-                this.hsl.l += (this.to_hsl.l - this.hsl.l) * 0.1;
+                this.hsl.h += (this.to_hsl.h - this.hsl.h) * 0.02;
+                this.hsl.s += (this.to_hsl.s - this.hsl.s) * 0.02;
+                this.hsl.l += (this.to_hsl.l - this.hsl.l) * 0.02;
                 this.color = hslToNormalizedRgb(this.hsl.h, this.hsl.s, this.hsl.l);
             }
 
@@ -547,66 +582,6 @@
 
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
-            // Draw cluster indices
-            /*
-            for (let cluster of clusters) {
-                let clusterParticles = particles.filter(p => p.cluster === cluster.index);
-                let count = clusterParticles.length;             
-
-                // Draw eyes if there are at least 2 particles in the cluster
-                if (count >= 2) {
-                    let [x0, y0] = [clusterParticles[0].x, clusterParticles[0].y];
-                    let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
-
-                    drawEye4(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y, cluster.index);
-                    drawEye4(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y, cluster.index);
-
-                    // ctx.fillStyle = 'red';
-                    // ctx.fillText(cluster.index, cluster.x, cluster.y);
-                    ctx.fillStyle = 'black';
-
-                     // Calculate midpoint
-                    let mx = (x0 + x1) / 2;
-                    let my = (y0 + y1) / 2;
-
-                    // Calculate the vector (x1 - x0, y1 - y0)
-                    let dx = x1 - x0;
-                    let dy = y1 - y0;
-
-                    // Calculate orthogonal vector
-                    // Use (-dy, dx) or (dy, -dx)
-                    let orthoX = dy;
-                    let orthoY = -dx;
-
-                    // Determine which direction to move in
-                    let o0 = [-dy, dx];
-                    let o1 = [dy, -dx];
-
-                    // Normalize the orthogonal vector to 30 units length
-                    let length = Math.sqrt(orthoX * orthoX + orthoY * orthoY);
-                    let factor = 30 / length;
-                    orthoX *= factor;
-                    orthoY *= factor;
-
-                    // Calculate new position for fillText
-                    let fx = mx + orthoX;
-                    let fy = my + orthoY;
-
-                    // Draw text
-                    ctx.fillStyle = 'black';
-                    ctx.fillText(count, fx, fy);
-
-                    // color change
-                    let f = count / 19;
-                    let h = f * 0.9;
-                    clusterParticles.forEach(p => {
-                        let s = p.hsl.s;
-                        let l = p.hsl.l;
-                        p.to_hsl = { h, s, l };
-                    });
-                }
-            }
-            */
 
             for(let i = 0; i < slimes.length; i++) {
                 let slime = slimes[i];
@@ -662,10 +637,12 @@
                     // color change
                     let f = count / 19;
                     let h = f * 0.9;
-                    clusterParticles.forEach(p => {
-                        let s = p.hsl.s;
-                        let l = p.hsl.l;
-                        p.to_hsl = { h, s, l };
+                    clusterParticles.forEach((p, j) => {
+                        // let s = p.hsl.s;
+                        // let l = p.hsl.l;
+                        // p.to_hsl = { h, s, l };
+                        let colors = color_map[count - 1];
+                        p.to_hsl = colors[j];
                     });
                 }
 
@@ -703,20 +680,30 @@
                 // draw mouse trail
                 if(mouseInfo.isDividingMode) {
                     ctx.beginPath();
-                    //ctx.moveTo(mouseInfo.downX, mouseInfo.downY);
                     for(let i = 0; i < mouseInfo.trail.length; i++) {
                         ctx.lineTo(mouseInfo.trail[i].x, mouseInfo.trail[i].y);
                     }
                     ctx.lineTo(mouseInfo.x, mouseInfo.y);
                     ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
                     ctx.lineWidth = 5;
+                    // dashed line
+                    ctx.setLineDash([5, 10]);
                     ctx.stroke();
                     ctx.lineWidth = 1;
+                    // solid line
+                    ctx.setLineDash([]);
                 }
                 else if(nearestCluster && mouseInfo.tail.length === 10) {
                     let dx = mouseInfo.tail[mouseInfo.tail.length - 1].x - mouseInfo.tail[0].x;
                     let dy = mouseInfo.tail[mouseInfo.tail.length - 1].y - mouseInfo.tail[0].y;
                     let angle = Math.atan2(dy, dx);
+
+                    ctx.beginPath();
+                    ctx.moveTo(mouseInfo.tail[0].x, mouseInfo.tail[0].y);
+                    ctx.lineTo(mouseInfo.tail[mouseInfo.tail.length - 1].x - Math.cos(angle) * 10, mouseInfo.tail[mouseInfo.tail.length - 1].y - Math.sin(angle) * 10);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                    ctx.lineWidth = 5;
+                    ctx.stroke();
 
                     // draw arrow head trianglesuing transform
                     ctx.save();
@@ -724,26 +711,12 @@
                     ctx.rotate(angle);
                     ctx.beginPath();
                     ctx.moveTo(0, 0);
-                    ctx.lineTo(-10, -5);
-                    ctx.lineTo(-10, 5);
+                    ctx.lineTo(-20, -10);
+                    ctx.lineTo(-20, 10);
                     ctx.closePath();
                     ctx.fillStyle = 'rgba(255, 255, 255, 1)';
                     ctx.fill();
                     ctx.restore();
-                    
-
-
-                    // let arrowSize = 10;
-                    // let arrowAngle = Math.PI / 6;
-                    // let arrowX = mouseInfo.lastX - dx / dist * arrowSize;
-                    // let arrowY = mouseInfo.lastY - dy / dist * arrowSize;
-                    // ctx.beginPath();
-                    // ctx.moveTo(mouseInfo.lastX, mouseInfo.lastY);
-                    // ctx.lineTo(arrowX + dy / dist * arrowSize * Math.sin(arrowAngle), arrowY - dx / dist * arrowSize * Math.cos(arrowAngle));
-                    // ctx.lineTo(arrowX - dy / dist * arrowSize * Math.sin(arrowAngle), arrowY + dx / dist * arrowSize * Math.cos(arrowAngle));
-                    // ctx.closePath();
-                    // ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-                    // ctx.fill();
                 }
             }
 
