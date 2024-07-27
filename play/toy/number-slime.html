@@ -130,6 +130,7 @@
 
         void main() {
             vec2 uv = (2.0 * gl_FragCoord.xy - u_resolution) / u_resolution.y;
+            
             vec3 blobColor = vec3(0.0);
             vec3 mixedColor = vec3(0.0);
             float maxInfluence = 0.0;
@@ -146,8 +147,10 @@
                 totalWeight += influence;
             }
 
-            float threshold = u_tightness;
-            float value = smoothstep(threshold - 0.05, threshold, totalWeight);
+            float aspect_factor = u_resolution.y / u_resolution.x;
+            float area_factor = u_resolution.x * u_resolution.y / 1e6;
+            float threshold = u_tightness * aspect_factor * area_factor;
+            float value = smoothstep(threshold - 0.05 * area_factor, threshold, totalWeight);
             value = clamp(value, 0.0, 1.0);
 
             vec3 backgroundColor = backgroundGradient(uv);
