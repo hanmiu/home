@@ -99,11 +99,13 @@
     <script id="fragmentShader" type="x-shader/x-fragment">
         precision mediump float;
 
+        uniform vec3 u_mouse;
         uniform vec2 u_resolution;
         uniform vec2 u_circles[20];
         uniform vec3 u_colors[20];
         uniform int u_circleCount;
         uniform float u_tightness;
+        uniform float u_time;
 
         float metaball(vec2 p, vec2 center, float radius) {
             return radius * radius / dot(p - center, p - center);
@@ -112,7 +114,18 @@
         vec3 backgroundGradient(vec2 uv) {
             float t = uv.y;
             // return mix(vec3(0.1, 0.2, 0.3), vec3(0.5, 0.7, 0.9), t);
-            return vec3(0.0);
+            //uv = floor(uv * 20.0) / 20.0;
+            float d = length(uv - u_mouse.xy);
+            d = 0.1 / (d + 1e-3);
+            d += (sin(atan(uv.y - u_mouse.y, uv.x - u_mouse.x) * 5.0) * 0.5 + 0.5) * 0.1;
+            float c = sin(d * 50.0 - u_time) * 0.5 + 0.5 + d;
+            // gamma correction
+            c = pow(c, 1.0 / 2.2);
+            float factor = 0.0;
+            if(u_mouse.z > 0.0) {
+                factor = 0.2;
+            }
+            return clamp(vec3(1.0 - c) * 0.5, 0.0, 1.0) * factor;
         }
 
         void main() {
@@ -137,7 +150,7 @@
             float value = smoothstep(threshold - 0.05, threshold, totalWeight);
             value = clamp(value, 0.0, 1.0);
 
-            vec3 backgroundColor = backgroundGradient(uv * 0.5 + 0.5);
+            vec3 backgroundColor = backgroundGradient(uv);
             float smoothValue = 0.5;
             if (totalWeight > 0.0) {
                 mixedColor /= totalWeight; // Normalize the mixed color by the total influence
@@ -163,11 +176,24 @@
         let clusters = []; 
         let nearestCluster = null;
         let slimes = [];
-        let lastMousePos = { x: 0, y: 0 };
-        let mousePos = { x: 0, y: 0 };
-        let mouseOffset = { x: 0, y: 0 };
-        let mouseVelocity = { x: 0, y: 0 };
+        let mouseInfo = {
+            x: 0,
+            y: 0,
+            lastX: 0,
+            lastY: 0,
+            offsetX: 0,
+            offsetY: 0,
+            velocityX: 0,
+            velocityY: 0,
+            downX: 0,
+            downY: 0,
+            isDown: false,
+            isDividingMode: false,
+            tick: 0,
+            trail: [],
+        };
         let paused = false;
+        let time = 0;
         const particleCountInput = document.getElementById('particleCount');
         const particleSizeInput = document.getElementById('particleSize');
         const repulsionFactorInput = document.getElementById('repulsionFactor');
@@ -451,24 +477,25 @@
         }
 
         function update() {
+            time = performance.now() / 1000;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             applyForces();
             dbscan();
 
-            if (nearestCluster && Math.random() < 0.1) {
-                const pos = mousePos;
-                for (let particle of particles) {
-                    if (particle.cluster === nearestCluster.index) {
-                        let dx = pos.x - particle.x;
-                        let dy = pos.y - particle.y;
-                        let dist = Math.sqrt(dx * dx + dy * dy);
-                        let force = 1 / dist * 3;
-                        particle.vx = dx * force;
-                        particle.vy = dy * force;
-                    }
-                }
-            }
+            // if (nearestCluster && Math.random() < 0.1) {
+            //     const pos = mousePos;
+            //     for (let particle of particles) {
+            //         if (particle.cluster === nearestCluster.index) {
+            //             let dx = pos.x - particle.x;
+            //             let dy = pos.y - particle.y;
+            //             let dist = Math.sqrt(dx * dx + dy * dy);
+            //             let force = 1 / dist * 3;
+            //             particle.vx = dx * force;
+            //             particle.vy = dy * force;
+            //         }
+            //     }
+            // }
 
             ctx.font = '25px Days One';
             ctx.textAlign = 'center';
@@ -560,8 +587,8 @@
                     let [x1, y1] = [clusterParticles[1].x, clusterParticles[1].y];
 
                     if(slime.tick > 60) {
-                        drawEye4(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mousePos.x, mousePos.y, cluster.index);
-                        drawEye4(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mousePos.x, mousePos.y, cluster.index);
+                        drawEye4(clusterParticles[0].x, clusterParticles[0].y, clusterParticles[1].x, clusterParticles[1].y, mouseInfo.x, mouseInfo.y, cluster.index);
+                        drawEye4(clusterParticles[1].x, clusterParticles[1].y, clusterParticles[0].x, clusterParticles[0].y, mouseInfo.x, mouseInfo.y, cluster.index);
                     }
 
                     ctx.fillStyle = 'white';
@@ -612,6 +639,43 @@
                 // ctx.fillText(slime.id, slime.x, slime.y);
             }
 
+            
+            if(mouseInfo.isDown) {
+                // draw mouse trail
+                if(mouseInfo.isDividingMode) {
+                    ctx.beginPath();
+                    //ctx.moveTo(mouseInfo.downX, mouseInfo.downY);
+                    for(let i = 0; i < mouseInfo.trail.length; i++) {
+                        ctx.lineTo(mouseInfo.trail[i].x, mouseInfo.trail[i].y);
+                    }
+                    ctx.lineTo(mouseInfo.x, mouseInfo.y);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                    ctx.lineWidth = 5;
+                    ctx.stroke();
+                    ctx.lineWidth = 1;
+                }
+                else if(nearestCluster) {
+                    // draw arrow from last two trail points
+                    if(mouseInfo.trail.length > 10) {
+                        let last = mouseInfo.trail.length - 1;
+                        let dx = mouseInfo.trail[last].x - mouseInfo.trail[last - 9].x;
+                        let dy = mouseInfo.trail[last].y - mouseInfo.trail[last - 9].y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        let arrowSize = 10;
+                        let arrowAngle = Math.PI / 6;
+                        let arrowX = mouseInfo.trail[last].x - dx / dist * arrowSize;
+                        let arrowY = mouseInfo.trail[last].y - dy / dist * arrowSize;
+                        ctx.beginPath();
+                        ctx.moveTo(mouseInfo.trail[last].x, mouseInfo.trail[last].y);
+                        ctx.lineTo(arrowX + dy / dist * arrowSize * Math.sin(arrowAngle), arrowY - dx / dist * arrowSize * Math.cos(arrowAngle));
+                        ctx.lineTo(arrowX - dy / dist * arrowSize * Math.sin(arrowAngle), arrowY + dx / dist * arrowSize * Math.cos(arrowAngle));
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                        ctx.fill();
+                    }
+                }
+            }
+
             if(renderGL) {
                 renderGL();
             }
@@ -637,9 +701,16 @@
 
         function onDown(e) {
             const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
-            mousePos = pos;
+            mouseInfo.x = mouseInfo.downX = pos.x;
+            mouseInfo.y = mouseInfo.downY = pos.y;
             if(e.touches) e.preventDefault();
-            mouseOffset = { x: 0, y: 0 };
+            mouseInfo.offsetX = 0;
+            mouseInfo.offsetY = 0;
+            mouseInfo.isDown = true;
+            mouseInfo.isDividingMode = false;
+            mouseInfo.tick = 0;
+            mouseInfo.trail = [];
+
             selectedParticle = null;
             for (let particle of particles) {
                 // radius 50px 안에 있는 입자 중 pos와 가장 가까운 입자 선택
@@ -649,8 +720,8 @@
                 if (dist < 50 && (!selectedParticle || dist < selectedParticle.dist)) {
                     selectedParticle = particle;
                     selectedParticle.dist = dist;
-                    lastMousePos = pos;
-                    mouseOffset = { x: pos.x - particle.x, y: pos.y - particle.y };
+                    mouseInfo.offsetX = pos.x - particle.x;
+                    mouseInfo.offsetY = pos.y - particle.y;
                 }
             }
             if(!selectedParticle) {
@@ -661,57 +732,86 @@
                     let dx = cluster.x - pos.x;
                     let dy = cluster.y - pos.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < minDist && dist < 500) {
+                    if (dist < minDist && dist < 300) {
                         minDist = dist;
                         nearestCluster = cluster;
                     }
                 }
-                if (nearestCluster) {
+                // if (nearestCluster) {
+                //     for (let particle of particles) {
+                //         if (particle.cluster === nearestCluster.index) {
+                //             let dx = pos.x - particle.x;
+                //             let dy = pos.y - particle.y;
+                //             let dist = Math.sqrt(dx * dx + dy * dy);
+                //             let force = 1 / dist;
+                //             particle.vx = dx * force;
+                //             particle.vy = dy * force;
+                //         }
+                //     }
+                // }
+            }
+        }
+
+        function onMove(e) {
+            const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
+            mouseInfo.x = pos.x;
+            mouseInfo.y = pos.y;
+            mouseInfo.velocityX = pos.x - mouseInfo.lastX;
+            mouseInfo.velocityY = pos.y - mouseInfo.lastY;
+            mouseInfo.tick += 1;
+
+            if (selectedParticle) {
+                if(e.touches) e.preventDefault();
+                
+                selectedParticle.x = pos.x - mouseInfo.offsetX;
+                selectedParticle.y = pos.y - mouseInfo.offsetY;
+                selectedParticle.vx = 0;
+                selectedParticle.vy = 0;
+
+                moveCluster(selectedParticle, mouseInfo.velocityX, mouseInfo.velocityY);
+            }
+
+            if (nearestCluster) {
+                if(mouseInfo.tick === 5) {
+                    const dot = (pos.x - nearestCluster.x) * mouseInfo.velocityX + (pos.y - nearestCluster.y) * mouseInfo.velocityY;
+                    if(dot < 0) {
+                        mouseInfo.isDividingMode = true;
+                    }
+                }
+                if(!mouseInfo.isDividingMode && mouseInfo.tick > 5) {
                     for (let particle of particles) {
                         if (particle.cluster === nearestCluster.index) {
                             let dx = pos.x - particle.x;
                             let dy = pos.y - particle.y;
                             let dist = Math.sqrt(dx * dx + dy * dy);
-                            let force = 1 / dist;
+                            let force = 1 / dist * 3;
                             particle.vx = dx * force;
                             particle.vy = dy * force;
                         }
                     }
                 }
             }
-        }
 
-        function onMove(e) {
-            const pos = e.touches ? getTouchPos(canvas, e) : getMousePos(canvas, e);
-            mousePos = pos;
-            if (selectedParticle) {
-                if(e.touches) e.preventDefault();
-                const dx = pos.x - lastMousePos.x;
-                const dy = pos.y - lastMousePos.y;
-
-                selectedParticle.x = pos.x - mouseOffset.x;
-                selectedParticle.y = pos.y - mouseOffset.y;
-                selectedParticle.vx = 0;
-                selectedParticle.vy = 0;
-
-                moveCluster(selectedParticle, dx, dy);
-
-                mouseVelocity = {
-                    x: dx,
-                    y: dy
-                };
-
-                lastMousePos = pos;
+            if(mouseInfo.isDown) {
+                mouseInfo.trail.push({x: pos.x, y: pos.y});
+                if(mouseInfo.trail.length > 100) {
+                    mouseInfo.trail.shift();
+                }
             }
+
+            mouseInfo.lastX = pos.x;
+            mouseInfo.lastY = pos.y;
         }
 
         function onUp() {
             if (selectedParticle) {
-                selectedParticle.vx = mouseVelocity.x;
-                selectedParticle.vy = mouseVelocity.y;
+                selectedParticle.vx = mouseInfo.velocityX;
+                selectedParticle.vy = mouseInfo.velocityY;
             }
             selectedParticle = null;
             nearestCluster = null;
+            mouseInfo.isDown = false;
+            mouseInfo.trail = [];
         }
 
         function resizeCanvas() {
@@ -914,15 +1014,21 @@
             const resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
             gl.uniform2f(resolutionUniformLocation, width, height);
 
+            const mouseUniformLocation = gl.getUniformLocation(program, "u_mouse");
             const circlesUniformLocation = gl.getUniformLocation(program, "u_circles");
             const colorsUniformLocation = gl.getUniformLocation(program, "u_colors");
             const circleCountUniformLocation = gl.getUniformLocation(program, "u_circleCount");
             const tightnessUniformLocation = gl.getUniformLocation(program, "u_tightness");
+            const timeUniformLocation = gl.getUniformLocation(program, "u_time");
 
             //createCircles(circleCount);
 
             function render() {
                 gl.clear(gl.COLOR_BUFFER_BIT);
+
+                gl.uniform1f(timeUniformLocation, time);
+
+                gl.uniform3f(mouseUniformLocation, (2.0 * mouseInfo.x - canvas.width) / canvas.height, (2.0 * (canvas.height - mouseInfo.y) - canvas.height) / canvas.height, mouseInfo.isDown ? 1 : 0);
 
                 const circlePositions = new Float32Array(particles.flatMap(c => [
                     (2.0 * c.x - canvas.width) / canvas.height,
