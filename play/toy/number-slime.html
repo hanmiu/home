@@ -355,8 +355,24 @@
             }
 
             // Calculate cluster centers
+            // for (let i = 0; i < clusterIndex; i++) {
+            //     let sumX = 0, sumY = 0, count = 0;
+            //     for (let particle of particles) {
+            //         if (particle.cluster === i) {
+            //             sumX += particle.x;
+            //             sumY += particle.y;
+            //             count++;
+            //         }
+            //     }
+            //     if (count > 0) {
+            //         clusters.push({x: sumX / count, y: sumY / count, index: i});
+            //     }
+            // }
+            
+            // Calculate cluster centers and bounding radius
             for (let i = 0; i < clusterIndex; i++) {
                 let sumX = 0, sumY = 0, count = 0;
+                let maxDist = 0;
                 for (let particle of particles) {
                     if (particle.cluster === i) {
                         sumX += particle.x;
@@ -365,9 +381,22 @@
                     }
                 }
                 if (count > 0) {
-                    clusters.push({x: sumX / count, y: sumY / count, index: i});
+                    let cx = sumX / count;
+                    let cy = sumY / count;
+                    for (let particle of particles) {
+                        if (particle.cluster === i) {
+                            let dx = particle.x - cx;
+                            let dy = particle.y - cy;
+                            let dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist > maxDist) {
+                                maxDist = dist;
+                            }
+                        }
+                    }
+                    clusters.push({x: cx, y: cy, index: i, radius: maxDist});
                 }
             }
+
 
             // slimes 관리
             if(slimes.length == 0) {
@@ -792,7 +821,7 @@
                 }
             }
 
-            if(mouseInfo.isDown) {
+            if(mouseInfo.isDown && mouseInfo.isDividingMode) {
                 mouseInfo.trail.push({x: pos.x, y: pos.y});
                 if(mouseInfo.trail.length > 100) {
                     mouseInfo.trail.shift();
@@ -808,10 +837,140 @@
                 selectedParticle.vx = mouseInfo.velocityX;
                 selectedParticle.vy = mouseInfo.velocityY;
             }
+            divideSlime();
             selectedParticle = null;
             nearestCluster = null;
             mouseInfo.isDown = false;
             mouseInfo.trail = [];
+        }
+
+        function divideSlime0() {
+            if(mouseInfo.trail.length > 10) {
+                for(let i = 0; i < particles.length; i++) {
+                    let particle = particles[i];    
+                    for(let j = 0; j < mouseInfo.trail.length; j++) {
+                        const dx = particle.x - mouseInfo.trail[j].x;
+                        const dy = particle.y - mouseInfo.trail[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if(dist < particle.size) {
+                            particle.x += dx;
+                            particle.y += dy;
+                        }
+                    }
+                }
+            }
+        }
+
+        function divideSlime() {
+            // 모든 cluster를 순회하여 trail을 구성하는 좌표가 cluster의 중심에서 그 cluster의 radius 안에 들어오는 cluster들을 찾는다.
+            let targetClusters = [];
+            for(let i = 0; i < clusters.length; i++) {
+                let cluster = clusters[i];
+                for(let j = 0; j < mouseInfo.trail.length; j++) {
+                    let dx = cluster.x - mouseInfo.trail[j].x;
+                    let dy = cluster.y - mouseInfo.trail[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if(dist < cluster.radius) {
+                        targetClusters.push(cluster.index);
+                        break;
+                    }
+                }
+            }
+
+            let processed = false;
+            if(mouseInfo.trail.length > 10 && targetClusters.length > 0) {   
+                // 모든 입자들을 순회하여 trail을 구성하는 좌표와 모든 거리를 계산해서 리스트를 만들고 가장 짧은 두 점을 찾는다.
+                for(let targetCluster of targetClusters) {
+                    let ptcls = particles.filter(p => p.cluster === targetCluster);
+                    let group0 = {x: 0, y: 0, members: []};
+                    let group1 = {x: 0, y: 0, members: []};
+                    for(let i = 0; i < ptcls.length; i++) {
+                        let particle = ptcls[i];
+                        if(targetClusters.includes(particle.cluster)) {
+                            let distList = [];
+                            for(let j = 0; j < mouseInfo.trail.length; j++) {
+                                const dx = particle.x - mouseInfo.trail[j].x;
+                                const dy = particle.y - mouseInfo.trail[j].y;
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+                                distList.push({i, j, dist});
+                            }
+                            distList.sort((a, b) => a.dist - b.dist);
+                            let p0 = mouseInfo.trail[distList[0].j];
+                            let p1 = mouseInfo.trail[distList[1].j];
+                            // particle과 p0, p0와 p1을 연결하는 두 벡터를 만들고 두 벡터의 외적을 구해서 particle을 두 그룹으로 나눈다.
+                            let v0 = {x: p0.x - particle.x, y: p0.y - particle.y};
+                            let v1 = {x: p1.x - p0.x, y: p1.y - p0.y};
+                            let cross = v0.x * v1.y - v0.y * v1.x;
+                            if(cross > 0) {
+                                group0.members.push(particle);
+                            }
+                            else {
+                                group1.members.push(particle);
+                            }
+                        }
+                    }
+                    
+                    if(group0.members.length > 0 && group1.members.length > 0) {
+                        processed = true;
+                        // trail의 시작점과 끝점 사이의 벡터를 구해서 이것에 직교하는 두 벡터를 dividing vector로 사용한다. 이때 dividing vector의 방향은 두 그룹의 중점과 cluster의 중점이 만드는 벡터와 내적이 같은 방향으로 한다.
+                        let p0 = mouseInfo.trail[0];
+                        let p1 = mouseInfo.trail[mouseInfo.trail.length - 1];
+                        let v = {x: p1.x - p0.x, y: p1.y - p0.y};
+                        let dividingCenter = {x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2};
+                        let dividingVector0 = {x: v.y, y: -v.x};
+                        let dx = dividingCenter.x - targetCluster.x;
+                        let dy = dividingCenter.y - targetCluster.y;
+                        let cross = dx * dividingVector0.y - dy * dividingVector0.x;
+                        if(cross < 0) {
+                            dividingVector0.x = -dividingVector0.x;
+                            dividingVector0.y = -dividingVector0.y;
+                        }
+                        let dividingVector1 = {x: -dividingVector0.x, y: -dividingVector0.y};
+
+                        // normalize dividing vectors
+                        let length0 = Math.sqrt(dividingVector0.x * dividingVector0.x + dividingVector0.y * dividingVector0.y);
+                        let length1 = Math.sqrt(dividingVector1.x * dividingVector1.x + dividingVector1.y * dividingVector1.y);
+                        dividingVector0.x /= length0 + 1e-3;
+                        dividingVector0.y /= length0 + 1e-3;
+                        dividingVector1.x /= length1 + 1e-3;
+                        dividingVector1.y /= length1 + 1e-3;
+                        // console.log(dividingCenter, dividingVector0, dividingVector1);
+                        // dividing vector0, dividing vector1을 각각의 그룹에 속한 입자들에게 적용한다.
+                        let factor = 100;
+                        for(let i = 0; i < group0.members.length; i++) {
+                            let particle = group0.members[i];
+                            particle.x += dividingVector0.x * factor;
+                            particle.y += dividingVector0.y * factor;
+                        }
+                        for(let i = 0; i < group1.members.length; i++) {
+                            let particle = group1.members[i];
+                            particle.x += dividingVector1.x * factor;
+                            particle.y += dividingVector1.y * factor;
+                        }
+                    }  
+                }
+            }
+
+            if(!processed) {
+                // 처리가 안된 경우 보험. 클러스터가 애매하게 붙어있을 때도 처리
+                if(mouseInfo.trail.length > 10) {
+                    if(mouseInfo.trail.length > 10) {
+                        for(let i = 0; i < particles.length; i++) {
+                            let particle = particles[i];    
+                            for(let j = 0; j < mouseInfo.trail.length; j++) {
+                                const dx = particle.x - mouseInfo.trail[j].x;
+                                const dy = particle.y - mouseInfo.trail[j].y;
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+                                if(dist < particle.size * 3) {
+                                    let force = 1 / (dist + 1e-3);
+                                    particle.vx += dx * force;
+                                    particle.vy += dy * force;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         function resizeCanvas() {
