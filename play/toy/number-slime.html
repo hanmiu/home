@@ -192,8 +192,10 @@
             tick: 0,
             trail: [],
         };
+        let dividers = [];
         let paused = false;
         let time = 0;
+
         const particleCountInput = document.getElementById('particleCount');
         const particleSizeInput = document.getElementById('particleSize');
         const repulsionFactorInput = document.getElementById('repulsionFactor');
@@ -393,7 +395,7 @@
                             }
                         }
                     }
-                    clusters.push({x: cx, y: cy, index: i, radius: maxDist});
+                    clusters.push({x: cx, y: cy, index: i, radius: maxDist, size: count});
                 }
             }
 
@@ -663,11 +665,35 @@
                     });
                 }
 
-
                 // ctx.fillStyle = 'red';
                 // ctx.fillText(slime.id, slime.x, slime.y);
             }
 
+            // dividers
+            let toRemoveDividers = [];
+            for(let divider of dividers) {
+                if(divider.span > 0) {
+                    divider.span -= 1;
+                    let f = divider.span / (divider.maxSpan - 1);
+                    f = f * f * (3 - 2 * f);
+                    for(let particle of divider.members) {
+                        let factor = 1;
+                        if(clusters[particle.cluster]) {
+                            factor = (1 + clusters[particle.cluster].size / (20 - 1)) * 2;
+                        }
+                        particle.x += divider.vx * 3 * f * factor;
+                        particle.y += divider.vy * 3 * f * factor;
+                        particle.vx *= 0.5;
+                        particle.vy *= 0.5;
+                    }
+                    if(divider.span === 0) {
+                        toRemoveDividers.push(divider);
+                    }
+                }
+            }
+            while(toRemoveDividers.length > 0) {
+                dividers.splice(dividers.indexOf(toRemoveDividers.shift()), 1);
+            }
             
             if(mouseInfo.isDown) {
                 // draw mouse trail
@@ -936,17 +962,32 @@
                         dividingVector1.y /= length1 + 1e-3;
                         // console.log(dividingCenter, dividingVector0, dividingVector1);
                         // dividing vector0, dividing vector1을 각각의 그룹에 속한 입자들에게 적용한다.
-                        let factor = 100;
-                        for(let i = 0; i < group0.members.length; i++) {
-                            let particle = group0.members[i];
-                            particle.x += dividingVector0.x * factor;
-                            particle.y += dividingVector0.y * factor;
-                        }
-                        for(let i = 0; i < group1.members.length; i++) {
-                            let particle = group1.members[i];
-                            particle.x += dividingVector1.x * factor;
-                            particle.y += dividingVector1.y * factor;
-                        }
+                        // let factor = 100;
+                        // for(let i = 0; i < group0.members.length; i++) {
+                        //     let particle = group0.members[i];
+                        //     particle.x += dividingVector0.x * factor;
+                        //     particle.y += dividingVector0.y * factor;
+                        // }
+                        // for(let i = 0; i < group1.members.length; i++) {
+                        //     let particle = group1.members[i];
+                        //     particle.x += dividingVector1.x * factor;
+                        //     particle.y += dividingVector1.y * factor;
+                        // }
+                        let span = 30;
+                        dividers.push({
+                            vx: dividingVector0.x,
+                            vy: dividingVector0.y,
+                            members: group0.members,
+                            span: span,
+                            maxSpan: span
+                        });
+                        dividers.push({
+                            vx: dividingVector1.x,
+                            vy: dividingVector1.y,
+                            members: group1.members,
+                            span: span,
+                            maxSpan: span
+                        });
                     }  
                 }
             }
