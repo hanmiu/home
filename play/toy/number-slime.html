@@ -191,6 +191,7 @@
             isDividingMode: false,
             tick: 0,
             trail: [],
+            tail: [],
         };
         let dividers = [];
         let paused = false;
@@ -709,25 +710,37 @@
                     ctx.stroke();
                     ctx.lineWidth = 1;
                 }
-                else if(nearestCluster) {
-                    // draw arrow from last two trail points
-                    if(mouseInfo.trail.length > 10) {
-                        let last = mouseInfo.trail.length - 1;
-                        let dx = mouseInfo.trail[last].x - mouseInfo.trail[last - 9].x;
-                        let dy = mouseInfo.trail[last].y - mouseInfo.trail[last - 9].y;
-                        let dist = Math.sqrt(dx * dx + dy * dy);
-                        let arrowSize = 10;
-                        let arrowAngle = Math.PI / 6;
-                        let arrowX = mouseInfo.trail[last].x - dx / dist * arrowSize;
-                        let arrowY = mouseInfo.trail[last].y - dy / dist * arrowSize;
-                        ctx.beginPath();
-                        ctx.moveTo(mouseInfo.trail[last].x, mouseInfo.trail[last].y);
-                        ctx.lineTo(arrowX + dy / dist * arrowSize * Math.sin(arrowAngle), arrowY - dx / dist * arrowSize * Math.cos(arrowAngle));
-                        ctx.lineTo(arrowX - dy / dist * arrowSize * Math.sin(arrowAngle), arrowY + dx / dist * arrowSize * Math.cos(arrowAngle));
-                        ctx.closePath();
-                        ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-                        ctx.fill();
-                    }
+                else if(nearestCluster && mouseInfo.tail.length === 10) {
+                    let dx = mouseInfo.tail[mouseInfo.tail.length - 1].x - mouseInfo.tail[0].x;
+                    let dy = mouseInfo.tail[mouseInfo.tail.length - 1].y - mouseInfo.tail[0].y;
+                    let angle = Math.atan2(dy, dx);
+
+                    // draw arrow head trianglesuing transform
+                    ctx.save();
+                    ctx.translate(mouseInfo.tail[mouseInfo.tail.length - 1].x, mouseInfo.tail[mouseInfo.tail.length - 1].y);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-10, -5);
+                    ctx.lineTo(-10, 5);
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                    ctx.fill();
+                    ctx.restore();
+                    
+
+
+                    // let arrowSize = 10;
+                    // let arrowAngle = Math.PI / 6;
+                    // let arrowX = mouseInfo.lastX - dx / dist * arrowSize;
+                    // let arrowY = mouseInfo.lastY - dy / dist * arrowSize;
+                    // ctx.beginPath();
+                    // ctx.moveTo(mouseInfo.lastX, mouseInfo.lastY);
+                    // ctx.lineTo(arrowX + dy / dist * arrowSize * Math.sin(arrowAngle), arrowY - dx / dist * arrowSize * Math.cos(arrowAngle));
+                    // ctx.lineTo(arrowX - dy / dist * arrowSize * Math.sin(arrowAngle), arrowY + dx / dist * arrowSize * Math.cos(arrowAngle));
+                    // ctx.closePath();
+                    // ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                    // ctx.fill();
                 }
             }
 
@@ -852,6 +865,11 @@
                 if(mouseInfo.trail.length > 100) {
                     mouseInfo.trail.shift();
                 }
+            }
+
+            mouseInfo.tail.push({x: pos.x, y: pos.y});
+            if(mouseInfo.tail.length > 10) {
+                mouseInfo.tail.shift();
             }
 
             mouseInfo.lastX = pos.x;
