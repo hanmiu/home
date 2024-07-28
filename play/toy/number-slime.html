@@ -184,6 +184,13 @@
         let clusters = []; 
         let nearestCluster = null;
         let slimes = [];
+
+        const modes = {
+            NONE: 0,
+            DRAG: 1,
+            DIVIDE: 2,
+        };
+
         let mouseInfo = {
             x: 0,
             y: 0,
@@ -196,7 +203,8 @@
             downX: 0,
             downY: 0,
             isDown: false,
-            isDividingMode: false,
+            // isDividingMode: false,
+            mode: modes.NONE,
             tick: 0,
             trail: [],
             tail: [],
@@ -675,7 +683,7 @@
             
             if(mouseInfo.isDown) {
                 // draw mouse trail
-                if(mouseInfo.isDividingMode) {
+                if(mouseInfo.mode === modes.DIVIDE) {
                     ctx.beginPath();
                     for(let i = 0; i < mouseInfo.trail.length; i++) {
                         ctx.lineTo(mouseInfo.trail[i].x, mouseInfo.trail[i].y);
@@ -691,29 +699,41 @@
                     ctx.setLineDash([]);
                 }
                 else if(nearestCluster && mouseInfo.tail.length === 10) {
-                    let dx = mouseInfo.tail[mouseInfo.tail.length - 1].x - mouseInfo.tail[0].x;
-                    let dy = mouseInfo.tail[mouseInfo.tail.length - 1].y - mouseInfo.tail[0].y;
-                    let angle = Math.atan2(dy, dx);
+                    mouseInfo.mode = modes.DRAG;
+                    // let dx = mouseInfo.tail[mouseInfo.tail.length - 1].x - mouseInfo.tail[0].x;
+                    // let dy = mouseInfo.tail[mouseInfo.tail.length - 1].y - mouseInfo.tail[0].y;
+                    let targetCluster = clusters[nearestCluster.index];
+                    if(targetCluster) {
+                        let ex = mouseInfo.tail[mouseInfo.tail.length - 1].x;
+                        let ey = mouseInfo.tail[mouseInfo.tail.length - 1].y;
+                        let dx = ex - targetCluster.x;
+                        let dy = ey - targetCluster.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        let magnitude = Math.max(30, Math.min(80, dist * mouseInfo.dragPower));
+                        let ux = dx / (dist + 1e-3);
+                        let uy = dy / (dist + 1e-3);
+                        let angle = Math.atan2(dy, dx);
 
-                    ctx.beginPath();
-                    ctx.moveTo(mouseInfo.tail[0].x, mouseInfo.tail[0].y);
-                    ctx.lineTo(mouseInfo.tail[mouseInfo.tail.length - 1].x - Math.cos(angle) * 10, mouseInfo.tail[mouseInfo.tail.length - 1].y - Math.sin(angle) * 10);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
-                    ctx.lineWidth = 5;
-                    ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(ex - ux * 20, ey - uy * 20);
+                        ctx.lineTo(ex - ux * magnitude, ey - uy * magnitude);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                        ctx.lineWidth = 5;
+                        ctx.stroke();
 
-                    // draw arrow head trianglesuing transform
-                    ctx.save();
-                    ctx.translate(mouseInfo.tail[mouseInfo.tail.length - 1].x, mouseInfo.tail[mouseInfo.tail.length - 1].y);
-                    ctx.rotate(angle);
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(-20, -10);
-                    ctx.lineTo(-20, 10);
-                    ctx.closePath();
-                    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-                    ctx.fill();
-                    ctx.restore();
+                        // draw arrow head trianglesuing transform
+                        ctx.save();
+                        ctx.translate(ex, ey);
+                        ctx.rotate(angle);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(-20, -10);
+                        ctx.lineTo(-20, 10);
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                        ctx.fill();
+                        ctx.restore();
+                    }
                 }
             }
 
@@ -748,7 +768,7 @@
             mouseInfo.offsetX = 0;
             mouseInfo.offsetY = 0;
             mouseInfo.isDown = true;
-            mouseInfo.isDividingMode = false;
+            mouseInfo.mode = modes.NONE;
             mouseInfo.tick = 0;
             mouseInfo.trail = [];
 
@@ -804,10 +824,11 @@
                 if(mouseInfo.tick === 5) {
                     const dot = (pos.x - nearestCluster.x) * mouseInfo.velocityX + (pos.y - nearestCluster.y) * mouseInfo.velocityY;
                     if(dot < 0) {
-                        mouseInfo.isDividingMode = true;
+                        mouseInfo.mode = modes.DIVIDE;
                     }
                 }
-                if(!mouseInfo.isDividingMode && mouseInfo.tick > 5) {
+
+                if(mouseInfo.mode === modes.DRAG && mouseInfo.tick > 5) {
                     mouseInfo.toDragPower = 1;
                     for (let particle of particles) {
                         if (particle.cluster === nearestCluster.index) {
@@ -822,16 +843,18 @@
                 }
             }
 
-            if(mouseInfo.isDown && mouseInfo.isDividingMode) {
-                mouseInfo.trail.push({x: pos.x, y: pos.y});
-                if(mouseInfo.trail.length > 100) {
-                    mouseInfo.trail.shift();
+            if(mouseInfo.isDown) {
+                if(mouseInfo.mode === modes.DIVIDE) {
+                    mouseInfo.trail.push({x: pos.x, y: pos.y});
+                    if(mouseInfo.trail.length > 100) {
+                        mouseInfo.trail.shift();
+                    }
                 }
-            }
 
-            mouseInfo.tail.push({x: pos.x, y: pos.y});
-            if(mouseInfo.tail.length > 10) {
-                mouseInfo.tail.shift();
+                mouseInfo.tail.push({x: pos.x, y: pos.y});
+                if(mouseInfo.tail.length > 10) {
+                    mouseInfo.tail.shift();
+                }
             }
 
             mouseInfo.lastX = pos.x;
