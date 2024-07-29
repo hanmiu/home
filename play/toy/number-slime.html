@@ -183,8 +183,8 @@
         let particles = [];
         let selectedParticle = null;
         let clusters = []; 
-        let nearestCluster = null;
         let slimes = [];
+        let nearestSlime = null;
 
         const modes = {
             NONE: 0,
@@ -414,104 +414,39 @@
                     clusterIndex++;
                 }
             }
-
-            // Calculate cluster centers
-            // for (let i = 0; i < clusterIndex; i++) {
-            //     let sumX = 0, sumY = 0, count = 0;
-            //     for (let particle of particles) {
-            //         if (particle.cluster === i) {
-            //             sumX += particle.x;
-            //             sumY += particle.y;
-            //             count++;
-            //         }
-            //     }
-            //     if (count > 0) {
-            //         clusters.push({x: sumX / count, y: sumY / count, index: i});
-            //     }
-            // }
             
-            // Calculate cluster centers and bounding radius
+            // Calculate cluster centers and bounding rect
             for (let i = 0; i < clusterIndex; i++) {
                 let sumX = 0, sumY = 0, count = 0;
-                let maxDist = 0;
+                // bounding rect
+                let minX = Number.MAX_VALUE, minY = Number.MAX_VALUE, maxX = Number.MIN_VALUE, maxY = Number.MIN_VALUE;
                 for (let particle of particles) {
                     if (particle.cluster === i) {
                         sumX += particle.x;
                         sumY += particle.y;
+                        if (particle.x < minX) minX = particle.x;
+                        if (particle.y < minY) minY = particle.y;
+                        if (particle.x > maxX) maxX = particle.x;
+                        if (particle.y > maxY) maxY = particle.y;
                         count++;
                     }
                 }
                 if (count > 0) {
                     let cx = sumX / count;
                     let cy = sumY / count;
-                    for (let particle of particles) {
-                        if (particle.cluster === i) {
-                            let dx = particle.x - cx;
-                            let dy = particle.y - cy;
-                            let dist = Math.sqrt(dx * dx + dy * dy);
-                            if (dist > maxDist) {
-                                maxDist = dist;
-                            }
-                        }
-                    }
-                    clusters.push({x: cx, y: cy, index: i, radius: maxDist, size: count});
+                    let offset = 40;
+                    clusters.push({
+                        x: cx,
+                        y: cy,
+                        index: i,
+                        size: count,
+                        rect: {left: minX - offset, top: minY - offset, right: maxX + offset, bottom: maxY + offset},
+                        slime_id: -1,
+                    });
                 }
             }
 
-
-            // slimes 관리
-            if(slimes.length == 0) {
-                slimes = clusters.map(cluster => ({
-                    id: currentSlimeId++,
-                    x: cluster.x,
-                    y: cluster.y,
-                    index: cluster.index,
-                    tick: 0,
-                }));
-            }
-            if(slimes.length < clusters.length) {
-                // clusters 순회해서 반경 10 이하인 것들만 slime에 추가
-                for(let cluster of clusters) {
-                    let isExist = false;
-                    for(let slime of slimes) {
-                        let dx = cluster.x - slime.x;
-                        let dy = cluster.y - slime.y;
-                        let dist = Math.sqrt(dx * dx + dy * dy);
-                        if(dist < 10) {
-                            isExist = true;
-                            break;
-                        }
-                    }
-                    if(!isExist) {
-                        slimes.push({
-                            id: currentSlimeId++,
-                            x: cluster.x,
-                            y: cluster.y,
-                            index: cluster.index,
-                            tick: 0,
-                        });
-                    }
-                }
-            }
-            if(slimes.length > clusters.length) {
-                // slimes 순회해서 clusters에 없는 것들 제거
-                for(let i = slimes.length - 1; i >= 0; i--) {
-                    let isExist = false;
-                    for(let cluster of clusters) {
-                        let dx = cluster.x - slimes[i].x;
-                        let dy = cluster.y - slimes[i].y;
-                        let dist = Math.sqrt(dx * dx + dy * dy);
-                        if(dist < 10) {
-                            isExist = true;
-                            break;
-                        }
-                    }
-                    if(!isExist) {
-                        slimes.splice(i, 1);
-                    }
-                }
-            }
-            // slimes를 순회해서 가장 가까운 cluster로 slime 정보를 업데이트
+            // slimes를 순회해서 가장 가까운 cluster에 slime_id 할당
             for(let slime of slimes) {
                 let minDist = Number.MAX_VALUE;
                 let minCluster = null;
@@ -524,9 +459,84 @@
                         minCluster = cluster;
                     }
                 }
-                slime.x = minCluster.x;
-                slime.y = minCluster.y;
-                slime.index = minCluster.index;
+                if(minCluster) {
+                    minCluster.slime_id = slime.id;
+                }
+            }
+
+            // slimes 관리
+            if(slimes.length === 0) {
+                slimes = clusters.map(cluster => ({
+                    id: currentSlimeId++,
+                    x: cluster.x,
+                    y: cluster.y,
+                    index: cluster.index,
+                    size: cluster.size,
+                    rect: { left: cluster.rect.left, top: cluster.rect.top, right: cluster.rect.right, bottom: cluster.rect.bottom },
+                    tick: 0,
+                    flag: false,
+                }));
+            }
+            else if(slimes.length < clusters.length) {
+                // clusters 순회해서 기존 slime들과 거리가 차이나는 것만 새 slime으로 추가
+                for(let cluster of clusters) {
+                    let isExist = false;
+                    for(let slime of slimes) {
+                        let dx = cluster.x - slime.x;
+                        let dy = cluster.y - slime.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if(dist < 1) {
+                            isExist = true;
+                            break;
+                        }
+                    }
+                    if(!isExist) {
+                        slimes.push({
+                            id: cluster.slime_id === -1 ? currentSlimeId++ : cluster.slime_id,
+                            x: cluster.x,
+                            y: cluster.y,
+                            index: cluster.index,
+                            size: cluster.size,
+                            rect: { left: cluster.rect.left, top: cluster.rect.top, right: cluster.rect.right, bottom: cluster.rect.bottom },
+                            tick: 0,
+                            flag: false,
+                        });
+                    }
+                }
+            }
+            // cluster를 순회해서 가장 가까운 cluster로 slime 정보를 업데이트
+            for(let cluster of clusters) {
+                let minDist = Number.MAX_VALUE;
+                let minSlime = null;
+                for(let slime of slimes) {
+                    let dx = cluster.x - slime.x;
+                    let dy = cluster.y - slime.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if(dist < minDist) {
+                        minDist = dist;
+                        minSlime = slime;
+                    }
+                }
+                minSlime.x = cluster.x;
+                minSlime.y = cluster.y;
+                minSlime.index = cluster.index;
+                minSlime.size = cluster.size;
+                minSlime.rect.left = cluster.rect.left;
+                minSlime.rect.top = cluster.rect.top;
+                minSlime.rect.right = cluster.rect.right;
+                minSlime.rect.bottom = cluster.rect.bottom;
+                minSlime.flag = true;
+                cluster.slime_id = minSlime.id;
+            }
+
+            // slimes를 순회해서 flag가 false인 것들 제거
+            for(let i = slimes.length - 1; i >= 0; i--) {
+                if(!slimes[i].flag) {
+                    slimes.splice(i, 1);
+                }
+                else {
+                    slimes[i].flag = false;
+                }
             }
         }
 
@@ -647,6 +657,11 @@
                             p.to_hsl = colors[j];
                         });
                     }
+
+                    // draw rect
+                    // ctx.strokeStyle = 'rgba(0, 255, 255, 1)';
+                    // ctx.lineWidth = 1;
+                    // ctx.strokeRect(cluster.rect.left, cluster.rect.top, cluster.rect.right - cluster.rect.left, cluster.rect.bottom - cluster.rect.top);
                 }
 
                 // ctx.fillStyle = 'red';
@@ -699,11 +714,11 @@
                     // solid line
                     ctx.setLineDash([]);
                 }
-                else if(nearestCluster && mouseInfo.tail.length === 10) {
+                else if(nearestSlime && mouseInfo.tail.length === 10) {
                     mouseInfo.mode = modes.DRAG;
                     // let dx = mouseInfo.tail[mouseInfo.tail.length - 1].x - mouseInfo.tail[0].x;
                     // let dy = mouseInfo.tail[mouseInfo.tail.length - 1].y - mouseInfo.tail[0].y;
-                    let targetCluster = clusters[nearestCluster.index];
+                    let targetCluster = clusters[nearestSlime.index];
                     if(targetCluster) {
                         let ex = mouseInfo.tail[mouseInfo.tail.length - 1].x;
                         let ey = mouseInfo.tail[mouseInfo.tail.length - 1].y;
@@ -787,16 +802,16 @@
                 }
             }
             if(!selectedParticle) {
-                // nearest cluster
-                nearestCluster = null;
+                // nearest slime
+                nearestSlime = null;
                 let minDist = Number.MAX_VALUE;
-                for (let cluster of clusters) {
-                    let dx = cluster.x - pos.x;
-                    let dy = cluster.y - pos.y;
+                for (let slime of slimes) {
+                    let dx = slime.x - pos.x;
+                    let dy = slime.y - pos.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < minDist && dist < 300) {
                         minDist = dist;
-                        nearestCluster = cluster;
+                        nearestSlime = slime;
                     }
                 }
             }
@@ -821,9 +836,9 @@
                 moveCluster(selectedParticle, mouseInfo.velocityX, mouseInfo.velocityY);
             }
 
-            if (nearestCluster) {
+            if (nearestSlime) {
                 if(mouseInfo.tick === 5) {
-                    const dot = (pos.x - nearestCluster.x) * mouseInfo.velocityX + (pos.y - nearestCluster.y) * mouseInfo.velocityY;
+                    const dot = (pos.x - nearestSlime.x) * mouseInfo.velocityX + (pos.y - nearestSlime.y) * mouseInfo.velocityY;
                     if(dot < 0) {
                         mouseInfo.mode = modes.DIVIDE;
                     }
@@ -832,7 +847,7 @@
                 if(mouseInfo.mode === modes.DRAG && mouseInfo.tick > 5) {
                     mouseInfo.toDragPower = 1;
                     for (let particle of particles) {
-                        if (particle.cluster === nearestCluster.index) {
+                        if (particle.cluster === nearestSlime.index) {
                             let dx = pos.x - particle.x;
                             let dy = pos.y - particle.y;
                             let dist = Math.sqrt(dx * dx + dy * dy);
@@ -875,7 +890,7 @@
             }
             divideSlime();
             selectedParticle = null;
-            nearestCluster = null;
+            nearestSlime = null;
             mouseInfo.isDown = false;
             mouseInfo.trail = [];
             mouseInfo.tail = [];
@@ -884,14 +899,27 @@
 
         function divideSlime() {
             // 모든 cluster를 순회하여 trail을 구성하는 좌표가 cluster의 중심에서 그 cluster의 radius 안에 들어오는 cluster들을 찾는다.
+            // let targetClusters = [];
+            // for(let i = 0; i < clusters.length; i++) {
+            //     let cluster = clusters[i];
+            //     for(let j = 0; j < mouseInfo.trail.length; j++) {
+            //         let dx = cluster.x - mouseInfo.trail[j].x;
+            //         let dy = cluster.y - mouseInfo.trail[j].y;
+            //         let dist = Math.sqrt(dx * dx + dy * dy);
+            //         if(dist < cluster.radius) {
+            //             if(!targetClusters.includes(cluster.index)) {
+            //                 targetClusters.push(cluster.index);
+            //             }
+            //         }
+            //     }
+            // }
+
+            // 모든 cluster를 순회하여 trail을 구성하는 좌표가 cluster의 rect 안에 들어오는 cluster들을 찾는다.
             let targetClusters = [];
             for(let i = 0; i < clusters.length; i++) {
                 let cluster = clusters[i];
                 for(let j = 0; j < mouseInfo.trail.length; j++) {
-                    let dx = cluster.x - mouseInfo.trail[j].x;
-                    let dy = cluster.y - mouseInfo.trail[j].y;
-                    let dist = Math.sqrt(dx * dx + dy * dy);
-                    if(dist < cluster.radius) {
+                    if(mouseInfo.trail[j].x >= cluster.rect.left && mouseInfo.trail[j].x <= cluster.rect.right && mouseInfo.trail[j].y >= cluster.rect.top && mouseInfo.trail[j].y <= cluster.rect.bottom) {
                         if(!targetClusters.includes(cluster.index)) {
                             targetClusters.push(cluster.index);
                         }
