@@ -378,6 +378,10 @@
         let target = event.target;
         let movable = false;
         start_handle_target = target;
+        svg.style.cursor = '';
+        document.querySelector('#color-picker').style.cursor = '';
+        document.querySelector('#ui-buttons').style.cursor = '';
+        document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
 
         let [pageX, pageY] = [0, 0];
         if (event.type === 'mousedown') {
@@ -461,10 +465,11 @@
         if(start_handle_target) {
             if(start_handle_target.id === 'color-picker') {
                 // cursor를 drag로
-                svg.style.cursor = 'grabbing';
-                document.querySelector('#color-picker').style.cursor = 'grabbing';
-                document.querySelector('#ui-buttons').style.cursor = 'grabbing';
-                document.querySelectorAll('.palette').forEach(x => x.style.cursor = 'grabbing');
+                let mode = 'copy';
+                svg.style.cursor = mode;
+                document.querySelector('#color-picker').style.cursor = mode;
+                document.querySelector('#ui-buttons').style.cursor = mode;
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = mode);
             }
             else {
                 svg.style.cursor = '';
@@ -495,14 +500,16 @@
         }
         selectedMovable = null;
 
-        if(start_handle_target.id === 'color-picker') {
-            if(event.target.classList.contains('palette')) {
-                event.target.style['background-color'] = document.querySelector('#color-picker').value;
+        if(start_handle_target) {
+            if(start_handle_target.id === 'color-picker') {
+                if(event.target.classList.contains('palette')) {
+                    event.target.style['background-color'] = document.querySelector('#color-picker').value;
+                }
+                svg.style.cursor = '';
+                document.querySelector('#color-picker').style.cursor = '';
+                document.querySelector('#ui-buttons').style.cursor = '';
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
             }
-            svg.style.cursor = '';
-            document.querySelector('#color-picker').style.cursor = '';
-            document.querySelector('#ui-buttons').style.cursor = '';
-            document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
         }
         start_handle_target = null;
     }
@@ -1303,21 +1310,13 @@
         return `#${r}${g}${b}`;
     }
 
-    document.querySelector('#palette0').addEventListener('click', (event) => {
+    document.querySelectorAll('.palette').forEach(x => x.addEventListener('click', (event) => {
         let color = rgbToHex(getComputedStyle(event.target).backgroundColor);
         document.querySelector('#color-picker').value = color;
         document.querySelectorAll('.jamo-button').forEach((el) => {
             el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
         });
-    });
-
-    document.querySelector('#palette1').addEventListener('click', (event) => {
-        let color = rgbToHex(getComputedStyle(event.target).backgroundColor);
-        document.querySelector('#color-picker').value = color;
-        document.querySelectorAll('.jamo-button').forEach((el) => {
-            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
-        });
-    });
+    }));
 
     // // 드래그 시작 시 color value 저장
     // document.querySelector('#color-picker').addEventListener('dragstart', (event) => {
