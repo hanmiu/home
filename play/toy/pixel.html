@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIXEL</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #dropZone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: #666;
+            background-color: rgba(240, 240, 240, 0.8);
+        }
+        #canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="dropZone">여기에 32x32 픽셀 아트 PNG 파일을 드래그 앤 드롭하세요</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const dropZone = document.getElementById('dropZone');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const GROUND_HEIGHT = 50;
+        const GRAVITY = 0.5;
+
+        class Sprite {
+            constructor(imageData, x, y) {
+                this.imageData = imageData;
+                this.x = x;
+                this.y = y;
+                this.width = 64;
+                this.height = 64;
+                this.vx = 0;
+                this.vy = 0;
+                this.jumpForce = -10;
+                this.onGround = false;
+                this.boundingBox = this.calculateBoundingBox();
+            }
+
+            calculateBoundingBox() {
+                let left = 32, right = 0, top = 32, bottom = 0;
+                for (let y = 0; y < 32; y++) {
+                    for (let x = 0; x < 32; x++) {
+                        const i = (y * 32 + x) * 4;
+                        if (this.imageData[i + 3] > 0) {
+                            left = Math.min(left, x);
+                            right = Math.max(right, x);
+                            top = Math.min(top, y);
+                            bottom = Math.max(bottom, y);
+                        }
+                    }
+                }
+                return {
+                    left: left * 2,
+                    right: right * 2,
+                    top: top * 2,
+                    bottom: bottom * 2
+                };
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                for (let y = 0; y < 32; y++) {
+                    for (let x = 0; x < 32; x++) {
+                        const i = (y * 32 + x) * 4;
+                        ctx.fillStyle = `rgba(${this.imageData[i]}, ${this.imageData[i+1]}, ${this.imageData[i+2]}, ${this.imageData[i+3] / 255})`;
+                        ctx.fillRect(x * 2, y * 2, 2, 2);
+                    }
+                }
+                ctx.restore();
+            }
+
+            update() {
+                if (this.onGround) {
+                    this.vx = 0;  // 바닥에서 미끄러지지 않도록 수평 속도를 0으로 설정
+                    if (Math.random() < 0.02) {
+                        this.jump();
+                    }
+                } else {
+                    this.vy += GRAVITY;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 바닥 충돌 체크
+                if (this.y + this.height > canvas.height - GROUND_HEIGHT) {
+                    this.y = canvas.height - GROUND_HEIGHT - this.height;
+                    this.vy = 0;
+                    this.onGround = true;
+                } else {
+                    this.onGround = false;
+                }
+
+                // 벽 충돌 체크
+                if (this.x < 0) {
+                    this.x = 0;
+                    this.vx = Math.abs(this.vx);  // 오른쪽으로 튕김
+                } else if (this.x + this.width > canvas.width) {
+                    this.x = canvas.width - this.width;
+                    this.vx = -Math.abs(this.vx);  // 왼쪽으로 튕김
+                }
+            }
+
+            jump() {
+                this.vy = this.jumpForce * (Math.random() * 0.5 + 0.75);  // 75% ~ 125% of jumpForce
+                this.vx = (Math.random() - 0.5) * 10;  // Random horizontal velocity
+                this.onGround = false;
+            }
+
+            collidesWith(other) {
+                return !(this.x + this.boundingBox.right < other.x + other.boundingBox.left ||
+                         this.x + this.boundingBox.left > other.x + other.boundingBox.right ||
+                         this.y + this.boundingBox.bottom < other.y + other.boundingBox.top ||
+                         this.y + this.boundingBox.top > other.y + other.boundingBox.bottom);
+            }
+
+            resolveCollision(other) {
+                // 충돌 방향 계산
+                const dx = (this.x + this.width / 2) - (other.x + other.width / 2);
+                const dy = (this.y + this.height / 2) - (other.y + other.height / 2);
+
+                // 겹침 방지
+                const overlapX = (this.width + other.width) / 2 - Math.abs(dx);
+                const overlapY = (this.height + other.height) / 2 - Math.abs(dy);
+
+                if (overlapX > 0 && overlapY > 0) {
+                    if (overlapX < overlapY) {
+                        // 수평 방향으로 밀어냄
+                        if (dx > 0) {
+                            this.x += overlapX / 2;
+                            other.x -= overlapX / 2;
+                        } else {
+                            this.x -= overlapX / 2;
+                            other.x += overlapX / 2;
+                        }
+                        // 수평 속도 반전
+                        this.vx *= -1;
+                        other.vx *= -1;
+                    } else {
+                        // 수직 방향으로 밀어냄
+                        if (dy > 0) {
+                            this.y += overlapY / 2;
+                            other.y -= overlapY / 2;
+                        } else {
+                            this.y -= overlapY / 2;
+                            other.y += overlapY / 2;
+                        }
+                        // 수직 속도 반전
+                        this.vy *= -0.5;
+                        other.vy *= -0.5;
+                    }
+                }
+            }
+        }
+
+        const sprites = [];
+        let animationId = null;
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 지면 그리기
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+
+            sprites.forEach(sprite => {
+                sprite.update();
+                sprite.draw();
+            });
+
+            // 충돌 검사 및 해결
+            for (let i = 0; i < sprites.length; i++) {
+                for (let j = i + 1; j < sprites.length; j++) {
+                    if (sprites[i].collidesWith(sprites[j])) {
+                        sprites[i].resolveCollision(sprites[j]);
+                    }
+                }
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const files = Array.from(e.dataTransfer.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+            if (imageFiles.length === 0) {
+                alert('이미지 파일만 드롭할 수 있습니다.');
+                return;
+            }
+
+            dropZone.style.display = 'none';
+
+            for (let file of imageFiles) {
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
+                await img.decode();
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 32;
+                tempCanvas.height = 32;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(img, 0, 0, 32, 32);
+                const imageData = tempCtx.getImageData(0, 0, 32, 32).data;
+
+                const x = Math.random() * (canvas.width - 64);
+                const y = Math.random() * (canvas.height - GROUND_HEIGHT - 64);
+                sprites.push(new Sprite(imageData, x, y));
+            }
+
+            if (!animationId) {
+                animate();
+            }
+        });
+    </script>
+</body>
+</html>
