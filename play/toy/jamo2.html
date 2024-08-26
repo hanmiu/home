@@ -166,8 +166,8 @@
         <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
         <input type="color" id="color-picker" value="#000000" style="margin-right: 5px">
         <span>
-            <button id="palette0" class="palette" style="background-color: orange">ㅤ</button>
-            <button id="palette1" class="palette" style="background-color: rgb(161, 67, 229)">ㅤ</button>
+            <button id="palette0" class="palette" style="background-color: #ffa500;">ㅤ</button>
+            <button id="palette1" class="palette" style="background-color: #a143e5;">ㅤ</button>
         </span>
     </div>
     <div id="preview"></div>
@@ -190,6 +190,9 @@
     </div>
 </body>
 <script>
+    const palettes = document.querySelectorAll('.palette');
+    let start_handle_target = null;
+
     const stage = document.getElementById('stage');
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -374,6 +377,7 @@
     function handleStart(event) {
         let target = event.target;
         let movable = false;
+        start_handle_target = target;
 
         let [pageX, pageY] = [0, 0];
         if (event.type === 'mousedown') {
@@ -453,6 +457,22 @@
                 // event.target.style.color = 'blue';
             }
         }
+
+        if(start_handle_target) {
+            if(start_handle_target.id === 'color-picker') {
+                // cursor를 drag로
+                svg.style.cursor = 'grabbing';
+                document.querySelector('#color-picker').style.cursor = 'grabbing';
+                document.querySelector('#ui-buttons').style.cursor = 'grabbing';
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = 'grabbing');
+            }
+            else {
+                svg.style.cursor = '';
+                document.querySelector('#color-picker').style.cursor = '';
+                document.querySelector('#ui-buttons').style.cursor = '';
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
+            }
+        }
     }
 
     document.addEventListener('mouseout', (event) => {
@@ -474,6 +494,17 @@
             action();
         }
         selectedMovable = null;
+
+        if(start_handle_target.id === 'color-picker') {
+            if(event.target.classList.contains('palette')) {
+                event.target.style['background-color'] = document.querySelector('#color-picker').value;
+            }
+            svg.style.cursor = '';
+            document.querySelector('#color-picker').style.cursor = '';
+            document.querySelector('#ui-buttons').style.cursor = '';
+            document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
+        }
+        start_handle_target = null;
     }
 
     document.addEventListener('mousedown', handleStart);
@@ -1260,8 +1291,20 @@
         }
     });
 
+    function rgbToHex(rgb) {
+        // rgb 문자열을 분해합니다. 예: "rgb(255, 255, 255)" 또는 "rgba(255, 255, 255, 1)"
+        let result = rgb.match(/\d+/g);
+
+        // 각 값을 16진수로 변환합니다.
+        let r = parseInt(result[0]).toString(16).padStart(2, '0');
+        let g = parseInt(result[1]).toString(16).padStart(2, '0');
+        let b = parseInt(result[2]).toString(16).padStart(2, '0');
+
+        return `#${r}${g}${b}`;
+    }
+
     document.querySelector('#palette0').addEventListener('click', (event) => {
-        let color = '#ffa500';
+        let color = rgbToHex(getComputedStyle(event.target).backgroundColor);
         document.querySelector('#color-picker').value = color;
         document.querySelectorAll('.jamo-button').forEach((el) => {
             el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
@@ -1269,12 +1312,31 @@
     });
 
     document.querySelector('#palette1').addEventListener('click', (event) => {
-        let color = '#a143e5';
+        let color = rgbToHex(getComputedStyle(event.target).backgroundColor);
         document.querySelector('#color-picker').value = color;
         document.querySelectorAll('.jamo-button').forEach((el) => {
             el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
         });
     });
+
+    // // 드래그 시작 시 color value 저장
+    // document.querySelector('#color-picker').addEventListener('dragstart', (event) => {
+    //     event.dataTransfer.setData('text/plain', colorPicker.value);
+    //     console.log('dragstart');
+    // });
+
+    // // 각 팔레트에 드롭 이벤트 핸들러 설정
+    // palettes.forEach(palette => {
+    //     palette.addEventListener('dragover', (event) => {
+    //         event.preventDefault(); // 드롭을 허용하기 위해 기본 동작 방지
+    //     });
+
+    //     palette.addEventListener('drop', (event) => {
+    //         event.preventDefault();
+    //         const color = event.dataTransfer.getData('text/plain');
+    //         palette.style.backgroundColor = color; // 팔레트 배경색 변경
+    //     });
+    // });
 
     document.querySelector('#logotype').addEventListener('click', (event) => {
         window.open('https://www.hanmiu.cc', '_blank');
