@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+<title>한글 자모 창작</title>
+<style>
+    body{
+        margin: 0px;
+        overflow: hidden;
+        font-family: sans-serif;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    #stage {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+    }
+
+    #svg {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+    }
+
+    .scalerot {
+        transition: 0.2s;
+    }
+
+    .glyph {
+        cursor: move;
+    }
+
+    .touch-aid {
+        cursor: move;
+    }
+
+    #ui-top {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        padding: 30px;
+        box-sizing: border-box;
+        border-bottom: 1px solid black;
+    }
+
+    #ui-buttons {
+        position: absolute;
+        left: 0px;
+        padding: 30px;
+    }
+
+    .ui-button {
+        padding: 5px;
+        border-radius: 3px;
+        font-family: sans-serif;
+        font-size: 14px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        cursor: pointer;
+    }
+
+    .ui-button:disabled {
+        cursor: default;
+    }
+
+    /* #ui-bottom {
+        position: absolute;
+        left: 0px;
+        bottom: 0px;
+        width: 100%;
+        height: 100px;
+        padding: 30px;
+        box-sizing: border-box;
+        border-top: 1px solid black;
+    } */
+
+    .jamo-button {
+        display: inline-block;
+        margin: 5px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        background-size: contain;
+        transform-origin: center center;
+        transition: transform 0.2s;
+    }
+
+    .jamo-button:hover {
+        transform: scale(1.25);
+    }
+
+    #logotype {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        height: 20px;
+        opacity: 0.5;
+        cursor: pointer;
+    }
+
+    #preview {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        height: 20px;
+        font-size: 20px;
+        font-family: sans-serif;
+        cursor: pointer;
+    }
+
+    #info {
+        position: absolute;
+        left: 0px;
+        top: 90px;
+        padding-left: 30px;
+        padding-right: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        font-family: sans-serif;
+    }
+
+    #info > ul > li {
+        margin-top: 0.3em;
+        line-height: 1.25em;
+        font-size: 0.8em;
+    }
+
+    .palette {
+        border-radius: 3px;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+        width: 30px;
+        height: 30px;
+        margin-right: 5px;
+        cursor: pointer;
+    }
+
+    @media print {
+        body {
+            margin: 0;
+        }
+        #ui-top, #ui-buttons, #preview, #logotype {
+            display: none;
+        }
+        #stage {
+            /* A4 210mm x 297mm */
+            width: 210mm;
+            height: 297mm;
+        }
+    }
+</style>
+<body>
+    <div id="stage">
+        <!-- <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="m -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></svg> -->
+    </div>
+    <div id="ui-top"></div>
+    <div id="ui-buttons">
+        <button id="bt-clear" class="ui-button" style="background-color: red;">새로</button>
+        <button id="bt-undo" class="ui-button" style="background-color: orange;" disabled="true">취소</button>
+        <button id="bt-redo" class="ui-button" style="background-color: yellow;" disabled="true">다시</button>
+        <button id="bt-save" class="ui-button" style="background-color: rgb(173, 238, 44);">저장</button>
+        <button id="bt-print" class="ui-button" style="background-color: rgb(32, 197, 223);">인쇄</button>
+        <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
+        <input type="color" id="color-picker" value="#000000" style="margin-right: 5px">
+        <span>
+            <button id="palette0" class="palette" style="background-color: orange">ㅤ</button>
+            <button id="palette1" class="palette" style="background-color: rgb(161, 67, 229)">ㅤ</button>
+        </span>
+    </div>
+    <div id="preview"></div>
+    <img id="logotype">
+    <!-- <div id="ui-bottom"></div> -->
+    <div id="info" style="display: none;">
+        <h4>놀이 방법</h4>
+        <ul>
+            <li>위의 한글 자모를 끌어다가 아래쪽에 배치해 보세요.</li>
+            <li>선택한 자모를 선 위로 끌어 올리면 지워집니다.</li>
+            <li>빨간색 ~ 보라색 버튼의 기능도 활용해 보세요.</li>
+            <li>키보드가 있는 컴퓨터에서는 화살표(크기/회전), 스페이스(복제), 백스페이스(지우기) 기능을 사용할 수 있습니다.</li>
+            <li>'읽기'버튼은 또박또박 읽고, 우하단의 조합된 글을 클릭하면 연음으로 읽습니다.</li>
+            <li><a href="https://www.hanmiu.cc" target="_blank">한미유치원</a> 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !</li>
+        </ul>
+        <div style="text-align: right; font-size: 0.8em; margin: 20px 0px 10px 0px;">창작: 미디어아티스트 최승준</div>
+        <div style="text-align: right; padding-top: 10px; border-top: 1px solid gray;">
+            <button id="close-info">놀이 방법 닫기</button>
+        </div>
+    </div>
+</body>
+<script>
+    const stage = document.getElementById('stage');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    stage.appendChild(svg);
+
+    let jamoset = {
+        'ᄀ': 'm -25,-25 50,0 0,50',
+        'ᄂ': 'm -25,-25 0,50 50,0',
+        'ᄃ': 'm 25,-25 -50,0 0,50 50,0',
+        'ᄅ': 'm -25,-25 50,0 0,25 -50,0 0,25 50,0',
+        'ᄆ': 'm -25,-25 50,0 0,50 -50,0 z',
+        'ᄇ': 'm -25,0 50,0 m -50,-25 0,50 50,0 0,-50',
+        'ᄉ': 'M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄋ': 'M 25,0 A 25,25 0 1 1 -25,0 25,25 0 1 1 25,0 z',
+        'ᄌ': 'm -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄎ': 'm 0,-40 0,10 m -25,5 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄏ': 'm -25,0 50,0 m -50,-25 50,0 0,50',
+        'ᄐ': 'm -25,0 50,0 m 0,-25 -50,0 0,50 50,0',
+        'ᄑ': 'm 15,-25 0,50 m -30,-50 0,50 m -10,0 50,0 m -50,-50 50,0',
+        'ᄒ': 'm 20,5 c 0,11 -9,20 -20,20 -11,0 -20,-9 -20,-20 0,-11 9,-20 20,-20 11,0 20,9 20,20 z M 0,-40 0,-30 m -25,5 50,0',
+        'ᅡ': 'M 0,0 20,0 M 0,-40 0,40',	
+        'ᅣ': 'm 0,15 20,0 M 0,-15 20,-15 M 0,-40 0,40',
+        'ᅥ': 'M -20,0 0,0 m 0,-40 0,80',
+        'ᅧ': 'm -20,15 20,0 m -20,-30 20,0 m 0,-25 0,80',
+        'ᅩ': 'M 0,-20 0,0 m -40,0 80,0',
+        'ᅭ': 'm 15,-20 0,20 m -30,-20 0,20 m -25,0 80,0',
+        'ᅮ': 'M 0,0 0,20 M -40,0 40,0',
+        'ᅲ': 'm 15,0 0,20 M -15,0 -15,20 M -40,0 40,0',
+        'ᅳ': 'M -40,0 40,0',
+        'ᅵ': 'M 0,-40 0,40' 
+    };
+
+    let selectedMovable = null;
+    let lastMovable = null;
+    let [offsetX, offsetY] = [0, 0];
+    let action_history = [];
+    let action_history_buffer = [];
+    let last_acted_time = 0;
+    let base_stroke_width = 10;
+    let selected_stroke_color = 'blue';
+    let selected_stroke_width = 4;
+    let last_vaild_chars = null;
+    let speak_time_ids = [];
+
+    let frames = [];
+    let curr_frame_idx = 0;
+
+    let utter = null;
+    if(speechSynthesis) {
+        utter = new SpeechSynthesisUtterance();
+        utter.lang = 'ko';
+        utter.rate = 0.8;
+        utter.pitch = 1.0;
+        utter.volume = 1.0;
+    }
+
+    function setJamoButtonColor() {
+        let color = document.querySelector('#color-picker').value;
+        document.querySelectorAll('.jamo-button').forEach((el) => {
+            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
+        });
+    }
+
+    function init() {
+        // top-ui 자모 선택
+        /*
+        for (let jamo in jamoset) {        
+            let svg_string = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path></svg>`;
+
+            const encoded_svg = encodeURIComponent(svg_string);
+            const el = document.createElement('div');
+            el.classList.add('jamo-button');
+            el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
+            //el.style['background-image'] = `url("data:image/svg+xml;utf-8,${svg_string}")`;
+            //let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            let size = 45;
+            el.style['width']= `${size}px`;
+            el.style['height'] = `${size}px`;
+            el.dataset.jamo = jamo;
+            document.querySelector('#ui-top').appendChild(el);
+            if(jamo === 'ᄒ') {
+                let br = document.createElement('br');
+                document.querySelector('#ui-top').appendChild(br);
+            }
+        }
+        */
+        for (let jamo in jamoset) {        
+            let inner_svg_string = `<path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width+2}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path>
+            <path class="front" d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path>`;
+
+            let bt_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            bt_svg.setAttribute('width', '100%');
+            bt_svg.setAttribute('height', '100%');
+            bt_svg.setAttribute('viewBox', `0 0 100 100`);
+            bt_svg.innerHTML = inner_svg_string;
+            bt_svg.style['pointer-events'] = 'none';
+            const el = document.createElement('div');
+            el.classList.add('jamo-button');
+            //el.style['background-image'] = `url("data:image/svg+xml,${encoded_svg}")`;
+            //el.style['background-image'] = `url("data:image/svg+xml;utf-8,${svg_string}")`;
+            //let size = Math.max(window.innerWidth, window.innerHeight) / 25;
+            el.appendChild(bt_svg);
+            let size = 45;
+            el.style['width']= `${size}px`;
+            el.style['height'] = `${size}px`;
+            el.dataset.jamo = jamo;
+            document.querySelector('#ui-top').appendChild(el);
+            // if(jamo === 'ᄒ') {
+            //     let br = document.createElement('br');
+            //     document.querySelector('#ui-top').appendChild(br);
+            // }
+        }
+
+        let el_logotype = document.querySelector('#logotype');
+        let logo_svg_str = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 305 100" version="1.1" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;"><g transform="matrix(0.132046,0,0,0.132046,-275.898,-181.837)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:31.55px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,-215.341,-148.706)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-234.97,-149.014)"><path d="M2555.2,1518.19L2555.2,1842.53" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-231.778,-165.71)"><path d="M2142.87,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-36.6926,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-27.4323,-152.336)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.167914,0,0,-0.167914,-121.496,319.866)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:24.81px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,21.1762,-165.445)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,198.954,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,2.37791,-149.014)"><path d="M2555.2,1518.19L2555.2,1872.19" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,199.935,-138.281)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-59.8431,-148.992)"><path d="M2703.12,1753.94C2845.41,1760.9 2927.01,1766.21 2998.72,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.173765,0,0,0.168083,-145.561,-229.091)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:24.37px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-45.8206,-149.203)"><path d="M1736.22,1991.09C1736.22,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1753.84 1564.35,1718.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,361.661,-149.151)"><path d="M1736.76,1991.09C1736.76,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1759.84 1564.35,1724.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.0782,-149.568)"><path d="M2289.38,1553.11C2289.38,1553.11 2308.91,1670.79 2289.38,1724.47C2269.72,1778.49 2171.6,1875.79 2171.44,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,466.598,-149.568)"><path d="M2290.86,1724.47L2173.04,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-56.4968,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.1885,-162.323)"><path d="M2172.41,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-172.361,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113459,0,0,0.103146,-35.0422,-129.724)"><rect x="991.31" y="1548.04" width="202.433" height="324.155" style="fill:none;stroke:black;stroke-width:38.43px;"></rect></g></svg>`;
+        el_logotype.src = `data:image/svg+xml;utf8,${logo_svg_str}`;
+    }
+
+    function resize() {
+        let jamo_size = Math.max(Math.min(Math.min(window.innerWidth, window.innerHeight) / 25, 45), 25);
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+        for(let jb of document.querySelectorAll('.jamo-button')) {
+            jb.style['width']= `${jamo_size}px`;
+            jb.style['height'] = `${jamo_size}px`;
+        }
+
+        let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
+        document.querySelector('#ui-buttons').style['top'] = `${ui_top_rect.bottom}px`;
+
+        // document.querySelector('#ui-bottom').style['height'] = `${jamo_size * 3}px`;
+    }
+
+    function add_movable(jamo) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.classList.add('movable');
+        svg.appendChild(group);
+
+        group.dataset.ojamo = jamo;
+        group.dataset.jamo = jamo;
+        group.dataset.rot = 0;
+        group.dataset.scale = 1;
+        group.dataset.color = document.querySelector('#color-picker').value;
+        group.dataset.type = 'jamo';
+
+        const scalerot = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        scalerot.classList.add('scalerot');
+        group.appendChild(scalerot);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.classList.add('touch-aid');
+        circle.setAttribute('cx', '0');
+        circle.setAttribute('cy', '0');
+        circle.setAttribute('r', '25');
+        circle.setAttribute('stroke', 'none');
+        circle.setAttribute('fill', 'transparent');
+        scalerot.appendChild(circle);
+
+        let stroke_width = base_stroke_width;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.classList.add('glyph');
+        path.setAttribute('d', jamoset[jamo]);
+        path.setAttribute('stroke', group.dataset.color);
+        path.setAttribute('stroke-width', stroke_width);
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('fill', 'none');
+
+        let halo = path.cloneNode();
+        halo.classList.remove('glyph');
+        halo.classList.add('halo');
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-width', stroke_width + 1);
+        scalerot.appendChild(halo);
+        scalerot.appendChild(path);
+
+        return group;
+    }
+
+    function handleStart(event) {
+        let target = event.target;
+        let movable = false;
+
+        let [pageX, pageY] = [0, 0];
+        if (event.type === 'mousedown') {
+            pageX = event.pageX;
+            pageY = event.pageY;
+        } else if (event.type === 'touchstart') {
+            pageX = event.touches[0].pageX;
+            pageY = event.touches[0].pageY;
+        }
+
+        if(target.classList.contains('jamo-button')) {
+            movable = true;
+            let group = add_movable(target.dataset.jamo);
+            group.dataset.x = pageX;
+            group.dataset.y = pageY;
+            group.setAttribute('transform', `translate(${pageX}, ${pageY})`);
+            target = group;
+        }
+
+        if(target.parentElement) {
+            if(target.parentElement.id !== 'ui-buttons') {
+                document.querySelectorAll('.halo').forEach((el) => {
+                    el.setAttribute('stroke', 'transparent');
+                });
+                lastMovable = null;
+            }
+        }
+        
+        while(target.parentElement) {
+            if(target.classList.contains('movable')) {
+                movable = true;
+                break;
+            }
+            target = target.parentElement;
+        }
+        
+        if(movable) {
+            selectedMovable = target;
+            lastMovable = selectedMovable;
+            let scale = parseFloat(selectedMovable.dataset.scale);
+            let stroke_width = base_stroke_width / scale;
+            selectedMovable.querySelector('.halo').setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+            selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
+            selectedMovable.querySelector('.halo').setAttribute('stroke-opacity', 0.5);
+
+            offsetX = pageX - parseFloat(target.dataset.x);
+            offsetY = pageY - parseFloat(target.dataset.y);
+
+            document.querySelector('#color-picker').value = selectedMovable.dataset.color;
+            setJamoButtonColor();
+        }
+        else {
+            //---
+        }
+    }
+
+    function handleMove(event) {
+        if(selectedMovable) {
+            let x, y;
+            if (event.type === 'mousemove') {
+                x = event.pageX - offsetX;
+                y = event.pageY - offsetY;
+            } else if (event.type === 'touchmove') {
+                // event.preventDefault();
+                x = event.touches[0].pageX - offsetX;
+                y = event.touches[0].pageY - offsetY;
+            }
+            selectedMovable.setAttribute('transform', `translate(${x}, ${y})`);
+            selectedMovable.dataset.x = x;
+            selectedMovable.dataset.y = y;
+
+            judge();
+        }
+        else {
+            if(event.target.classList.contains('movable')) {
+                // event.target.style['-webkit-text-stroke'] = '3px blue';
+                // event.target.style.color = 'blue';
+            }
+        }
+    }
+
+    document.addEventListener('mouseout', (event) => {
+        if(event.target.classList.contains('movable')) {
+            // event.target.style['-webkit-text-stroke'] = '';
+            // event.target.style.color = '';
+        }
+    });
+
+    function handleEnd(event) {
+        if(selectedMovable) {
+            let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
+            if(selectedMovable.dataset.y < ui_top_rect.bottom) {
+                if(lastMovable === selectedMovable) {
+                    lastMovable = null;
+                }
+                selectedMovable.remove();
+            }
+            action();
+        }
+        selectedMovable = null;
+    }
+
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+
+    document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        //event.stopPropagation();
+    });
+
+    window.addEventListener('resize', () => {
+        resize();
+    });
+
+    window.addEventListener("orientationchange", (event) => {
+        setTimeout(() => {
+            resize();
+        }, 100);
+    });
+
+    document.addEventListener('keyup', (event) => {
+        if(lastMovable) {
+            let scale = parseFloat(lastMovable.dataset.scale);
+            let rot = parseFloat(lastMovable.dataset.rot);
+            let stroke_width = base_stroke_width / scale;
+            let acted = false;
+
+            //console.log(event.key); 
+            // 13은 Enter, 16은 Shift
+            if(event.key === 'Enter') {
+                frames.push(svg.innerHTML);
+            }
+
+            // 스페이스 눌렀을 때 선택된 movable 복제
+            if(event.keyCode === 32) {
+                lastMovable.querySelector('.halo').setAttribute('stroke', 'transparent');
+                let group = add_movable(lastMovable.dataset.jamo);
+                let scalerot = group.querySelector('.scalerot');
+                let halo = group.querySelector('.halo');
+                let glyph = group.querySelector('.glyph');
+                group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
+                group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
+                group.dataset.scale = scale;
+                group.dataset.rot = rot;
+                group.dataset.color = lastMovable.dataset.color;
+                group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+                scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+                glyph.setAttribute('stroke', group.dataset.color);
+                glyph.setAttribute('stroke-width', stroke_width);
+                halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+                halo.setAttribute('stroke', selected_stroke_color);
+                halo.setAttribute('stroke-opacity', 0.5);
+                lastMovable = group;
+                acted = true;
+            }
+
+            // 백스페이스 눌렀을 때 선택된 movable 지우기
+            if(event.keyCode === 8) {
+                lastMovable.remove();
+                lastMovable = null;
+                acted = true;
+            }
+
+            if(acted) {
+                action();
+            }
+        }
+    });
+
+    // 키보드 화살표 상하를 눌렀을 때 scale 조절
+    document.addEventListener('keydown', (event) => {
+        if(lastMovable) {
+            let scale = parseFloat(lastMovable.dataset.scale);
+            let rot = parseFloat(lastMovable.dataset.rot);
+            let scalerot = lastMovable.querySelector('.scalerot');
+            let halo = lastMovable.querySelector('.halo');
+            let glyph = lastMovable.querySelector('.glyph');
+            let stroke_width = base_stroke_width / scale;
+            let acted = false;
+
+            if(event.keyCode === 38) {
+                scale += 0.1;
+                if(scale > 2) scale = 2;
+                acted = true;
+            }
+            else if(event.keyCode === 40) {
+                scale -= 0.1;
+                if(scale < 0.5) scale = 0.5;   
+                acted = true;
+            }
+            else if(event.keyCode === 37) { // 키보드 화살표 좌우를 눌렀을 때 rot 조절
+                rot -= 5;
+                acted = true;
+                jamo_rotation_applied(lastMovable);
+                judge();
+            }
+            else if(event.keyCode === 39) {
+                rot += 5;
+                acted = true;
+                jamo_rotation_applied(lastMovable);
+                judge();
+            }
+
+            if(acted) {
+                lastMovable.dataset.scale = scale;
+                lastMovable.dataset.rot = rot;
+                scalerot.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+                halo.setAttribute('stroke-opacity', 0.5);
+                glyph.setAttribute('stroke-width', stroke_width);
+                action();
+            }
+        }
+
+        if(event.key === '<') {
+            curr_frame_idx -= 1;
+            if(curr_frame_idx < 0) curr_frame_idx = 0;
+            svg.innerHTML = frames[curr_frame_idx];
+        }
+        else if(event.key === '>') {
+            curr_frame_idx += 1;
+            if(curr_frame_idx >= frames.length) curr_frame_idx = frames.length - 1;
+            svg.innerHTML = frames[curr_frame_idx];
+        }
+    });
+
+    function state_svg_to_array() {
+        let state = [];
+        for(let el of svg.querySelectorAll('.movable')) {
+            state.push({...el.dataset});
+        }
+        return state;
+    }
+
+    function dataset_to_movable(dataset) {
+        let group = add_movable(dataset.jamo);
+        let scalerot = group.querySelector('.scalerot');
+        let halo = group.querySelector('.halo');
+        let glyph = group.querySelector('.glyph');
+        for(let key in dataset) {
+            group.dataset[key] = dataset[key];
+        }
+        group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+        scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+        glyph.setAttribute('stroke', group.dataset.color);
+        glyph.setAttribute('stroke-width', base_stroke_width / group.dataset.scale);
+        halo.setAttribute('stroke-width', base_stroke_width / group.dataset.scale + selected_stroke_width / group.dataset.scale);
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-opacity', 0.5);
+        return group;
+    }
+
+    function state_array_to_svg(state) {
+        if(state) {
+            svg.innerHTML = '';
+            for(let dataset of state) {
+                dataset_to_movable(dataset);
+            }
+        }
+    }
+
+    function action() {
+        let acted_time = performance.now();
+        let elapsed_time = acted_time - last_acted_time;
+        last_acted_time = acted_time;
+        if(elapsed_time < 500) {
+            action_history.pop();
+        }
+        action_history.push(state_svg_to_array());
+        while(action_history_buffer.length > 0) {
+            action_history_buffer.pop();
+        }
+
+        check_buttons();
+
+        judge();
+    }
+
+    function undo() {
+        if(action_history.length > 0) {
+            const popped = action_history.pop();
+            action_history_buffer.push(popped);
+            if(action_history.length > 0) {
+                state_array_to_svg(action_history[action_history.length - 1]);
+            }
+            else {
+                svg.innerHTML = '';
+            }
+            document.querySelectorAll('.halo').forEach((el) => {
+                el.setAttribute('stroke', 'transparent');
+            });
+            lastMovable = null;
+        }
+
+        check_buttons();
+    }
+
+    function redo() {
+        if(action_history_buffer.length > 0) {
+            const popped = action_history_buffer.pop();
+            action_history.push(popped);
+            state_array_to_svg(action_history[action_history.length - 1]);
+            document.querySelectorAll('.halo').forEach((el) => {
+                el.setAttribute('stroke', 'transparent');
+            });
+            lastMovable = null;
+        }
+
+        check_buttons();
+    }
+
+    function formatDateToString(date) {
+        // 년, 월, 일, 시, 분, 초를 추출합니다.
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');  // 월은 0-based, 따라서 +1을 해줍니다.
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+
+        // 파일명 포맷에 맞게 결합합니다.
+        return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+    }
+
+    function save_svg() {
+        // save 버튼을 누르면 svg를 xml형식으로 변환하여 파일로 다운로드
+        el_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        el_svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        el_svg.setAttribute('width', '100%');
+        el_svg.setAttribute('height', '100%');
+        el_svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+        el_svg.innerHTML = svg.innerHTML;
+        
+        for(let el of el_svg.querySelectorAll('.touch-aid')) {
+            el.remove();
+        }
+
+        for(let el of el_svg.querySelectorAll('.halo')) {
+            el.remove();
+        }
+  
+        let svg_xml = new XMLSerializer().serializeToString(el_svg);
+        let blob = new Blob([svg_xml], {type: 'image/svg+xml'});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `jamo_${formatDateToString(new Date())}.svg`;
+        a.click();
+    }
+
+    // Listen for the dragover event
+    svg.addEventListener('dragover', function (event) {
+        event.preventDefault();
+    });
+
+    // Listen for the drop event, loading SVG
+    svg.addEventListener('drop', function (event) {
+        event.preventDefault();
+
+        // Get the files that were dragged
+        const files = event.dataTransfer.files;
+
+        // Process each file
+        for (const file of files) {
+            // Only work with SVG files
+            if (file.type === 'image/svg+xml') {
+                // Create a FileReader to read the file
+                const reader = new FileReader();
+                
+                reader.onload = function (e) {
+                    // Log the SVG string to the console
+                    let div = document.createElement('div');
+                    div.innerHTML = e.target.result;
+                    let el_svg = div.querySelector('svg');
+                    for(let group of el_svg.querySelectorAll('.movable')) {
+                        const scalerot = group.querySelector('.scalerot');
+                        const glyph = group.querySelector('.glyph');
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.classList.add('touch-aid');
+                        circle.setAttribute('cx', '0');
+                        circle.setAttribute('cy', '0');
+                        circle.setAttribute('r', '25');
+                        circle.setAttribute('stroke', 'none');
+                        circle.setAttribute('fill', 'transparent');
+                        const halo = glyph.cloneNode();
+                        halo.classList.remove('glyph');
+                        halo.classList.add('halo');
+                        halo.setAttribute('stroke', 'transparent');
+                        scalerot.insertBefore(halo, scalerot.firstChild);
+                        scalerot.insertBefore(circle, scalerot.firstChild);
+                        if(!group.hasAttribute('color')) {
+                            group.dataset.color = '#000000';
+                        }
+                    }
+                    svg.innerHTML = el_svg.innerHTML;
+                    action();
+                };
+
+                // Read the file as text
+                reader.readAsText(file);
+            }
+        }
+    });
+
+    function judge() {
+        let consonants = 'ᄀᄂᄃᄅᄆᄇᄉᄋᄌᄎᄏᄐᄑᄒ'.split('');
+        let vowels = 'ᅡᅣᅥᅧᅩᅭᅮᅲᅳᅵ'.split('');
+        let movables = Array.from(document.querySelectorAll('.movable'));
+        let vowel_movables = movables.filter((el) => {
+            return vowels.includes(el.dataset.jamo);
+        }).sort((a, b) => {
+            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+        });
+        let consonant_movables = movables.filter((el) => {
+            return consonants.includes(el.dataset.jamo);
+        }).sort((a, b) => {
+            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+        });
+
+        // 초성 (Leading consonants): U+1100 – U+1112 (19자)
+        // ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ
+        // 종성 (Trailing consonants): U+11A8 – U+11C2 (27자), U+11A7 (종성이 없는 경우)
+        // ᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ
+
+        const type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
+        const type_h = 'ᅩᅭᅮᅲᅳ'.split('');
+        const type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
+
+        const combined_jung = {
+            'ᅡᅵ': 'ᅢ',
+            'ᅵᅥ': 'ᅢ',
+            'ᅣᅵ': 'ᅤ',
+            'ᅵᅧ': 'ᅤ',
+            'ᅥᅵ': 'ᅦ',
+            'ᅧᅵ': 'ᅨ',
+            'ᅩᅡ': 'ᅪ',
+            'ᅩᅢ': 'ᅫ',
+            'ᅩᅵ': 'ᅬ',
+            'ᅮᅥ': 'ᅯ',
+            'ᅮᅦ': 'ᅰ',
+            'ᅮᅵ': 'ᅱ',
+            'ᅳᅵ': 'ᅴ',
+        };
+
+        const combined_cho = {
+            'ᄀᄀ': 'ᄁ',
+            'ᄃᄃ': 'ᄄ',
+            'ᄇᄇ': 'ᄈ',
+            'ᄉᄉ': 'ᄊ',
+            'ᄌᄌ': 'ᄍ',
+        };
+
+        // ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ
+        // ᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ  
+        const combined_jong = {
+            'ᄀ': 'ᆨ',
+            'ᄀᄀ': 'ᆩ',
+            'ᄀᄉ': 'ᆪ',
+            'ᄂ': 'ᆫ',
+            'ᄂᄌ': 'ᆬ',
+            'ᄂᄒ': 'ᆭ',
+            'ᄃ': 'ᆮ',
+            'ᄅ': 'ᆯ',
+            'ᄅᄀ': 'ᆰ',
+            'ᄅᄆ': 'ᆱ',
+            'ᄅᄇ': 'ᆲ',
+            'ᄅᄉ': 'ᆳ',
+            'ᄅᄐ': 'ᆴ',
+            'ᄅᄒ': 'ᆶ',
+            'ᄆ': 'ᆷ',
+            'ᄇ': 'ᆸ',
+            'ᄇᄉ': 'ᆹ',
+            'ᄉ': 'ᆺ',
+            'ᄉᄉ': 'ᆻ',
+            'ᄋ': 'ᆼ',
+            'ᄌ': 'ᆽ',
+            'ᄎ': 'ᆾ',
+            'ᄏ': 'ᆿ',
+            'ᄐ': 'ᇀ',
+            'ᄑ': 'ᇁ',
+            'ᄒ': 'ᇂ',
+        };
+
+        let thres_x = 70;
+        let thres_y = 80;
+
+        let chars = [];
+
+        // 모음 부터 파악
+        for(let i = 0; i < vowel_movables.length; i++) {
+            let prev_i = i - 1;
+            let el_vowel = vowel_movables[i];
+            let char = {
+                cho: '',
+                jung: '',
+                jong: '',
+                cho_elements: [],
+                jung_elements: [],
+                jong_elements: []
+            };
+
+            if(prev_i > -1) {
+                let cx = 0;
+                let cy = 0;
+
+                let el_prev_vowel = vowel_movables[prev_i];
+                char.jung_elements = [el_prev_vowel, el_vowel];
+                let x0 = parseFloat(el_prev_vowel.dataset.x);
+                let y0 = parseFloat(el_prev_vowel.dataset.y);
+                let x1 = parseFloat(el_vowel.dataset.x);
+                let y1 = parseFloat(el_vowel.dataset.y);
+                let dx = x1 - x0;
+                let dy = y1 - y0;
+                //let dist = Math.sqrt(dx * dx + dy * dy);
+                if(Math.abs(dx) < thres_x && Math.abs(dy) < thres_y) {
+                    let key = el_prev_vowel.dataset.jamo + el_vowel.dataset.jamo;
+                    // ᅫ, ᅰ 경우는 3개를 검사해야 함
+                    let combined_vowel = combined_jung[key];
+                    if(i > 1 && (combined_vowel == 'ᅢ' || combined_vowel == 'ᅦ')) {
+                        let el_prev_prev_vowel = vowel_movables[i - 2];
+                        let x2 = parseFloat(el_prev_prev_vowel.dataset.x);
+                        let y2 = parseFloat(el_prev_prev_vowel.dataset.y);
+                        let dx2 = x2 - x0;
+                        let dy2 = y2 - y0;
+                        //let dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                        if(Math.abs(dx2) < thres_x && Math.abs(dy2) < thres_y) {
+                            key = el_prev_prev_vowel.dataset.jamo + combined_vowel;
+                            char.jung_elements.unshift(el_prev_prev_vowel);
+                            chars.pop(); // 없어도?
+                        }
+                    }
+                    if(combined_jung[key]) {
+                        char.jung = combined_jung[key];
+                        chars.push(char);
+                    }
+                }
+                else {
+                    char.jung = el_vowel.dataset.jamo;
+                    char.jung_elements = [el_vowel];
+                    chars.push(char);
+                }   
+            }
+            else {
+                char.jung = el_vowel.dataset.jamo;
+                char.jung_elements = [el_vowel];
+                chars.push(char);
+            }
+        }
+
+        // vaild_vowels를 순회해서 앞 요소의 linked_elements와 현재 요소의 linked_elements가 겹치는게 있으면 앞 요소를 제거
+        for (let i = 1; i < chars.length; i++) {
+            const currentVowel = chars[i];
+            const previousVowel = chars[i - 1];
+            const linkedElements = currentVowel.jung_elements;
+            const previousLinkedElements = previousVowel.jung_elements;
+            const intersection = linkedElements.filter((el) => previousLinkedElements.includes(el));
+            if (intersection.length > 0) {
+                chars.splice(i - 1, 1);
+                i--;
+            }
+        }
+
+        //console.log(chars);
+        // 모음의 범위에 들어온 자음을 파악하고 위아래냐에 따라서 초성인지 종성인지를 체크한 리스트를 만들고, 먼저 초성의 경우를 다룬 다음, 초성과 모음으로 종성이 들어갈 범위 산출. 그 리스트에서 왼쪽 거리가 가장 가까이에 있는 다른 초/종 리스트에서 쌍자음의 경우를 합치고, 최종 초중종성 자모를 한 글자로 합치기
+
+        document.querySelectorAll('.bound').forEach((el) => {
+            el.remove();
+        });
+
+        for(let char of chars) {
+            // char.jung_elements를 바탕으로 가장 왼쪽, 가장 오른쪽, 가장 위, 가장 아래의 좌표 left, right, top, bottom을 구한다.
+            let left = Number.MAX_VALUE;
+            let right = Number.MIN_VALUE;
+            let top = Number.MAX_VALUE;
+            let bottom = Number.MIN_VALUE;
+            for(let el of char.jung_elements) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                if(rect.left < left) left = rect.left;
+                if(rect.right > right) right = rect.right;
+                if(rect.top < top) top = rect.top;
+                if(rect.bottom > bottom) bottom = rect.bottom;
+            }
+
+            // let el_rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            // el_rect.classList.add('bound');
+            // el_rect.setAttribute('x', left);
+            // el_rect.setAttribute('y', top);
+            // el_rect.setAttribute('width', right - left);
+            // el_rect.setAttribute('height', bottom - top);
+            // el_rect.setAttribute('stroke', 'red');
+            // el_rect.setAttribute('stroke-width', '1');
+            // el_rect.setAttribute('fill', 'transparent');
+            // svg.appendChild(el_rect);
+
+            if(type_v.includes(char.jung)) {
+                // 왼쪽에 있는 자음의 중심이 top ~ bottom 사이에 있고 가장 가까운 것을 초성으로 선택
+                let cx = 0;
+                let cy = 0;
+                let min_dist = Number.MAX_VALUE;
+                let min_el = null;
+                for(let el of consonant_movables) {
+                    let rect = el.querySelector('.glyph').getBoundingClientRect();
+                    cx = (rect.left + rect.right) / 2;
+                    cy = (rect.top + rect.bottom) / 2;
+                    if(top < cy && cy < bottom) {
+                        let dist = Math.abs(cx - left);
+                        if(dist < min_dist && cx < left) {
+                            min_dist = dist;
+                            min_el = el;
+                        }
+                    }
+                }
+                if(min_el) {
+                    char.cho = min_el.dataset.jamo;
+                    char.cho_elements = [min_el];
+                }
+            }
+            else if(type_h.includes(char.jung) || type_d.includes(char.jung)) {
+                // 위쪽에 있는 자음의 중심이 left ~ right 사이에 있고 가장 가까운 것을 초성으로 선택
+                let cx = 0;
+                let cy = 0;
+                let min_dist = Number.MAX_VALUE;
+                let min_el = null;
+                for(let el of consonant_movables) {
+                    let rect = el.querySelector('.glyph').getBoundingClientRect();
+                    cx = (rect.left + rect.right) / 2;
+                    cy = (rect.top + rect.bottom) / 2;
+                    if(left < cx && cx < right) {
+                        let dist = Math.abs(cy - bottom);
+                        if(dist < min_dist && cy < bottom) {
+                            min_dist = dist;
+                            min_el = el;
+                        }
+                    }
+                }
+                if(min_el) {
+                    char.cho = min_el.dataset.jamo;
+                    char.cho_elements = [min_el];
+                }
+            }
+            // 다른 자음 중에 현재 초성의 왼쪽에 있으면서 가장 가까운 것 중에 거리가 80 이내인 것을 쌍자음 후보로 선택
+            let min_cho_el = char.cho_elements[0];
+            for(let el of consonant_movables) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (rect.left + rect.right) / 2;
+                let cy = (rect.top + rect.bottom) / 2;
+                if(char.cho_elements.length === 0) continue;
+                let rect_cho = char.cho_elements[0].querySelector('.glyph').getBoundingClientRect();
+                let rect_cho_cx = (rect_cho.left + rect_cho.right) / 2;
+                let rect_cho_cy = (rect_cho.top + rect_cho.bottom) / 2;
+                let dist = Math.abs(cx - rect_cho_cx);
+                if(el !== min_cho_el) {
+                    let scale = Math.max(parseFloat(el.dataset.scale), 1);
+                    if(dist < thres_x * 1.25 * scale && cy > rect_cho.top && cy < rect_cho.bottom) {
+                        char.cho_elements.unshift(el);
+                        char.cho_elements.sort((a, b) => {
+                            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+                        });
+                        let key = char.cho_elements.map((el) => el.dataset.jamo).join('');
+                        if(combined_cho.hasOwnProperty(key)) {
+                            char.cho = combined_cho[key];
+                        }
+                        else {
+                            char.cho_elements.shift();
+                            char.cho = char.cho_elements[char.cho_elements.length - 1].dataset.jamo;
+                        }
+                    }
+                }
+            }
+
+            // cho_elements의 모든 요소의 rect와 jung_elements의 모든 요소의 rect의 합집합이 되는 큰 rect를 구한다.
+            for(let el of char.cho_elements) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                if(rect.left < left) left = rect.left;
+                if(rect.right > right) right = rect.right;
+                if(rect.top < top) top = rect.top;
+                if(rect.bottom > bottom) bottom = rect.bottom;
+            }
+            // let el_rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            // el_rect.classList.add('bound');
+            // el_rect.setAttribute('x', left);
+            // el_rect.setAttribute('y', top);
+            // el_rect.setAttribute('width', right - left);
+            // el_rect.setAttribute('height', bottom - top);
+            // el_rect.setAttribute('stroke', 'red');
+            // el_rect.setAttribute('stroke-width', '1');
+            // el_rect.setAttribute('fill', 'transparent');
+            // svg.appendChild(el_rect);
+
+            // 모든 자음의 중심이 left ~ right 사이에 있고 bottom 보다 아래 있으면서 가장 가까운 자음을 종성으로 선택
+            for(let el of consonant_movables) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (rect.left + rect.right) / 2;
+                let cy = (rect.top + rect.bottom) / 2;
+                if(left < cx && cx < right && cy > bottom) {
+                    let dist = Math.abs(cy - bottom);
+                    if(dist < thres_y) {
+                        char.jong = combined_jong[el.dataset.jamo];
+                        char.jong_elements = [el];
+                    }
+                }
+            }
+            let min_jong_el = char.jong_elements[0];
+            for(let el of consonant_movables) {
+                let rect = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (rect.left + rect.right) / 2;
+                let cy = (rect.top + rect.bottom) / 2;
+                if(char.jong_elements.length === 0) continue;
+                let rect_jong = char.jong_elements[0].querySelector('.glyph').getBoundingClientRect();
+                let rect_jong_cx = (rect_jong.left + rect_jong.right) / 2;
+                let rect_jong_cy = (rect_jong.top + rect_jong.bottom) / 2;
+                let dist = Math.abs(cx - rect_jong_cx);
+                if(el !== min_jong_el) {
+                    let scale = Math.max(parseFloat(el.dataset.scale), 1);
+                    if(dist < thres_x * 1.25 * scale && cy > rect_jong.top && cy < rect_jong.bottom) {
+                        char.jong_elements.unshift(el);
+                        char.jong_elements.sort((a, b) => {
+                            return parseFloat(a.dataset.x) - parseFloat(b.dataset.x);
+                        });
+                        let key = char.jong_elements.map((el) => el.dataset.jamo).join('');
+                        if(combined_jong.hasOwnProperty(key)) {
+                            char.jong = combined_jong[key];
+                        }
+                        else {
+                            char.jong_elements.shift();
+                            char.jong = char.jong_elements[char.jong_elements.length - 1].dataset.jamo;
+                        }
+                    }
+                }
+            }
+        }
+        //console.log(chars);
+        let print = '';
+        for(let char of chars) {
+            let ch = (char.cho + char.jung + char.jong).normalize('NFC');
+            print += ch;
+        }
+        //console.log(print);
+
+        last_vaild_chars = chars;
+        document.querySelector('#preview').innerHTML = print;
+        return print;
+    }
+
+    document.querySelector('#preview').addEventListener('click', (event) => {
+        if(utter) {
+            while(speak_time_ids.length > 0) {
+                clearTimeout(speak_time_ids.shift());
+            }
+            speechSynthesis.cancel();
+            utter.rate = 0.8;
+            utter.text = event.target.textContent; 
+            speechSynthesis.speak(utter);
+            document.querySelector('#bt-speak').disabled = false;
+        }
+    });
+
+    document.querySelector('#bt-clear').addEventListener('click', (event) => {
+        svg.innerHTML = '';
+        lastMovable = null;
+        action();
+    });
+
+    document.querySelector('#bt-undo').addEventListener('click', (event) => {
+        undo();
+    });
+
+    document.querySelector('#bt-redo').addEventListener('click', (event) => {
+        redo();
+    });
+
+    document.querySelector('#bt-save').addEventListener('click', (event) => {
+        save_svg();
+    });
+
+    document.querySelector('#bt-print').addEventListener('click', (event) => {
+        document.querySelectorAll('.halo').forEach((el) => {
+            el.setAttribute('stroke', 'transparent');
+        });
+
+        let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        // 모든 movable의 rect를 구해서 전체를 감싸는 사각형 구하기
+        let left = Number.MAX_VALUE;
+        let right = Number.MIN_VALUE;
+        let top = Number.MAX_VALUE;
+        let bottom = Number.MIN_VALUE;
+        for(let el of document.querySelectorAll('.movable')) {
+            let rect = el.querySelector('.glyph').getBoundingClientRect();
+            if(rect.left < left) left = rect.left;
+            if(rect.right > right) right = rect.right;
+            if(rect.top < top) top = rect.top;
+            if(rect.bottom > bottom) bottom = rect.bottom;
+        }
+        //console.log(left, right, top, bottom);
+        
+        let scale = 1;
+        let rotation = 0;
+        let width = right - left;
+        let height = bottom - top;
+        // a4_width 는 devicePixelRatio를 고려하면?
+        let dpi = 96;
+        let inch2mm = 25.4
+        let a4_width = 210 * 96 / inch2mm;
+        let a4_height = 297 * 96 / inch2mm;
+        let a4_center_x = a4_width / 2;
+        let a4_center_y = a4_height / 2;
+        let center_x = (left + right) / 2;
+        let center_y = (top + bottom) / 2;
+        let a4_ratio = a4_width / a4_height;
+        let ratio = width / height;
+        let len = Math.min(width, height);
+        if(ratio >= 1) {
+            scale = a4_width * 0.9 / len;
+            rotation = 90;
+            if(scale * width > a4_height) {
+                scale = a4_height * 0.9 / width;
+            }
+        }
+        else {
+            scale = a4_height * 0.9 / len;
+            if(scale * height > a4_height) {
+                scale = a4_height * 0.9 / height;
+            }
+        }
+        
+        //group.setAttribute('transform', `translate(${a4_center_x - center_x * scale}, ${a4_center_y - center_y * scale}) scale(${scale})`);
+        group.setAttribute('transform', `translate(${a4_center_x}, ${a4_center_y}) scale(${scale}) rotate(${rotation}) translate(${-center_x}, ${-center_y})`);
+    
+        for(let el of document.querySelectorAll('.movable')) {
+            group.appendChild(el.cloneNode(true));
+        }
+        svg.innerHTML = '';
+        svg.appendChild(group);
+
+        // svg의 attribute를 a4 크기에 맞게 조절, viewBox도 조절
+        svg.setAttribute('width', a4_width);
+        svg.setAttribute('height', a4_height);
+        svg.setAttribute('viewBox', `0 0 ${a4_width} ${a4_height}`);
+
+        // a4 크기를 채우는 사각형 그리기
+        // let el_rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        // el_rect.setAttribute('x', 0);
+        // el_rect.setAttribute('y', 0);
+        // el_rect.setAttribute('width', a4_width * window.devicePixelRatio);
+        // el_rect.setAttribute('height', a4_height * window.devicePixelRatio) ;
+        // el_rect.setAttribute('stroke', 'black');
+        // el_rect.setAttribute('stroke-width', '10');
+        // el_rect.setAttribute('fill', 'transparent');
+        // svg.appendChild(el_rect);
+
+        window.print();
+        // 인쇄 후 다시 원래대로
+        svg.innerHTML = '';
+        for(let el of group.querySelectorAll('.movable')) {
+            svg.appendChild(el);
+        }
+
+        // svg의 attribute를 원래대로
+        svg.setAttribute('width', window.innerWidth);
+        svg.setAttribute('height', window.innerHeight);
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+        if(selectedMovable) {
+            selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
+        }
+    });
+
+    document.querySelector('#color-picker').addEventListener('input', (event) => {
+        let color = event.target.value;
+        setJamoButtonColor();
+        if(lastMovable) {
+            if(lastMovable.dataset.color !== color) {
+                lastMovable.dataset.color = color;
+                lastMovable.querySelector('.glyph').setAttribute('stroke', color);
+                action();
+            }
+        }
+    });
+
+    document.querySelector('#palette0').addEventListener('click', (event) => {
+        let color = '#ffa500';
+        document.querySelector('#color-picker').value = color;
+        document.querySelectorAll('.jamo-button').forEach((el) => {
+            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
+        });
+    });
+
+    document.querySelector('#palette1').addEventListener('click', (event) => {
+        let color = '#a143e5';
+        document.querySelector('#color-picker').value = color;
+        document.querySelectorAll('.jamo-button').forEach((el) => {
+            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
+        });
+    });
+
+    document.querySelector('#logotype').addEventListener('click', (event) => {
+        window.open('https://www.hanmiu.cc', '_blank');
+    });
+
+    document.querySelector('#close-info').addEventListener('click', () => {
+        document.querySelector('#info').style.display = 'none';
+    });
+
+    function check_buttons() {
+        if(action_history.length > 0) {
+            document.querySelector('#bt-undo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-undo').disabled = true;
+        }
+
+        if(action_history_buffer.length > 0) {
+            document.querySelector('#bt-redo').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-redo').disabled = true;
+        }
+
+        if(svg.children.length > 0) {
+            document.querySelector('#bt-clear').disabled = false;
+            document.querySelector('#bt-save').disabled = false;
+            document.querySelector('#bt-print').disabled = false;
+            document.querySelector('#bt-speak').disabled = false;
+        }
+        else {
+            document.querySelector('#bt-clear').disabled = true;
+            document.querySelector('#bt-save').disabled = true;
+            document.querySelector('#bt-print').disabled = true;
+            document.querySelector('#bt-speak').disabled = true;
+        }
+        judge();
+    }
+
+    if(utter) {
+        document.querySelector('#bt-speak').addEventListener('click', (event) => {
+            document.querySelector('#bt-speak').disabled = true;
+            while(speak_time_ids.length > 0) {
+                clearTimeout(speak_time_ids.shift());
+            }
+
+            utter.rate = 0.8;
+            let chars = document.querySelector('#preview').textContent.split('');
+            for(let i = 0; i < chars.length; i++) {
+                let tid = setTimeout(() => {
+                    utter.text = chars[i];
+                    speechSynthesis.speak(utter);
+                    if(last_vaild_chars) {
+                        let elem = last_vaild_chars[i];
+                        if(elem) {
+                            elem.cho_elements.forEach((el) => {
+                                el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
+                            });
+                            elem.jung_elements.forEach((el) => {
+                                el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
+                            });
+                            elem.jong_elements.forEach((el) => {
+                                el.querySelector('.glyph').setAttribute('stroke', 'rgb(161, 67, 229)');
+                            });
+                            setTimeout(() => {
+                                elem.cho_elements.forEach((el) => {
+                                    el.querySelector('.glyph').setAttribute('stroke', el.dataset.color);
+                                });
+                                elem.jung_elements.forEach((el) => {
+                                    el.querySelector('.glyph').setAttribute('stroke', el.dataset.color);
+                                });
+                                elem.jong_elements.forEach((el) => {
+                                    el.querySelector('.glyph').setAttribute('stroke', el.dataset.color);
+                                });
+                            }, 500);
+                        }
+                    }
+                }, i * 1000);
+                speak_time_ids.push(tid);
+                if(i == chars.length - 1) {
+                    setTimeout(() => {
+                        document.querySelector('#bt-speak').disabled = false;
+                    }, i * 1000 + 500);
+                }
+            }
+        });
+    }
+    else {
+        document.querySelector('#bt-speak').style.display = 'none';
+    }
+
+    function pie4(str, f) {
+        let arr = str.split('');
+        
+    }
+
+    function pie4(str, f) {
+        let arr = str.split('');
+        let pie = '';
+
+        if(arr.length === 4) {
+            for(let i = 0; i < arr.length; i++) {
+                if(f >= 0 && f <0.125) {
+                    pie = arr[0];
+                }
+                else if(f >= 0.125 && f < 0.375) {
+                    pie = arr[1];
+                }
+                else if(f >= 0.375 && f < 0.625) {
+                    pie = arr[2];
+                }
+                else if(f >= 0.625 && f < 0.875) {
+                    pie = arr[3];
+                }
+                else if(f >= 0.875 && f <= 1) {
+                    pie = arr[0];
+                }
+            }
+        }
+        return pie;
+    }
+
+    function jamo_rotation_applied(el) {
+        let rot = parseFloat(el.dataset.rot) % 360;
+        if(rot < 0) {
+            rot += 360;
+        }
+        rot = rot / 360;
+        let ojamo = el.dataset.ojamo;
+        let jamo = el.dataset.ojamo;
+        // ᄀᄂ
+        // ᅡᅣᅥᅧᅩᅭᅮᅲᅳᅵ
+        if(ojamo === 'ᅡ') {
+            jamo = pie4('ᅡᅮᅥᅩ', rot);
+        }
+        else if(ojamo === 'ᅣ') {
+            jamo = pie4('ᅣᅲᅧᅭ', rot);
+        }
+        else if(ojamo === 'ᅥ') {
+            jamo = pie4('ᅥᅩᅡᅮ', rot);
+        }
+        else if(ojamo === 'ᅧ') {
+            jamo = pie4('ᅧᅭᅣᅲ', rot);
+        }
+        else if(ojamo === 'ᅩ') {
+            jamo = pie4('ᅩᅡᅮᅥ', rot);
+        }
+        else if(ojamo === 'ᅭ') {
+            jamo = pie4('ᅭᅣᅲᅧ', rot);
+        }
+        else if(ojamo === 'ᅮ') {
+            jamo = pie4('ᅮᅥᅩᅡ', rot);
+        }
+        else if(ojamo === 'ᅲ') {
+            jamo = pie4('ᅲᅧᅭᅣ', rot);
+        }
+        else if(ojamo === 'ᅳ') {
+            jamo = pie4('ᅳᅵᅳᅵ', rot);
+        }
+        else if(ojamo === 'ᅵ') {
+            jamo = pie4('ᅵᅳᅵᅳ', rot);
+        }
+        else if(ojamo === 'ᄀ') {
+            jamo = pie4('ᄀᄀᄂᄂ', rot);
+        }
+        else if(ojamo === 'ᄂ') {
+            jamo = pie4('ᄂᄂᄀᄀ', rot);
+        }
+        if(jamo) {
+            el.dataset.jamo = jamo;
+        }
+        return jamo;
+    }
+
+    setTimeout(() => {
+        let rect_ui_top = document.querySelector('#ui-top').getBoundingClientRect();
+        if(!localStorage.jamo_visited_count) {
+            localStorage.jamo_visited_count = 1;
+            document.querySelector('#info').style.display = 'block';
+            document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
+        }
+        else {
+            let visited_count = parseInt(localStorage.jamo_visited_count);
+            visited_count += 1;
+            if(visited_count <= 3) {
+                document.querySelector('#info').style.display = 'block';
+                document.querySelector('#info').style.top = `${rect_ui_top.bottom}px`;
+            }
+            localStorage.jamo_visited_count = visited_count;
+        }
+    }, 200);
+
+    init();
+    resize();
+    check_buttons();
+</script>
