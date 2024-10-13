@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 캐릭터 그리기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .color-button {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .color-button.selected {
+            border: 4px solid #333;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            grid-template-rows: repeat(8, 40px);
+            border: 1px solid #ccc;
+        }
+        .pixel {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+            padding: 0;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .action-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #clear {
+            background-color: #3498db;
+        }
+        #save {
+            background-color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>내 캐릭터 그리기</h1>
+        <div class="color-palette" id="palette"></div>
+        <div class="grid" id="pixelGrid"></div>
+        <div class="buttons">
+            <button id="clear" class="action-button">다시하기</button>
+            <button id="save" class="action-button">그림 저장하기</button>
+        </div>
+    </div>
+    <canvas id="saveCanvas" width="1024" height="1024" style="display: none;"></canvas>
+
+    <script>
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3', 
+            '#FF8B94', '#A8E6CF', '#000000', '#FFFFFF'
+        ];
+        let selectedColor = colors[0];
+        const pixels = Array(64).fill('#FFFFFF');
+
+        function createColorPalette() {
+            const palette = document.getElementById('palette');
+            colors.forEach((color, index) => {
+                const button = document.createElement('button');
+                button.className = 'color-button';
+                button.style.backgroundColor = color;
+                button.onclick = () => selectColor(color, button);
+                if (index === 0) button.classList.add('selected');
+                palette.appendChild(button);
+            });
+        }
+
+        function selectColor(color, button) {
+            selectedColor = color;
+            document.querySelectorAll('.color-button').forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+        }
+
+        function createPixelGrid() {
+            const grid = document.getElementById('pixelGrid');
+            for (let i = 0; i < 64; i++) {
+                const pixel = document.createElement('button');
+                pixel.className = 'pixel';
+                pixel.style.backgroundColor = '#FFFFFF';
+                pixel.onclick = () => colorPixel(i, pixel);
+                grid.appendChild(pixel);
+            }
+        }
+
+        function colorPixel(index, pixel) {
+            pixels[index] = selectedColor;
+            pixel.style.backgroundColor = selectedColor;
+        }
+
+        function clearGrid() {
+            pixels.fill('#FFFFFF');
+            document.querySelectorAll('.pixel').forEach(pixel => pixel.style.backgroundColor = '#FFFFFF');
+        }
+
+        function saveImage() {
+            const canvas = document.getElementById('saveCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const pixelSize = canvas.width / 8;
+            pixels.forEach((color, i) => {
+                const x = (i % 8) * pixelSize;
+                const y = Math.floor(i / 8) * pixelSize;
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            });
+
+            const now = new Date();
+            const dateString = now.getFullYear() + 
+                               ('0' + (now.getMonth() + 1)).slice(-2) + 
+                               ('0' + now.getDate()).slice(-2) + '_' + 
+                               ('0' + now.getHours()).slice(-2) + 
+                               ('0' + now.getMinutes()).slice(-2);
+            
+            const link = document.createElement('a');
+            link.download = '내캐릭터_' + dateString + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        createColorPalette();
+        createPixelGrid();
+        document.getElementById('clear').onclick = clearGrid;
+        document.getElementById('save').onclick = saveImage;
+    </script>
+</body>
+</html>
