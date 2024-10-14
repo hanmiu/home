@@ -75,10 +75,27 @@
         #save {
             background-color: #2ecc71;
         }
+        #dragOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            z-index: 1000;
+        }
+        .no-drop {
+            cursor: no-drop;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="container">
         <h1>내 캐릭터 그리기</h1>
         <div class="color-palette" id="palette"></div>
         <div class="grid" id="pixelGrid"></div>
@@ -88,6 +105,7 @@
         </div>
     </div>
     <canvas id="saveCanvas" width="1024" height="1024" style="display: none;"></canvas>
+    <div id="dragOverlay">PNG 파일을 여기에 드롭하세요</div>
 
     <script>
         const colors = [
@@ -163,10 +181,107 @@
             link.click();
         }
 
+        function setupDragAndDrop() {
+            const body = document.body;
+            const container = document.getElementById('container');
+            const overlay = document.getElementById('dragOverlay');
+            
+            body.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // if (!container.contains(e.target)) {
+                //     overlay.style.display = 'flex';
+                //     container.classList.add('no-drop');
+                // }
+            });
+
+            body.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // overlay.style.display = 'none';
+                // container.classList.remove('no-drop');
+            });
+
+            body.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // overlay.style.display = 'none';
+                // container.classList.remove('no-drop');
+                // if (!container.contains(e.target)) {
+                //     const files = e.dataTransfer.files;
+                //     if (files.length > 0) {
+                //         const file = files[0];
+                //         if (file.type === 'image/png') {
+                //             loadImage(file);
+                //         } else {
+                //             alert('PNG 파일만 불러올 수 있습니다.');
+                //         }
+                //     }
+                // }
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'image/png') {
+                        loadImage(file);
+                    } else {
+                        alert('PNG 파일만 불러올 수 있습니다.');
+                    }
+                }
+            });
+        }
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1024;
+                    canvas.height = 1024;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 1024, 1024);
+                    const imageData = ctx.getImageData(0, 0, 1024, 1024);
+                    processImageData(imageData);
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function processImageData(imageData) {
+            const pixelSize = 1024 / 8;
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    const centerX = Math.floor(x * pixelSize + pixelSize / 2);
+                    const centerY = Math.floor(y * pixelSize + pixelSize / 2);
+                    const index = (centerY * 1024 + centerX) * 4;
+                    const r = imageData.data[index];
+                    const g = imageData.data[index + 1];
+                    const b = imageData.data[index + 2];
+                    const color = `rgb(${r},${g},${b})`;
+                    pixels[y * 8 + x] = color;
+                }
+            }
+            updateGrid();
+        }
+
+        function updateGrid() {
+            const gridPixels = document.querySelectorAll('.pixel');
+            pixels.forEach((color, index) => {
+                gridPixels[index].style.backgroundColor = color;
+            });
+        }
+
+        function preventContextMenu(e) {
+            e.preventDefault();
+        }
+
         createColorPalette();
         createPixelGrid();
+        setupDragAndDrop();
         document.getElementById('clear').onclick = clearGrid;
         document.getElementById('save').onclick = saveImage;
+        document.body.addEventListener('contextmenu', preventContextMenu);
     </script>
 </body>
 </html>
