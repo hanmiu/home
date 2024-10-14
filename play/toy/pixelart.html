@@ -27,6 +27,7 @@
         h1 {
             font-size: 24px;
             color: #333;
+            cursor: pointer;
         }
         .color-palette {
             display: flex;
@@ -81,6 +82,10 @@
         #save {
             background-color: #2ecc71;
         }
+        #print {
+            background-color: #e67e22;
+            display: none;
+        }
         #undo, #redo {
             background-color: #95a5a6;
             font-size: 20px;
@@ -110,11 +115,43 @@
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
+        #printArea {
+            display: none;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            #printCanvas {
+                width: 66vw;
+                height: 66vw;
+            }
+            #printInfo {
+                margin-top: 20px;
+                text-align: left;
+                width: 66vw;
+                font-size: 1.5em;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container" id="container">
-        <h1>내 캐릭터 그리기</h1>
+        <h1 id="title">내 캐릭터 그리기</h1>
         <div class="color-palette" id="palette"></div>
         <div class="buttons">
             <button id="undo" class="action-button">↶</button>
@@ -123,11 +160,20 @@
         <div class="grid" id="pixelGrid"></div>
         <div class="buttons">
             <button id="clear" class="action-button">다시하기</button>
+            <button id="print" class="action-button">인쇄</button>
             <button id="save" class="action-button">그림 저장하기</button>
         </div>
     </div>
     <canvas id="saveCanvas" width="1024" height="1024" style="display: none;"></canvas>
     <div id="dragOverlay">PNG 파일을 여기에 드롭하세요</div>
+    <div id="printArea">
+        <canvas id="printCanvas" width="1024" height="1024"></canvas>
+        <div id="printInfo">
+            <p>캐릭터 이름: </p>
+            <p>만든 사람: </p>
+            <p id="printDate"></p>
+        </div>
+    </div>
 
     <script>
         const colors = [
@@ -326,15 +372,44 @@
             e.preventDefault();
         }
 
-        createColorPalette();
-        createPixelGrid();
-        setupDragAndDrop();
-        document.getElementById('clear').onclick = clearGrid;
-        document.getElementById('save').onclick = saveImage;
-        document.getElementById('undo').onclick = undo;
-        document.getElementById('redo').onclick = redo;
-        document.body.addEventListener('contextmenu', preventContextMenu);
-        updateUndoRedoButtons();
-    </script>
+        function togglePrintButton() {
+            const printButton = document.getElementById('print');
+            printButton.style.display = printButton.style.display === 'none' ? 'inline-block' : 'none';
+        }
+
+        function printCharacter() {
+        const printCanvas = document.getElementById('printCanvas');
+        const ctx = printCanvas.getContext('2d');
+        ctx.clearRect(0, 0, printCanvas.width, printCanvas.height);
+
+        const pixelSize = printCanvas.width / 8;
+        pixels.forEach((color, i) => {
+            const x = (i % 8) * pixelSize;
+            const y = Math.floor(i / 8) * pixelSize;
+            if (color !== 'transparent') {
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            }
+        });
+
+        const now = new Date();
+        const dateString = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][now.getDay()]}요일 ${now.getHours().toString().padStart(2, '0')}시 ${now.getMinutes().toString().padStart(2, '0')}분`;
+        
+        document.getElementById('printDate').textContent = dateString;
+        window.print();
+    }
+
+    createColorPalette();
+    createPixelGrid();
+    setupDragAndDrop();
+    document.getElementById('clear').onclick = clearGrid;
+    document.getElementById('save').onclick = saveImage;
+    document.getElementById('undo').onclick = undo;
+    document.getElementById('redo').onclick = redo;
+    document.getElementById('title').onclick = togglePrintButton;
+    document.getElementById('print').onclick = printCharacter;
+    document.body.addEventListener('contextmenu', preventContextMenu);
+    updateUndoRedoButtons();
+</script>
 </body>
 </html>
