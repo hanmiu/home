@@ -48,6 +48,12 @@
             grid-template-columns: repeat(8, 40px);
             grid-template-rows: repeat(8, 40px);
             border: 1px solid #ccc;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+                              linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #ccc 75%),
+                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
         .pixel {
             width: 40px;
@@ -75,6 +81,10 @@
         #save {
             background-color: #2ecc71;
         }
+        #undo, #redo {
+            background-color: #95a5a6;
+            font-size: 20px;
+        }
         #dragOverlay {
             position: fixed;
             top: 0;
@@ -92,12 +102,24 @@
         .no-drop {
             cursor: no-drop;
         }
+        .transparent-bg {
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+                              linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #ccc 75%),
+                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
     </style>
 </head>
 <body>
     <div class="container" id="container">
         <h1>내 캐릭터 그리기</h1>
         <div class="color-palette" id="palette"></div>
+        <div class="buttons">
+            <button id="undo" class="action-button">↶</button>
+            <button id="redo" class="action-button">↷</button>
+        </div>
         <div class="grid" id="pixelGrid"></div>
         <div class="buttons">
             <button id="clear" class="action-button">다시하기</button>
@@ -110,17 +132,23 @@
     <script>
         const colors = [
             '#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3', 
-            '#FF8B94', '#A8E6CF', '#000000', '#FFFFFF'
+            '#FF8B94', '#A8E6CF', '#000000', '#FFFFFF', 'transparent'
         ];
         let selectedColor = colors[0];
-        const pixels = Array(64).fill('#FFFFFF');
+        const pixels = Array(64).fill('transparent');
+        let history = [JSON.parse(JSON.stringify(pixels))];
+        let historyIndex = 0;
 
         function createColorPalette() {
             const palette = document.getElementById('palette');
             colors.forEach((color, index) => {
                 const button = document.createElement('button');
                 button.className = 'color-button';
-                button.style.backgroundColor = color;
+                if (color === 'transparent') {
+                    button.classList.add('transparent-bg');
+                } else {
+                    button.style.backgroundColor = color;
+                }
                 button.onclick = () => selectColor(color, button);
                 if (index === 0) button.classList.add('selected');
                 palette.appendChild(button);
@@ -138,34 +166,50 @@
             for (let i = 0; i < 64; i++) {
                 const pixel = document.createElement('button');
                 pixel.className = 'pixel';
-                pixel.style.backgroundColor = '#FFFFFF';
                 pixel.onclick = () => colorPixel(i, pixel);
                 grid.appendChild(pixel);
             }
+            updateGrid();
         }
 
         function colorPixel(index, pixel) {
             pixels[index] = selectedColor;
-            pixel.style.backgroundColor = selectedColor;
+            updateGrid();
+            addToHistory();
+        }
+
+        function updateGrid() {
+            const gridPixels = document.querySelectorAll('.pixel');
+            pixels.forEach((color, index) => {
+                if (color === 'transparent') {
+                    gridPixels[index].style.backgroundColor = 'transparent';
+                    gridPixels[index].classList.add('transparent-bg');
+                } else {
+                    gridPixels[index].style.backgroundColor = color;
+                    gridPixels[index].classList.remove('transparent-bg');
+                }
+            });
         }
 
         function clearGrid() {
-            pixels.fill('#FFFFFF');
-            document.querySelectorAll('.pixel').forEach(pixel => pixel.style.backgroundColor = '#FFFFFF');
+            pixels.fill('transparent');
+            updateGrid();
+            addToHistory();
         }
 
         function saveImage() {
             const canvas = document.getElementById('saveCanvas');
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const pixelSize = canvas.width / 8;
             pixels.forEach((color, i) => {
                 const x = (i % 8) * pixelSize;
                 const y = Math.floor(i / 8) * pixelSize;
-                ctx.fillStyle = color;
-                ctx.fillRect(x, y, pixelSize, pixelSize);
+                if (color !== 'transparent') {
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                }
             });
 
             const now = new Date();
@@ -189,35 +233,16 @@
             body.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // if (!container.contains(e.target)) {
-                //     overlay.style.display = 'flex';
-                //     container.classList.add('no-drop');
-                // }
             });
 
             body.addEventListener('dragleave', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // overlay.style.display = 'none';
-                // container.classList.remove('no-drop');
             });
 
             body.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // overlay.style.display = 'none';
-                // container.classList.remove('no-drop');
-                // if (!container.contains(e.target)) {
-                //     const files = e.dataTransfer.files;
-                //     if (files.length > 0) {
-                //         const file = files[0];
-                //         if (file.type === 'image/png') {
-                //             loadImage(file);
-                //         } else {
-                //             alert('PNG 파일만 불러올 수 있습니다.');
-                //         }
-                //     }
-                // }
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
                     const file = files[0];
@@ -258,18 +283,43 @@
                     const r = imageData.data[index];
                     const g = imageData.data[index + 1];
                     const b = imageData.data[index + 2];
-                    const color = `rgb(${r},${g},${b})`;
+                    const a = imageData.data[index + 3];
+                    const color = a === 0 ? 'transparent' : `rgb(${r},${g},${b})`;
                     pixels[y * 8 + x] = color;
                 }
             }
             updateGrid();
+            addToHistory();
         }
 
-        function updateGrid() {
-            const gridPixels = document.querySelectorAll('.pixel');
-            pixels.forEach((color, index) => {
-                gridPixels[index].style.backgroundColor = color;
-            });
+        function addToHistory() {
+            history = history.slice(0, historyIndex + 1);
+            history.push(JSON.parse(JSON.stringify(pixels)));
+            historyIndex = history.length - 1;
+            updateUndoRedoButtons();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                pixels.splice(0, pixels.length, ...history[historyIndex]);
+                updateGrid();
+                updateUndoRedoButtons();
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                pixels.splice(0, pixels.length, ...history[historyIndex]);
+                updateGrid();
+                updateUndoRedoButtons();
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            document.getElementById('undo').disabled = historyIndex === 0;
+            document.getElementById('redo').disabled = historyIndex === history.length - 1;
         }
 
         function preventContextMenu(e) {
@@ -281,7 +331,10 @@
         setupDragAndDrop();
         document.getElementById('clear').onclick = clearGrid;
         document.getElementById('save').onclick = saveImage;
+        document.getElementById('undo').onclick = undo;
+        document.getElementById('redo').onclick = redo;
         document.body.addEventListener('contextmenu', preventContextMenu);
+        updateUndoRedoButtons();
     </script>
 </body>
 </html>
