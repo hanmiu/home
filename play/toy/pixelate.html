@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Palette Quantization with Drag and Drop</title>
+    <title>Adaptive Color Quantization with Cell Size Control</title>
     <style>
         body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; margin: 0; }
         .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -12,7 +12,8 @@
         .color-input { width: 30px; height: 30px; padding: 0; border: none; cursor: pointer; }
         #dropZone { border: 2px dashed #ccc; padding: 20px; text-align: center; cursor: pointer; }
         #dropZone.drag-over { background-color: #f0f0f0; }
-        #paletteSizeValue { font-weight: bold; }
+        .control-group { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        #cellSizeValue, #paletteSizeValue { width: 50px; }
     </style>
 </head>
 <body>
@@ -21,10 +22,15 @@
             Drag and drop an image here or click to select
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
-        <div>
+        <div class="control-group">
             <label for="paletteSize">Palette Size: </label>
-            <input type="range" id="paletteSize" min="2" max="16" value="4">
-            <span id="paletteSizeValue">4</span>
+            <input type="range" id="paletteSize" min="2" max="32" value="8">
+            <span id="paletteSizeValue">8</span>
+        </div>
+        <div class="control-group">
+            <label for="cellSize">Cell Size: </label>
+            <input type="range" id="cellSize" min="2" max="32" value="8">
+            <input type="number" id="cellSizeValue" min="2" max="32" value="8">
         </div>
         <div class="canvas-container">
             <canvas id="originalCanvas"></canvas>
@@ -38,13 +44,20 @@
         const quantizedCanvas = document.getElementById('quantizedCanvas');
         const paletteSizeInput = document.getElementById('paletteSize');
         const paletteSizeValue = document.getElementById('paletteSizeValue');
+        const cellSizeInput = document.getElementById('cellSize');
+        const cellSizeValue = document.getElementById('cellSizeValue');
         const paletteContainer = document.getElementById('palette');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
 
         let originalImageData;
         let palette = [];
+        let cellSize = 8;
         let quantizedWidth, quantizedHeight;
+        let pixelColors = [];
+        let colorIndexMap = [];
+        let quantized_ctx, quantized;
+        let timeoutId = 0;
 
         function handleFile(file) {
             const reader = new FileReader();
@@ -67,32 +80,31 @@
                     originalCanvas.width = width;
                     originalCanvas.height = height;
 
-                    // Calculate quantized size
-                    const maxQuantizedSize = 50;
-                    if (width > height) {
-                        quantizedWidth = maxQuantizedSize;
-                        quantizedHeight = Math.round(height * (maxQuantizedSize / width));
-                    } else {
-                        quantizedHeight = maxQuantizedSize;
-                        quantizedWidth = Math.round(width * (maxQuantizedSize / height));
-                    }
-                    quantizedCanvas.width = quantizedWidth;
-                    quantizedCanvas.height = quantizedHeight;
-                    quantizedCanvas.style.width = `${width}px`;
-                    quantizedCanvas.style.height = `${height}px`;
-
                     // Draw original image
-                    const ctx = originalCanvas.getContext('2d');
+                    const ctx = originalCanvas.getContext('2d', { willReadFrequently: true });
                     ctx.drawImage(img, 0, 0, width, height);
                     originalImageData = ctx.getImageData(0, 0, width, height);
 
-                    quantizeImage();
+                    // Set cell size range
+                    const minDimension = Math.min(width, height);
+                    const maxCellSize = Math.floor(minDimension / 16);
+                    const minCellSize = Math.max(2, Math.floor(minDimension / 32));
+                    cellSizeInput.min = minCellSize;
+                    cellSizeInput.max = maxCellSize;
+                    cellSizeValue.min = minCellSize;
+                    cellSizeValue.max = maxCellSize;
+                    cellSize = Math.floor((minCellSize + maxCellSize) / 2);
+                    cellSizeInput.value = cellSize;
+                    cellSizeValue.value = cellSize;
+
+                    updateQuantizedImage(true);
                 }
                 img.src = event.target.result;
             }
             reader.readAsDataURL(file);
         }
 
+        // Event listeners
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('drag-over');
@@ -122,154 +134,210 @@
             }
         });
 
-        function medianCut(colors, desiredPaletteSize) {
-            // Initialize the list of boxes with a single box containing all colors
-            let boxes = [getBox(colors)];
+        paletteSizeInput.addEventListener('input', () => {
+            paletteSizeValue.textContent = paletteSizeInput.value;
+            updateQuantizedImage(true);
+        });
 
-            function getBox(colors) {
-                let rmin = 255, rmax = 0;
-                let gmin = 255, gmax = 0;
-                let bmin = 255, bmax = 0;
-                for (let i = 0; i < colors.length; i++) {
-                    const color = colors[i];
-                    if (color[0] < rmin) rmin = color[0];
-                    if (color[0] > rmax) rmax = color[0];
-                    if (color[1] < gmin) gmin = color[1];
-                    if (color[1] > gmax) gmax = color[1];
-                    if (color[2] < bmin) bmin = color[2];
-                    if (color[2] > bmax) bmax = color[2];
-                }
-                return { colors: colors, rmin, rmax, gmin, gmax, bmin, bmax };
+        cellSizeInput.addEventListener('input', () => {
+            cellSize = parseInt(cellSizeInput.value);
+            cellSizeValue.value = cellSize;
+            updateQuantizedImage();
+        });
+
+        cellSizeValue.addEventListener('input', () => {
+            cellSize = parseInt(cellSizeValue.value);
+            cellSizeInput.value = cellSize;
+            updateQuantizedImage();
+        });
+
+        function adaptiveColorClustering(colors, k) {
+            // Step 1: Initial division using Median Cut
+            let boxes = [{ colors: colors, volume: calculateColorVolume(colors) }];
+            while (boxes.length < k) {
+                boxes.sort((a, b) => b.volume - a.volume);
+                const boxToSplit = boxes.shift();
+                const [box1, box2] = splitBox(boxToSplit.colors);
+                boxes.push({ colors: box1, volume: calculateColorVolume(box1) });
+                boxes.push({ colors: box2, volume: calculateColorVolume(box2) });
             }
 
-            while (boxes.length < desiredPaletteSize) {
-                // Find the box with the largest color range
-                let maxRange = -1;
-                let boxIndex = -1;
-                for (let i = 0; i < boxes.length; i++) {
-                    const box = boxes[i];
-                    const rRange = box.rmax - box.rmin;
-                    const gRange = box.gmax - box.gmin;
-                    const bRange = box.bmax - box.bmin;
-                    const range = Math.max(rRange, gRange, bRange);
-                    if (range > maxRange && box.colors.length > 1) {
-                        maxRange = range;
-                        boxIndex = i;
+            // Step 2: Refine centroids using K-means-like approach
+            let centroids = boxes.map(box => calculateAverageColor(box.colors));
+            let assignments = new Array(colors.length);
+
+            for (let iteration = 0; iteration < 5; iteration++) {
+                // Assign colors to nearest centroid
+                for (let i = 0; i < colors.length; i++) {
+                    assignments[i] = findClosestCentroidIndex(colors[i], centroids);
+                }
+
+                // Update centroids
+                let newCentroids = new Array(k).fill().map(() => [0, 0, 0]);
+                let counts = new Array(k).fill(0);
+                for (let i = 0; i < colors.length; i++) {
+                    const centroidIndex = assignments[i];
+                    newCentroids[centroidIndex][0] += colors[i][0];
+                    newCentroids[centroidIndex][1] += colors[i][1];
+                    newCentroids[centroidIndex][2] += colors[i][2];
+                    counts[centroidIndex]++;
+                }
+
+                for (let i = 0; i < k; i++) {
+                    if (counts[i] > 0) {
+                        centroids[i] = [
+                            Math.round(newCentroids[i][0] / counts[i]),
+                            Math.round(newCentroids[i][1] / counts[i]),
+                            Math.round(newCentroids[i][2] / counts[i])
+                        ];
                     }
                 }
-
-                if (boxIndex === -1) {
-                    // No more boxes can be split
-                    break;
-                }
-
-                const boxToSplit = boxes[boxIndex];
-
-                // Choose the channel with the largest range
-                const rRange = boxToSplit.rmax - boxToSplit.rmin;
-                const gRange = boxToSplit.gmax - boxToSplit.gmin;
-                const bRange = boxToSplit.bmax - boxToSplit.bmin;
-
-                let channelIndex;
-                if (rRange >= gRange && rRange >= bRange) {
-                    channelIndex = 0;
-                } else if (gRange >= rRange && gRange >= bRange) {
-                    channelIndex = 1;
-                } else {
-                    channelIndex = 2;
-                }
-
-                // Sort the colors in the box along the selected channel
-                boxToSplit.colors.sort((a, b) => a[channelIndex] - b[channelIndex]);
-
-                // Split the box into two boxes at the median
-                const mid = Math.floor(boxToSplit.colors.length / 2);
-                const box1Colors = boxToSplit.colors.slice(0, mid);
-                const box2Colors = boxToSplit.colors.slice(mid);
-
-                if (box1Colors.length === 0 || box2Colors.length === 0) {
-                    // Can't split further, remove the box from consideration
-                    boxes.splice(boxIndex, 1);
-                    continue;
-                }
-
-                const box1 = getBox(box1Colors);
-                const box2 = getBox(box2Colors);
-
-                // Replace the original box with the two new boxes
-                boxes.splice(boxIndex, 1);
-                boxes.push(box1);
-                boxes.push(box2);
             }
 
-            // Compute the average color of each box
-            const palette = boxes.map(box => {
-                const avgColor = box.colors.reduce(
-                    (acc, c) => [acc[0] + c[0], acc[1] + c[1], acc[2] + c[2]],
-                    [0, 0, 0]
-                ).map(v => Math.round(v / box.colors.length));
-                return avgColor;
-            });
+            // Step 3: Ensure minimum distance between centroids
+            centroids = ensureMinimumDistance(centroids);
 
-            return palette;
+            return centroids;
         }
 
-        function quantizeImage(recomputePalette = true) {
+        function calculateColorVolume(colors) {
+            let rMin = 255, rMax = 0, gMin = 255, gMax = 0, bMin = 255, bMax = 0;
+            for (const color of colors) {
+                rMin = Math.min(rMin, color[0]);
+                rMax = Math.max(rMax, color[0]);
+                gMin = Math.min(gMin, color[1]);
+                gMax = Math.max(gMax, color[1]);
+                bMin = Math.min(bMin, color[2]);
+                bMax = Math.max(bMax, color[2]);
+            }
+            return (rMax - rMin) * (gMax - gMin) * (bMax - bMin);
+        }
+
+        function splitBox(colors) {
+            let rRange = 0, gRange = 0, bRange = 0;
+            for (const color of colors) {
+                rRange = Math.max(rRange, color[0]) - Math.min(rRange, color[0]);
+                gRange = Math.max(gRange, color[1]) - Math.min(gRange, color[1]);
+                bRange = Math.max(bRange, color[2]) - Math.min(bRange, color[2]);
+            }
+
+            const channelToSplit = rRange > gRange ? (rRange > bRange ? 0 : 2) : (gRange > bRange ? 1 : 2);
+            colors.sort((a, b) => a[channelToSplit] - b[channelToSplit]);
+            const mid = Math.floor(colors.length / 2);
+            return [colors.slice(0, mid), colors.slice(mid)];
+        }
+
+        function calculateAverageColor(colors) {
+            let r = 0, g = 0, b = 0;
+            for (const color of colors) {
+                r += color[0];
+                g += color[1];
+                b += color[2];
+            }
+            return [
+                Math.round(r / colors.length),
+                Math.round(g / colors.length),
+                Math.round(b / colors.length)
+            ];
+        }
+
+        function ensureMinimumDistance(centroids) {
+            const minDistance = 30; // Minimum Euclidean distance between centroids
+            for (let i = 0; i < centroids.length; i++) {
+                for (let j = i + 1; j < centroids.length; j++) {
+                    const dist = colorDistance(centroids[i], centroids[j]);
+                    if (dist < minDistance) {
+                        const direction = [
+                            centroids[j][0] - centroids[i][0],
+                            centroids[j][1] - centroids[i][1],
+                            centroids[j][2] - centroids[i][2]
+                        ];
+                        const magnitude = Math.sqrt(direction[0]**2 + direction[1]**2 + direction[2]**2);
+                        const normalizedDirection = direction.map(d => d / magnitude);
+                        const adjustment = normalizedDirection.map(d => d * (minDistance - dist) / 2);
+
+                        centroids[i] = centroids[i].map((v, idx) => Math.max(0, Math.min(255, Math.round(v - adjustment[idx]))));
+                        centroids[j] = centroids[j].map((v, idx) => Math.max(0, Math.min(255, Math.round(v + adjustment[idx]))));
+                    }
+                }
+            }
+            return centroids;
+        }
+
+        function updateQuantizedImage(recomputePalette = false) {
             if (!originalImageData) return;
 
             const { data, width, height } = originalImageData;
             const paletteSize = parseInt(paletteSizeInput.value);
 
+            quantizedWidth = Math.floor(width / cellSize);
+            quantizedHeight = Math.floor(height / cellSize);
+
             if (recomputePalette) {
                 // Extract colors from the image
-                const colors = [];
-                for (let i = 0; i < data.length; i += 4) {
-                    colors.push([data[i], data[i + 1], data[i + 2]]);
+                pixelColors = [];
+                for (let y = 0; y < height; y += cellSize) {
+                    for (let x = 0; x < width; x += cellSize) {
+                        const i = (y * width + x) * 4;
+                        pixelColors.push([data[i], data[i + 1], data[i + 2]]);
+                    }
                 }
 
-                // Apply the Median Cut algorithm
-                palette = medianCut(colors, paletteSize);
+                // Apply the Adaptive Color Clustering algorithm
+                palette = adaptiveColorClustering(pixelColors, paletteSize);
                 updatePaletteUI();
             }
 
-            // Quantize the image using the current palette
-            const ctx = quantizedCanvas.getContext('2d');
-            const quantized = ctx.createImageData(quantizedWidth, quantizedHeight);
+            // Quantize the image
+            quantizedCanvas.width = quantizedWidth;
+            quantizedCanvas.height = quantizedHeight;
+            quantizedCanvas.style.width = `${width}px`;
+            quantizedCanvas.style.height = `${height}px`;
+
+            quantized_ctx = quantizedCanvas.getContext('2d');
+            quantized = quantized_ctx.createImageData(quantizedWidth, quantizedHeight);
 
             for (let y = 0; y < quantizedHeight; y++) {
                 for (let x = 0; x < quantizedWidth; x++) {
                     const i = (y * quantizedWidth + x) * 4;
-                    const sourceX = Math.floor(x * width / quantizedWidth);
-                    const sourceY = Math.floor(y * height / quantizedHeight);
+                    const sourceX = x * cellSize;
+                    const sourceY = y * cellSize;
                     const sourceI = (sourceY * width + sourceX) * 4;
                     const sourceColor = [data[sourceI], data[sourceI + 1], data[sourceI + 2]];
+                    const paletteIndex = findClosestPaletteColor(sourceColor);
+                    const color = palette[paletteIndex];
 
-                    // Find the closest palette color
-                    let minDistance = Infinity;
-                    let closestColor = palette[0];
-                    for (let j = 0; j < palette.length; j++) {
-                        const palColor = palette[j];
-                        const dist = colorDistance(sourceColor, palColor);
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            closestColor = palColor;
-                        }
-                    }
-
-                    quantized.data[i] = closestColor[0];
-                    quantized.data[i + 1] = closestColor[1];
-                    quantized.data[i + 2] = closestColor[2];
+                    colorIndexMap[i] = paletteIndex;
+                    quantized.data[i] = color[0];
+                    quantized.data[i + 1] = color[1];
+                    quantized.data[i + 2] = color[2];
                     quantized.data[i + 3] = 255;
                 }
             }
 
-            ctx.putImageData(quantized, 0, 0);
+            quantized_ctx.putImageData(quantized, 0, 0);
+        }
+
+        function findClosestPaletteColor(color) {
+            if (palette.length === 0) return 0;  // 팔레트가 비어있을 경우 처리
+            let minDist = Infinity;
+            let closestIndex = 0;
+            for (let i = 0; i < palette.length; i++) {
+                const dist = colorDistance(color, palette[i]);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIndex = i;
+                }
+            }
+            return closestIndex;
         }
 
         function colorDistance(c1, c2) {
-            return Math.pow(c1[0] - c2[0], 2) +
-                   Math.pow(c1[1] - c2[1], 2) +
-                   Math.pow(c1[2] - c2[2], 2);
+            return Math.sqrt(
+                Math.pow(c1[0] - c2[0], 2) +
+                Math.pow(c1[1] - c2[1], 2) +
+                Math.pow(c1[2] - c2[2], 2)
+            );
         }
 
         function updatePaletteUI() {
@@ -279,20 +347,47 @@
                 input.type = 'color';
                 input.className = 'color-input';
                 input.value = `#${color[0].toString(16).padStart(2, '0')}${color[1].toString(16).padStart(2, '0')}${color[2].toString(16).padStart(2, '0')}`;
-                input.addEventListener('change', (e) => handlePaletteChange(index, e.target.value));
+                input.addEventListener('input', (e) => handlePaletteChange(index, e.target.value));
                 paletteContainer.appendChild(input);
             });
         }
 
         function handlePaletteChange(index, newColor) {
             palette[index] = newColor.slice(1).match(/.{2}/g).map(x => parseInt(x, 16));
-            quantizeImage(false); // Do not recompute the palette
+            const color = palette[index];
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                for (let y = 0; y < quantizedHeight; y++) {
+                    for (let x = 0; x < quantizedWidth; x++) {
+                        const i = (y * quantizedWidth + x) * 4;
+                        if(colorIndexMap[i] === index) {
+                            quantized.data[i] = color[0];
+                            quantized.data[i + 1] = color[1];
+                            quantized.data[i + 2] = color[2];
+                            quantized.data[i + 3] = 255;
+                        }
+                    }
+                }
+
+                quantized_ctx.putImageData(quantized, 0, 0);
+            }, 200);
         }
 
-        paletteSizeInput.addEventListener('input', () => {
-            paletteSizeValue.textContent = paletteSizeInput.value;
-            quantizeImage(true); // Recompute the palette
-        });
+        function findClosestCentroidIndex(color, centroids) {
+            let minDist = Infinity;
+            let closestIndex = 0;
+            for (let i = 0; i < centroids.length; i++) {
+                const dist = colorDistance(color, centroids[i]);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIndex = i;
+                }
+            }
+            return closestIndex;
+        }
+
+        // Initialize the UI
+        updatePaletteUI();
     </script>
 </body>
 </html>
