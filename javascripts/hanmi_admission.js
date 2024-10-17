@@ -1,10 +1,11 @@
 html['admission'] = `
 <div>2025학년도 한미유치원 입학 안내</div>
 <br>
+<!--
 <div class="subtle">
-
 <a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a>을 통해 환경 사진과 연령별 간추린 교실 이야기를 소개하고 있습니다.<br>
 </div>
+-->
 <br>
 
 
