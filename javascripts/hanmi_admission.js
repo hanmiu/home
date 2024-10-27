@@ -68,7 +68,7 @@ html['admission'] = `
 </div>
 
 
-<img src="./images/2024/2025_vintro_1.svg" style="width: 100%">
+<img src="./images/2024/2025_vintro_0.svg" style="width: 100%">
 <br>
 <img src="./images/2023/2024_vintro_2.svg" style="width: 100%">
 <br>
