@@ -57,14 +57,6 @@ html['admission'] = `
 </div>
 <br>
 
-<div class="subtle">
-<a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
-  <ul class="flower">
-    <li>우선 모집: 11월 01일 (금) ~ 11월 05일 (화)</li>
-    <li>일반 모집: 11월 19일 (화) ~ 11월 22일 (금)</li>
-  </ul>
-</div>
-
 <br>
 <div class="subtle">
 아래 이미지를 클릭하면,
@@ -108,6 +100,15 @@ html['admission'] = `
 <div class="subtle">
   <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>에도 다양한 사례가 있으니 참고해 주세요.<br>
   <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">작년 설명회 자료</a>에서도 한미유치원의 교육과 환경에 관한 이야기를 더 살펴보실 수 있습니다.
+</div>
+<br><br>
+
+<div class="subtle">
+<a href="https://www.go-firstschool.go.kr" target="_blank">처음학교로</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
+  <ul class="flower">
+    <li>우선 모집: 11월 01일 (금) ~ 11월 05일 (화)</li>
+    <li>일반 모집: 11월 19일 (화) ~ 11월 22일 (금)</li>
+  </ul>
 </div>
 <br><br>
 
