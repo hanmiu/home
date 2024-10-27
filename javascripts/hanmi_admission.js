@@ -6,7 +6,6 @@ html['admission'] = `
 <a href="https://instagram.com/hanmiucw" target="_blank">한미유치원 인스타그램</a>을 통해 환경 사진과 연령별 간추린 교실 이야기를 소개하고 있습니다.<br>
 </div>
 -->
-<br>
 
 
 모집대상
@@ -45,9 +44,8 @@ html['admission'] = `
     <!--<li>일반 모집: 11/14(화) 16시 30분</li>-->
     <!--<li>일반 모집: 11/14(월) 16시 30분, <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a>  (← 클릭) </li>-->
   </ul>
-  <!--<a href="https://drive.google.com/file/d/10_UtFlgPmo0OVc-u8V9TfLvDPL0_JNoz/view?usp=sharing" target="_blank"><strong>2023학년도 설명회 자료 및 모집 요강</strong></a>  (← 클릭)-->
-  <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">작년 설명회 자료</a>에서 한미유치원의 교육과 환경에 관한 이야기를 살펴보실 수 있습니다.<br> <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>에도 다양한 사례가 있으니 참고해 주세요.
-  <br><br><br>
+</div>
+<br>
 
 <div>시설 참관</div>
 <div class="subtle">
@@ -67,18 +65,50 @@ html['admission'] = `
   </ul>
 </div>
 
+<br>
+<div class="subtle">
+아래 이미지를 클릭하면,
+</div>
 
-<img src="./images/2024/2025_vintro_0.svg" style="width: 100%">
+<div class="subtle">
+  <ul class="musical">
+    <li><a href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">한미유치원은 처음이라 (적응 이야기)</a></li>
+    <li><a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5" target="_blank">한미유치원의 교육</a></li>
+    <li><a href="https://good-pike-738.notion.site/1257a34ea6e7808981e3d05a5049c550" target="_blank">한미유치원의 공부</a></li>
+  </ul>
+으로 연결되어 한미유치원에 관한 자세한 이야기를 살펴보실 수 있습니다.
+</div>
+<br><br>
+
+<a href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">
+  <img src="./images/2024/2025_vintro_1.svg" style="width: 100%">
+</a>
 <br>
-<img src="./images/2023/2024_vintro_2.svg" style="width: 100%">
+<a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5" target="_blank">
+  <img src="./images/2024/2025_vintro_2.svg" style="width: 100%">
+</a>
 <br>
-<img src="./images/2023/2024_vintro_3.svg" style="width: 100%">
+<a href="https://good-pike-738.notion.site/1257a34ea6e7808981e3d05a5049c550" target="_blank">
+  <img src="./images/2024/2025_vintro_3.svg" style="width: 100%">
+</a>
 <br>
-<img src="./images/2023/2024_vintro_4.svg" style="width: 100%">
+<a href="https://www.instagram.com/hanmiucw" target="_blank">
+  <img src="./images/2024/2025_vintro_4.svg" style="width: 100%">
+</a>
 <br>
-<img src="./images/2023/2024_vintro_5.svg" style="width: 100%">
+<a href="https://good-pike-738.notion.site/1227a34ea6e78080bf37ecd39fa96d27" target="_blank">
+  <img src="./images/2024/2025_vintro_5.svg" style="width: 100%">
+</a>
 <br>
-<img src="./images/2023/2024_vintro_6.svg" style="width: 100%">
+<a href="https://www.hanmiu.cc/?page=hanmi" target="_blank">
+  <img src="./images/2024/2025_vintro_6.svg" style="width: 100%">
+</a>
+<br><br>
+
+<div class="subtle">
+  <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>에도 다양한 사례가 있으니 참고해 주세요.<br>
+  <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">작년 설명회 자료</a>에서도 한미유치원의 교육과 환경에 관한 이야기를 더 살펴보실 수 있습니다.
+</div>
 <br><br>
 
 <div>그 밖의 정보</div>
