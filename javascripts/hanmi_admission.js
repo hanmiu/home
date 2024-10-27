@@ -64,13 +64,12 @@ html['admission'] = `
 
 <div class="subtle">
   <ul class="musical">
-    <li><a href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">한미유치원은 처음이라 (적응 이야기)</a></li>
+    <li><a href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">한미유치원은 처음이라 (적응)</a></li>
     <li><a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5" target="_blank">한미유치원의 교육</a></li>
     <li><a href="https://good-pike-738.notion.site/1257a34ea6e7808981e3d05a5049c550" target="_blank">한미유치원의 공부</a></li>
   </ul>
 으로 연결되어 한미유치원에 관한 자세한 이야기를 살펴보실 수 있습니다.
 </div>
-<br><br>
 
 <a href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">
   <img src="./images/2024/2025_vintro_1.svg" style="width: 100%">
