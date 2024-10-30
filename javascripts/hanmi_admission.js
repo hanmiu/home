@@ -70,34 +70,37 @@ html['admission'] = `
 으로 연결되어 한미유치원에 관한 자세한 이야기를 살펴보실 수 있습니다.
 </div>
 
-<a href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">
+<a class="no-underline" href="https://good-pike-738.notion.site/1257a34ea6e78034a13cdc6885c8856b" target="_blank">
   <img src="./images/2024/2025_vintro_1.svg" style="width: 100%">
 </a>
+<hr>
 <br>
-<a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5" target="_blank">
+<a class="no-underline" href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5" target="_blank">
   <img src="./images/2024/2025_vintro_2.svg" style="width: 100%">
 </a>
+<hr>
 <br>
-<a href="https://good-pike-738.notion.site/1257a34ea6e7808981e3d05a5049c550" target="_blank">
+<a class="no-underline" href="https://good-pike-738.notion.site/1257a34ea6e7808981e3d05a5049c550" target="_blank">
   <img src="./images/2024/2025_vintro_3.svg" style="width: 100%">
 </a>
+<hr>
 <br>
-<a href="https://www.instagram.com/hanmiucw" target="_blank">
+<a class="no-underline" href="https://www.instagram.com/hanmiucw" target="_blank">
   <img src="./images/2024/2025_vintro_4.svg" style="width: 100%">
 </a>
 <br>
-<a href="https://good-pike-738.notion.site/1227a34ea6e78080bf37ecd39fa96d27" target="_blank">
+<a class="no-underline" href="https://good-pike-738.notion.site/1227a34ea6e78080bf37ecd39fa96d27" target="_blank">
   <img src="./images/2024/2025_vintro_5.svg" style="width: 100%">
 </a>
 <br>
-<a href="https://www.hanmiu.cc/?page=hanmi" target="_blank">
+<a class="no-underline" href="https://www.hanmiu.cc/?page=hanmi" target="_blank">
   <img src="./images/2024/2025_vintro_6.svg" style="width: 100%">
 </a>
 <br><br>
 
 <div class="subtle">
   <a href="https://bit.ly/408ZT96" target"_blank">디지털 놀이터와 연결되어 있는 교실 놀이</a>에도 다양한 사례가 있으니 참고해 주세요.<br>
-  <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">작년 설명회 자료</a>에서도 한미유치원의 교육과 환경에 관한 이야기를 더 살펴보실 수 있습니다.
+  <a href="https://drive.google.com/file/d/1ApPpTBmcWLjJst7RqSw0CMZY2v3GrbAU/view?usp=sharing" target="_blank">2024 설명회 자료</a>, <a href="https://good-pike-738.notion.site/2022-1c6e3df50280408b8efe23edfbcacd98" target="_blank">2022 설명회 자료</a>에서도 한미유치원의 교육과 환경에 관한 이야기를 더 살펴보실 수 있습니다.
 </div>
 <br><br>
 
