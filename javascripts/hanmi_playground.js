@@ -17,7 +17,18 @@ html['playground'] = `
   <a class="no-underline" href="https://hanmiu.cc/play/toy/jamo.html">
     <img class="full" src="./images/2023/jamo.jpg">
   </a>
-  <div class="subtle">한미유치원의 각 반에서는 어린이들이 호기심을 따라 탐험과 맥락이 있는 놀이를 통해 한글을 알아갑니다. 그 여정을 지원하기 위해 만들었습니다. <a href="https://good-pike-738.notion.site/94f34ac96ce9470fb9e81e302f4868c6" target="_blank">한글 나와라 뚝딱, 우리가 만든 글자</a> 이야기를 살펴봐 주세요~</div>
+  <div class="subtle">한미유치원의 각 반에서는 어린이들이 호기심을 따라 탐험과 맥락이 있는 놀이를 통해 한글을 알아갑니다. 그 여정을 지원하기 위해 만들었습니다. <a href="https://good-pike-738.notion.site/94f34ac96ce9470fb9e81e302f4868c6" target="_blank">한글 나와라 뚝딱, 우리가 만든 글자</a> 이야기를 살펴봐 주세요~
+  </div>
+  <br><br>
+  
+  <div class="subtle"><a href="https://hanmiu.cc/play/toy/jamo_anagram.html" target="_blank"><strong>
+  한글 자모 섞어 맞추기
+  </strong></div>
+  <a class="no-underline" href="https://hanmiu.cc/play/toy/jamo.html">
+    <img class="full" src="./images/2023/jamo_anagram.jpg">
+  </a>
+  <div class="subtle">섞인 자모는 원래 무슨 단어였을까요? <a href="https://good-pike-738.notion.site/6fe0adab1aea4296b980f3523843bd00" target="_blank">한글 용사</a> 이야기를 살펴봐 주세요~
+  </div>
   <br><br>
 
   <div class="subtle"><a href="https://hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank"><strong>
