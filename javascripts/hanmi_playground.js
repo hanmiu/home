@@ -8,7 +8,7 @@ html['playground'] = `
   <a class="no-underline" href="https://hanmiu.cc/play/toy/number-slime.html">
     <img class="full" src="./images/2024/numberslime.jpg">
   </a>
-  <div class="subtle">숫자 슬라임을 모으고 가르며 놀 수 있어요. 숫자에도 다양한 모양이 있네요! 어린이들이 말하는 '이만큼'은 과연 '얼마만큼'일까요? <a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5">🔢  작은 수, 풍성한 배움의 씨앗 🌱</a> 이야기도 살펴봐 주세요~</div>
+  <div class="subtle">숫자 슬라임을 모으고 가르며 놀 수 있어요. 숫자에도 다양한 모양이 있네요! 어린이들이 말하는 '이만큼'은 과연 '얼마만큼'일까요? <a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5"  target="_blank">🔢  작은 수, 풍성한 배움의 씨앗 🌱</a> 이야기도 살펴봐 주세요~</div>
   <br><br>
 
   <div class="subtle"><a href="https://hanmiu.cc/play/toy/jamo.html" target="_blank"><strong>
@@ -17,7 +17,7 @@ html['playground'] = `
   <a class="no-underline" href="https://hanmiu.cc/play/toy/jamo.html">
     <img class="full" src="./images/2023/jamo.jpg">
   </a>
-  <div class="subtle">한미유치원의 각 반에서는 어린이들이 호기심을 따라 탐험과 맥락이 있는 놀이를 통해 한글을 알아갑니다. 그 여정을 지원하기 위해 만들었습니다.</div>
+  <div class="subtle">한미유치원의 각 반에서는 어린이들이 호기심을 따라 탐험과 맥락이 있는 놀이를 통해 한글을 알아갑니다. 그 여정을 지원하기 위해 만들었습니다. <a href="https://good-pike-738.notion.site/94f34ac96ce9470fb9e81e302f4868c6" target="_blank">한글 나와라 뚝딱, 우리가 만든 글자</a> 이야기를 살펴봐 주세요~</div>
   <br><br>
 
   <div class="subtle"><a href="https://hanmiu.cc/play/metahanmi/quizcraft.html" target="_blank"><strong>
