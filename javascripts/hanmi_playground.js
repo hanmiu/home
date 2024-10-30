@@ -8,7 +8,7 @@ html['playground'] = `
   <a class="no-underline" href="https://hanmiu.cc/play/toy/number-slime.html">
     <img class="full" src="./images/2024/numberslime.jpg">
   </a>
-  <div class="subtle">숫자 슬라임을 모으고 가르며 놀 수 있어요. 꽃반 친구들이 요청해서 만들었답니다. 숫자에도 다양한 모양이 있네요~ 어린이들이 말하는 '이만큼'은 과연 '얼마만큼'일까요?</div>
+  <div class="subtle">숫자 슬라임을 모으고 가르며 놀 수 있어요. 숫자에도 다양한 모양이 있네요! 어린이들이 말하는 '이만큼'은 과연 '얼마만큼'일까요? <a href="https://good-pike-738.notion.site/1257a34ea6e780f49fd4fe50dafac7e5">🔢  작은 수, 풍성한 배움의 씨앗 🌱</a> 이야기도 살펴봐 주세요~</div>
   <br><br>
 
   <div class="subtle"><a href="https://hanmiu.cc/play/toy/jamo.html" target="_blank"><strong>
