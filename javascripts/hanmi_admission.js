@@ -105,7 +105,7 @@ html['admission'] = `
 <br><br>
 
 <div class="subtle">
-<a href="https://www.go-firstschool.go.kr" target="_blank">입소·입학신청사이트</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
+<a href="https://enter.childinfo.go.kr" target="_blank">입소·입학신청사이트</a>의 일정에 맞춰 계속 이 페이지의 내용을 업데이트할 예정입니다.
   <ul class="flower">
     <li>우선 모집: 11월 01일 (금) ~ 11월 05일 (화)</li>
     <li>일반 모집: 11월 19일 (화) ~ 11월 22일 (금)</li>
