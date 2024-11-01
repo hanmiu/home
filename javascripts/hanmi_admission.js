@@ -7,6 +7,9 @@ html['admission'] = `
 </div>
 <br>
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9hZn_2sn6dA?si=IH3qIYQgRwnkoO1D" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<br><br>
+
 모집대상
 <div class="subtle">
   <ul class="flower">
