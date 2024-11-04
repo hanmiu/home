@@ -41,25 +41,18 @@ html['admission'] = `
 -->
 
 
-<div>교육 설명회 2025</div>
+<div>2025 교육 설명회 및 시설 참관</div>
 <div class="subtle">
   <ul class="leaf">
-    <li>우선 모집: 10/31(목), 11/01(금) 16시 30분</li>
-    <!--<li>일반 모집: 11/14(화) 16시 30분</li>-->
+    <!--<li>우선 모집: 10/31(목), 11/01(금) 16시 30분</li>-->
+    <li>일반 모집: 11월 15일 금요일, 16시 30분 ~ 18시</li>
     <!--<li>일반 모집: 11/14(월) 16시 30분, <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a>  (← 클릭) </li>-->
   </ul>
-</div>
-<br>
-
-<div>시설 참관</div>
-<div class="subtle">
+  일반 모집 설명회 날에 한미유치원을 방문하여 시설을 둘러보고 소개를 받으실 수 있습니다.
   <ul class="leaf">
-    <li>10월 31일 (목) ~ 11월 01일 (금) 16시 30분 ~ 18시</li>
-    <!--<li>11월 14일 설명회 이후에 이어서 진행합니다. <a href="https://forms.gle/1kwVNaahWW7QWffr8" target="_blank"><strong>설명회 및 시설 참관 신청</strong></a></li>-->
+    <li>원장 인사 → 입학 안내 → 교육관 소개 → 사례 발표 → 교실 투어 및 질의 응답</li>   
   </ul>
-  이 기간 동안 한미유치원을 방문하여 시설을 둘러보고 소개를 받으실 수 있습니다.
 </div>
-<br>
 
 <br>
 <div class="subtle">
