@@ -1,7 +1,10 @@
 html['playground'] = `
   <div>어린이의 동시대 환경인 디지털</div>
   <br>
-
+  <div class="subtle"><span style="color: yellowgreen;">❝</span> 우리에게는 아날로그와 디지털 환경이 공존하고 얽혀 있는 것이 매우 중요하다. 왜냐하면 아날로그와 디지털은 함께 흥미로운 경험의 구성을 지원해 주며, 창의성을 촉발시키는 요소가 되기 때문이다. <span style="color: yellowgreen;">❞</span><br>
+<div style="text-align: right; margin-top: 5px;">-  <a href="https://www.nl.go.kr/seoji/contents/S80100000000.do?schM=intgr_detail_view_isbn&isbn=9791197032998&cipId=229185645%2C"  target="_blank">흔적, 말, 재료의 모자이크 (16p)</a></div></div>
+  <br>
+  
   <div class="subtle"><a href="https://hanmiu.cc/play/toy/number-slime.html" target="_blank"><strong>
   숫자 슬라임
   </strong></div>
