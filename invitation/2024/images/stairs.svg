@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g id="Layer4">
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="10" y="20" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="30" y="20" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="60" y="20" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="10" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="20" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="30" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="50" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="70" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="30" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="60" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="60" y="20" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="10" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="20" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="50" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="70" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="30" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="60" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="60" y="20" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="10" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="20" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="50" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="30" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,10)">
+            <rect x="60" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="10" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="20" y="30" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,110,0)">
+            <rect x="30" y="40" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-116.196,217.074)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-123.314,237.074)">
+            <rect x="230" y="210" width="10" height="10" style="stroke:black;stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-116.534,243.853)">
+            <rect x="230" y="210" width="10" height="10" style="stroke:black;stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-109.755,237.074)">
+            <rect x="230" y="210" width="10" height="10" style="stroke:black;stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-116.534,230.295)">
+            <rect x="230" y="210" width="10" height="10" style="stroke:black;stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-122.975,223.853)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-116.196,223.853)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.677939,0,0,0.677939,-109.417,223.853)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.479375,0.479375,-0.479375,0.479375,57.4189,162.9)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.479375,0.479375,-0.479375,0.479375,57.4189,172.487)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.479375,0.479375,-0.479375,0.479375,67.0064,172.487)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(0.479375,0.479375,-0.479375,0.479375,67.0064,162.9)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.15px;"/>
+        </g>
+        <g transform="matrix(1,-1.11022e-16,1.11022e-16,1,-60,70)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,-1.11022e-16,1.11022e-16,1,-70,60)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,-1.11022e-16,1.11022e-16,1,-50,60)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,-1.11022e-16,1.11022e-16,1,-60,50)">
+            <rect x="230" y="210" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="10" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="240" y="10" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="220" y="20" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="20" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="100" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,30)">
+            <rect x="100" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,20)">
+            <rect x="100" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="110" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="120" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="130" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,30)">
+            <rect x="130" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="140" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="150" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="270" y="30" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="150" y="40" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="220" y="40" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="270" y="40" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="150" y="50" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="220" y="50" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="50" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="50" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="150" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="240" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="60" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="70" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="70" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="270" y="70" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="80" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="90" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="90" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="100" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="220" y="100" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="100" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="240" y="100" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="100" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="100" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="110" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="120" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="130" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="130" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="130" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="130" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="130" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="270" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="280" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="290" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="300" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="310" y="140" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="150" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="150" width="10" height="10" style="fill:rgb(255,255,0);stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="150" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="150" width="10" height="10" style="fill:rgb(255,255,0);stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="150" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="150" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="310" y="150" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="220" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="240" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="310" y="160" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="240" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="310" y="170" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="240" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="250" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="260" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="270" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="280" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="290" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="300" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="310" y="180" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="190" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="190" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="190" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="200" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="200" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="200" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="200" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="50" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="60" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="80" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="170" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="180" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="190" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="200" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="210" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="220" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="230" y="210" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="220" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="220" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="50" y="220" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="60" y="220" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="220" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="80" y="220" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="90" y="220" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="220" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="230" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="230" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="50" y="230" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="60" y="230" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="230" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="80" y="230" width="10" height="10" style="fill:rgb(255,255,0);stroke:rgb(255,255,0);stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="90" y="230" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="230" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="50" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="60" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="80" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="90" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="240" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="250" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="50" y="250" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="60" y="250" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="250" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="80" y="250" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="250" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="100" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="110" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="120" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="130" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,30)">
+            <rect x="130" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="140" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="150" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="160" y="260" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="270" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="270" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="100" y="270" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="40" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="50" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="60" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="70" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="80" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="90" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="100" y="280" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="290" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="300" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="0" y="310" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="10" y="310" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="20" y="310" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,40,40)">
+            <rect x="30" y="310" width="10" height="10" style="stroke:black;stroke-width:0.1px;"/>
+        </g>
+    </g>
+</svg>

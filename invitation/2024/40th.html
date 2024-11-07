@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한미유치원 40주년 기념 초대장</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Serif KR', serif;
+            min-height: 100vh;
+            color: #1a237e;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e1eaf1 100%);
+        }
+        
+        #card {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .container {
+            position: relative;
+            max-width: 100%;
+            min-height: 100vh;
+            padding: 2rem;
+            margin: 0 auto;
+            text-align: center;
+            z-index: 2;
+        }
+        
+        .invitation-card {
+            padding: 2rem;
+            /*
+            background: rgba(255, 255, 255, 0.92);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+            max-width: 600px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            */
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #1a237e;
+            letter-spacing: 0.1em;
+        }
+        
+        .content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            text-align: left;
+            word-break: keep-all;
+        }
+        
+        .signature {
+            text-align: right;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            margin-top: 2rem;
+            background-color: #1a237e;
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn:hover {
+            background-color: #283593;
+            transform: translateY(-2px);
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 2rem auto;
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .stairs {
+            width: clamp(100px, 50vw, 200px); /* 최소 200px, 기본 50vw, 최대 600px */
+            height: auto;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="card"></canvas>
+    
+    <div class="container">
+        <div class="invitation-card">
+            <!-- <svg class="logo" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#1a237e" stroke-width="2"/>
+                <path fill="#1a237e" d="M30 40 L50 65 L70 40 Z"/>
+                <text x="50" y="35" text-anchor="middle" font-family="'Noto Serif KR'" font-size="14" fill="#1a237e">한미유치원</text>
+                <text x="50" y="85" text-anchor="middle" font-family="'Noto Serif KR'" font-size="12" fill="#1a237e">40주년</text>
+            </svg> -->
+            <img src="./images/stairs.svg" class="stairs">
+            
+            <h1>그리운 선생님들께</h1>
+            
+            <div class="content">
+                그동안 안녕하셨어요? 원장 박소미입니다.<br><br>
+                
+                올해 12월로 한미유치원이 40돌을 맞습니다.<br><br>
+                
+                선생님들이 계셨기에 한미가 '풍요로운 놀이 속에서 배움과 삶의 질을 높이는' 생동감 있는
+                모습을 오늘까지 이어올 수 있었다고 생각합니다.<br><br>
+                
+                이에 감사한 마음과 함께 그리운 마음을 담아 선생님들을 만나는 작은 기념 모임을 가지려고 합니다.<br><br>
+                
+                우리 서로 지난 시간의 추억과 안부를 나누며 함께 밀렸던 이야기를 나눌 수 있기를 바라며, 선생님을 초대합니다!
+            </div>
+            
+            <div class="signature">
+                2024년 11월 8일<br>
+                원장 박소미 드림
+            </div>
+            
+            <a href="#" class="btn">참석 여부 알려주기</a>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+    <script>
+        let g = document.querySelector('#card').getContext('2d');
+        g.canvas.width = innerWidth;
+        g.canvas.height = innerHeight;
+        
+        let ctx = document.createElement('canvas').getContext('2d');
+        ctx.canvas.width = g.canvas.width;
+        ctx.canvas.height = g.canvas.height;
+        
+        let gradient = g.createLinearGradient(0,g.canvas.height/2, 0,g.canvas.height);
+        gradient.addColorStop(0, 'hsl(0, 0%, 100%)');
+        gradient.addColorStop(.5, `hsla(${173 + (Math.random()*2-1) * 20}, 100%, 77%, 0.8)`);
+        gradient.addColorStop(1, `hsl(${208 + (Math.random()*2-1) * 20}, 66%, 65%)`);
+        
+        let time = 0;
+        
+        let flakes = [];
+        let ptcls = [];
+        
+        let touch = {
+            down: false,
+            x: 0,
+            y: 0,
+            oldx: 0,
+            oldy: 0,
+        };
+        
+        //------
+        let camera, scene, renderer;
+        let uniforms;
+        
+        let vs = `
+  varying vec2 vUv;
+  void main()	{
+    vUv = uv;
+    gl_Position = vec4( position, 1.0 );
+  }
+  `;
+        
+        let fs = `
+  varying vec2 vUv;
+  uniform vec2 resolution;
+  uniform float time;
+  //uniform sampler2D map;
+
+  float pi = 3.141592;
+
+  #define OCTAVES 6
+
+  float random(vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
+  }
+
+  float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+
+    float a = random(i + vec2(0.0, 0.0));
+    float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0));
+    float d = random(i + vec2(1.0, 1.0));
+
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    float result = a + u.x*(b - a) + u.y*(c - a) + u.x*u.y*(a - b - c + d);
+
+    return result;
+  }
+
+  float fbm(vec2 st) {
+    float value = 0.0;
+    float amplitude = .5;
+    float frequency = 0.0;
+
+    for (int i = 0; i < OCTAVES; i++) {
+      value += amplitude * noise(st);
+      st *= 2.0;
+      amplitude *= 0.5;
+    }
+    return value;
+  }
+
+  vec3 gradient(vec2 p) {
+    return vec3(-0.1, p.y - 0.5, 0.8);
+  }
+
+
+  void main()	{
+    vec2 p = - 1.0 + 2.0 * vUv;
+	p.x *= resolution.x / resolution.y;
+
+    vec3 color = vec3(0.0);
+	
+    float fb = fbm(p + fbm(p * 2.0) + time * 0.1);
+    float fb1 = fbm(p + fbm(p * 2.0) + time * 0.2);
+	color += fb;
+	// color += gradient(p);
+    color += 0.3;
+    // color *= vec3(0.4, (p.y*0.5+0.5)*2.0, 0.6) * 2.0;
+    // color += vec3(0.0, sin(time)*0.5+0.5, 0.2) * 0.2;
+    color *= (fb1 + 0.6);
+    color += vec3(p.y*0.5+0.5)*0.5;
+    color = pow(color, vec3(0.9545)*fb);
+    
+
+	gl_FragColor = vec4( color, 1.0 );
+  }
+  `;
+        //------
+        
+        let frame_count = 0;
+        function update() {
+            for(let i = 0; i < ptcls.length; i++) {
+                ptcls[i].update();
+            }
+            frame_count += 1;
+        }
+        
+        function draw() {
+            g.fillStyle = 'white';
+            g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+            
+            g.save();
+            g.scale(2, 2);
+            g.drawImage(renderer.domElement, 0, 0);
+            g.restore();
+            
+            g.fillStyle = 'rgb(240, 240, 240)';
+            g.strokeStyle = 'rgb(180, 180, 180)';
+            for(let i = 0; i < ptcls.length / 2; i++) {
+                ptcls[i].draw();
+            }
+            
+            g.drawImage(ctx.canvas, 0, 0);
+            
+            let sh = (g.canvas.height / 15 | 0);
+            // let iw = sh * 6;
+            // g.save();
+            // g.translate(g.canvas.width / 2, g.canvas.height * 0.8);
+            // g.rotate(Math.sin(time * 0.001) * Math.PI * 0.01);
+            // g.drawImage(img_tree, -iw/2, -iw, iw, iw);
+            // g.restore();
+            
+            for(let i = ptcls.length / 2; i < ptcls.length; i++) {
+                ptcls[i].draw();
+            }
+            
+            // g.fillStyle = gradient;
+            // g.beginPath();
+            // g.moveTo(0, g.canvas.height * 0.85);
+            // g.quadraticCurveTo(g.canvas.width/2, g.canvas.height * 0.75, g.canvas.width, g.canvas.height * 0.85);
+            // g.lineTo(g.canvas.width, g.canvas.height);
+            // g.lineTo(0, g.canvas.height);
+            // g.fill();
+            
+            g.textAlign = 'center';
+            g.textBaseline = 'middle';
+            
+            let h = (Math.sin(time * 0.0001) * 0.5 + 0.5);
+            let sat = 78 + (Math.sin(time * 0.0002) * 0.5 + 0.5) * 20;
+            let lig = 17 + (Math.cos(time * 0.0003) * 0.5 + 0.5) * 30;
+            
+            // draw_logo();
+        }
+        
+        function loop(timestamp) {
+            time = timestamp;
+            uniforms[ "time" ].value = timestamp / 1000;
+            if(frame_count % 4 == 0) {
+                renderer.render( scene, camera );  
+            }
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        
+        function shuffle(array) {
+            let n = array.length, t, i;
+            while (n) {
+                i = Math.random() * n-- | 0; // 0 ≤ i < n
+                t = array[n];
+                array[n] = array[i];
+                array[i] = t;
+            }
+            return array;
+        }
+        
+        class Ptcl {
+            constructor(x, y, r, img) {
+                this.x = x;
+                this.to_x = x;
+                this.y = y;
+                this.to_y = y;
+                this.r = r;
+                this.img = img;
+                this.speed = (0.5 + Math.random() * 0.5) * 0.75;
+                this.rot_dir = Math.random() > 0.5 ? 1 : -1;
+                this.rot_angle = 0.01 + Math.random() * 0.02;
+                this.rot = 0;
+            }
+            
+            update() {
+                this.to_x += (Math.random() * 2 - 1)  * 2;
+                this.x += (this.to_x - this.x) * 0.1;
+                this.to_y += this.speed + (2* Math.random() - 1) * 0.3;
+                this.y += (this.to_y - this.y) * 0.1;
+                this.rot += this.rot_dir * this.rot_angle;
+                
+                if(this.x + this.r*2 < 0) {
+                    this.x = g.canvas.width + this.r*2;
+                    this.to_x = this.x;
+                }
+                if(this.x - this.r*2 > g.canvas.width) {
+                    this.x = -this.r*2;
+                    this.to_x = this.x;
+                }
+                if(this.y - this.r*2 > g.canvas.height) {
+                    this.y = -this.r*2;
+                    this.to_y = this.y;
+                    this.x = Math.random() * g.canvas.width;
+                    this.to_x = this.x;
+                }
+            }
+            
+            draw() {
+                g.save();
+                g.globalAlpha = 1.0;
+                g.globalCompositeOperation = 'screen';
+                g.translate(this.x, this.y);
+                g.rotate(this.rot);
+                g.scale(this.r / 25, this.r / 25);
+                g.drawImage(this.img, -64, -64);
+                g.restore();
+            }
+        }
+        
+        function draw_logo() {
+            let s = g.canvas.height * 0.07 / 100;
+            g.save();
+            g.translate(g.canvas.width / 2, g.canvas.height - 50);
+            g.save();
+            g.scale(s, s);
+            g.translate(-305 / 2, -50);
+            g.beginPath();
+            g.moveTo(26.405,23.245);g.bezierCurveTo(26.405,23.245,26.881,26.114,27.220,29.950);g.moveTo(11.354,29.950);g.lineTo(41.454,29.950);g.moveTo(37.190,48.339);g.bezierCurveTo(37.190,43.725,33.062,39.980,27.979,39.980);g.lineTo(24.830,39.980);g.bezierCurveTo(19.746,39.980,15.620,43.725,15.620,48.339);g.bezierCurveTo(15.620,52.953,19.746,56.697,24.830,56.697);g.lineTo(27.979,56.697);g.bezierCurveTo(33.062,56.697,37.190,52.953,37.190,48.339);g.closePath();g.moveTo(54.946,23.241);g.lineTo(54.946,60.041);g.moveTo(54.945,43.324);g.lineTo(64.902,43.324);g.moveTo(18.038,66.730);g.bezierCurveTo(18.038,71.342,16.822,76.787,25.891,76.760);g.lineTo(58.121,76.760);g.moveTo(77.431,29.950);g.lineTo(100.399,29.950);g.lineTo(100.399,63.385);g.lineTo(77.431,63.385);g.closePath();g.moveTo(117.555,23.263);g.lineTo(117.555,73.417);g.moveTo(171.459,34.571);g.bezierCurveTo(171.459,28.397,166.278,23.386,159.897,23.386);g.lineTo(155.944,23.386);g.bezierCurveTo(149.561,23.386,144.382,28.397,144.382,34.571);g.bezierCurveTo(144.382,40.744,149.561,45.755,155.944,45.755);g.lineTo(159.897,45.755);g.bezierCurveTo(166.278,45.755,171.459,40.744,171.459,34.571);g.closePath();g.moveTo(151.173,76.708);g.bezierCurveTo(151.173,62.099,152.196,54.288,142.887,53.984);g.bezierCurveTo(135.824,53.754,132.047,49.789,131.672,45.756);g.moveTo(164.606,76.760);g.bezierCurveTo(164.606,62.151,163.644,54.340,172.954,54.036);g.bezierCurveTo(180.017,53.806,183.794,50.522,184.168,46.489);g.moveTo(193.295,33.337);g.lineTo(220.044,33.337);g.moveTo(206.677,26.649);g.bezierCurveTo(206.677,26.649,208.893,40.002,206.677,46.092);g.bezierCurveTo(204.447,52.221,193.314,63.261,193.296,63.429);g.moveTo(206.675,46.092);g.lineTo(220.043,63.429);g.moveTo(233.419,23.263);g.lineTo(233.419,73.417);g.moveTo(273.707,31.600);g.bezierCurveTo(273.707,26.986,269.579,23.241,264.497,23.241);g.lineTo(261.348,23.241);g.bezierCurveTo(256.264,23.241,252.137,26.986,252.137,31.600);g.bezierCurveTo(252.137,36.214,256.264,39.958,261.348,39.958);g.lineTo(264.497,39.958);g.bezierCurveTo(269.579,39.958,273.707,36.214,273.707,31.600);g.closePath();g.moveTo(246.856,50.012);g.bezierCurveTo(263.000,50.801,272.258,51.404,280.395,46.668);g.moveTo(262.923,59.077);g.bezierCurveTo(262.923,59.077,263.527,55.428,263.959,50.550);g.moveTo(282.312,57.379);g.lineTo(292.270,57.379);g.moveTo(292.293,23.241);g.lineTo(292.293,63.407);g.moveTo(253.685,66.730);g.bezierCurveTo(253.685,71.342,252.468,76.787,261.537,76.760);g.lineTo(293.767,76.760);
+            g.lineCap = 'round';
+            g.lineJoin = 'round';
+            g.lineWidth = 4.5;
+            g.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            g.stroke();
+            g.restore();
+            g.restore();
+            g.lineWidth = 1;
+        }
+        
+        function paint_flake(x, y) {
+            let s = g.canvas.height * 0.0001 + (Math.random() * 0.01);
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.random() * Math.PI * 2);
+            ctx.scale(s, s);
+            ctx.drawImage(flakes[Math.random() * (flakes.length - 1) | 0], -64, -64);
+            ctx.restore();
+        }
+        
+        function touchstart(e) {
+            e.target.focus();
+            e.preventDefault();
+            touch.down = true;
+            if(e.changedTouches) {
+                if(e.changedTouches.length > 0) {
+                    touch.x = e.changedTouches[0].pageX;
+                    touch.y = e.changedTouches[0].pageY;
+                }
+            }
+            else {
+                touch.x = e.pageX;
+                touch.y = e.pageY;
+            }
+            touch.oldx = touch.x;
+            touch.oldy = touch.y;
+            paint_flake(touch.x, touch.y);
+        }
+        
+        function touchmove(e) {
+            e.preventDefault();
+            touch.oldx = touch.x;
+            touch.oldy = touch.y;
+            if(e.changedTouches) {
+                if(e.changedTouches.length > 0) {
+                    touch.x = e.changedTouches[0].pageX;
+                    touch.y = e.changedTouches[0].pageY;
+                }
+            }
+            else {
+                touch.x = e.pageX;
+                touch.y = e.pageY;
+            }
+            if(touch.down) {
+                paint_flake(touch.x, touch.y);  
+            }
+            
+            for(let i = 0; i < ptcls.length; i++) {
+                let ptcl = ptcls[i];
+                let dx = touch.x - ptcl.x;
+                let dy = touch.y - ptcl.y;
+                let d = Math.sqrt(dx*dx+dy*dy) + 1e-6;
+                if(d < g.canvas.height * 0.1) {
+                    let ux = dx / d;
+                    let uy = dy / d;
+                    ptcl.to_x += -ux * 10;
+                    ptcl.to_y += -uy * 10;
+                }
+            }
+        }
+        
+        function touchend(e) {
+            e.preventDefault();
+            touch.down = false;
+            if(e.changedTouches) {
+                if(e.changedTouches.length > 0) {
+                    touch.x = e.changedTouches[0].pageX;
+                    touch.y = e.changedTouches[0].pageY;
+                }
+            }
+            else {
+                touch.x = e.pageX;
+                touch.y = e.pageY;
+            }
+        }
+        
+        function init() {
+            for(let i = 0; i < 9; i++) {
+                let img = new Image();
+                img.src = `./images/snow(${i}).png`;
+                flakes.push(img);
+            }
+            
+            let sh = g.canvas.height / 300;
+            for(let i = 0; i < 100; i++) {
+                let x = Math.random() * g.canvas.width;
+                let y = Math.random() * g.canvas.height;
+                let r = (sh + 2 * sh * Math.random()) * 0.5;
+                let img = flakes[Math.random() * flakes.length | 0];
+                let ptcl = new Ptcl(x, y, r, img);
+                ptcls.push(ptcl);
+            }
+            
+            container = document.getElementById( 'three' );
+            camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+            scene = new THREE.Scene();
+            
+            let geometry = new THREE.PlaneBufferGeometry( 2, 2 );
+            uniforms = {
+                'time': { value: 1.0 },
+                'resolution': { value: new THREE.Vector2(innerWidth, innerHeight) },
+            };
+            
+            let material = new THREE.ShaderMaterial( {
+                uniforms: uniforms,
+                vertexShader: vs,
+                fragmentShader: fs,
+            } );
+            
+            let mesh = new THREE.Mesh( geometry, material );
+            scene.add( mesh );
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio( 1 );
+            
+            renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+            uniforms.resolution.value.x = window.innerWidth/2;
+            uniforms.resolution.value.y = window.innerHeight/2;
+            
+            g.canvas.addEventListener('mousedown', touchstart, false);
+            g.canvas.addEventListener('mousemove', touchmove, false);
+            g.canvas.addEventListener('mouseup', touchend, false);
+            
+            g.canvas.addEventListener('touchstart', touchstart, false);
+            g.canvas.addEventListener('touchmove', touchmove, false);
+            g.canvas.addEventListener('touchend', touchend, false);
+        }
+        
+        init();
+        loop();
+    </script>
+</body>
+</html>
