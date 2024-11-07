@@ -18,7 +18,7 @@
             min-height: 100vh;
             color: #1a237e;
             position: relative;
-            overflow: hidden;
+            /* overflow: hidden; */
             background: linear-gradient(135deg, #f0f4f8 0%, #e1eaf1 100%);
         }
         
@@ -42,6 +42,7 @@
         }
         
         .invitation-card {
+            overflow-y: auto;
             padding: 2rem;
             /*
             background: rgba(255, 255, 255, 0.92);
@@ -522,13 +523,13 @@
             uniforms.resolution.value.x = window.innerWidth/2;
             uniforms.resolution.value.y = window.innerHeight/2;
             
-            g.canvas.addEventListener('mousedown', touchstart, false);
-            g.canvas.addEventListener('mousemove', touchmove, false);
-            g.canvas.addEventListener('mouseup', touchend, false);
+            // g.canvas.addEventListener('mousedown', touchstart, false);
+            // g.canvas.addEventListener('mousemove', touchmove, false);
+            // g.canvas.addEventListener('mouseup', touchend, false);
             
-            g.canvas.addEventListener('touchstart', touchstart, false);
-            g.canvas.addEventListener('touchmove', touchmove, false);
-            g.canvas.addEventListener('touchend', touchend, false);
+            // g.canvas.addEventListener('touchstart', touchstart, false);
+            // g.canvas.addEventListener('touchmove', touchmove, false);
+            // g.canvas.addEventListener('touchend', touchend, false);
         }
         
         init();
