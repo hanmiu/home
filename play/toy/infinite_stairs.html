@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무한의 계단</title>
+    <style>
+        :root {
+            --background: #FFF5E6;
+            --primary: #FFB6C1;
+            --secondary: #B0E0E6;
+            --accent: #98FB98;
+            --text: #6A5ACD;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--background);
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: var(--text);
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .button.secondary {
+            background-color: var(--secondary);
+        }
+
+        .button.accent {
+            background-color: var(--accent);
+        }
+
+        .game-title {
+            font-size: 3em;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        .emoji-stairs {
+            font-size: 4em;
+            margin: 30px 0;
+        }
+
+        .players-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .player-card {
+            padding: 15px;
+            margin: 10px;
+            border-radius: 15px;
+            color: var(--text);
+            font-weight: bold;
+            min-width: 200px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .player-card.active {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .character-item {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            padding: 5px;
+            margin: 5px 0;
+        }
+
+        .floor-input {
+            padding: 10px;
+            font-size: 18px;
+            width: 80px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        .reset-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--background);
+        }
+
+        .loading-icon {
+            font-size: 48px;
+            animation: bounce 1s infinite;
+        }
+
+        .loading-text {
+            color: var(--text);
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .error-message {
+            color: #FF6B6B;
+            background-color: rgba(255, 107, 107, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-icon">🎲</div>
+        <div id="loading-text" class="loading-text">수수께끼를 불러오는 중입니다...</div>
+    </div>
+
+    <div id="game-container" class="hidden">
+        <div id="start-screen">
+            <h1 class="game-title">무한의 계단</h1>
+            <div class="emoji-stairs">🪜✨</div>
+            <button class="button" onclick="startGame()">플레이</button>
+        </div>
+
+        <div id="player-select-screen" class="hidden">
+            <h2 style="color: var(--text); margin-bottom: 20px;">몇 명이서 놀까요?</h2>
+            <div>
+                <button class="button secondary" onclick="selectPlayers(2)">2명</button>
+                <button class="button secondary" onclick="selectPlayers(3)">3명</button>
+                <button class="button secondary" onclick="selectPlayers(4)">4명</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div id="players-status" class="players-container"></div>
+            
+            <div id="floor-input-screen" class="hidden">
+                <h3 style="color: var(--text); margin-bottom: 20px;">
+                    플레이어 <span id="current-player-num"></span> 차례: 몇 층에 도착했나요?
+                </h3>
+                <input type="number" id="floor-number" class="floor-input">
+                <button class="button" onclick="enterFloor()">도착!</button>
+            </div>
+
+            <div id="quiz-screen" class="hidden">
+                <h3 style="color: var(--text); margin-bottom: 20px">
+                    <span id="current-floor"></span>층 퀴즈
+                </h3>
+                <p id="quiz-question" style="color: var(--text); margin-bottom: 30px"></p>
+                <div id="quiz-options"></div>
+            </div>
+
+            <div id="result-screen" class="hidden">
+                <h3 id="result-message" style="color: var(--text); margin-bottom: 20px"></h3>
+                <button class="button" onclick="nextTurn()">다음 차례</button>
+            </div>
+        </div>
+
+        <button id="reset-button" class="button accent reset-button hidden" onclick="resetGame()">
+            새로 시작하기
+        </button>
+    </div>
+
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1nEq8Sdh6FcGuxruw7zcNkxty6EqpiHx-bV45VWJ7Ylc/export?format=csv&gid=0';
+        const playerColors = ['#FF9999', '#66CCFF', '#99FF99', '#FFCC99'];
+        
+        let gameState = {
+            phase: 'loading',
+            playerCount: 2,
+            currentPlayer: 0,
+            currentFloor: 0,
+            currentPuzzle: null,
+            playerCharacters: [],
+            availablePuzzles: []
+        };
+
+        // 유틸리티 함수
+        function removeQuotes(str) {
+            return str.replace(/^["']|["']$/g, '').trim();
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(header => removeQuotes(header.trim()));
+            return lines.slice(1)
+                .filter(line => line.trim() !== '')
+                .map(line => {
+                    const values = line.split(',').map(removeQuotes);
+                    return headers.reduce((obj, header, index) => {
+                        obj[header] = values[index] || '';
+                        return obj;
+                    }, {});
+                });
+        }
+
+        // 게임 초기화 및 데이터 로딩
+        async function initializeGame() {
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const csvText = await response.text();
+                const puzzleData = parseCSV(csvText);
+                
+                // 데이터를 게임 형식으로 변환
+                gameState.availablePuzzles = puzzleData
+                    .filter(row => row['수수께끼'] && row['정답'])
+                    .map(row => ({
+                        question: row['수수께끼'],
+                        answer: row['정답'],
+                        options: [row['정답'], row['보기1'], row['보기2']]
+                            .filter(Boolean)
+                            .sort(() => Math.random() - 0.5)
+                    }));
+
+                if (gameState.availablePuzzles.length === 0) {
+                    throw new Error('수수께끼를 찾을 수 없습니다.');
+                }
+
+                gameState.phase = 'start';
+                console.log(gameState);
+                // 로딩 화면 숨기고 게임 표시
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+                showScreen('start-screen');
+            } catch (error) {
+                console.error('Error loading puzzles:', error);
+                const loadingText = document.getElementById('loading-text');
+                loadingText.textContent = '데이터를 불러오는 중 오류가 발생했습니다.';
+                loadingText.classList.add('error-message');
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('#game-container > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function startGame() {
+            gameState.phase = 'selectPlayers';
+            showScreen('player-select-screen');
+            document.getElementById('reset-button').classList.remove('hidden');
+        }
+
+        function selectPlayers(num) {
+            gameState.playerCount = num;
+            gameState.playerCharacters = Array(num).fill().map(() => []);
+            gameState.phase = 'enterFloor';
+            showScreen('game-screen');
+            updateGameScreen();
+        }
+
+        function updateGameScreen() {
+            const playersStatus = document.getElementById('players-status');
+            playersStatus.innerHTML = gameState.playerCharacters.map((characters, i) => `
+                <div class="player-card ${i === gameState.currentPlayer ? 'active' : ''}" 
+                     style="background-color: ${playerColors[i]}">
+                    <div style="font-size: 1.2em; margin-bottom: 10px">플레이어 ${i + 1}</div>
+                    <div style="font-size: 0.9em">
+                        ${characters.map(char => `
+                            <div class="character-item">
+                                <span style="margin-right: 10px">🐰</span>
+                                <span>${char.ability}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('floor-input-screen').classList.remove('hidden');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('current-player-num').textContent = gameState.currentPlayer + 1;
+        }
+
+        function enterFloor() {
+            const floorInput = document.getElementById('floor-number');
+            gameState.currentFloor = parseInt(floorInput.value) || 0;
+            const puzzle = getRandomPuzzle();
+            
+            if (puzzle) {
+                gameState.currentPuzzle = puzzle;
+                showQuiz();
+            } else {
+                alert("모든 수수께끼를 다 풀었습니다! 게임을 다시 시작합니다.");
+                resetGame();
+            }
+        }
+
+        function showQuiz() {
+            document.getElementById('floor-input-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('current-floor').textContent = gameState.currentFloor;
+            document.getElementById('quiz-question').textContent = gameState.currentPuzzle.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = gameState.currentPuzzle.options
+                .map(option => `
+                    <button class="button" onclick="answerQuiz('${option}')" style="margin: 0 10px">
+                        ${option}
+                    </button>
+                `).join('');
+        }
+
+        function getRandomPuzzle() {
+            if (gameState.availablePuzzles.length === 0) return null;
+            const randomIndex = Math.floor(Math.random() * gameState.availablePuzzles.length);
+            const puzzle = gameState.availablePuzzles[randomIndex];
+            gameState.availablePuzzles.splice(randomIndex, 1);
+            return puzzle;
+        }
+
+        function answerQuiz(selectedAnswer) {
+            const correct = selectedAnswer === gameState.currentPuzzle.answer;
+            if (correct) {
+                gameState.playerCharacters[gameState.currentPlayer].push({
+                    name: '토끼',
+                    ability: '5층 앞으로 이동'
+                });
+            }
+            
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('result-message').textContent = 
+                correct ? "정답입니다!" : "틀렸습니다.";
+        }
+
+        function nextTurn() {
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.playerCount;
+            gameState.phase = 'enterFloor';
+            updateGameScreen();
+            document.getElementById('floor-number').value = '';
+        }
+
+        function resetGame() {
+            const originalPuzzles = [...gameState.availablePuzzles];
+            gameState = {
+                phase: 'start',
+                playerCount: 2,
+                currentPlayer: 0,
+                currentFloor: 0,
+                currentPuzzle: null,
+                playerCharacters: [],
+                availablePuzzles: originalPuzzles
+            };
+            showScreen('start-screen');
+            document.getElementById('reset-button').classList.add('hidden');
+        }
+
+        // 게임 시작
+        initializeGame();
+    </script>
+</body>
+</html>
