@@ -99,9 +99,12 @@
         }
 
         .reset-button {
-            position: fixed;
+            /* 
+            position: fixed; 
             bottom: 20px;
             right: 20px;
+            */
+            margin-top: 100px;
         }
 
         .hidden {
@@ -237,6 +240,15 @@
                 
                 const csvText = await response.text();
                 const puzzleData = parseCSV(csvText);
+
+                const response2 = await fetch('https://docs.google.com/spreadsheets/d/1nEq8Sdh6FcGuxruw7zcNkxty6EqpiHx-bV45VWJ7Ylc/export?format=csv&gid=181252125');
+                if (!response2.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const csvText2 = await response2.text();
+                const puzzleData2 = parseCSV(csvText2);
+                console.log(puzzleData2);
                 
                 // 데이터를 게임 형식으로 변환
                 gameState.availablePuzzles = puzzleData
