@@ -46,19 +46,14 @@
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(8, 40px);
-            grid-template-rows: repeat(8, 40px);
+            width: 320px;
+            height: 320px;
             border: 1px solid #ccc;
-            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
-            linear-gradient(-45deg, #ccc 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #ccc 75%),
-            linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
+
         .pixel {
-            width: 40px;
-            height: 40px;
+            width: 100%;
+            height: 100%;
             border: 1px solid #ccc;
             padding: 0;
             cursor: pointer;
@@ -106,14 +101,6 @@
         }
         .no-drop {
             cursor: no-drop;
-        }
-        .transparent-bg {
-            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
-            linear-gradient(-45deg, #ccc 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #ccc 75%),
-            linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
         #printArea {
             display: none;
@@ -176,12 +163,15 @@
     </div>
     
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const gridSize = parseInt(urlParams.get('s')) || 8; // 기본값 8
+
         const colors = [
         '#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3', 
         '#FF8B94', '#A8E6CF', '#000000', '#FFFFFF', 'transparent'
         ];
         let selectedColor = colors[0];
-        const pixels = Array(64).fill('transparent');
+        const pixels = Array(gridSize * gridSize).fill('transparent');
         let history = [JSON.parse(JSON.stringify(pixels))];
         let historyIndex = 0;
         
@@ -206,10 +196,82 @@
             document.querySelectorAll('.color-button').forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
         }
-        
+
+        // Grid 클래스의 CSS를 JavaScript로 동적 설정
+        function updateGridStyle() {
+            const grid = document.getElementById('pixelGrid');
+            const patternSize = 320 / gridSize; // 전체 크기를 그리드 크기로 나눔
+            const halfPatternSize = patternSize / 2;
+            
+            grid.style.cssText = `
+                display: grid;
+                width: 320px;
+                height: 320px;
+                grid-template-columns: repeat(${gridSize}, 1fr);
+                grid-template-rows: repeat(${gridSize}, 1fr);
+                border: 1px solid #ccc;
+                background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+                    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #ccc 75%),
+                    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+                background-size: ${patternSize}px ${patternSize}px;
+                background-position: 0 0, 0 ${halfPatternSize}px, ${halfPatternSize}px ${-halfPatternSize}px, ${-halfPatternSize}px 0px;
+            `;
+        }
+
+        // Pixel 클래스의 스타일도 동적으로 설정
+        function updatePixelStyle() {
+            const style = document.createElement('style');
+            const patternSize = 320 / gridSize;
+            const halfPatternSize = patternSize / 2;
+            
+            style.textContent = `
+                .pixel {
+                    width: 100%;
+                    height: 100%;
+                    border: 1px solid #ccc;
+                    padding: 0;
+                    cursor: pointer;
+                    box-sizing: border-box;
+                }
+                .transparent-bg {
+                    background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+                        linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #ccc 75%),
+                        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+                    background-size: ${patternSize}px ${patternSize}px;
+                    background-position: 0 0, 0 ${halfPatternSize}px, ${halfPatternSize}px ${-halfPatternSize}px, ${-halfPatternSize}px 0px;
+                }
+            `;
+            
+            // 이전 스타일 제거
+            const oldStyle = document.querySelector('style[data-pixel-style]');
+            if (oldStyle) {
+                oldStyle.remove();
+            }
+            
+            style.setAttribute('data-pixel-style', 'true');
+            document.head.appendChild(style);
+        }
+
+        // CSS 스타일을 HTML에서 제거 (스크립트로 동적 관리할 것이므로)
+        // .grid와 .pixel, .transparent-bg 클래스의 background-image 관련 스타일을 제거
+
+        // createPixelGrid 함수 수정
         function createPixelGrid() {
             const grid = document.getElementById('pixelGrid');
-            for (let i = 0; i < 64; i++) {
+            
+            // 그리드 스타일 업데이트
+            updateGridStyle();
+            
+            // 픽셀 스타일 업데이트
+            updatePixelStyle();
+            
+            // 기존 픽셀 제거
+            grid.innerHTML = '';
+            
+            // 새 픽셀 생성
+            for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('button');
                 pixel.className = 'pixel';
                 pixel.onclick = () => colorPixel(i, pixel);
@@ -217,6 +279,19 @@
             }
             updateGrid();
         }
+        
+        // function createPixelGrid() {
+        //     const grid = document.getElementById('pixelGrid');
+        //     grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+        //     grid.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+        //     for (let i = 0; i < gridSize * gridSize; i++) {
+        //         const pixel = document.createElement('button');
+        //         pixel.className = 'pixel';
+        //         pixel.onclick = () => colorPixel(i, pixel);
+        //         grid.appendChild(pixel);
+        //     }
+        //     updateGrid();
+        // }
         
         function colorPixel(index, pixel) {
             pixels[index] = selectedColor;
@@ -245,13 +320,16 @@
         
         function saveImage() {
             const canvas = document.getElementById('saveCanvas');
+            // 캔버스 크기를 그리드 크기에 맞게 조정
+            canvas.width = 1024;
+            canvas.height = 1024;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            const pixelSize = canvas.width / 8;
+            const pixelSize = canvas.width / gridSize;
             pixels.forEach((color, i) => {
-                const x = (i % 8) * pixelSize;
-                const y = Math.floor(i / 8) * pixelSize;
+                const x = (i % gridSize) * pixelSize;
+                const y = Math.floor(i / gridSize) * pixelSize;
                 if (color !== 'transparent') {
                     ctx.fillStyle = color;
                     ctx.fillRect(x, y, pixelSize, pixelSize);
@@ -266,7 +344,7 @@
             ('0' + now.getMinutes()).slice(-2);
             
             const link = document.createElement('a');
-            link.download = '내캐릭터_' + dateString + '.png';
+            link.download = `캐릭터_${gridSize}x${gridSize}_${dateString}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -320,9 +398,9 @@
         }
         
         function processImageData(imageData) {
-            const pixelSize = 1024 / 8;
-            for (let y = 0; y < 8; y++) {
-                for (let x = 0; x < 8; x++) {
+            const pixelSize = 1024 / gridSize; // 1024px 기준으로 계산
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
                     const centerX = Math.floor(x * pixelSize + pixelSize / 2);
                     const centerY = Math.floor(y * pixelSize + pixelSize / 2);
                     const index = (centerY * 1024 + centerX) * 4;
@@ -331,7 +409,7 @@
                     const b = imageData.data[index + 2];
                     const a = imageData.data[index + 3];
                     const color = a === 0 ? 'transparent' : `rgb(${r},${g},${b})`;
-                    pixels[y * 8 + x] = color;
+                    pixels[y * gridSize + x] = color;
                 }
             }
             updateGrid();
@@ -382,18 +460,18 @@
             const ctx = printCanvas.getContext('2d');
             ctx.clearRect(0, 0, printCanvas.width, printCanvas.height);
             
-            const pixelSize = (printCanvas.width - 2) / 8;
+            const pixelSize = (printCanvas.width - 2) / gridSize;
             pixels.forEach((color, i) => {
-                const x = (i % 8) * pixelSize;
-                const y = Math.floor(i / 8) * pixelSize; 
+                const x = (i % gridSize) * pixelSize;
+                const y = Math.floor(i / gridSize) * pixelSize; 
                 if (color !== 'transparent') {
                     ctx.fillStyle = 'black';
                     ctx.fillRect(x, y, pixelSize+2, pixelSize+2);
                 }
             });
             pixels.forEach((color, i) => {
-                const x = (i % 8) * pixelSize;
-                const y = Math.floor(i / 8) * pixelSize;
+                const x = (i % gridSize) * pixelSize;
+                const y = Math.floor(i / gridSize) * pixelSize;
                 if (color !== 'transparent') {
                     ctx.fillStyle = color;
                     ctx.fillRect(x+1, y+1, pixelSize, pixelSize);
