@@ -5,398 +5,422 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>무한의 계단</title>
     <style>
-        :root {
-            --background: #FFF5E6;
-            --primary: #FFB6C1;
-            --secondary: #B0E0E6;
-            --accent: #98FB98;
-            --text: #6A5ACD;
-        }
-
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: var(--background);
-            min-height: 100vh;
-            text-align: center;
+            font-family: 'Pretendard', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
+            background-color: #f0f0f0;
         }
-
-        .button {
-            padding: 10px 20px;
-            background-color: var(--primary);
-            color: var(--text);
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            margin: 5px;
-        }
-
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .button.secondary {
-            background-color: var(--secondary);
-        }
-
-        .button.accent {
-            background-color: var(--accent);
-        }
-
-        .game-title {
-            font-size: 3em;
-            color: var(--text);
-            margin-bottom: 20px;
-        }
-
-        .emoji-stairs {
-            font-size: 4em;
-            margin: 30px 0;
-        }
-
-        .players-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .player-card {
-            padding: 15px;
-            margin: 10px;
-            border-radius: 15px;
-            color: var(--text);
-            font-weight: bold;
-            min-width: 200px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .player-card.active {
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .character-item {
-            background-color: rgba(255, 255, 255, 0.7);
+        .container {
+            background-color: white;
+            padding: 20px;
             border-radius: 10px;
-            padding: 5px;
-            margin: 5px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-
-        .floor-input {
-            padding: 10px;
-            font-size: 18px;
-            width: 80px;
-            margin-right: 10px;
-            text-align: center;
+        .player-select, .game-board, .player-status, .riddle-section, .character-section {
+            margin-bottom: 20px;
         }
-
-        .reset-button {
-            /* 
-            position: fixed; 
-            bottom: 20px;
-            right: 20px;
-            */
-            margin-top: 100px;
-        }
-
         .hidden {
             display: none;
         }
-
-        .loading-screen {
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .player-status .current {
+            background-color: #fff3cd;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .collected-characters {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: var(--background);
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 5px;
         }
-
-        .loading-icon {
-            font-size: 48px;
-            animation: bounce 1s infinite;
-        }
-
-        .loading-text {
-            color: var(--text);
+        .collected-characters span {
             font-size: 1.5em;
-            margin-top: 20px;
+            cursor: help;
         }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+        .character-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
-
-        .error-message {
-            color: #FF6B6B;
-            background-color: rgba(255, 107, 107, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
+        .character-emoji {
+            font-size: 2em;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .options {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-icon">🎲</div>
-        <div id="loading-text" class="loading-text">수수께끼를 불러오는 중입니다...</div>
-    </div>
-
-    <div id="game-container" class="hidden">
-        <div id="start-screen">
-            <h1 class="game-title">무한의 계단</h1>
-            <div class="emoji-stairs">🪜✨</div>
-            <button class="button" onclick="startGame()">플레이</button>
+    <div class="container">
+        <h1>무한의 계단</h1>
+        
+        <div class="player-select">
+            <h2>몇 명이서 놀까요?</h2>
+            <button onclick="game.selectPlayers(2)">2명</button>
+            <button onclick="game.selectPlayers(3)">3명</button>
+            <button onclick="game.selectPlayers(4)">4명</button>
         </div>
 
-        <div id="player-select-screen" class="hidden">
-            <h2 style="color: var(--text); margin-bottom: 20px;">몇 명이서 놀까요?</h2>
-            <div>
-                <button class="button secondary" onclick="selectPlayers(2)">2명</button>
-                <button class="button secondary" onclick="selectPlayers(3)">3명</button>
-                <button class="button secondary" onclick="selectPlayers(4)">4명</button>
+        <div id="gameBoard" class="game-board hidden">
+            <div id="playerStatus" class="player-status"></div>
+            <div id="gameControls" class="game-controls">
+                <button onclick="game.rollDice()" id="rollDiceBtn">주사위 굴리기</button>
             </div>
+            <div id="riddleSection" class="riddle-section hidden"></div>
+            <div id="characterSection" class="character-section hidden"></div>
         </div>
 
-        <div id="game-screen" class="hidden">
-            <div id="players-status" class="players-container"></div>
-            
-            <div id="floor-input-screen" class="hidden">
-                <h3 style="color: var(--text); margin-bottom: 20px;">
-                    플레이어 <span id="current-player-num"></span> 차례: 몇 층에 도착했나요?
-                </h3>
-                <input type="number" id="floor-number" class="floor-input">
-                <button class="button" onclick="enterFloor()">도착!</button>
-            </div>
-
-            <div id="quiz-screen" class="hidden">
-                <h3 style="color: var(--text); margin-bottom: 20px">
-                    <span id="current-floor"></span>층 퀴즈
-                </h3>
-                <p id="quiz-question" style="color: var(--text); margin-bottom: 30px"></p>
-                <div id="quiz-options"></div>
-            </div>
-
-            <div id="result-screen" class="hidden">
-                <h3 id="result-message" style="color: var(--text); margin-bottom: 20px"></h3>
-                <button class="button" onclick="nextTurn()">다음 차례</button>
-            </div>
-        </div>
-
-        <button id="reset-button" class="button accent reset-button hidden" onclick="resetGame()">
-            새로 시작하기
-        </button>
+        <button onclick="game.restart()" class="restart-btn">새로 시작하기</button>
     </div>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1nEq8Sdh6FcGuxruw7zcNkxty6EqpiHx-bV45VWJ7Ylc/export?format=csv&gid=0';
-        const playerColors = ['#FF9999', '#66CCFF', '#99FF99', '#FFCC99'];
-        
-        let gameState = {
-            phase: 'loading',
-            playerCount: 2,
-            currentPlayer: 0,
-            currentFloor: 0,
-            currentPuzzle: null,
-            playerCharacters: [],
-            availablePuzzles: []
-        };
+    const EMOJIS = {
+        "코인": "💰",
+        "이동": "👣",
+        "처음으로": "🔄",
+        "쉬기": "💤",
+        "한번더": "🔁"
+    };
 
-        // 유틸리티 함수
-        function removeQuotes(str) {
-            return str.replace(/^["']|["']$/g, '').trim();
+    class Game {
+        constructor() {
+            this.riddles = [];
+            this.characters = [];
+            this.players = [];
+            this.currentPlayerIndex = 0;
+            this.currentRiddle = null;
+            this.currentCharacter = null;
+            this.isGameStarted = false;
+            
+            // DOM 요소 참조 저장
+            this.elements = {
+                gameBoard: null,
+                playerStatus: null,
+                gameControls: null,
+                riddleSection: null,
+                characterSection: null
+            };
         }
 
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n');
-            const headers = lines[0].split(',').map(header => removeQuotes(header.trim()));
-            return lines.slice(1)
-                .filter(line => line.trim() !== '')
-                .map(line => {
-                    const values = line.split(',').map(removeQuotes);
-                    return headers.reduce((obj, header, index) => {
-                        obj[header] = values[index] || '';
-                        return obj;
-                    }, {});
-                });
+        initializeDOM() {
+            this.elements = {
+                gameBoard: document.getElementById('gameBoard'),
+                playerStatus: document.getElementById('playerStatus'),
+                gameControls: document.getElementById('gameControls'),
+                riddleSection: document.getElementById('riddleSection'),
+                characterSection: document.getElementById('characterSection')
+            };
         }
 
-        // 게임 초기화 및 데이터 로딩
-        async function initializeGame() {
-            try {
-                const response = await fetch(SHEET_URL);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
-                const csvText = await response.text();
-                const puzzleData = parseCSV(csvText);
+        init() {
+            // 초기 데이터 설정
+            const initialRiddles = [{"이름":"행복이","수수께끼":"쓰면 쓸수록 작아지는 것은?","정답":"비누","보기1":"컴퓨터","보기2":"모자"},{"이름":"행복이","수수께끼":"세상에서 가장 아름다운 소는?","정답":"미소","보기1":"축소","보기2":"채소"},{"이름":"이다온","수수께끼":"모자가 넘어지면?","정답":"모자이크","보기1":"안경","보기2":"양말"},{"이름":"박윤슬","수수께끼":"저축을 좋아하는 나무는?","정답":"은행나무","보기1":"자작나무","보기2":"참나무"},{"이름":"박윤슬","수수께끼":"깔고 앉을 수 없는 자리는?","정답":"잠자리","보기1":"돗자리","보기2":"물병자리"},{"이름":"박윤슬","수수께끼":"어두우면 잘 보이고 환하면 안보이는 것은?","정답":"별","보기1":"해","보기2":"꽃"},{"이름":"박윤슬","수수께끼":"신은 신인데 못 신는 신은?","정답":"귀신","보기1":"운동화","보기2":"장화"},{"이름":"박윤슬","수수께끼":"세상에 가장 아름다운 소는?","정답":"미소","보기1":"젖소","보기2":"소고기"},{"이름":"이다온","수수께끼":"왕이 넘어지면?","정답":"킹콩","보기1":"왕관","보기2":"콩"},{"이름":"박윤슬","수수께끼":"쇠는 쇠인데 사람들이 모두 싫어하는 쇠는?","정답":"구두쇠","보기1":"장화쇠","보기2":"방아쇠"},{"이름":"권금별","수수께끼":"나는 벌인데 가장 오래 살아","정답":"장수말벌","보기1":"호박벌","보기2":"꿀벌"},{"이름":"권금별","수수께끼":"나는 과일인데 너무 뾰족해","정답":"두리안","보기1":"수박","보기2":"망고"},{"이름":"권금별","수수께끼":"나는 빵인데 바삭해","정답":"스콘","보기1":"식빵","보기2":"크림빵"},{"이름":"까치반","수수께끼":"3+5=?","정답":"8","보기1":"7","보기2":"10"},{"이름":"까치반","수수께끼":"1+3=?","정답":"4","보기1":"0","보기2":"2"},{"이름":"권금별","수수께끼":"사람들이 제일 빨리 먹는 떡은?","정답":"헐레벌떡","보기1":"꿀떡","보기2":"무지개떡"},{"이름":"까치반","수수께끼":"낮말은 새가 듣고 밤말은 ?가 듣는다.","정답":"쥐","보기1":"고양이","보기2":"사자"},{"이름":"","수수께끼":"누워서 ? 먹기","정답":"떡","보기1":"호박죽","보기2":"수박"},{"이름":"","수수께끼":"?이도 나무에서 떨어진다.","정답":"원숭이","보기1":"하마","보기2":"나무늘보"},{"이름":"","수수께끼":"?모아 태산","정답":"티끌","보기1":"동전","보기2":"백원"},{"이름":"","수수께끼":"?뀐 놈이 성낸다","정답":"방귀","보기1":"바늘","보기2":"오줌"},{"이름":"","수수께끼":"사막에서 ? 찾기","정답":"바늘","보기1":"사과","보기2":"피자"},{"이름":"","수수께끼":"말이 ? 가 된다","정답":"씨","보기1":"금","보기2":""},{"이름":"윤혜진","수수께끼":"빨간 옷을 입어도 하얀 옷을 입어도 까만 것은?","정답":"그림자","보기1":"산타","보기2":"눈사람"},{"이름":"박현","수수께끼":"한으로 시작하는 말은?","정답":"한미유치원","보기1":"항아리","보기2":"하마"},{"이름":"하승표","수수께끼":"안먹고 싶어도 먹어야 되는 것은?","정답":"나이","보기1":"떡국","보기2":"밥"},{"이름":"하승표","수수께끼":"쓰레기의 수명은 짧다 길다?","정답":"길다","보기1":"짧다","보기2":"모른다"},{"이름":"하승표","수수께끼":"아무리 봐도 똑같지 않은 것은?","정답":"질문","보기1":"책상","보기2":"의자"},{"이름":"하승표","수수께끼":"넘어지는 오리를 세글자로 하면?","정답":"철퍼덕","보기1":"오리쿵","보기2":"아이쿠"},{"이름":"하승표","수수께끼":"사자를 공격하는 동물은?","정답":"울버린","보기1":"오리","보기2":"병아리"},{"이름":"박윤슬","수수께끼":"왕이 넘어지면?","정답":"킹콩","보기1":"콩콩","보기2":"킹킹"},{"이름":"박윤슬","수수께끼":"다리미가 좋아하는 음식은?","정답":"피자","보기1":"사과","보기2":"햄버거"},{"이름":"윤예성","수수께끼":"물고기는 물고기인데 이빨도 없고 뼈도 없는 것은?","정답":"붕어빵","보기1":"연어","보기2":"광어"},{"이름":"이다온","수수께끼":"스승의 날은 누구의 생일일까요?","정답":"세종대왕 탄식일","보기1":"선생님","보기2":"원장님"},{"이름":"임채훈","수수께끼":"세상에서 가장 뜨거운 과일은?","정답":"천도복숭아","보기1":"메론","보기2":"토마토"},{"이름":"권금별","수수께끼":"치과의사가 좋아하는 음식은?","정답":"탕후루","보기1":"상추","보기2":"브로콜리"},{"이름":"권금별","수수께끼":"젤리발을 가지고 있는 동물은?","정답":"고양이","보기1":"코끼리","보기2":"나무늘보"},{"이름":"권금별","수수께끼":"앗! 내 등에 가시는?","정답":"고슴도치","보기1":"칼","보기2":"바늘"},{"이름":"이시호","수수께끼":"바다에 사는 파리는?","정답":"해파리","보기1":"날파리","보기2":"초파리"},{"이름":"오윤우","수수께끼":"","정답":"","보기1":"","보기2":""},{"이름":"이제이","수수께끼":"사람은 사람인데 혼자서 못움직이는 사람은?","정답":"인형","보기1":"어른","보기2":"어린이"},{"이름":"이우제","수수께끼":"곰이 다니는 목욕탕은?","정답":"곰탕","보기1":"해물탕","보기2":"설렁탕"},{"이름":"김하윤","수수께끼":"태양의 흑점은 지구의 몇배 될까요?","정답":"2배","보기1":"1.5배","보기2":"20배"}];
 
-                const response2 = await fetch('https://docs.google.com/spreadsheets/d/1nEq8Sdh6FcGuxruw7zcNkxty6EqpiHx-bV45VWJ7Ylc/export?format=csv&gid=181252125');
-                if (!response2.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
-                const csvText2 = await response2.text();
-                const puzzleData2 = parseCSV(csvText2);
-                console.log(puzzleData2);
-                
-                // 데이터를 게임 형식으로 변환
-                gameState.availablePuzzles = puzzleData
-                    .filter(row => row['수수께끼'] && row['정답'])
-                    .map(row => ({
-                        question: row['수수께끼'],
-                        answer: row['정답'],
-                        options: [row['정답'], row['보기1'], row['보기2']]
-                            .filter(Boolean)
-                            .sort(() => Math.random() - 0.5)
-                    }));
+            const initialCharacters = [{"캐릭터 이름":"주물이","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"10코인을 얻음","만든이":"","타입":"코인","대상":"자신","값":"10"},{"캐릭터 이름":"가다","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"3칸 앞으로","만든이":"","타입":"이동","대상":"자신","값":"3"},{"캐릭터 이름":"추추","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"3칸 앞으로","만든이":"","타입":"이동","대상":"자신","값":"3"},{"캐릭터 이름":"치왕","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"1칸 앞으로","만든이":"","타입":"이동","대상":"자신","값":"1"},{"캐릭터 이름":"새우킹","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"꼬리가 있어서 앞에 사람이 있을 경우 앞사람을 날리는 효과가 있음(앞사람은 맨 처음부터 다시 시작)","만든이":"","타입":"처음으로","대상":"앞사람","값":"0"},{"캐릭터 이름":"햄벅","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"2칸 앞으로","만든이":"","타입":"이동","대상":"자신","값":"2"},{"캐릭터 이름":"공공이","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"5칸 뒤로","만든이":"","타입":"이동","대상":"자신","값":"5"},{"캐릭터 이름":"번번이","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"맨 첫번째부터 다시 시작","만든이":"","타입":"처음으로","대상":"자신","값":"0"},{"캐릭터 이름":"병병이","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"1칸 앞으로","만든이":"","타입":"이동","대상":"자신","값":"1"},{"캐릭터 이름":"미니","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"12칸 앞으로","만든이":"","타입":"이동","대상":"자신","값":"12"},{"캐릭터 이름":"불탄이","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"불탄이의 불에 옷이 다 타버렸다! 처음부터 다시 시작!","만든이":"","타입":"처음으로","대상":"자신","값":"0"},{"캐릭터 이름":"레모니","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"트렘폴린을 타는 능력이 있어서 뽀잉 점프해서 다섯칸 앞으로 갈 수 있다.","만든이":"최민지","타입":"이동","대상":"자신","값":"5"},{"캐릭터 이름":"펭펭이","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"얼음 구덩이에 빠져 한 판을 쉬어야 한다.","만든이":"조서안","타입":"쉬기","대상":"자신","값":"1"},{"캐릭터 이름":"무브","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"무화과를 먹고 힘을 얻었다. 여섯칸 앞으로!","만든이":"조서안","타입":"이동","대상":"자신","값":"6"},{"캐릭터 이름":"권금별","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"금이 쏟아져서 무덤이 되었다. 두판 쉬어야 한다.","만든이":"조서안","타입":"쉬기","대상":"자신","값":"2"},{"캐릭터 이름":"펭수","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"펭수가 춤을 춘다. 방해가 되서 한 판 쉬기","만든이":"조서안","타입":"쉬기","대상":"자신","값":"1"},{"캐릭터 이름":"얼음슬라임","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"얼음슬라임을 만나 뒤로 미끄러졌다. 두칸 뒤로 가야 한다.","만든이":"박준","타입":"이동","대상":"자신","값":"-2"},{"캐릭터 이름":"하트미니","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"사랑을 나눠줘서 더 빨리 갈 수 있다. 한번 더! 주사위를 던져라","만든이":"최민지","타입":"한번더","대상":"자신","값":"0"},{"캐릭터 이름":"티비","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"티비를 봐서 눈이 나빠져서 눈을 잘 볼수가 없다. 이런 뒤로 떨어져버렸다. 다섯칸 뒤로!","만든이":"최민지","타입":"이동","대상":"자신","값":"-5"},{"캐릭터 이름":"팡팡이","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"빔이 쏟아져서 방해를 받는다! 다섯칸 뒤로 가야 한다.","만든이":"최민지","타입":"이동","대상":"자신","값":"-5"},{"캐릭터 이름":"다이아몬드","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"알라딘 영화처럼 쌩 하고 돗자리를 타고 올라갈 수 있다. 10칸 앞으로 가라!","만든이":"최민지","타입":"쉬기","대상":"자신","값":"1"},{"캐릭터 이름":"얌얌이","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"이걸 먹으면 작아져서 조금씩밖에 못올라간다. 다음판에서는 못나간다! 쉬어라!","만든이":"최민지","타입":"쉬기","대상":"자신","값":"1"},{"캐릭터 이름":"보라","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"귀여워가지고 친구들을 배려하게 되었다. 다음판은 쉬면서 친구들에게 양보하게 된다.","만든이":"최민지","타입":"쉬기","대상":"자신","값":"1"},{"캐릭터 이름":"파란발오리새","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"파란발오리새를 타고 날아서 열칸 앞으로 간다.","만든이":"조서안","타입":"이동","대상":"자신","값":"10"},{"캐릭터 이름":"끈적이","캐릭터 유형":"함정형 캐릭터","캐릭터 효과":"끈적이에 붙어서 못움직인다. 두판 쉬기.","만든이":"박현","타입":"쉬기","대상":"자신","값":"2"},{"캐릭터 이름":"스티븐","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"힘이 쎄서 앞에 있는 친구를 날려버린다. 앞에 친구는 처음부터 다시 시작!","만든이":"박현","타입":"처음으로","대상":"앞사람","값":"0"},{"캐릭터 이름":"뿔빨이","캐릭터 유형":"버프형 캐릭터","캐릭터 효과":"100원을 얻었다!!!!","만든이":"","타입":"코인","대상":"자신","값":"100"}];
 
-                if (gameState.availablePuzzles.length === 0) {
-                    throw new Error('수수께끼를 찾을 수 없습니다.');
-                }
+            this.riddles = this.shuffle([...initialRiddles]);
+            this.characters = this.shuffle([...initialCharacters]);
+        }
 
-                gameState.phase = 'start';
-                console.log(gameState);
-                // 로딩 화면 숨기고 게임 표시
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('game-container').style.display = 'block';
-                showScreen('start-screen');
-            } catch (error) {
-                console.error('Error loading puzzles:', error);
-                const loadingText = document.getElementById('loading-text');
-                loadingText.textContent = '데이터를 불러오는 중 오류가 발생했습니다.';
-                loadingText.classList.add('error-message');
+        shuffle(array) {
+            let currentIndex = array.length;
+            let temporaryValue, randomIndex;
+
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
             }
+
+            return array;
         }
 
-        function showScreen(screenId) {
-            document.querySelectorAll('#game-container > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
+        selectPlayers(count) {
+            this.initializeDOM();
+            this.players = Array.from({length: count}, (_, i) => ({
+                id: i + 1,
+                floor: 0,
+                coins: 0,
+                skipTurns: 0,
+                collectedCharacters: []
+            }));
+            
+            this.isGameStarted = true;
+            document.querySelector('.player-select').classList.add('hidden');
+            this.elements.gameBoard.classList.remove('hidden');
+            this.updatePlayerStatus();
         }
 
-        function startGame() {
-            gameState.phase = 'selectPlayers';
-            showScreen('player-select-screen');
-            document.getElementById('reset-button').classList.remove('hidden');
-        }
-
-        function selectPlayers(num) {
-            gameState.playerCount = num;
-            gameState.playerCharacters = Array(num).fill().map(() => []);
-            gameState.phase = 'enterFloor';
-            showScreen('game-screen');
-            updateGameScreen();
-        }
-
-        function updateGameScreen() {
-            const playersStatus = document.getElementById('players-status');
-            playersStatus.innerHTML = gameState.playerCharacters.map((characters, i) => `
-                <div class="player-card ${i === gameState.currentPlayer ? 'active' : ''}" 
-                     style="background-color: ${playerColors[i]}">
-                    <div style="font-size: 1.2em; margin-bottom: 10px">플레이어 ${i + 1}</div>
-                    <div style="font-size: 0.9em">
-                        ${characters.map(char => `
-                            <div class="character-item">
-                                <span style="margin-right: 10px">🐰</span>
-                                <span>${char.ability}</span>
-                            </div>
-                        `).join('')}
+        updatePlayerStatus() {
+            this.elements.playerStatus.innerHTML = this.players.map((player, index) => `
+                <div class="${index === this.currentPlayerIndex ? 'current' : ''}">
+                    ${player.skipTurns > 0 ? '😴 ' : ''}플레이어 ${player.id}: ${player.floor}층, 코인: ${player.coins || 0}
+                    <div class="collected-characters">
+                        ${player.collectedCharacters.map(char => 
+                            `<span title="${char['캐릭터 효과']}">${EMOJIS[char['타입']] || '👾'}</span>`
+                        ).join('')}
                     </div>
                 </div>
             `).join('');
-
-            document.getElementById('floor-input-screen').classList.remove('hidden');
-            document.getElementById('quiz-screen').classList.add('hidden');
-            document.getElementById('result-screen').classList.add('hidden');
-            document.getElementById('current-player-num').textContent = gameState.currentPlayer + 1;
         }
 
-        function enterFloor() {
-            const floorInput = document.getElementById('floor-number');
-            gameState.currentFloor = parseInt(floorInput.value) || 0;
-            const puzzle = getRandomPuzzle();
+        rollDice() {
+            const diceValue = Math.floor(Math.random() * 6) + 1;
+            const currentPlayer = this.players[this.currentPlayerIndex];
+            currentPlayer.floor += diceValue;
             
-            if (puzzle) {
-                gameState.currentPuzzle = puzzle;
-                showQuiz();
+            document.querySelector('.game-controls').innerHTML = `
+                <div>주사위 값: ${diceValue}</div>
+                <div>플레이어 ${currentPlayer.id}가 ${currentPlayer.floor}층으로 이동했습니다!</div>
+            `;
+
+            this.updatePlayerStatus();
+            this.showRiddleAndCharacter();
+        }
+
+        showRiddleAndCharacter() {
+            if (this.riddles.length === 0) {
+                this.endGame();
+                return;
+            }
+
+            this.currentRiddle = this.riddles.pop();
+            this.currentCharacter = this.characters.pop();
+            
+            if (this.characters.length === 0) {
+                this.characters = this.shuffle([...this.characters]);
+            }
+
+            this.elements.riddleSection.innerHTML = `
+                <h3>수수께끼</h3>
+                <p>${this.currentRiddle['수수께끼']}</p>
+                <div class="options">
+                    ${this.shuffle([
+                        this.currentRiddle['정답'],
+                        this.currentRiddle['보기1'],
+                        this.currentRiddle['보기2']
+                    ]).map(option => 
+                        `<button onclick="game.checkAnswer('${option}')">${option}</button>`
+                    ).join('')}
+                </div>
+            `;
+
+            this.elements.characterSection.innerHTML = `
+                <h3>나왔다!</h3>
+                <div class="character-card">
+                    <span class="character-emoji">${EMOJIS[this.currentCharacter['타입']] || '👾'}</span>
+                    <div class="character-info">
+                        <p>${this.currentCharacter['캐릭터 이름']}</p>
+                        <p>❓ 문제를 맞추면 효과가 공개됩니다</p>
+                    </div>
+                </div>
+            `;
+
+            this.elements.riddleSection.classList.remove('hidden');
+            this.elements.characterSection.classList.remove('hidden');
+        }
+
+        checkAnswer(answer) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            if (answer === this.currentRiddle['정답']) {
+                messageDiv.textContent = '정답입니다!';
+                messageDiv.style.color = 'green';
+                this.elements.characterSection.querySelector('.character-info').innerHTML = `
+                    <p>${this.currentCharacter['캐릭터 이름']}</p>
+                    <p>${this.currentCharacter['캐릭터 효과']}</p>
+                `;
+                this.applyCharacterEffect();
             } else {
-                alert("모든 수수께끼를 다 풀었습니다! 게임을 다시 시작합니다.");
-                resetGame();
+                messageDiv.textContent = '틀렸습니다.';
+                messageDiv.style.color = 'red';
             }
+
+            document.querySelector('.riddle-section').appendChild(messageDiv);
+            document.querySelector('.riddle-section .options').innerHTML = '';
+
+            // 다음 차례 버튼 추가
+            const nextTurnBtn = document.createElement('button');
+            nextTurnBtn.textContent = '다음 차례';
+            nextTurnBtn.onclick = () => this.nextTurn();
+            document.querySelector('.riddle-section').appendChild(nextTurnBtn);
         }
 
-        function showQuiz() {
-            document.getElementById('floor-input-screen').classList.add('hidden');
-            document.getElementById('quiz-screen').classList.remove('hidden');
-            document.getElementById('current-floor').textContent = gameState.currentFloor;
-            document.getElementById('quiz-question').textContent = gameState.currentPuzzle.question;
-            
-            const optionsContainer = document.getElementById('quiz-options');
-            optionsContainer.innerHTML = gameState.currentPuzzle.options
-                .map(option => `
-                    <button class="button" onclick="answerQuiz('${option}')" style="margin: 0 10px">
-                        ${option}
-                    </button>
-                `).join('');
-        }
+        applyCharacterEffect() {
+            const currentPlayer = this.players[this.currentPlayerIndex];
+            const character = this.currentCharacter;
+            let targetPlayer;
 
-        function getRandomPuzzle() {
-            if (gameState.availablePuzzles.length === 0) return null;
-            const randomIndex = Math.floor(Math.random() * gameState.availablePuzzles.length);
-            const puzzle = gameState.availablePuzzles[randomIndex];
-            gameState.availablePuzzles.splice(randomIndex, 1);
-            return puzzle;
-        }
-
-        function answerQuiz(selectedAnswer) {
-            const correct = selectedAnswer === gameState.currentPuzzle.answer;
-            if (correct) {
-                gameState.playerCharacters[gameState.currentPlayer].push({
-                    name: '토끼',
-                    ability: '5층 앞으로 이동'
-                });
+            // 대상 플레이어 결정
+            switch (character['대상']) {
+                case '자신':
+                    targetPlayer = currentPlayer;
+                    break;
+                case '앞사람':
+                    targetPlayer = this.players[(this.currentPlayerIndex - 1 + this.players.length) % this.players.length];
+                    break;
+                case '뒷사람':
+                    targetPlayer = this.players[(this.currentPlayerIndex + 1) % this.players.length];
+                    break;
+                case '나외모두':
+                    this.players.forEach((player, index) => {
+                        if (index !== this.currentPlayerIndex) {
+                            this.applyEffect(player, character);
+                        }
+                    });
+                    return;
             }
+
+            this.applyEffect(targetPlayer, character);
+            currentPlayer.collectedCharacters.push(character);
+            this.updatePlayerStatus();
+        }
+
+        applyEffect(player, character) {
+            const value = parseInt(character['값']);
             
-            document.getElementById('quiz-screen').classList.add('hidden');
-            document.getElementById('result-screen').classList.remove('hidden');
-            document.getElementById('result-message').textContent = 
-                correct ? "정답입니다!" : "틀렸습니다.";
+            switch (character['타입']) {
+                case '코인':
+                    if (!player.coins) player.coins = 0;
+                    player.coins += value;
+                    break;
+                case '이동':
+                    player.floor += value;
+                    break;
+                case '처음으로':
+                    player.floor = 0;
+                    break;
+                case '쉬기':
+                    player.skipTurns += value;
+                    break;
+                case '한번더':
+                    player.extraTurns = (player.extraTurns || 0) + value;
+                    break;
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.textContent = `${player.id}번 플레이어에게 "${character['캐릭터 효과']}" 효과가 적용되었습니다.`;
+            document.querySelector('.character-section').appendChild(messageDiv);
         }
 
-        function nextTurn() {
-            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.playerCount;
-            gameState.phase = 'enterFloor';
-            updateGameScreen();
-            document.getElementById('floor-number').value = '';
+        nextTurn() {
+            this.elements.riddleSection.classList.add('hidden');
+            this.elements.characterSection.classList.add('hidden');
+            
+            const currentPlayer = this.players[this.currentPlayerIndex];
+            
+            // 현재 플레이어의 추가 턴이 있는지 확인
+            if (currentPlayer.extraTurns > 0) {
+                currentPlayer.extraTurns--;
+                this.elements.gameControls.innerHTML = `
+                    <div class="message">플레이어 ${currentPlayer.id}의 추가 턴입니다!</div>
+                    <button id="rollDiceBtn" onclick="game.rollDice()">주사위 굴리기</button>
+                `;
+                return;
+            }
+
+            // 다음 플레이어 결정
+            do {
+                this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+                const nextPlayer = this.players[this.currentPlayerIndex];
+                
+                if (nextPlayer.skipTurns > 0) {
+                    nextPlayer.skipTurns--;
+                    this.elements.gameControls.innerHTML = `
+                        <div class="message">플레이어 ${nextPlayer.id}는 쉬는 중입니다. (남은 턴: ${nextPlayer.skipTurns})</div>
+                    `;
+                    continue;
+                }
+                break;
+            } while (true);
+
+            this.elements.gameControls.innerHTML = `
+                <button id="rollDiceBtn" onclick="game.rollDice()">주사위 굴리기</button>
+            `;
+            
+            this.updatePlayerStatus();
         }
 
-        function resetGame() {
-            const originalPuzzles = [...gameState.availablePuzzles];
-            gameState = {
-                phase: 'start',
-                playerCount: 2,
-                currentPlayer: 0,
-                currentFloor: 0,
-                currentPuzzle: null,
-                playerCharacters: [],
-                availablePuzzles: originalPuzzles
-            };
-            showScreen('start-screen');
-            document.getElementById('reset-button').classList.add('hidden');
+        endGame() {
+            // 점수 계산: 층수 + (코인 × 0.1)
+            const rankings = this.players
+                .map(player => ({
+                    id: player.id,
+                    score: player.floor + ((player.coins || 0) * 0.1),
+                    characters: player.collectedCharacters.length
+                }))
+                .sort((a, b) => b.score - a.score);
+
+            const gameBoard = document.querySelector('.game-board');
+            gameBoard.innerHTML = `
+                <h2>🎊 게임 종료! 🎊</h2>
+                <div class="rankings">
+                    ${rankings.map((player, index) => `
+                        <div class="rank">
+                            ${index + 1}등: 플레이어 ${player.id}
+                            (점수: ${player.score.toFixed(1)}, 수집한 캐릭터: ${player.characters}개)
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
-        // 게임 시작
-        initializeGame();
+        restart() {
+            this.init();
+            this.isGameStarted = false;
+            this.currentPlayerIndex = 0;
+            this.currentRiddle = null;
+            this.currentCharacter = null;
+            
+            document.querySelector('.player-select').classList.remove('hidden');
+            document.querySelector('.game-board').classList.add('hidden');
+            document.querySelector('.riddle-section').classList.add('hidden');
+            document.querySelector('.character-section').classList.add('hidden');
+            
+            document.querySelector('.game-board').innerHTML = `
+                <div class="player-status"></div>
+                <div class="game-controls">
+                    <button onclick="game.rollDice()" id="rollDiceBtn">주사위 굴리기</button>
+                    <button onclick="game.nextTurn()" id="nextTurnBtn" class="hidden">다음 차례</button>
+                </div>
+                <div class="riddle-section hidden"></div>
+                <div class="character-section hidden"></div>
+            `;
+        }
+    }
+
+    const game = new Game();
+    game.init();
     </script>
 </body>
 </html>
