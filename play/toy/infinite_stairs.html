@@ -188,7 +188,12 @@
                     ${player.skipTurns > 0 ? '😴 ' : ''}플레이어 ${player.id}: ${player.floor}층, 코인: ${player.coins || 0}
                     <div class="collected-characters">
                         ${player.collectedCharacters.map(char => 
-                            `<span title="${char['캐릭터 효과']}">${EMOJIS[char['타입']] || '👾'}</span>`
+                            `<img 
+                                src="./assets/infinite_stairs/${char['캐릭터 이름']}.png"
+                                alt="${char['캐릭터 이름']}"
+                                title="${char['캐릭터 효과']}"
+                                style="image-rendering: pixelated; width: auto; height: auto; max-width: 32px; max-height: 32px; object-fit: contain;"
+                            >`
                         ).join('')}
                     </div>
                 </div>
@@ -239,7 +244,11 @@
             this.elements.characterSection.innerHTML = `
                 <h3>나왔다!</h3>
                 <div class="character-card">
-                    <span class="character-emoji">${EMOJIS[this.currentCharacter['타입']] || '👾'}</span>
+                    <img 
+                        src="./assets/infinite_stairs/${this.currentCharacter['캐릭터 이름']}.png"
+                        alt="${this.currentCharacter['캐릭터 이름']}"
+                        style="image-rendering: pixelated; width: auto; height: auto; max-width: 64px; max-height: 64px; object-fit: contain;"
+                    >
                     <div class="character-info">
                         <p>${this.currentCharacter['캐릭터 이름']}</p>
                         <p>❓ 문제를 맞추면 효과가 공개됩니다</p>
