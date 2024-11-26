@@ -36,6 +36,9 @@
         button:hover {
             background-color: #45a049;
         }
+        .restart-btn {
+            background-color: #000000;
+        }
         .player-status .current {
             background-color: #fff3cd;
             padding: 5px;
@@ -96,7 +99,7 @@
             <div id="characterSection" class="character-section hidden"></div>
         </div>
 
-        <button onclick="game.restart()" class="restart-btn">새로 시작하기</button>
+        <button onclick="game.confirmRestart()" class="restart-btn">새로 시작하기</button>
     </div>
 
     <script>
@@ -396,26 +399,39 @@
         }
 
         restart() {
+            // 게임 상태 초기화
             this.init();
             this.isGameStarted = false;
             this.currentPlayerIndex = 0;
             this.currentRiddle = null;
             this.currentCharacter = null;
             
-            document.querySelector('.player-select').classList.remove('hidden');
-            document.querySelector('.game-board').classList.add('hidden');
-            document.querySelector('.riddle-section').classList.add('hidden');
-            document.querySelector('.character-section').classList.add('hidden');
+            // DOM 초기화
+            this.initializeDOM();  // DOM 요소 참조 다시 가져오기
             
-            document.querySelector('.game-board').innerHTML = `
-                <div class="player-status"></div>
-                <div class="game-controls">
+            // UI 초기화
+            document.querySelector('.player-select').classList.remove('hidden');
+            this.elements.gameBoard.classList.add('hidden');
+            this.elements.riddleSection.classList.add('hidden');
+            this.elements.characterSection.classList.add('hidden');
+            
+            this.elements.gameBoard.innerHTML = `
+                <div id="playerStatus" class="player-status"></div>
+                <div id="gameControls" class="game-controls">
                     <button onclick="game.rollDice()" id="rollDiceBtn">주사위 굴리기</button>
-                    <button onclick="game.nextTurn()" id="nextTurnBtn" class="hidden">다음 차례</button>
                 </div>
-                <div class="riddle-section hidden"></div>
-                <div class="character-section hidden"></div>
+                <div id="riddleSection" class="riddle-section hidden"></div>
+                <div id="characterSection" class="character-section hidden"></div>
             `;
+            
+            // DOM 요소 참조 다시 업데이트
+            this.initializeDOM();
+        }
+
+        confirmRestart() {
+            if (confirm('정말 새로 시작할까요?')) {
+                this.restart();
+            }
         }
     }
 
