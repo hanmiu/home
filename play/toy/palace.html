@@ -909,10 +909,17 @@
 
         // 모달 관련 함수들 추가
         function openModal(url) {
-            const modal = document.getElementById('modal');
-            const iframe = document.getElementById('modal-iframe');
-            iframe.src = url;
-            modal.style.display = 'flex';
+            // 모바일 기기 체크
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // 모바일에서는 새 창으로 열기
+                window.open(url, '_blank');
+            } else {
+                // 데스크톱에서는 기존 모달로 열기
+                const modal = document.getElementById('modal');
+                const iframe = document.getElementById('modal-iframe');
+                iframe.src = url;
+                modal.style.display = 'flex';
+            }
         }
 
         function closeModal() {
