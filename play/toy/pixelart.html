@@ -198,12 +198,17 @@
                 align-items: center;
                 justify-content: center;
             }
+            #printCanvas {
+                width: 66vw;
+                image-rendering: pixelated;
+            }
             #gridPrintCanvas {
                 width: auto;
                 height: auto;
+                image-rendering: pixelated;
             }
             #printInfo {
-                margin-top: 0px;
+                margin-top: 100px;
                 text-align: left;
                 width: 66vw;
                 font-size: 2em;
@@ -289,7 +294,7 @@
         const paletteThemes = {
             "rainbow": {
                 name: "무지개",
-                colors: ['#F58023', '#FAE83E', '#9CC841', '#2583F1', '#A200A2']
+                colors: ['#2583F1', '#9CC841', '#FAE83E', '#F58023', '#FF0000']
             },
             "Green Globe On Moss": {
                 name: "Green Globe On Moss",
@@ -299,21 +304,21 @@
                 name: "Tropical Fruit Punch",
                 colors: ['#146152', '#44803F', '#B4CF66', '#FFEC5C', '#FF5A33']
             },
-            "ocean": {
-                name: "바다",
+            "Untitled": {
+                name: "Untitled",
                 colors: ['#FC8DCA', '#C37EDB', '#B7A6F6', '#88A3E2', '#AAECFC']
             },
-            "ocean2": {
-                name: "바다",
-                colors: ['#248EA6', '#25C7D9', '#F2D338', '#F2622E', '#F23030']
+            "Mars": {
+                name: "Mars",
+                colors: ['#3D182B', '#AD0626', '#FF005A', '#FF9800', '#FFCE00']
             },
             "Abstract blue and yellow": {
                 name: "Abstract blue and yellow",
                 colors: ['#20448C', '#086CB4', '#008CDB', '#FFBC24', '#FFD340']
             },
-            "Brown": {
-                name: "Brown",
-                colors: ['#592F16', '#8C5230', '#BF9075', '#D9B29C', '#402921']
+            "Ocean": {
+                name: "Ocean",
+                colors: ['#023859', '#025373', '#50A0BF', '#96C6D9', '#D8EBF2']
             },
             "Around the World": {
                 name: "Around the World",
@@ -363,7 +368,7 @@
             const colorPicker = document.createElement('input');
             colorPicker.type = 'color';
             colorPicker.id = 'customColorPicker';
-            colorPicker.value = '#FF0000'; // 기본 보라색
+            colorPicker.value = '#A200A2'; // 기본 보라색
             colorPicker.oninput = () => selectColor(colorPicker.parentElement);
             const customColorButton = document.createElement('div');
             customColorButton.className = 'color-button';
@@ -771,11 +776,6 @@
                     const x = j * cellSize;
                     const y = i * cellSize;
                     
-                    // Draw cell border
-                    ctx.strokeStyle = '#999999';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(x, y, cellSize, cellSize);
-                    
                     // Fill cell if needed
                     const pixelIndex = i * gridSize + j;
                     const color = pixels[pixelIndex];
@@ -783,6 +783,17 @@
                         ctx.fillStyle = color;
                         ctx.fillRect(x, y, cellSize, cellSize);
                     }
+                }
+            }
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const x = j * cellSize;
+                    const y = i * cellSize;
+                    
+                    // Draw cell border
+                    ctx.strokeStyle = '#999999';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
                 }
             }
             ctx.restore();
