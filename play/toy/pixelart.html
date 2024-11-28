@@ -293,7 +293,7 @@
             colorPicker.type = 'color';
             colorPicker.id = 'customColorPicker';
             colorPicker.value = '#9400D3'; // 기본 보라색
-            colorPicker.onchange = () => selectColor(colorPicker.value, colorPicker.parentElement);
+            colorPicker.oninput = () => selectColor(colorPicker.value, colorPicker.parentElement);
             const customColorButton = document.createElement('div');
             customColorButton.className = 'color-button';
             customColorButton.appendChild(colorPicker);
@@ -352,6 +352,9 @@
         
         function selectColor(color, button) {
             selectedColor = button.style.backgroundColor;
+            if(button.querySelector('input')) {
+                selectedColor = color;
+            }
             document.querySelectorAll('.color-button').forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
         }
