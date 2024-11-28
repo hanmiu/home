@@ -171,11 +171,11 @@
 
         #logotype {
             /* display: none; */
-            position: absolute;
+            position: fixed;
             left: 20px;
             bottom: 20px;
             height: 20px;
-            opacity: 0.5;
+            opacity: 1;
             cursor: pointer;
         }
 
@@ -208,6 +208,13 @@
                 width: 66vw;
                 font-size: 2em;
             }
+            .logotype_print {
+                position: fixed;
+                right: 20px;
+                bottom: 20px;
+                height: 30px;
+                opacity: 0.5;
+            }
             @page {
                 size: A4;
                 margin: 0;
@@ -235,7 +242,7 @@
             <button id="save" class="action-button">그림 저장하기</button>
         </div>
         <div class="buttons">
-            <input type="number" value="10" id="gridSize" style="width: 50px; text-align: center;"><label for="gridSize" style="margin-top: 10px">mm</label>
+            <input type="number" value="10" id="printCellSize" style="width: 50px; text-align: center;"><label for="printCellSize" style="margin-top: 10px">mm</label>
             <button id="print-grid" class="action-button">칸 인쇄</button>
         </div>
     </div>
@@ -248,21 +255,24 @@
             <p>만든 사람: </p>
             <p id="printDate"></p>
         </div>
+        <img class="logotype_print" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     </div>
     <div id="gridPrintArea">
         <canvas id="gridPrintCanvas"></canvas>
+        <img class="logotype_print" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     </div>
-    <img id="logotype">
+    <img id="logotype" src="https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg">
     <script>
         let el_logotype = document.querySelector('#logotype');
-        let logo_svg_str = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 305 100" version="1.1" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;"><g transform="matrix(0.132046,0,0,0.132046,-275.898,-181.837)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:31.55px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,-215.341,-148.706)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-234.97,-149.014)"><path d="M2555.2,1518.19L2555.2,1842.53" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-231.778,-165.71)"><path d="M2142.87,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-36.6926,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-27.4323,-152.336)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.167914,0,0,-0.167914,-121.496,319.866)"><path d="M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89" style="fill:none;stroke:black;stroke-width:24.81px;"></path></g><g transform="matrix(0.138417,0,0,0.125615,21.1762,-165.445)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:31.52px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,198.954,-181.98)"><path d="M482.378,2192.03C482.378,2232.68 471.655,2280.67 551.585,2280.43L835.645,2280.43" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,2.37791,-149.014)"><path d="M2555.2,1518.19L2555.2,1872.19" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,199.935,-138.281)"><path d="M726.04,1724.47L813.8,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-59.8431,-148.992)"><path d="M2703.12,1753.94C2845.41,1760.9 2927.01,1766.21 2998.72,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.173765,0,0,0.168083,-145.561,-229.091)"><path d="M1824.42,1568.64C1824.42,1531.91 1794.6,1502.1 1757.88,1502.1L1735.13,1502.1C1698.4,1502.1 1668.59,1531.91 1668.59,1568.64C1668.59,1605.37 1698.4,1635.18 1735.13,1635.18L1757.88,1635.18C1794.6,1635.18 1824.42,1605.37 1824.42,1568.64Z" style="fill:none;stroke:black;stroke-width:24.37px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-45.8206,-149.203)"><path d="M1736.22,1991.09C1736.22,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1753.84 1564.35,1718.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,361.661,-149.151)"><path d="M1736.76,1991.09C1736.76,1862.33 1745.24,1793.49 1663.19,1790.81C1600.94,1788.78 1567.65,1759.84 1564.35,1724.29" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.0782,-149.568)"><path d="M2289.38,1553.11C2289.38,1553.11 2308.91,1670.79 2289.38,1724.47C2269.72,1778.49 2171.6,1875.79 2171.44,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(-0.113461,0,0,0.113461,466.598,-149.568)"><path d="M2290.86,1724.47L2173.04,1877.27" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-56.4968,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-53.1885,-162.323)"><path d="M2172.41,1724.47L2408.16,1724.47" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113461,0,0,0.113461,-172.361,-148.992)"><path d="M2555.2,1518.19L2555.2,1960.22" style="fill:none;stroke:black;stroke-width:36.72px;"></path></g><g transform="matrix(0.113459,0,0,0.103146,-35.0422,-129.724)"><rect x="991.31" y="1548.04" width="202.433" height="324.155" style="fill:none;stroke:black;stroke-width:38.43px;"></rect></g></svg>`;
-        el_logotype.src = `data:image/svg+xml;utf8,${logo_svg_str}`;
         document.querySelector('#logotype').addEventListener('click', (event) => {
             window.open('https://www.hanmiu.cc', '_blank');
         });
 
         const urlParams = new URLSearchParams(window.location.search);
         const gridSize = parseInt(urlParams.get('s')) || 8; // 기본값 8
+        let printCellSize = parseInt(urlParams.get('m')) || 10; // 기본값 10
+        document.getElementById('printCellSize').value = printCellSize;
+
         const themeSelector = document.getElementById('themeSelector');
         const pixels = Array(gridSize * gridSize).fill('transparent');
         let history = [JSON.parse(JSON.stringify(pixels))];
@@ -272,6 +282,8 @@
         const ctx_print = printCanvas.getContext('2d');
         const gridPrintCanvas = document.getElementById('gridPrintCanvas');
         const ctx_grid_print = gridPrintCanvas.getContext('2d');
+
+        let isDrawing = false;
 
         // 팔레트 테마 정의
         const paletteThemes = {
@@ -352,11 +364,12 @@
             colorPicker.type = 'color';
             colorPicker.id = 'customColorPicker';
             colorPicker.value = '#FF0000'; // 기본 보라색
-            colorPicker.dataset.color_id = 0;
-            colorPicker.oninput = () => selectColor(colorPicker);
+            colorPicker.oninput = () => selectColor(colorPicker.parentElement);
             const customColorButton = document.createElement('div');
             customColorButton.className = 'color-button';
             customColorButton.appendChild(colorPicker);
+            customColorButton.dataset.color = colorPicker.value;
+            customColorButton.dataset.color_id = 0;
             palette.appendChild(customColorButton);
             
             // 테마 색상 (1-5번)
@@ -419,15 +432,19 @@
             let pixelButtons = document.querySelectorAll('.pixel');
             Array.from(pixelButtons).forEach((pixel, index) => {
                 if(pixel.dataset.color_id) {
-                    pixel.style.backgroundColor = colorButtons[pixel.dataset.color_id].dataset.color;
-                    pixels[index] = colorButtons[pixel.dataset.color_id].dataset.color;
+                    if(colorButtons[pixel.dataset.color_id]) {
+                        pixel.style.backgroundColor = colorButtons[pixel.dataset.color_id].dataset.color;
+                        pixels[index] = colorButtons[pixel.dataset.color_id].dataset.color;
+                    }
                 }
             });
         }
         
         function selectColor(button) {
-            if(button.id === 'customColorPicker') {
-                selectedColor = button.value;
+            if(button.querySelector('input')) {
+                selectedColor = button.querySelector('input').value;
+                button.dataset.color = selectedColor;
+                button.dataset.color_id = 0;
             } else {
                 selectedColor = button.dataset.color;
             }
@@ -495,6 +512,7 @@
             const gridPixels = document.querySelectorAll('.pixel');
             pixels.forEach((color, index) => {
                 gridPixels[index].style.backgroundColor = color;
+                gridPixels[index].dataset.color = color;
             });
         }
         
@@ -599,6 +617,42 @@
                 }
             }
             updateGrid();
+            // 팔레트 매칭
+            // pixels에서 유니크한 색상을 찾아서 배열 만들기
+            const uniqueColors = Array.from(new Set(pixels));
+            // HEX 색상으로 변환 (대문자)
+            let hexColors = uniqueColors.map(color => {
+                if (color === 'transparent') {
+                    return 'transparent';
+                }
+                const rgb = color.match(/\d+/g);
+                return `#${rgb.map(c => parseInt(c).toString(16).padStart(2, '0')).join('')}`;
+            });
+            
+            hexColors = hexColors.filter(color => 
+                color !== 'transparent' && color !== '#ffffff' && color !== '#000000'
+            );
+
+            console.log(hexColors);
+
+            const gridPixels = document.querySelectorAll('.pixel');
+            pixels.forEach((color, index) => {
+                // pixels[index]의 hex 색상을 계산
+                const hexColor = color === 'transparent' ? 'transparent' : 
+                    `#${color.match(/\d+/g).map(c => parseInt(c).toString(16).padStart(2, '0')).join('')}`;
+                // 검은색, 흰색, 투명이라면
+                // gridPixels[index].dataset.color_id 를 6, 7, 8 에 대응
+                if (color === 'transparent') {
+                    gridPixels[index].dataset.color_id = 8;
+                } else if (color === '#000000') {
+                    gridPixels[index].dataset.color_id = 6;
+                } else if (color === '#ffffff') {
+                    gridPixels[index].dataset.color_id = 7;
+                } else {
+                    // 그 외의 색상은 1이상의 숫자로 hexColors의 개수에 대응하게 매칭
+                    gridPixels[index].dataset.color_id = hexColors.indexOf(hexColor) + 1;
+                }
+            });
             addToHistory();
         }
         
@@ -689,11 +743,11 @@
         // 그리드 인쇄 함수
         function printGrid() {
             const ctx = ctx_grid_print;
-            const gridSizeMM = parseInt(document.getElementById('gridSize').value);
+            const printCellSizeMM = parseInt(document.getElementById('printCellSize').value);
             
             // Convert mm to pixels (assuming 96 DPI)
             const mmToPixels = 3.7795275591; // 1mm = 3.7795275591 pixels
-            const cellSize = gridSizeMM * mmToPixels;
+            const cellSize = printCellSizeMM * mmToPixels;
             
             // Calculate total size
             const totalSize = cellSize * gridSize;
@@ -736,11 +790,121 @@
             setTimeout(hidePrintAreas, 100);
         }
 
+        function setupMouseEvents() {
+            const grid = document.getElementById('pixelGrid');
+
+            grid.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                handleDraw(e);
+            });
+
+            grid.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    handleDraw(e);
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDrawing = false;
+            });
+
+            grid.addEventListener('touchstart', (e) => {
+                isDrawing = true;
+                handleDraw(e.touches[0]);
+                e.preventDefault(); // 터치 이벤트 시 스크롤 방지
+            });
+
+            grid.addEventListener('touchmove', (e) => {
+                if (isDrawing) {
+                    handleDraw(e.touches[0]);
+                }
+                e.preventDefault();
+            });
+
+            document.addEventListener('touchend', () => {
+                isDrawing = false;
+            });
+        }
+
+        function setupKeyboardEvents() {
+            document.addEventListener('keydown', (e) => {
+                if (e.altKey) {
+                    let moved = false;
+                    if (e.key === 'ArrowUp') {
+                        movePixels(0, -1);
+                        moved = true;
+                    } else if (e.key === 'ArrowDown') {
+                        movePixels(0, 1);
+                        moved = true;
+                    } else if (e.key === 'ArrowLeft') {
+                        movePixels(-1, 0);
+                        moved = true;
+                    } else if (e.key === 'ArrowRight') {
+                        movePixels(1, 0);
+                        moved = true;
+                    }
+                    if (moved) {
+                        e.preventDefault();
+                        updateGrid();
+                    }
+                }
+            });
+        }
+
+        function movePixels(dx, dy) {
+            const grid = document.getElementById('pixelGrid');
+            const newPixels = Array(gridSize * gridSize).fill('transparent');
+            const newPixelIds = Array(gridSize * gridSize).fill(null);
+
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const oldIndex = row * gridSize + col;
+                    const newRow = row + dy;
+                    const newCol = col + dx;
+
+                    if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
+                        const newIndex = newRow * gridSize + newCol;
+                        newPixels[newIndex] = pixels[oldIndex];
+                        newPixelIds[newIndex] = grid.children[oldIndex].dataset.color_id;
+                    }
+                }
+            }
+
+            pixels.splice(0, pixels.length, ...newPixels);
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                grid.children[i].dataset.color = newPixels[i];
+                grid.children[i].dataset.color_id = newPixelIds[i];
+            }
+
+            addToHistory();
+        }
+
+        function handleDraw(event) {
+            const grid = document.getElementById('pixelGrid');
+            const rect = grid.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const col = Math.floor((x / rect.width) * gridSize);
+            const row = Math.floor((y / rect.height) * gridSize);
+
+            if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) {
+                const index = row * gridSize + col;
+                pixels[index] = selectedColor;
+
+                const pixel = grid.children[index];
+                pixel.style.backgroundColor = selectedColor;
+                pixel.dataset.color_id = selectedColorId;
+            }
+        }
+
         themeSelector.appendChild(createThemeSelector());        
         createColorPalette();
         let selectedColor = document.getElementById('customColorPicker').value;
         let selectedColorId = 0;
         createPixelGrid();
+        setupMouseEvents();
+        setupKeyboardEvents();
         setupDragAndDrop();
         document.getElementById('clear').addEventListener('click', clearGrid);
         document.getElementById('save').addEventListener('click', saveImage);
