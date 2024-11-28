@@ -233,10 +233,10 @@
         <div id="themeSelector"></div>
         <div class="color-palette" id="palette"></div>
         <div class="buttons">
-            <button id="undo" class="action-button">
+            <button id="undo" class="action-button" style="opacity: 0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
             </button>
-            <button id="redo" class="action-button">
+            <button id="redo" class="action-button" style="opacity: 0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
             </button>
         </div>
@@ -272,6 +272,10 @@
         document.querySelector('#logotype').addEventListener('click', (event) => {
             window.open('https://www.hanmiu.cc', '_blank');
         });
+        let isMobile = false;
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            isMobile = true;    
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         const gridSize = parseInt(urlParams.get('s')) || 8; // 기본값 8
@@ -510,7 +514,9 @@
             pixels[index] = selectedColor;
             pixel.style.backgroundColor = selectedColor;
             pixel.dataset.color_id = selectedColorId;
-            addToHistory();
+            if(isMobile) {
+                addToHistory();
+            }
         }
         
         function updateGrid() {
@@ -692,8 +698,10 @@
         }
         
         function updateUndoRedoButtons() {
-            document.getElementById('undo').disabled = historyIndex === 0;
-            document.getElementById('redo').disabled = historyIndex === history.length - 1;
+            // document.getElementById('undo').disabled = historyIndex === 0;
+            // document.getElementById('redo').disabled = historyIndex === history.length - 1;
+            document.getElementById('undo').style.opacity = historyIndex === 0 ? 0.5 : 1;
+            document.getElementById('redo').style.opacity = historyIndex === history.length - 1 ? 0.5 : 1;
         }
         
         function preventContextMenu(e) {
