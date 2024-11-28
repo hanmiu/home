@@ -74,6 +74,7 @@
             background-color: #e67e22;
         }
         #undo, #redo {
+            padding: 5px 10px;
             background-color: #dadada;
             font-size: 20px;
         }
@@ -125,6 +126,7 @@
 
         .color-palette {
             display: grid;
+            margin-top: -20px;
             grid-template-columns: repeat(9, 1fr);
             gap: 5px;
             width: 320px;
@@ -232,22 +234,38 @@
 
         // 팔레트 테마 정의
         const paletteThemes = {
-            rainbow: {
+            "rainbow": {
                 name: "무지개",
-                colors: ['#FF9999', '#FFD700', '#98FB98', '#87CEEB', '#DDA0DD']
+                colors: ['#F58023', '#FAE83E', '#9CC841', '#2583F1', '#A200A2']
             },
-            autumn: {
-                name: "가을",
-                colors: ['#8B4513', '#CD853F', '#DAA520', '#D2691E', '#A0522D']
+            "Green Globe On Moss": {
+                name: "Green Globe On Moss",
+                colors: ['#042940', '#005C53', '#9FC131', '#DBF227', '#D6D58E']
             },
-            flower: {
-                name: "꽃",
-                colors: ['#FFB7C5', '#FF69B4', '#DDA0DD', '#EE82EE', '#FF00FF']
+            "Tropical Fruit Punch": {
+                name: "Tropical Fruit Punch",
+                colors: ['#146152', '#44803F', '#B4CF66', '#FFEC5C', '#FF5A33']
             },
-            ocean: {
+            "ocean": {
                 name: "바다",
-                colors: ['#00CED1', '#20B2AA', '#48D1CC', '#40E0D0', '#00FFFF']
-            }
+                colors: ['#FC8DCA', '#C37EDB', '#B7A6F6', '#88A3E2', '#AAECFC']
+            },
+            "ocean2": {
+                name: "바다",
+                colors: ['#248EA6', '#25C7D9', '#F2D338', '#F2622E', '#F23030']
+            },
+            "Abstract blue and yellow": {
+                name: "Abstract blue and yellow",
+                colors: ['#20448C', '#086CB4', '#008CDB', '#FFBC24', '#FFD340']
+            },
+            "Brown": {
+                name: "Brown",
+                colors: ['#592F16', '#8C5230', '#BF9075', '#D9B29C', '#402921']
+            },
+            "Around the World": {
+                name: "Around the World",
+                colors: ['#F2C2D8', '#0F7CBF', '#F2C53D', '#F2CEAE', '#F2561D']
+            },
         };
         
         // 테마 선택기 생성
@@ -292,8 +310,8 @@
             const colorPicker = document.createElement('input');
             colorPicker.type = 'color';
             colorPicker.id = 'customColorPicker';
-            colorPicker.value = '#9400D3'; // 기본 보라색
-            colorPicker.oninput = () => selectColor(colorPicker.value, colorPicker.parentElement);
+            colorPicker.value = '#FF0000'; // 기본 보라색
+            colorPicker.oninput = () => selectColor(colorPicker);
             const customColorButton = document.createElement('div');
             customColorButton.className = 'color-button';
             customColorButton.appendChild(colorPicker);
@@ -305,7 +323,8 @@
                 const button = document.createElement('button');
                 button.className = 'color-button';
                 button.style.backgroundColor = color;
-                button.onclick = () => selectColor(color, button);
+                button.dataset.color = color;
+                button.onclick = () => selectColor(button);
                 palette.appendChild(button);
             });
             
@@ -316,10 +335,12 @@
                 button.className = 'color-button';
                 if (color === 'transparent') {
                     button.classList.add('transparent-palette');
+                    button.dataset.color = color;
                 } else {
                     button.style.backgroundColor = color;
+                    button.dataset.color = color;
                 }
-                button.onclick = () => selectColor(color, button);
+                button.onclick = () => selectColor(button);
                 palette.appendChild(button);
             });
 
@@ -336,6 +357,7 @@
             newColors.forEach((color, index) => {
                 const button = colorButtons[index + 1]; // +1은 커스텀 컬러 피커를 건너뛰기 위함
                 button.style.backgroundColor = color;
+                button.dataset.color = color;
             });
             
             // 현재 선택된 버튼 찾기
@@ -350,10 +372,11 @@
             }
         }
         
-        function selectColor(color, button) {
-            selectedColor = button.style.backgroundColor;
-            if(button.querySelector('input')) {
-                selectedColor = color;
+        function selectColor(button) {
+            if(button.id === 'customColorPicker') {
+                selectedColor = button.value;
+            } else {
+                selectedColor = button.dataset.color;
             }
             document.querySelectorAll('.color-button').forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
