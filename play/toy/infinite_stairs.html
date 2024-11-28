@@ -217,6 +217,7 @@
             //     <div>주사위 값: ${diceValue}</div>
             //     <div>플레이어 ${currentPlayer.id}가 ${currentPlayer.floor}층으로 이동했습니다!</div>
             // `;
+            document.querySelector('#rollDiceBtn').style.display = 'none';
 
             this.updatePlayerStatus();
             this.showRiddleAndCharacter();
@@ -285,8 +286,10 @@
                 messageDiv.style.color = 'red';
             }
 
+            document.querySelector('.riddle-section').innerHTML = '';
             document.querySelector('.riddle-section').appendChild(messageDiv);
-            document.querySelector('.riddle-section .options').innerHTML = '';
+            // document.querySelector('.riddle-section .options').innerHTML = '';
+            
 
             // 다음 차례 버튼 추가
             const nextTurnBtn = document.createElement('button');
@@ -384,6 +387,7 @@
                 break;
             } while (true);
 
+            document.querySelector('#rollDiceBtn').style.display = 'block';
             this.elements.gameControls.innerHTML = `
                 <button id="rollDiceBtn" onclick="game.rollDice()">주사위 굴리기</button>
             `;
