@@ -518,6 +518,13 @@
         
         function clearGrid() {
             pixels.fill('transparent');
+            // color_id 초기화
+            const gridPixels = document.querySelectorAll('.pixel');
+            gridPixels.forEach((pixel, index) => {
+                pixel.style.backgroundColor = 'transparent';
+                pixel.dataset.color = 'transparent';
+                pixel.dataset.color_id = 8;
+            });
             updateGrid();
             addToHistory();
         }
@@ -803,6 +810,9 @@
             });
 
             document.addEventListener('mouseup', () => {
+                if(isDrawing) {
+                    addToHistory();
+                }
                 isDrawing = false;
             });
 
@@ -816,10 +826,12 @@
                 if (isDrawing) {
                     handleDraw(e.touches[0]);
                 }
-                e.preventDefault();
             });
 
             document.addEventListener('touchend', () => {
+                if(isDrawing) {
+                    addToHistory();
+                }
                 isDrawing = false;
             });
         }
