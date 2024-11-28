@@ -33,21 +33,6 @@
             color: #333;
             cursor: pointer;
         }
-        .color-palette {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .color-button {
-            width: 40px;
-            height: 40px;
-            border: 1px solid #ccc;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        .color-button.selected {
-            border: 4px solid #333;
-        }
         .grid {
             display: grid;
             width: 320px;
@@ -87,7 +72,6 @@
         }
         #print {
             background-color: #e67e22;
-            display: none;
         }
         #undo, #redo {
             background-color: #dadada;
@@ -110,6 +94,69 @@
         .no-drop {
             cursor: no-drop;
         }
+
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 320px;
+        }
+
+        .theme-button {
+            height: 30px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            padding: 2px;
+            background: white;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+        }
+
+        .theme-button.selected {
+            outline: 2px solid #333;
+        }
+
+        .theme-color {
+            width: 100%;
+            height: 100%;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 5px;
+            width: 320px;
+        }
+
+        .color-button {
+            aspect-ratio: 1;
+            border: 1px solid #ccc;
+            padding: 0;
+            cursor: pointer;
+            position: relative;
+            background: white;
+        }
+
+        .color-button.selected {
+            outline: 2px solid #333;
+            outline-offset: -2px;
+        }
+
+        .transparent-palette {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='8' height='8' fill='%23fff'/%3E%3Crect x='8' y='8' width='8' height='8' fill='%23fff'/%3E%3Crect x='8' y='0' width='8' height='8' fill='%23ddd'/%3E%3Crect x='0' y='8' width='8' height='8' fill='%23ddd'/%3E%3C/svg%3E");
+            background-size: 16px 16px;
+        }
+
+        #customColorPicker {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: none;
+            cursor: pointer;
+        }
+
         #printArea {
             display: none;
         }
@@ -147,6 +194,7 @@
 <body>
     <div class="container" id="container">
         <h1 id="title"><span style="font-family: 'Noto Emoji', serif;">👾</span> 내 캐릭터 그리기 <span style="font-family: 'Noto Emoji', serif;">👾</span></h1>
+        <div id="themeSelector"></div>
         <div class="color-palette" id="palette"></div>
         <div class="buttons">
             <button id="undo" class="action-button">
@@ -177,19 +225,93 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const gridSize = parseInt(urlParams.get('s')) || 8; // 기본값 8
-
-        const colors = [
-        '#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3', 
-        '#FF8B94', '#A8E6CF', '#000000', '#FFFFFF', 'transparent'
-        ];
-        let selectedColor = colors[0];
+        const themeSelector = document.getElementById('themeSelector');
         const pixels = Array(gridSize * gridSize).fill('transparent');
         let history = [JSON.parse(JSON.stringify(pixels))];
         let historyIndex = 0;
+
+        // 팔레트 테마 정의
+        const paletteThemes = {
+            rainbow: {
+                name: "무지개",
+                colors: ['#FF9999', '#FFD700', '#98FB98', '#87CEEB', '#DDA0DD']
+            },
+            autumn: {
+                name: "가을",
+                colors: ['#8B4513', '#CD853F', '#DAA520', '#D2691E', '#A0522D']
+            },
+            flower: {
+                name: "꽃",
+                colors: ['#FFB7C5', '#FF69B4', '#DDA0DD', '#EE82EE', '#FF00FF']
+            },
+            ocean: {
+                name: "바다",
+                colors: ['#00CED1', '#20B2AA', '#48D1CC', '#40E0D0', '#00FFFF']
+            }
+        };
         
+        // 테마 선택기 생성
+        function createThemeSelector() {
+            const container = document.createElement('div');
+            container.className = 'theme-selector';
+            
+            Object.entries(paletteThemes).forEach(([key, theme]) => {
+                const button = document.createElement('button');
+                button.className = 'theme-button';
+                button.title = theme.name;
+                
+                // 5개의 색상 블록 생성
+                theme.colors.forEach(color => {
+                    const colorBlock = document.createElement('div');
+                    colorBlock.className = 'theme-color';
+                    colorBlock.style.backgroundColor = color;
+                    button.appendChild(colorBlock);
+                });
+                
+                button.onclick = () => {
+                    document.querySelectorAll('.theme-button').forEach(btn => 
+                        btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    updatePaletteColors(theme.colors);
+                };
+                container.appendChild(button);
+            });
+            
+            // 첫 번째 테마를 기본 선택으로 설정
+            container.firstChild.classList.add('selected');
+            
+            return container;
+        }
+
+        // 수정된 createColorPalette 함수
         function createColorPalette() {
             const palette = document.getElementById('palette');
-            colors.forEach((color, index) => {
+            palette.className = 'color-palette';
+            
+            // 커스텀 컬러 피커 (0번)
+            const colorPicker = document.createElement('input');
+            colorPicker.type = 'color';
+            colorPicker.id = 'customColorPicker';
+            colorPicker.value = '#9400D3'; // 기본 보라색
+            colorPicker.onchange = () => selectColor(colorPicker.value, colorPicker.parentElement);
+            const customColorButton = document.createElement('div');
+            customColorButton.className = 'color-button';
+            customColorButton.appendChild(colorPicker);
+            palette.appendChild(customColorButton);
+            
+            // 테마 색상 (1-5번)
+            const defaultTheme = paletteThemes.rainbow.colors;
+            defaultTheme.forEach(color => {
+                const button = document.createElement('button');
+                button.className = 'color-button';
+                button.style.backgroundColor = color;
+                button.onclick = () => selectColor(color, button);
+                palette.appendChild(button);
+            });
+            
+            // 고정 색상 (6-8번)
+            const fixedColors = ['#000000', '#FFFFFF', 'transparent'];
+            fixedColors.forEach(color => {
                 const button = document.createElement('button');
                 button.className = 'color-button';
                 if (color === 'transparent') {
@@ -198,13 +320,38 @@
                     button.style.backgroundColor = color;
                 }
                 button.onclick = () => selectColor(color, button);
-                if (index === 0) button.classList.add('selected');
                 palette.appendChild(button);
             });
+
+            // 첫 번째 색상을 기본 선택으로 설정
+            palette.firstChild.classList.add('selected');
+        }
+
+        // 팔레트 색상 업데이트
+        function updatePaletteColors(newColors) {
+            const palette = document.getElementById('palette');
+            const colorButtons = palette.querySelectorAll('.color-button');
+            
+            // 1-5번 색상만 업데이트
+            newColors.forEach((color, index) => {
+                const button = colorButtons[index + 1]; // +1은 커스텀 컬러 피커를 건너뛰기 위함
+                button.style.backgroundColor = color;
+            });
+            
+            // 현재 선택된 버튼 찾기
+            const selectedButton = Array.from(colorButtons).find(btn => btn.classList.contains('selected'));
+            if (selectedButton) {
+                const buttonIndex = Array.from(colorButtons).indexOf(selectedButton);
+                // 만약 선택된 버튼이 테마 색상 영역(1-5번)이었다면
+                if (buttonIndex >= 1 && buttonIndex <= 5) {
+                    // 새로운 테마의 같은 위치 색상으로 업데이트
+                    selectedColor = newColors[buttonIndex - 1];
+                }
+            }
         }
         
         function selectColor(color, button) {
-            selectedColor = color;
+            selectedColor = button.style.backgroundColor;
             document.querySelectorAll('.color-button').forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
         }
@@ -412,11 +559,6 @@
             e.preventDefault();
         }
         
-        function togglePrintButton() {
-            const printButton = document.getElementById('print');
-            printButton.style.display = printButton.style.display === 'none' ? 'inline-block' : 'none';
-        }
-        
         function printCharacter() {
             const printCanvas = document.getElementById('printCanvas');
             const ctx = printCanvas.getContext('2d');
@@ -446,16 +588,17 @@
             document.getElementById('printDate').textContent = dateString;
             window.print();
         }
-        
+
+        themeSelector.appendChild(createThemeSelector());        
         createColorPalette();
+        let selectedColor = document.getElementById('customColorPicker').value;
         createPixelGrid();
         setupDragAndDrop();
-        document.getElementById('clear').onclick = clearGrid;
-        document.getElementById('save').onclick = saveImage;
-        document.getElementById('undo').onclick = undo;
-        document.getElementById('redo').onclick = redo;
-        document.getElementById('title').onclick = togglePrintButton;
-        document.getElementById('print').onclick = printCharacter;
+        document.getElementById('clear').addEventListener('click', clearGrid);
+        document.getElementById('save').addEventListener('click', saveImage);
+        document.getElementById('undo').addEventListener('click', undo);
+        document.getElementById('redo').addEventListener('click', redo);
+        document.getElementById('print').addEventListener('click', printCharacter);
         document.body.addEventListener('contextmenu', preventContextMenu);
         updateUndoRedoButtons();
     </script>
