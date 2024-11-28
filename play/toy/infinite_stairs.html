@@ -96,8 +96,8 @@
             <div id="gameControls" class="game-controls">
                 <button onclick="game.rollDice()" id="rollDiceBtn">주사위 굴리기</button>
             </div>
-            <div id="riddleSection" class="riddle-section hidden"></div>
             <div id="characterSection" class="character-section hidden"></div>
+            <div id="riddleSection" class="riddle-section hidden"></div>
         </div>
 
         <button onclick="game.confirmRestart()" class="restart-btn">새로 시작하기</button>
@@ -176,9 +176,24 @@
         }
 
         updatePlayerStatus() {
+            // this.elements.playerStatus.innerHTML = this.players.map((player, index) => `
+            //     <div class="${index === this.currentPlayerIndex ? 'current' : ''}">
+            //         ${player.skipTurns > 0 ? '😴 ' : ''}플레이어 ${player.id}: ${player.floor}층, 코인: ${player.coins || 0}
+            //         <div class="collected-characters">
+            //             ${player.collectedCharacters.map(char => 
+            //                 `<img 
+            //                     src="./assets/infinite_stairs/${char['캐릭터 이름']}.png"
+            //                     alt="${char['캐릭터 이름']}"
+            //                     title="${char['캐릭터 효과']}"
+            //                     style="image-rendering: pixelated; width: auto; height: auto; max-width: 32px; max-height: 32px; object-fit: contain;"
+            //                 >`
+            //             ).join('')}
+            //         </div>
+            //     </div>
+            // `).join('');
             this.elements.playerStatus.innerHTML = this.players.map((player, index) => `
                 <div class="${index === this.currentPlayerIndex ? 'current' : ''}">
-                    ${player.skipTurns > 0 ? '😴 ' : ''}플레이어 ${player.id}: ${player.floor}층, 코인: ${player.coins || 0}
+                    ${player.skipTurns > 0 ? '😴 ' : ''}플레이어 ${player.id}: 코인: ${player.coins || 0}
                     <div class="collected-characters">
                         ${player.collectedCharacters.map(char => 
                             `<img 
@@ -198,10 +213,10 @@
             const currentPlayer = this.players[this.currentPlayerIndex];
             currentPlayer.floor += diceValue;
             
-            document.querySelector('.game-controls').innerHTML = `
-                <div>주사위 값: ${diceValue}</div>
-                <div>플레이어 ${currentPlayer.id}가 ${currentPlayer.floor}층으로 이동했습니다!</div>
-            `;
+            // document.querySelector('.game-controls').innerHTML = `
+            //     <div>주사위 값: ${diceValue}</div>
+            //     <div>플레이어 ${currentPlayer.id}가 ${currentPlayer.floor}층으로 이동했습니다!</div>
+            // `;
 
             this.updatePlayerStatus();
             this.showRiddleAndCharacter();
