@@ -73,6 +73,9 @@
         #print {
             background-color: #e67e22;
         }
+        #print-grid {
+            background-color: #e67e22;
+        }
         #undo, #redo {
             padding: 5px 10px;
             background-color: #dadada;
@@ -162,14 +165,19 @@
         #printArea {
             display: none;
         }
+        #gridPrintArea {
+            display: none;
+        }
+
         @media print {
             body * {
                 visibility: hidden;
             }
-            #printArea, #printArea * {
+            #printArea.visible, #printArea.visible *,
+            #gridPrintArea.visible, #gridPrintArea.visible * {
                 visibility: visible;
             }
-            #printArea {
+            #printArea.visible, #gridPrintArea.visible {
                 position: absolute;
                 left: 0;
                 top: 0;
@@ -180,15 +188,19 @@
                 align-items: center;
                 justify-content: center;
             }
-            #printCanvas {
-                width: 66vw;
-                height: 66vw;
+            #gridPrintCanvas {
+                width: auto;
+                height: auto;
             }
             #printInfo {
-                margin-top: 20px;
+                margin-top: 0px;
                 text-align: left;
                 width: 66vw;
-                font-size: 1.5em;
+                font-size: 2em;
+            }
+            @page {
+                size: A4;
+                margin: 0;
             }
         }
     </style>
@@ -212,6 +224,10 @@
             <button id="print" class="action-button">인쇄</button>
             <button id="save" class="action-button">그림 저장하기</button>
         </div>
+        <div class="buttons">
+            <input type="number" value="10" id="gridSize" style="width: 50px; text-align: center;"><label for="gridSize" style="margin-top: 10px">mm</label>
+            <button id="print-grid" class="action-button">칸 인쇄</button>
+        </div>
     </div>
     <canvas id="saveCanvas" width="1024" height="1024" style="display: none;"></canvas>
     <div id="dragOverlay">PNG 파일을 여기에 드롭하세요</div>
@@ -223,6 +239,9 @@
             <p id="printDate"></p>
         </div>
     </div>
+    <div id="gridPrintArea">
+        <canvas id="gridPrintCanvas"></canvas>
+    </div>
     
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -231,6 +250,11 @@
         const pixels = Array(gridSize * gridSize).fill('transparent');
         let history = [JSON.parse(JSON.stringify(pixels))];
         let historyIndex = 0;
+
+        const printCanvas = document.getElementById('printCanvas');
+        const ctx_print = printCanvas.getContext('2d');
+        const gridPrintCanvas = document.getElementById('gridPrintCanvas');
+        const ctx_grid_print = gridPrintCanvas.getContext('2d');
 
         // 팔레트 테마 정의
         const paletteThemes = {
@@ -311,6 +335,7 @@
             colorPicker.type = 'color';
             colorPicker.id = 'customColorPicker';
             colorPicker.value = '#FF0000'; // 기본 보라색
+            colorPicker.dataset.color_id = 0;
             colorPicker.oninput = () => selectColor(colorPicker);
             const customColorButton = document.createElement('div');
             customColorButton.className = 'color-button';
@@ -324,6 +349,7 @@
                 button.className = 'color-button';
                 button.style.backgroundColor = color;
                 button.dataset.color = color;
+                button.dataset.color_id = defaultTheme.indexOf(color) + 1;
                 button.onclick = () => selectColor(button);
                 palette.appendChild(button);
             });
@@ -340,6 +366,7 @@
                     button.style.backgroundColor = color;
                     button.dataset.color = color;
                 }
+                button.dataset.color_id = fixedColors.indexOf(color) + 6;
                 button.onclick = () => selectColor(button);
                 palette.appendChild(button);
             });
@@ -370,6 +397,15 @@
                     selectedColor = newColors[buttonIndex - 1];
                 }
             }
+
+            // 팔레트가 바뀔 때 그리드에 적용
+            let pixelButtons = document.querySelectorAll('.pixel');
+            Array.from(pixelButtons).forEach((pixel, index) => {
+                if(pixel.dataset.color_id) {
+                    pixel.style.backgroundColor = colorButtons[pixel.dataset.color_id].dataset.color;
+                    pixels[index] = colorButtons[pixel.dataset.color_id].dataset.color;
+                }
+            });
         }
         
         function selectColor(button) {
@@ -378,6 +414,7 @@
             } else {
                 selectedColor = button.dataset.color;
             }
+            selectedColorId = button.dataset.color_id;
             document.querySelectorAll('.color-button').forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
         }
@@ -432,18 +469,15 @@
         
         function colorPixel(index, pixel) {
             pixels[index] = selectedColor;
-            updateGrid();
+            pixel.style.backgroundColor = selectedColor;
+            pixel.dataset.color_id = selectedColorId;
             addToHistory();
         }
         
         function updateGrid() {
             const gridPixels = document.querySelectorAll('.pixel');
             pixels.forEach((color, index) => {
-                if (color === 'transparent') {
-                    gridPixels[index].style.backgroundColor = 'transparent';
-                } else {
-                    gridPixels[index].style.backgroundColor = color;
-                }
+                gridPixels[index].style.backgroundColor = color;
             });
         }
         
@@ -584,10 +618,25 @@
         function preventContextMenu(e) {
             e.preventDefault();
         }
+
+        // 인쇄 상태를 추적하는 함수들
+        function showPrintArea() {
+            document.getElementById('printArea').classList.add('visible');
+            document.getElementById('gridPrintArea').classList.remove('visible');
+        }
+
+        function showGridPrintArea() {
+            document.getElementById('printArea').classList.remove('visible');
+            document.getElementById('gridPrintArea').classList.add('visible');
+        }
+
+        function hidePrintAreas() {
+            document.getElementById('printArea').classList.remove('visible');
+            document.getElementById('gridPrintArea').classList.remove('visible');
+        }
         
         function printCharacter() {
-            const printCanvas = document.getElementById('printCanvas');
-            const ctx = printCanvas.getContext('2d');
+            const ctx = ctx_print;
             ctx.clearRect(0, 0, printCanvas.width, printCanvas.height);
             
             const pixelSize = (printCanvas.width - 2) / gridSize;
@@ -612,12 +661,68 @@
             const dateString = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][now.getDay()]}요일 ${now.getHours().toString().padStart(2, '0')}시 ${now.getMinutes().toString().padStart(2, '0')}분`;
             
             document.getElementById('printDate').textContent = dateString;
+            
+            showPrintArea();
             window.print();
+            
+            // Reset display settings after printing
+            setTimeout(hidePrintAreas, 100);
+        }
+
+        // 그리드 인쇄 함수
+        function printGrid() {
+            const ctx = ctx_grid_print;
+            const gridSizeMM = parseInt(document.getElementById('gridSize').value);
+            
+            // Convert mm to pixels (assuming 96 DPI)
+            const mmToPixels = 3.7795275591; // 1mm = 3.7795275591 pixels
+            const cellSize = gridSizeMM * mmToPixels;
+            
+            // Calculate total size
+            const totalSize = cellSize * gridSize;
+            
+            // Set canvas size
+            gridPrintCanvas.width = totalSize + 2;
+            gridPrintCanvas.height = totalSize + 2;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, gridPrintCanvas.width, gridPrintCanvas.height);
+            ctx.save();
+            ctx.translate(1, 1);
+            // Draw grid and filled cells
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const x = j * cellSize;
+                    const y = i * cellSize;
+                    
+                    // Draw cell border
+                    ctx.strokeStyle = '#999999';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                    
+                    // Fill cell if needed
+                    const pixelIndex = i * gridSize + j;
+                    const color = pixels[pixelIndex];
+                    if (color !== 'transparent') {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                }
+            }
+            ctx.restore();
+            
+            // Show grid print area and print
+            showGridPrintArea();
+            window.print();
+            
+            // Reset display settings after printing
+            setTimeout(hidePrintAreas, 100);
         }
 
         themeSelector.appendChild(createThemeSelector());        
         createColorPalette();
         let selectedColor = document.getElementById('customColorPicker').value;
+        let selectedColorId = 0;
         createPixelGrid();
         setupDragAndDrop();
         document.getElementById('clear').addEventListener('click', clearGrid);
@@ -625,6 +730,7 @@
         document.getElementById('undo').addEventListener('click', undo);
         document.getElementById('redo').addEventListener('click', redo);
         document.getElementById('print').addEventListener('click', printCharacter);
+        document.getElementById('print-grid').addEventListener('click', printGrid);
         document.body.addEventListener('contextmenu', preventContextMenu);
         updateUndoRedoButtons();
     </script>
