@@ -20,10 +20,20 @@
             background-color: rgba(240, 240, 240, 0.8);
         }
         #canvas { display: block; }
+        #bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
     </style>
 </head>
 <body>
-    <div id="dropZone">여기에 32x32 픽셀 아트 PNG 파일을 드래그 앤 드롭하세요</div>
+    <img id="bg" src="./assets/pixelart/bg.svg">
+    <div id="dropZone" style="display: none;">여기에 32x32 픽셀 아트 PNG 파일을 드래그 앤 드롭하세요</div>
     <canvas id="canvas"></canvas>
 
     <script>
@@ -38,7 +48,7 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        const GROUND_HEIGHT = 50;
+        const GROUND_HEIGHT = 150;
         const GRAVITY = 0.5;
 
         class Sprite {
@@ -180,8 +190,8 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 지면 그리기
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+            // ctx.fillStyle = '#8B4513';
+            // ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
 
             sprites.forEach(sprite => {
                 sprite.update();
@@ -240,6 +250,39 @@
                 animate();
             }
         });
+
+        function init() {
+            const sketchCanvas = document.createElement('canvas');
+            const sketchCtx = sketchCanvas.getContext('2d');
+            // locarStorage에 저장된 픽셀 아트 불러오기
+            const pixelarts = JSON.parse(localStorage.getItem('pixelarts'));
+            // pixelarts가 존재하면 sprites 배열에 추가
+            if (pixelarts) {
+                for(let pixelart of pixelarts) {
+                    sketchCanvas.width = Number(pixelart.size);
+                    sketchCanvas.height = Number(pixelart.size);
+                    // pixelart는 gridSize가 숫자 하나로 있고, gridSize x gridSize 크기로 pixels에는 ["transparent", "#FF00A3", ...] 꼴로 색이 들어있음, 이걸 tempCanvas에 resize해서 그려서 imageData로 변환
+                    for (let i = 0; i < pixelart.pixels.length; i++) {
+                        const color = pixelart.pixels[i];
+                        if (color !== 'transparent') {
+                            sketchCtx.fillStyle = color;
+                            sketchCtx.fillRect(i % pixelart.size, Math.floor(i / pixelart.size), 1, 1);
+                        }
+                    }
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.imageSmoothingEnabled = false;
+                    tempCtx.drawImage(sketchCanvas, 0, 0, 32, 32);                    
+                    const imageData = tempCtx.getImageData(0, 0, 32, 32).data;
+                    const x = Math.random() * (canvas.width - 64);
+                    const y = Math.random() * (canvas.height - GROUND_HEIGHT - 64);
+                    sprites.push(new Sprite(imageData, x, y));
+                    }
+                animate();
+            }
+        }
+
+        init();
     </script>
 </body>
 </html>
