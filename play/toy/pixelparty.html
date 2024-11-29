@@ -52,12 +52,14 @@
         const GRAVITY = 0.5;
 
         class Sprite {
-            constructor(imageData, x, y) {
-                this.imageData = imageData;
+            constructor(ctx, x, y, size) {
+                this.img = ctx.canvas;
+                this.imageData = ctx.getImageData(0, 0, size, size).data;
                 this.x = x;
                 this.y = y;
-                this.width = 64;
-                this.height = 64;
+                this.size = size;
+                this.width = size;
+                this.height = size;
                 this.vx = 0;
                 this.vy = 0;
                 this.jumpForce = -10;
@@ -66,10 +68,10 @@
             }
 
             calculateBoundingBox() {
-                let left = 32, right = 0, top = 32, bottom = 0;
-                for (let y = 0; y < 32; y++) {
-                    for (let x = 0; x < 32; x++) {
-                        const i = (y * 32 + x) * 4;
+                let left = this.size, right = 0, top = this.size, bottom = 0;
+                for (let y = 0; y < this.size; y++) {
+                    for (let x = 0; x < this.size; x++) {
+                        const i = (y * this.size + x) * 4;
                         if (this.imageData[i + 3] > 0) {
                             left = Math.min(left, x);
                             right = Math.max(right, x);
@@ -79,23 +81,24 @@
                     }
                 }
                 return {
-                    left: left * 2,
-                    right: right * 2,
-                    top: top * 2,
-                    bottom: bottom * 2
+                    left: left,
+                    right: right,
+                    top: top,
+                    bottom: bottom
                 };
             }
 
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                for (let y = 0; y < 32; y++) {
-                    for (let x = 0; x < 32; x++) {
-                        const i = (y * 32 + x) * 4;
-                        ctx.fillStyle = `rgba(${this.imageData[i]}, ${this.imageData[i+1]}, ${this.imageData[i+2]}, ${this.imageData[i+3] / 255})`;
-                        ctx.fillRect(x * 2, y * 2, 2, 2);
-                    }
-                }
+                // for (let y = 0; y < this.size; y++) {
+                //     for (let x = 0; x < this.size; x++) {
+                //         const i = (y * this.size + x) * 4;
+                //         ctx.fillStyle = `rgba(${this.imageData[i]}, ${this.imageData[i+1]}, ${this.imageData[i+2]}, ${this.imageData[i+3] / 255})`;
+                //         ctx.fillRect(x * 2, y * 2, 2, 2);
+                //     }
+                // }
+                ctx.drawImage(this.img, 0, 0);
                 ctx.restore();
             }
 
@@ -261,7 +264,7 @@
                 for(let pixelart of pixelarts) {
                     sketchCanvas.width = Number(pixelart.size);
                     sketchCanvas.height = Number(pixelart.size);
-                    // pixelart는 gridSize가 숫자 하나로 있고, gridSize x gridSize 크기로 pixels에는 ["transparent", "#FF00A3", ...] 꼴로 색이 들어있음, 이걸 tempCanvas에 resize해서 그려서 imageData로 변환
+                    
                     for (let i = 0; i < pixelart.pixels.length; i++) {
                         const color = pixelart.pixels[i];
                         if (color !== 'transparent') {
@@ -272,11 +275,11 @@
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     tempCtx.imageSmoothingEnabled = false;
-                    tempCtx.drawImage(sketchCanvas, 0, 0, 32, 32);                    
-                    const imageData = tempCtx.getImageData(0, 0, 32, 32).data;
-                    const x = Math.random() * (canvas.width - 64);
-                    const y = Math.random() * (canvas.height - GROUND_HEIGHT - 64);
-                    sprites.push(new Sprite(imageData, x, y));
+                    let size = 128;
+                    tempCtx.drawImage(sketchCanvas, 0, 0, size, size);
+                    const x = Math.random() * (canvas.width - size * 2);
+                    const y = Math.random() * (canvas.height - GROUND_HEIGHT - size * 2);
+                    sprites.push(new Sprite(tempCtx, x, y, size));
                 }
                 animate();
             }
