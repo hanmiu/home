@@ -635,7 +635,7 @@
             pixelarts.push({
                 date: dateString,
                 size: gridSize,
-                pixels: pixels
+                pixels: structuredClone(pixels)
             });
             if(pixelarts.length > 10) {
                 pixelarts.shift();
