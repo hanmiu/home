@@ -6,19 +6,6 @@
     <title>PIXEL</title>
     <style>
         body { margin: 0; overflow: hidden; }
-        #dropZone {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            color: #666;
-            background-color: rgba(240, 240, 240, 0.8);
-        }
         #canvas { display: block; }
         #bg {
             position: absolute;
@@ -33,26 +20,29 @@
 </head>
 <body>
     <img id="bg" src="./assets/pixelart/bg.svg">
-    <div id="dropZone" style="display: none;">여기에 32x32 픽셀 아트 PNG 파일을 드래그 앤 드롭하세요</div>
     <canvas id="canvas"></canvas>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const dropZone = document.getElementById('dropZone');
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
         const GROUND_HEIGHT = 150;
         const GRAVITY = 0.5;
+        // 키 입력 상태를 추적하기 위한 객체
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            KeyW: false,
+            KeyA: false,
+            KeyD: false
+        };
+
+        const sprites = [];
+        let animationId = null;
+        let lastInputTime = Date.now();
 
         class Sprite {
-            constructor(ctx, x, y, size) {
+            constructor(ctx, x, y, size, isPlayer = false) {
                 this.img = ctx.canvas;
                 this.imageData = ctx.getImageData(0, 0, size, size).data;
                 this.x = x;
@@ -65,6 +55,9 @@
                 this.jumpForce = -10;
                 this.onGround = false;
                 this.boundingBox = this.calculateBoundingBox();
+                this.isPlayer = isPlayer;
+                this.isControlled = false;
+                this.moveSpeed = 5;
             }
 
             calculateBoundingBox() {
@@ -91,24 +84,21 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                // for (let y = 0; y < this.size; y++) {
-                //     for (let x = 0; x < this.size; x++) {
-                //         const i = (y * this.size + x) * 4;
-                //         ctx.fillStyle = `rgba(${this.imageData[i]}, ${this.imageData[i+1]}, ${this.imageData[i+2]}, ${this.imageData[i+3] / 255})`;
-                //         ctx.fillRect(x * 2, y * 2, 2, 2);
-                //     }
-                // }
                 ctx.drawImage(this.img, 0, 0);
                 ctx.restore();
             }
 
             update() {
-                if (this.onGround) {
-                    this.vx = 0;  // 바닥에서 미끄러지지 않도록 수평 속도를 0으로 설정
-                    if (Math.random() < 0.02) {
-                        this.jump();
+                if (!this.isPlayer || (this.isPlayer && !this.isControlled)) {
+                    if (this.onGround) {
+                        this.vx = 0;
+                        if (Math.random() < 0.02) {
+                            this.jump();
+                        }
                     }
-                } else {
+                }
+                
+                if (!this.onGround) {
                     this.vy += GRAVITY;
                 }
 
@@ -127,10 +117,10 @@
                 // 벽 충돌 체크
                 if (this.x < 0) {
                     this.x = 0;
-                    this.vx = Math.abs(this.vx);  // 오른쪽으로 튕김
+                    this.vx = this.isControlled ? 0 : Math.abs(this.vx);
                 } else if (this.x + this.width > canvas.width) {
                     this.x = canvas.width - this.width;
-                    this.vx = -Math.abs(this.vx);  // 왼쪽으로 튕김
+                    this.vx = this.isControlled ? 0 : -Math.abs(this.vx);
                 }
             }
 
@@ -186,22 +176,80 @@
             }
         }
 
-        const sprites = [];
-        let animationId = null;
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // 키 이벤트 리스너 추가
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            lastInputTime = Date.now();
+            if (sprites.length > 0) {
+                sprites[sprites.length - 1].isControlled = true;
+                if (sprites.length > 1) {
+                    sprites[sprites.length - 2].isControlled = true;
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        function updatePlayers() {
+            const currentTime = Date.now();
+            const timeSinceLastInput = currentTime - lastInputTime;
+            
+            if (sprites.length > 0) {
+                const player1 = sprites[sprites.length - 1];
+                
+                // 30초 이상 입력이 없으면 자동 모드로 전환
+                if (timeSinceLastInput > 30000) {
+                    player1.isControlled = false;
+                    if (sprites.length > 1) {
+                        sprites[sprites.length - 2].isControlled = false;
+                    }
+                    return;
+                }
+
+                if (player1.isControlled) {
+                    // Player 1 controls (arrow keys)
+                    player1.vx = 0;
+                    if (keys.ArrowLeft) player1.vx = -player1.moveSpeed;
+                    if (keys.ArrowRight) player1.vx = player1.moveSpeed;
+                    if (keys.ArrowUp && player1.onGround) {
+                        player1.vy = player1.jumpForce;
+                        player1.onGround = false;
+                    }
+                }
+
+                // Player 2 controls (WAD keys)
+                if (sprites.length > 1) {
+                    const player2 = sprites[sprites.length - 2];
+                    if (player2.isControlled) {
+                        player2.vx = 0;
+                        if (keys.KeyA) player2.vx = -player2.moveSpeed;
+                        if (keys.KeyD) player2.vx = player2.moveSpeed;
+                        if (keys.KeyW && player2.onGround) {
+                            player2.vy = player2.jumpForce;
+                            player2.onGround = false;
+                        }
+                    }
+                }
+            }
+        }
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 지면 그리기
-            // ctx.fillStyle = '#8B4513';
-            // ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
-
+            
+            updatePlayers();
+            
             sprites.forEach(sprite => {
                 sprite.update();
                 sprite.draw();
             });
 
-            // 충돌 검사 및 해결
             for (let i = 0; i < sprites.length; i++) {
                 for (let j = i + 1; j < sprites.length; j++) {
                     if (sprites[i].collidesWith(sprites[j])) {
@@ -213,65 +261,25 @@
             animationId = requestAnimationFrame(animate);
         }
 
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        dropZone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const files = Array.from(e.dataTransfer.files);
-            const imageFiles = files.filter(file => file.type.startsWith('image/'));
-
-            if (imageFiles.length === 0) {
-                alert('이미지 파일만 드롭할 수 있습니다.');
-                return;
-            }
-
-            dropZone.style.display = 'none';
-
-            for (let file of imageFiles) {
-                const img = new Image();
-                img.src = URL.createObjectURL(file);
-                await img.decode();
-
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = 32;
-                tempCanvas.height = 32;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(img, 0, 0, 32, 32);
-                const imageData = tempCtx.getImageData(0, 0, 32, 32).data;
-
-                const x = Math.random() * (canvas.width - 64);
-                const y = Math.random() * (canvas.height - GROUND_HEIGHT - 64);
-                sprites.push(new Sprite(imageData, x, y));
-            }
-
-            if (!animationId) {
-                animate();
-            }
-        });
-
         function init() {
             const sketchCanvas = document.createElement('canvas');
             const sketchCtx = sketchCanvas.getContext('2d');
-            // locarStorage에 저장된 픽셀 아트 불러오기
             const pixelarts = JSON.parse(localStorage.getItem('pixelarts'));
-            // pixelarts가 존재하면 sprites 배열에 추가
+            
             if (pixelarts) {
-                for(let pixelart of pixelarts) {
+                for(let i = 0; i < pixelarts.length; i++) {
+                    const pixelart = pixelarts[i];
                     sketchCanvas.width = Number(pixelart.size);
                     sketchCanvas.height = Number(pixelart.size);
                     
-                    for (let i = 0; i < pixelart.pixels.length; i++) {
-                        const color = pixelart.pixels[i];
+                    for (let j = 0; j < pixelart.pixels.length; j++) {
+                        const color = pixelart.pixels[j];
                         if (color !== 'transparent') {
                             sketchCtx.fillStyle = color;
-                            sketchCtx.fillRect(i % pixelart.size, Math.floor(i / pixelart.size), 1, 1);
+                            sketchCtx.fillRect(j % pixelart.size, Math.floor(j / pixelart.size), 1, 1);
                         }
                     }
+                    
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     tempCtx.imageSmoothingEnabled = false;
@@ -279,12 +287,17 @@
                     tempCtx.drawImage(sketchCanvas, 0, 0, size, size);
                     const x = Math.random() * (canvas.width - size * 2);
                     const y = Math.random() * (canvas.height - GROUND_HEIGHT - size * 2);
-                    sprites.push(new Sprite(tempCtx, x, y, size));
+                    
+                    // 마지막 두 스프라이트는 플레이어로 설정
+                    const isPlayer = (i >= pixelarts.length - 2);
+                    sprites.push(new Sprite(tempCtx, x, y, size, isPlayer));
                 }
                 animate();
             }
         }
 
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
         init();
     </script>
 </body>

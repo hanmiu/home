@@ -822,9 +822,10 @@
             const dateString = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][now.getDay()]}요일 ${now.getHours().toString().padStart(2, '0')}시 ${now.getMinutes().toString().padStart(2, '0')}분`;
             
             document.getElementById('printDate').textContent = dateString;
-            
+
             showPrintArea();
             window.print();
+            saveImage();
             
             // Reset display settings after printing
             setTimeout(hidePrintAreas, 100);
@@ -877,10 +878,11 @@
                 }
             }
             ctx.restore();
-            
+
             // Show grid print area and print
             showGridPrintArea();
             window.print();
+            saveImage();
             
             // Reset display settings after printing
             setTimeout(hidePrintAreas, 100);
@@ -1011,8 +1013,10 @@
                 const iframe = document.getElementById('modal-iframe');
                 iframe.src = url;
                 modal.style.display = 'flex';
+                iframe.focus();
             }
 
+            document.getElementById('song').volume = 0.2;
             document.getElementById('song').play();
         }
 
