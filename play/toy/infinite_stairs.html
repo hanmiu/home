@@ -149,7 +149,7 @@
         <div id="gameBoard" class="game-board hidden">
             <div id="playerStatus" class="player-status"></div>
             <div id="gameControls" class="game-controls">
-                <button onclick="game.rollDice()" id="rollDiceBtn">주사위 굴리기</button>
+                <button onclick="game.rollDice()" id="rollDiceBtn">🎲 주사위 굴리기</button>
             </div>
             <div id="characterSection" class="character-section hidden"></div>
             <div id="riddleSection" class="riddle-section hidden"></div>
@@ -426,6 +426,14 @@
                 </div>
             `;
 
+            let hidden_name = '';
+            this.currentCharacter['캐릭터 이름'].split('').forEach((char) => {
+                if (char === ' ') {
+                    hidden_name += ' ';
+                } else {
+                    hidden_name += '❓';
+                }
+            });
             this.elements.characterSection.innerHTML = `
                 <h3 class="notify">나왔다!</h3>
                 <div class="character-card">
@@ -435,8 +443,8 @@
                         style="image-rendering: pixelated; width: auto; height: auto; width: 96px; max-width: 96px; max-height: 96px; object-fit: contain; filter: brightness(0.0); transition: filter 0.5s;"
                     >
                     <div class="character-info">
-                        <p class="character-name">${this.currentCharacter['캐릭터 이름']}</p>
-                        <p>❓ 문제를 맞추면 효과가 공개됩니다</p>
+                        <p class="character-name">${hidden_name}</p>
+                        <p>✨ 문제를 맞추면 이름과 효과가 공개됩니다. ⚡️</p>
                     </div>
                 </div>
             `;
@@ -549,7 +557,7 @@
                 currentPlayer.extraTurns--;
                 this.elements.gameControls.innerHTML = `
                     <div class="message">플레이어 ${currentPlayer.id}의 추가 턴입니다!</div>
-                    <button id="rollDiceBtn" onclick="game.rollDice()">주사위 굴리기</button>
+                    <button id="rollDiceBtn" onclick="game.rollDice()">🎲 주사위 굴리기</button>
                 `;
                 return;
             }
@@ -570,7 +578,7 @@
             } while (true);
             
             this.elements.gameControls.innerHTML = `
-                <button id="rollDiceBtn" onclick="game.rollDice()">주사위 굴리기</button>
+                <button id="rollDiceBtn" onclick="game.rollDice()">🎲 주사위 굴리기</button>
             `;
             document.querySelector('#rollDiceBtn').style.display = 'block';
             
@@ -621,7 +629,7 @@
             this.elements.gameBoard.innerHTML = `
                 <div id="playerStatus" class="player-status"></div>
                 <div id="gameControls" class="game-controls">
-                    <button onclick="game.rollDice()" id="rollDiceBtn">주사위 굴리기</button>
+                    <button onclick="game.rollDice()" id="rollDiceBtn">🎲 주사위 굴리기</button>
                 </div>
                 <div id="riddleSection" class="riddle-section hidden"></div>
                 <div id="characterSection" class="character-section hidden"></div>
