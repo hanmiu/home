@@ -146,14 +146,7 @@
             <button onclick="game.selectPlayers(4)">4명</button>
         </div>
 
-        <div id="gameBoard" class="game-board hidden">
-            <div id="playerStatus" class="player-status"></div>
-            <div id="gameControls" class="game-controls">
-                <button onclick="game.rollDice()" id="rollDiceBtn">🎲 주사위 굴리기</button>
-            </div>
-            <div id="characterSection" class="character-section hidden"></div>
-            <div id="riddleSection" class="riddle-section hidden"></div>
-        </div>
+        <div id="gameBoard" class="game-board hidden"></div>
 
         <button onclick="game.confirmRestart()" class="restart-btn">새로 시작하기</button>
     </div>
@@ -228,8 +221,9 @@
 권금별	어부들이 싫어하는 가수는?	배철수	아이유	아이브
 권금별	도둑이 좋아하는 아이스크림은?	보석바	수박바	월드콘
 권금별	도둑이 싫어하는 아이스크림은?	누가바	메로나	요거트 아이스크림`;
-    const initialRiddles = tsvRiddleData.split('\n').map(row => {
-        const [name, riddle, answer, choice1, choice2] = row.split('\t');
+
+    const initialRiddles = tsvRiddleData.split('\n').slice(1).map(row => {
+        const [name, riddle, answer, choice1, choice2] = row.split('\t').map(x => x.trim());
         return { 이름: name, 수수께끼: riddle, 정답: answer, 보기1: choice1, 보기2: choice2 };
     });
 
@@ -251,7 +245,7 @@
 권금별	금이 쏟아져서 무덤이 되었다. 두판 쉬어야 한다.	조서안	쉬기	자신	2
 펭수	펭수가 춤을 춘다. 방해가 되서 한 판 쉬기	조서안	쉬기	자신	1
 얼음슬라임	얼음슬라임을 만나 뒤로 미끄러졌다. 두칸 뒤로 가야 한다.	박준	이동	자신	-2
-하트미니	사랑을 나눠줘서 더 빨리 갈 수 있다. 한번 더! 주사위를 던져라	최민지	한번더	자신	0
+하트미니	사랑을 나눠줘서 더 빨리 갈 수 있다. 한번 더! 주사위를 던져라	최민지	한번더	자신	1
 티비	티비를 봐서 눈이 나빠져서 눈을 잘 볼수가 없다. 이런 뒤로 떨어져버렸다. 다섯칸 뒤로!	최민지	이동	자신	-5
 팡팡이	빔이 쏟아져서 방해를 받는다! 다섯칸 뒤로 가야 한다.	최민지	이동	자신	-5
 다이아몬드	알라딘 영화처럼 쌩 하고 돗자리를 타고 올라갈 수 있다. 10칸 앞으로 가라!	최민지	쉬기	자신	1
@@ -264,30 +258,30 @@
 골드	하늘에서 금이 떨어진다! 5원 획득!	박준	코인	자신	5
 루초	루초를 타고 20칸 앞으로! 날아간다~	조서안	이동	자신	20
 하얀티비	무엇이로든 변할 수 있어서 캐릭터교체가 가능하다! 	최민지	캐릭터교체	자신	0
-산타클로스	산타클로스가 선물을 줘서 열어봐야 한다! 선물 가지고 놀아야 해서 한 판 쉬기!		쉬기	자신	0
-줄무늬옷	횡단보도에서 빨간불이 걸렸다. 한판을 쉬어야 한다!	최민지	쉬기	자신	0
+산타클로스	산타클로스가 선물을 줘서 열어봐야 한다! 선물 가지고 놀아야 해서 한 판 쉬기!		쉬기	자신	1
+줄무늬옷	횡단보도에서 빨간불이 걸렸다. 한판을 쉬어야 한다!	최민지	쉬기	자신	1
 돗단배	돗단배를 타고 아주 빨리 갈 수 있다. 5칸 앞으로 슝	최민지	이동	자신	5
-이은지 선생님	머리카락으로 상대방의 올라가는 길을 막았다! 내 앞사람은 한 판 쉬기!	최민지	쉬기	앞사람	0
-하트뿅	가다가 사랑에 빠져버렸다! 데이트 하느라 바쁘니깐 한판 쉬기~!	최민지	쉬기	자신	0
-케찹핑	케찹이 터져버렸다! 쭉 미끄러져서 3칸 뒤로 이동		쉬기	자신	0
+이은지 선생님	머리카락으로 상대방의 올라가는 길을 막았다! 내 앞사람은 한 판 쉬기!	최민지	쉬기	앞사람	1
+하트뿅	가다가 사랑에 빠져버렸다! 데이트 하느라 바쁘니깐 한판 쉬기~!	최민지	쉬기	자신	1
+케찹핑	케찹이 터져버렸다! 쭉 미끄러져서 3칸 뒤로 이동		이동	자신	-3
 구마	고구마 방구가 나와서 터보가 생겼다. 2칸 앞으로 뿡뿡~갈 수 있다.		이동	자신	2
 팽팽이	팽팽이의 팽이 돌리는 속도가 아주 빠르다! 팽이 바람이 불어서 4칸 앞으로 날아갔다.		이동	자신	4
 꿀벌	꿀벌이 꿀을 찾으러 전속력으로 앞으로 돌진한다! 10칸 앞으로 전속력 가기!		이동	자신	10
-문어문어	문어먹물 발사! 앞사람의 눈을 가려버렸다. 앞사람은 앞이 보이지 않아 갈 수 없다. 한판 쉬기!		쉬기	앞사람	0
+문어문어	문어먹물 발사! 앞사람의 눈을 가려버렸다. 앞사람은 앞이 보이지 않아 갈 수 없다. 한판 쉬기!		쉬기	앞사람	1
 풍선	풍선을 타고 날아간다~6칸 앞으로 두둥실~~		이동	자신	6
 마리	마리는 힘이 쎄지는 약을 먹었다. 힘이 쎄져서 앞사람을 날려버린다! 이런 앞사람이 5칸 앞으로!		이동	앞사람	5
-나무나무	나무나무는 조용하고 움직이지 않는다. 한 판 쉬면서 나비랑 놀기!		쉬기	자신	0
+나무나무	나무나무는 조용하고 움직이지 않는다. 한 판 쉬면서 나비랑 놀기!		쉬기	자신	1
 노랑모자	노랑 모자의 모자를 쓰면 변신이 가능하다! 캐릭터 교체 가능!		캐릭터교체	자신	0
 리본닌자	리본닌자가 숨어서 등껍질 공격을 한다. 5칸 앞으로 등껍질 공격~		이동	자신	5
 사슴벌레	사슴벌레의 집게는 강력하다. 내 바로 앞에 사람이 있다면 물기 공격! 바로 앞에 사람이 있다면 앞사람은 맨 처음으로.		처음으로	앞사람	0
-새싹이	새싹이는 아직 힘이 약하다. 아무런 효과가 없다. 		이동	자신	0
-사이다	사이다를 마셨다. 사이다가 맛있다! 주사위 한 번 더 돌리기!		한번 더 	자신	0
+새싹이	새싹이는 아직 힘이 약하다. 아무런 효과가 없다. 		무효	자신	0
+사이다	사이다를 마셨다. 사이다가 맛있다! 주사위 한 번 더 돌리기!		한번더	자신	1
 블루물약	블루물약을 마셨다. 효과발동! 잘못된 효과다. 잘못만들었다. 10칸 뒤로		이동	자신	-10
-버스	버스를 타서 엄청 커졌다! 효과는 따로 없다.		이동	자신	0
+버스	버스를 타서 엄청 커졌다! 효과는 따로 없다.		무효	자신	0
 왕토끼	왕토끼는 속도가 빨라진다. 순식간에 10칸 앞으로!		이동	자신	10
 하양연두티비	텔레비전에서 캐릭터를 바꿀 수 있다. 마음에 드는 캐릭터로 교체 가능!		캐릭터교체	자신	0
-핑크핑	핑크핑은 춤을 잘 춘다. 춤연습을 해야 하기 때문에 아무런 효과는 없다. 		이동	자신	0
-나아무우	나아무우가 같이 놀자고 이야기한다. 같이 놀아야 해서 한 판 쉬기~		쉬기	자신	0
+핑크핑	핑크핑은 춤을 잘 춘다. 춤연습을 해야 하기 때문에 아무런 효과는 없다. 		무효	자신	0
+나아무우	나아무우가 같이 놀자고 이야기한다. 같이 놀아야 해서 한 판 쉬기~		쉬기	자신	1
 빼루	빼루가 공격한다! 나 빼고 모두 3칸 뒤로 피해야 한다!		이동	나외모두	-3
 빨간 선글라스	빨간 선글라스에서 레이저빔이 나온다. 모두 2칸 뒤로 피해야 한다.		이동	나외모두	-2
 대한민국 코알라	대한민국~ 축구에서 한국이 이겼다! 기뻐서 친구들이랑 놀아야 한다. 한판 쉬기		쉬기	자신	0
@@ -296,7 +290,7 @@
 흐느적	흐느적 흐느적 2칸 뒤로!		이동	자신	-2`;
 
     const initialCharacters = tsvCharacterData.split('\n').slice(1).map(line => {
-        const [name, effect, creator, type, target, value] = line.split('\t');
+        const [name, effect, creator, type, target, value] = line.split('\t').map(x => x.trim());
         return { '캐릭터 이름': name, '캐릭터 효과': effect, '만든이': creator, '타입': type, '대상': target, '값': value };
     });
 
@@ -323,13 +317,20 @@
         }
 
         initializeDOM() {
-            this.elements = {
-                gameBoard: document.getElementById('gameBoard'),
-                playerStatus: document.getElementById('playerStatus'),
-                gameControls: document.getElementById('gameControls'),
-                riddleSection: document.getElementById('riddleSection'),
-                characterSection: document.getElementById('characterSection')
-            };
+            this.elements.gameBoard = document.getElementById('gameBoard');
+            this.elements.gameBoard.innerHTML = `
+                <div id="playerStatus" class="player-status"></div>
+                <div id="gameControls" class="game-controls">
+                    <button onclick="game.rollDice()" id="rollDiceBtn">🎲 주사위 굴리기</button>
+                </div>
+                <div id="characterSection" class="character-section hidden"></div>
+                <div id="riddleSection" class="riddle-section hidden"></div>
+            `;
+
+            this.elements.playerStatus = document.getElementById('playerStatus');
+            this.elements.gameControls = document.getElementById('gameControls');
+            this.elements.riddleSection = document.getElementById('riddleSection');
+            this.elements.characterSection = document.getElementById('characterSection');
         }
 
         init() {
@@ -359,6 +360,7 @@
                 floor: 0,
                 coins: 0,
                 skipTurns: 0,
+                extraTurns: 0,
                 collectedCharacters: []
             }));
             
@@ -401,6 +403,11 @@
 
         showRiddleAndCharacter() {
             if (this.riddles.length === 0) {
+                this.endGame();
+                return;
+            }
+
+            if (this.characters.length === 0) {
                 this.endGame();
                 return;
             }
@@ -478,8 +485,6 @@
 
             document.querySelector('.riddle-section').innerHTML = '';
             document.querySelector('.riddle-section').appendChild(messageDiv);
-            // document.querySelector('.riddle-section .options').innerHTML = '';
-            
 
             // 다음 차례 버튼 추가
             const nextTurnBtn = document.createElement('button');
@@ -523,7 +528,6 @@
             
             switch (character['타입']) {
                 case '코인':
-                    if (!player.coins) player.coins = 0;
                     player.coins += value;
                     break;
                 case '이동':
@@ -536,7 +540,7 @@
                     player.skipTurns += value;
                     break;
                 case '한번더':
-                    player.extraTurns = (player.extraTurns || 0) + value;
+                    player.extraTurns += value;
                     break;
             }
 
@@ -569,9 +573,9 @@
                 
                 if (nextPlayer.skipTurns > 0) {
                     nextPlayer.skipTurns--;
-                    this.elements.gameControls.innerHTML = `
-                        <div class="message">플레이어 ${nextPlayer.id}는 쉬는 중입니다. (남은 턴: ${nextPlayer.skipTurns})</div>
-                    `;
+                    // this.elements.gameControls.innerHTML = `
+                    //     <div class="message">플레이어 ${nextPlayer.id}는 쉬는 중입니다. (남은 턴: ${nextPlayer.skipTurns})</div>
+                    // `;
                     continue;
                 }
                 break;
@@ -625,18 +629,6 @@
             this.elements.gameBoard.classList.add('hidden');
             this.elements.riddleSection.classList.add('hidden');
             this.elements.characterSection.classList.add('hidden');
-            
-            this.elements.gameBoard.innerHTML = `
-                <div id="playerStatus" class="player-status"></div>
-                <div id="gameControls" class="game-controls">
-                    <button onclick="game.rollDice()" id="rollDiceBtn">🎲 주사위 굴리기</button>
-                </div>
-                <div id="riddleSection" class="riddle-section hidden"></div>
-                <div id="characterSection" class="character-section hidden"></div>
-            `;
-            
-            // DOM 요소 참조 다시 업데이트
-            this.initializeDOM();
         }
 
         confirmRestart() {
