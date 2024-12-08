@@ -1029,6 +1029,43 @@
             document.getElementById('song').pause();
         }
 
+        document.getElementById('title').addEventListener('click', () => {
+            const grid = document.getElementById('pixelGrid');
+            const gridWidth = grid.offsetWidth;
+            const gridHeight = grid.offsetHeight;
+            const pixelSize = gridWidth / gridSize;
+            
+            // SVG 기본 구조 생성
+            let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${gridWidth} ${gridHeight}">`;
+            
+            // 각 픽셀을 SVG 사각형으로 변환
+            pixels.forEach((color, i) => {
+                if (color !== 'transparent') {
+                    const x = (i % gridSize) * pixelSize;
+                    const y = Math.floor(i / gridSize) * pixelSize;
+                    svgContent += `<rect x="${x}" y="${y}" width="${pixelSize}" height="${pixelSize}" fill="${color}"/>`;
+                }
+            });
+            
+            svgContent += '</svg>';
+            
+            // 다운로드 링크 생성
+            const now = new Date();
+            const dateString = now.getFullYear() + 
+                ('0' + (now.getMonth() + 1)).slice(-2) + 
+                ('0' + now.getDate()).slice(-2) + '_' + 
+                ('0' + now.getHours()).slice(-2) + 
+                ('0' + now.getMinutes()).slice(-2);
+            
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `캐릭터_${gridSize}x${gridSize}_${dateString}.svg`;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
         themeSelector.appendChild(createThemeSelector());        
         createColorPalette();
         let selectedColor = document.getElementById('customColorPicker').value;
