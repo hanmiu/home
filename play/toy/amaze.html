@@ -142,7 +142,8 @@
 <body>
     <div class="container">
         <div><img id="title" src="./assets/amaze/amaze.svg"></div>
-        <p style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~</p>
+        <br>
+        <p id="notify" style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~</p>
         <div class="player-select">
             <h2>몇 명이서 모험을 할까요?</h2>
             <button onclick="game.selectPlayers(2)">2명</button>
@@ -431,6 +432,7 @@
             `).join('');
 
             document.querySelector('#start_quest').onclick = () => {
+                document.querySelector('#notify').style.display = 'none';
                 this.initializeDOM();
                 this.players.forEach(player => {
                     const input = document.getElementById(`player-${player.id}`);
