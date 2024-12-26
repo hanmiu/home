@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>한미로</title>
-    <!-- 2024학년도 까치반 어린이들의 작업을 확장 -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
 
@@ -130,11 +129,11 @@
 
         @keyframes run {
             0% {
-                transform: translateX(0);
+                transform: rotate(0deg);
                 opacity: 1;
             }
             100% {
-                transform: translateX(-100px);
+                transform: rotate(720deg);
                 opacity: 0;
             }
         }
@@ -145,7 +144,7 @@
         <div><img id="title" src="./assets/amaze/amaze.svg"></div>
         <p style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~</p>
         <div class="player-select">
-            <h2>몇 명이서 놀까요?</h2>
+            <h2>몇 명이서 모험을 할까요?</h2>
             <button onclick="game.selectPlayers(2)">2명</button>
             <button onclick="game.selectPlayers(3)">3명</button>
             <button onclick="game.selectPlayers(4)">4명</button>
@@ -342,10 +341,12 @@
             this.riddles = [];
             this.characters = [];
             this.players = [];
+            this.useVirtualDice = false;
             this.currentPlayerIndex = 0;
             this.currentRiddle = null;
             this.currentCharacter = null;
             this.isGameStarted = false;
+            this.lastDiceValue = 0;
             
             // DOM 요소 참조 저장
             this.elements = {
@@ -395,27 +396,62 @@
         }
 
         selectPlayers(count) {
-            this.initializeDOM();
-            this.players = Array.from({length: count}, (_, i) => ({
+            document.querySelector('.player-select').innerHTML = `
+                <div class="message">모험가의 이름을 적어주세요.</div>
+                <div id="playerNameInputs"></div>
+                <br>
+                <div>
+                    <input type="radio" id="realDice" name="diceType" value="real" checked>
+                    <label for="realDice">실물 주사위 사용</label>
+                    <input type="radio" id="virtualDice" name="diceType" value="virtual">
+                    <label for="virtualDice">가상 주사위 사용</label>
+                </div>
+                <br>
+                <div>
+                    <button id="start_quest">모험 시작하기</button>
+                </div>
+            `;
+
+            this.players = Array.from({ length: count }, (_, i) => ({
                 id: i + 1,
                 floor: 0,
                 coins: 0,
                 skipTurns: 0,
                 extraTurns: 0,
-                collectedCharacters: []
+                collectedCharacters: [],
+                name: `모험가${i + 1}` // 기본 이름
             }));
-            
-            this.isGameStarted = true;
-            document.querySelector('.player-select').classList.add('hidden');
-            this.elements.gameBoard.classList.remove('hidden');
-            this.updatePlayerStatus();
+
+            const playerNameInputs = document.querySelector('#playerNameInputs');
+            playerNameInputs.innerHTML = this.players.map(player => `
+                <div>
+                    <label for="player-${player.id}">모험가 ${player.id} 이름:</label>
+                    <input type="text" id="player-${player.id}" placeholder="${player.name}" autocomplete="off" />
+                </div>
+            `).join('');
+
+            document.querySelector('#start_quest').onclick = () => {
+                this.initializeDOM();
+                this.players.forEach(player => {
+                    const input = document.getElementById(`player-${player.id}`);
+                    player.name = input.value || player.name;
+                });
+
+                document.querySelector('.player-select').classList.add('hidden');
+                this.isGameStarted = true;
+                this.elements.gameBoard.classList.remove('hidden');
+                this.updatePlayerStatus();
+
+                const diceType = document.querySelector('input[name="diceType"]:checked').value;
+                this.useVirtualDice = (diceType === 'virtual');
+                };
         }
 
         updatePlayerStatus() {
             this.elements.playerStatus.innerHTML = this.players.map((player, index) => `
                 <div class="player-status">
                     <div><span class="player-name ${index === this.currentPlayerIndex ? 'current' : ''}">
-                    ${player.skipTurns > 0 ? '😴 ' : ''} ${player_emojis[player.id - 1]} 💎: ${player.coins || 0}
+                    ${player.skipTurns > 0 ? '😴 ' : ''} ${player_emojis[player.id - 1]} ${player.name}, 💎: ${player.coins || 0}
                     </span></div>
                     <div class="collected-characters">
                         ${player.collectedCharacters.map(char => 
@@ -435,6 +471,7 @@
             const diceValue = Math.floor(Math.random() * 6) + 1;
             const currentPlayer = this.players[this.currentPlayerIndex];
             currentPlayer.floor += diceValue;
+            game.lastDiceValue = diceValue;
             
             document.querySelector('#rollDiceBtn').style.display = 'none';
 
@@ -482,8 +519,17 @@
                     hidden_name += '❓';
                 }
             });
+
+            let diceMessage = '';
+            if (this.useVirtualDice) {
+                // 가상 주사위: ⚀ ~ ⚅ 중 랜덤 선택
+                const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+                diceMessage = `<span style="font-size: 2em;">${diceFaces[game.lastDiceValue - 1]}, ${game.lastDiceValue}</span> 단계 앞으로 갔더니,`;
+            }
+
             this.elements.characterSection.innerHTML = `
-                <h3 class="notify">나왔다!</h3>
+                <div>${diceMessage}</div>
+                <h3 class="notify">장난꾸러기 길잡이를 만났다!</h3>
                 <div class="character-card">
                     <img class="character-image" 
                         src="./assets/infinite_stairs/${this.currentCharacter['캐릭터 이름']}.png"
@@ -492,7 +538,7 @@
                     >
                     <div class="character-info">
                         <p class="character-name">${hidden_name}</p>
-                        <p>✨ 문제를 맞추면 이름과 효과가 공개됩니다. ⚡️</p>
+                        <p>✨ 수수께끼를 맞추면 길잡이의 이름과 능력이 해방됩니다. ⚡️</p>
                     </div>
                 </div>
             `;
@@ -507,7 +553,7 @@
             const character_image = document.querySelector('.character-image');
 
             if (answer === this.currentRiddle['정답']) {
-                document.querySelector('.notify').textContent = '잡았다! 🎉';
+                document.querySelector('.notify').textContent = '장난꾸러기 길잡이를 구출했다! 🎉';
                 character_image.style.filter = 'brightness(1.0)';
                 character_image.style.animation = 'bounce 0.3s ease-out 2';
                 messageDiv.textContent = '정답입니다!'; 
@@ -518,9 +564,9 @@
                 `;
                 this.applyCharacterEffect();
             } else {
-                document.querySelector('.notify').textContent = '놓쳤다...💨';
-                character_image.style.animation = 'run 0.3s ease-out forwards';
-                messageDiv.textContent = '틀렸습니다.';
+                document.querySelector('.notify').textContent = '휘리릭...🌀';
+                character_image.style.animation = 'run 1s ease-out forwards';
+                messageDiv.textContent = '틀렸습니다. 길잡이가 다시 그림자 속으로 봉인됐습니다...';
                 messageDiv.style.color = 'red';
             }
 
@@ -587,7 +633,7 @@
 
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
-            messageDiv.textContent = `${player.id}번 플레이어에게 "${character['캐릭터 효과']}" 효과가 적용되었습니다.`;
+            messageDiv.textContent = `${player.name}에게 "${character['캐릭터 효과']}" 효과가 적용되었습니다.`;
             document.querySelector('.character-section').appendChild(messageDiv);
         }
 
@@ -646,8 +692,8 @@
                 <div class="rankings">
                     ${rankings.map((player, index) => `
                         <div class="rank">
-                            ${index + 1}등: 플레이어 ${player.id}
-                            (점수: ${player.score.toFixed(1)}, 수집한 캐릭터: ${player.characters}개)
+                            ${index + 1}등: 플레이어 ${player.name}
+                            (점수: ${player.score.toFixed(1)}, 구출한 길잡이: ${player.characters})
                         </div>
                     `).join('')}
                 </div>
@@ -666,6 +712,13 @@
             this.initializeDOM();  // DOM 요소 참조 다시 가져오기
             
             // UI 초기화
+            document.querySelector('.player-select').innerHTML = `
+                <h2>몇 명이서 모험을 할까요?</h2>
+                <button onclick="game.selectPlayers(2)">2명</button>
+                <button onclick="game.selectPlayers(3)">3명</button>
+                <button onclick="game.selectPlayers(4)">4명</button>
+            `;
+
             document.querySelector('.player-select').classList.remove('hidden');
             this.elements.gameBoard.classList.add('hidden');
             this.elements.riddleSection.classList.add('hidden');
