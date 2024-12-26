@@ -546,7 +546,7 @@
             if (this.useVirtualDice) {
                 // 가상 주사위: ⚀ ~ ⚅ 중 랜덤 선택
                 const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-                diceMessage = `<span style="font-size: 2em;">${diceFaces[game.lastDiceValue - 1]}, ${game.lastDiceValue}</span> 단계 앞으로 갔더니,`;
+                diceMessage = `<span style="color: blue; font-size: 2em;">${diceFaces[game.lastDiceValue - 1]}</span>, <span style="color: blue; font-size: 2em;">${game.lastDiceValue}</span> 단계 앞으로 갔더니,`;
             }
 
             this.elements.characterSection.innerHTML = `
