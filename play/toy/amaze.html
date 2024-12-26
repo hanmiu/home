@@ -680,7 +680,7 @@
             if (currentPlayer.extraTurns > 0) {
                 currentPlayer.extraTurns--;
                 this.elements.gameControls.innerHTML = `
-                    <div class="message">플레이어 <span style="color: blue;">${currentPlayer.name}</span>의 추가 턴입니다!</div>
+                    <div class="message"><span style="color: blue;">${currentPlayer.name}</span>의 추가 턴입니다!</div>
                     <button id="rollDiceBtn" onclick="game.rollDice()">🎲 주사위 굴리기</button>
                 `;
                 return;
