@@ -143,7 +143,10 @@
     <div class="container">
         <div><img id="title" src="./assets/amaze/amaze.svg"></div>
         <br>
-        <p id="notify" style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~</p>
+        <p id="notify" style="color: purple;"></p>
+        <!--
+        <p id="notify" style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~ (엔딩 부분 추가 예정)</p> 
+        -->
         <div class="player-select">
             <h2>몇 명이서 모험을 할까요?</h2>
             <button onclick="game.selectPlayers(2)">2명</button>
@@ -153,7 +156,7 @@
 
         <div id="gameBoard" class="game-board hidden"></div>
 
-        <button onclick="game.confirmRestart()" class="restart-btn">새로 시작하기</button>
+        <button onclick="game.confirmRestart()" class="restart-btn">새로운 모험 시작하기</button>
     </div>
 
     <script>
@@ -683,19 +686,24 @@
             const rankings = this.players
                 .map(player => ({
                     id: player.id,
-                    score: player.floor + ((player.coins || 0) * 0.1),
+                    name: player.name,
+                    score: player.floor + player.collectedCharacters.length + ((player.coins || 0) * 0.1),
                     characters: player.collectedCharacters.length
                 }))
                 .sort((a, b) => b.score - a.score);
 
             const gameBoard = document.querySelector('.game-board');
             gameBoard.innerHTML = `
-                <h2>🎊 게임 종료! 🎊</h2>
+                <h2>🎊 모험 종료! 🎊</h2>
+                <h3>지혜로운 큰 새를 만났다!</h3>
+                <img src="./assets/amaze/bird.svg" alt="큰 새" style="height: 200px;">
+                <p>모험가들은 이 새를 타고 무사히 집으로 돌아가거나, 다시 새로운 모험을 향해 날아오를 수 있습니다.</p>
+                <p>명예의 전당: 멋지게 '한미로'를 답파한 모험가들</p>
                 <div class="rankings">
                     ${rankings.map((player, index) => `
                         <div class="rank">
-                            ${index + 1}등: 플레이어 ${player.name}
-                            (점수: ${player.score.toFixed(1)}, 구출한 길잡이: ${player.characters})
+                            🏆 ${player.name}
+                            (기여도: ${player.score.toFixed(1)}, 구출한 길잡이: ${player.characters})
                         </div>
                     `).join('')}
                 </div>
