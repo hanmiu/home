@@ -67,12 +67,6 @@
             padding-left: 5px;
             border-radius: 5px;
         }
-        /*
-        .collected-characters span {
-            font-size: 1.5em;
-            cursor: help;
-        }
-        */
         #gameControls {
             margin-top: 10px;
         }
@@ -99,6 +93,13 @@
             background: linear-gradient(90deg, green, blue, indigo, violet);
             -webkit-background-clip: text; /* 텍스트에만 배경 클립 */
             -webkit-text-fill-color: transparent; /* 텍스트 색상 투명 처리 */
+        }
+        .speaking {
+            margin: 10px 0;
+            padding: 5px 8px;
+            border-radius: 20px;
+            background-color: #9fe8a2;
+            cursor: pointer;
         }
         .message {
             margin: 10px 0;
@@ -143,9 +144,9 @@
     <div class="container">
         <div><img id="title" src="./assets/amaze/amaze.svg"></div>
         <br>
-        <p id="notify" style="color: purple;"></p>
+        <p id="notification" style="color: purple;"></p>
         <!--
-        <p id="notify" style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~ (엔딩 부분 추가 예정)</p> 
+        <p id="notification" style="color: purple;">'한미로'는 아직 테스트 중입니다. 플레이는 가능합니다~ (엔딩 부분 추가 예정)</p> 
         -->
         <div class="player-select">
             <h2>몇 명이서 모험을 할까요?</h2>
@@ -339,6 +340,9 @@
     });
 
     const player_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
+    let utter = new SpeechSynthesisUtterance();
+    utter.lang = 'ko-KR';
+    utter.rate = 0.75;
 
     class Game {
         constructor() {
@@ -435,7 +439,7 @@
             `).join('');
 
             document.querySelector('#start_quest').onclick = () => {
-                document.querySelector('#notify').style.display = 'none';
+                document.querySelector('#notification').style.display = 'none';
                 this.initializeDOM();
                 this.players.forEach(player => {
                     const input = document.getElementById(`player-${player.id}`);
@@ -503,8 +507,13 @@
             }
 
             this.elements.riddleSection.innerHTML = `
-                <h3>수수께끼</h3>
-                <p>${this.currentRiddle['수수께끼']}</p>
+                <h3>
+                    <span id="speak-riddle" class="speaking">💬</span>
+                    수수께끼
+                </h3>
+                <p>
+                    ${this.currentRiddle['수수께끼']}
+                </p>
                 <div class="options">
                     ${this.shuffle([
                         this.currentRiddle['정답'],
@@ -515,6 +524,14 @@
                     ).join('')}
                 </div>
             `;
+
+            const buns = '일번,이번,삼번'.split(',');
+            let options_text = Array.from(document.querySelectorAll('.options button')).map((btn, i) => `${buns[i]} ${btn.textContent}`).join(', ') + ' 중에 무엇일까요?';
+
+            document.querySelector('#speak-riddle').onclick = () => {
+                utter.text = `${this.currentRiddle['수수께끼']} ${options_text}`;
+                speechSynthesis.speak(utter);
+            };
 
             let hidden_name = '';
             this.currentCharacter['캐릭터 이름'].split('').forEach((char) => {
@@ -564,9 +581,19 @@
                 messageDiv.textContent = '정답입니다!'; 
                 messageDiv.style.color = 'green';
                 this.elements.characterSection.querySelector('.character-info').innerHTML = `
-                    <p class="character-name">${this.currentCharacter['캐릭터 이름']}</p>
-                    <p>${this.currentCharacter['캐릭터 효과']}</p>
+                    <p>
+                        <span class="character-name">${this.currentCharacter['캐릭터 이름']}
+                        </span>
+                    </p>
+                    <p>
+                        <span id="speak-character" class="speaking">💬</span>
+                        ${this.currentCharacter['캐릭터 효과']}
+                    </p>
                 `;
+                document.querySelector('#speak-character').onclick = () => {
+                    utter.text = `${this.currentCharacter['캐릭터 이름']}, ${this.currentCharacter['캐릭터 효과']}`;
+                    speechSynthesis.speak(utter);
+                };
                 this.applyCharacterEffect();
             } else {
                 document.querySelector('.notify').textContent = '휘리릭...🌀';
@@ -638,7 +665,8 @@
 
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
-            messageDiv.textContent = `${player.name}에게 "${character['캐릭터 효과']}" 효과가 적용되었습니다.`;
+            // messageDiv.textContent = `${player.name}에게 "${character['캐릭터 효과']}" 효과가 적용되었습니다.`;
+            messageDiv.innerHTML = `<span style="color: blue;">${player.name}</span> 에게 <span style="color: blue;">${character['캐릭터 이름']}</span>의 능력이 적용되었습니다.`;
             document.querySelector('.character-section').appendChild(messageDiv);
         }
 
@@ -652,7 +680,7 @@
             if (currentPlayer.extraTurns > 0) {
                 currentPlayer.extraTurns--;
                 this.elements.gameControls.innerHTML = `
-                    <div class="message">플레이어 ${currentPlayer.id}의 추가 턴입니다!</div>
+                    <div class="message">플레이어 <span style="color: blue;">${currentPlayer.name}</span>의 추가 턴입니다!</div>
                     <button id="rollDiceBtn" onclick="game.rollDice()">🎲 주사위 굴리기</button>
                 `;
                 return;
