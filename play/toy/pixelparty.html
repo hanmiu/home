@@ -21,7 +21,6 @@
 <body>
     <img id="bg" src="./assets/pixelart/bg.svg">
     <canvas id="canvas"></canvas>
-
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -266,6 +265,10 @@
             const sketchCtx = sketchCanvas.getContext('2d');
             const pixelarts = JSON.parse(localStorage.getItem('pixelarts'));
             
+            let bg_id = Math.floor(Math.random() * 5) + 1;
+            let bg_filename = `BG${String(bg_id).padStart(2, '0')}.jpg`;
+            document.getElementById('bg').src = `./assets/pixelart/${bg_filename}`; 
+
             if (pixelarts) {
                 for(let i = 0; i < pixelarts.length; i++) {
                     const pixelart = pixelarts[i];
