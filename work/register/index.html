@@ -1,0 +1,370 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>입학원서 생성기</title>
+<style>
+    body {
+        margin: 0;  
+        font-family: 'Malgun Gothic', sans-serif;
+    }
+    
+    /* UI 영역 스타일 - 인쇄 시 숨김 */
+    .ui-container {
+        padding: 20px;
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .ui-container h2 {
+        margin-top: 0;
+        color: #050084;
+    }
+    
+    .ui-container button {
+        background-color: #050084;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-size: 14px;
+    }
+    
+    .ui-container button:hover {
+        background-color: #030052;
+    }
+    
+    .instructions {
+        background-color: #e6f7ff;
+        border-left: 4px solid #1890ff;
+        padding: 10px 15px;
+        margin: 15px 0;
+        border-radius: 0 4px 4px 0;
+    }
+    
+    /* 기존 페이지 스타일 */
+    .page {
+        display: block;
+        position: relative;
+        width: 21cm;
+        height: 29.7cm;
+        margin: 0 auto;
+        box-sizing: border-box;
+        overflow: hidden;
+        page-break-after: always;
+    }
+    
+    .title {
+        text-align: center;
+        margin-top: 0.5cm;
+        font-size: 2rem;
+    }
+    
+    .basic {
+        margin-top: 0.5cm;
+        display: flex;
+        width: 100%;
+    }
+    
+    .info {
+        width: calc(21cm - 3.5cm);  
+    }
+    
+    .page table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+    
+    .basic tr {
+        height: calc(4.5cm / 5);
+        box-sizing: border-box;
+        border-bottom: 1px solid #e8e8e8;
+    }
+    
+    .basic td {
+        padding-left: 0.25cm;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .label {
+        color: #050084;
+    }
+    
+    .photo {
+        margin-top: 1px;
+        display: flex;
+        width: 3.5cm;
+        height: 4.5cm;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        border: 1px solid #e8e8e8;
+        color: #bebebe;
+    }
+    
+    .detail td {
+        padding: 0.2cm 0.2cm 0cm 0.25cm;
+        vertical-align: top;
+    }
+    
+    .detail .value {
+        font-size: 0.75rem;
+    }
+    
+    .footer {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        bottom: 0cm;
+        line-height: 2rem;
+    }
+    
+    .to {
+        font-size: 1.5rem;
+        letter-spacing: 0.3rem;
+    }
+    
+    .ds {
+        display: inline-block;
+        width: 1.6cm;
+    }
+    
+    .dn {
+        display: inline-block;
+        width: 3.2cm;
+    }
+    
+    /* 인쇄 설정 */
+    @media print {
+        .ui-container {
+            display: none;
+        }
+        
+        .page {
+            margin: 0;
+            box-shadow: none;
+        }
+    }
+    
+    /* 비인쇄 시 페이지 구분 */
+    @media screen {
+        .page {
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    }
+</style>
+<body>
+    <div class="ui-container">
+        <h2>입학원서 생성기</h2>
+        <div class="instructions">
+            <p><strong>사용 방법:</strong></p>
+            <ol>
+                <li>입학원서 스프레드시트에서 원하는 행을 선택하여 복사하세요. (Ctrl+C 또는 Cmd+C)</li>
+                <li>이 페이지 아무 곳에나 붙여넣기 하세요. (Ctrl+V 또는 Cmd+V)</li>
+                <li>입학원서가 생성됩니다.</li>
+                <li>생성된 원서의 모든 정보는 필요에 따라 직접 클릭하여 수정할 수 있습니다.</li>
+                <li>인쇄 버튼을 클릭하여 인쇄하세요.</li>
+            </ol>
+        </div>
+        <button id="clearBtn">모두 지우기</button>
+        <button id="printBtn">인쇄하기</button>
+    </div>
+    
+    <div class="pages">
+        <!-- 입학원서가 여기에 생성됩니다 -->
+    </div>
+    
+    <script>
+        let data = [];
+        const pagesContainer = document.querySelector('.pages');
+        const clearBtn = document.getElementById('clearBtn');
+        const printBtn = document.getElementById('printBtn');
+        
+        // 전체 페이지에 붙여넣기 이벤트 리스너 추가
+        document.addEventListener('paste', function(e) {
+            // 기본 붙여넣기 동작 방지
+            e.preventDefault();
+            
+            // 클립보드 데이터 가져오기
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const pastedData = clipboardData.getData('text');
+            
+            // TSV 데이터 파싱 및 처리
+            parseTSV(pastedData);
+        });
+        
+        // 인쇄 버튼 이벤트 리스너
+        printBtn.addEventListener('click', function() {
+            window.print();
+        });
+        
+        // 모두 지우기 버튼 이벤트 리스너
+        clearBtn.addEventListener('click', function() {
+            pagesContainer.innerHTML = '';
+            data = [];
+        });
+        
+        // TSV 데이터 파싱 함수
+        function parseTSV(line) {
+            
+            
+            // 여러 줄인 경우 첫 번째 줄을 헤더로 간주
+            // let keys = lines.shift().split('\t').map(x => x.trim());
+            let keys = `Timestamp	생년월일	어린이 이름	성별	주소	졸업한 형제/자매	반	과정 선택	Gmail 계정	온라인 참여 동의	등록유형	원적교	원적교 지역(주소)	동의 여부	성향	건강과 습관	칭찬	염려	보호자 이름(부)	보호자 전화번호(부)	보호자 이름(모)	보호자 전화번호(모)	교육관 · 양육관	아버지와 함께	어머니와 함께	주양육자	유치원의 교육관에 대해서	담임교사에게	유치원에게`.split('\t').map(x => x.trim());
+            
+            
+            let values = line.split('\t').map(x => x.trim());
+            let datum = {};
+            for(let i = 0; i < keys.length; i++) {
+                datum[keys[i]] = values[i] || '';
+            }
+            data.push(datum);
+            buildPage(datum);
+        }
+        
+        // JSON 형식 데이터 파싱 함수 
+        function parseJSON(jsonData) {
+            try {
+                // 구글 스프레드시트 JSON 형식 처리
+                if (jsonData.columns && jsonData.rows) {
+                    const keys = jsonData.columns.map(col => col.label || col.id);
+                    
+                    jsonData.rows.forEach(row => {
+                        const datum = {};
+                        keys.forEach((key, index) => {
+                            datum[key] = row.cells[index]?.text || '';
+                        });
+                        
+                        data.push(datum);
+                        buildPage(datum);
+                    });
+                    
+                    return true;
+                }
+                return false;
+            } catch (err) {
+                console.error("JSON 데이터 처리 오류:", err);
+                return false;
+            }
+        }
+        
+        // 페이지 생성 함수
+        function buildPage(d) {
+            let dt = new Date(d['Timestamp'] || new Date());
+            let html = `<div class="title">입 학 원 서</div>
+      <div class="basic">
+        <div class="info">
+          <table>
+            <tbody>
+              <tr>
+                <td class="label" colspan="2">이름:</td>
+                <td class="value" colspan="2" contenteditable="true" spellcheck="false">${d['어린이 이름'] || ''}</td>
+                <td class="label" colspan="2">성별:</td>
+                <td class="value" colspan="2" contenteditable="true" spellcheck="false">${d['성별'] || ''}</td>
+                <td class="label" colspan="2">생년월일:</td>
+                <td class="value" colspan="2" contenteditable="true" spellcheck="false">${d['생년월일'] || ''}</td>
+              </tr>
+              <tr>
+                <td class="label" colspan="2">메일:</td>
+                <td class="value" colspan="4" contenteditable="true" spellcheck="false">${d['Gmail 계정'] || ''}</td>
+                <td class="label" colspan="2">졸업 형제·자매:</td>
+                <td class="value" colspan="4" contenteditable="true" spellcheck="false">${d['졸업한 형제/자매'] || ''}</td>
+              </tr>
+              <tr>
+                <td class="label" colspan="2">주소:</td>
+                <td class="value" colspan="10" contenteditable="true" spellcheck="false">${d['주소'] || ''}</td>
+              </tr>
+              <tr>
+                <td class="label" colspan="3">보호자 이름(부):</td>
+                <td class="value" colspan="3" contenteditable="true" spellcheck="false">${d['보호자 이름(부)'] || ''}</td>
+                <td class="label" colspan="2" >전화번호(부):</td>
+                <td class="value" colspan="4" contenteditable="true" spellcheck="false">${d['보호자 전화번호(부)'] || ''}</td>
+              </tr>
+              <tr>
+                <td class="label" colspan="3">보호자 이름(모):</td>
+                <td class="value" colspan="3" contenteditable="true" spellcheck="false">${d['보호자 이름(모)'] || ''}</td>
+                <td class="label" colspan="2">전화번호(모):</td>
+                <td class="value" colspan="4" contenteditable="true" spellcheck="false">${d['보호자 전화번호(모)'] || ''}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="photo" contenteditable="true" spellcheck="false">사진</div>
+      </div>
+      <div class="detail">
+        <table>
+          <tbody>
+            <tr>
+              <td class="label">성향:</td>
+              <td class="label">건강과 습관:</td>
+            </tr>
+            <tr>
+              <td class="value" contenteditable="true" spellcheck="false">${d['성향'] || ''}</td>
+              <td class="value" contenteditable="true" spellcheck="false">${d['건강과 습관'] || ''}</td>
+            </tr>
+            <tr>
+              <td class="label">칭찬:</td>
+              <td class="label">염려:</td>
+            </tr>
+            <tr>
+              <td class="value" contenteditable="true" spellcheck="false">${d['칭찬'] || ''}</td>
+              <td class="value" contenteditable="true" spellcheck="false">${d['염려'] || ''}</td>
+            </tr>
+          </tbody>
+        </table>
+        <table>
+          <tbody>
+            <tr>
+              <td class="label" colspan="2">주양육자:</td>
+              <td class="value" colspan="10" contenteditable="true" spellcheck="false">${d['주양육자'] || ''}</td>
+            </tr>
+            <tr>
+              <td class="label" colspan="12">교육관·양육관:</td>
+            </tr>
+            <tr>
+              <td class="value" colspan="12" contenteditable="true" spellcheck="false">${d['교육관 · 양육관'] || ''}</td>
+            </tr>
+            <tr>
+              <td class="label" colspan="6">아버지와 함께:</td>
+              <td class="label" colspan="6">어머니와 함께:</td>
+            </tr>
+            <tr>
+              <td class="value" colspan="6" contenteditable="true" spellcheck="false">${d['아버지와 함께'] || ''}</td>
+              <td class="value" colspan="6" contenteditable="true" spellcheck="false">${d['어머니와 함께'] || ''}</td>
+            </tr>
+            <tr>
+              <td class="label" colspan="12">유치원의 교육관에 대해서:</td>
+            </tr>
+            <tr>
+              <td class="value" colspan="12" contenteditable="true" spellcheck="false">${d['유치원의 교육관에 대해서'] || ''}</td>
+            </tr>
+            <tr>
+              <td class="label" colspan="6">담임교사에게:</td>
+              <td class="label" colspan="6">유치원에게:</td>
+            </tr>
+            <tr>
+              <td class="value" colspan="6" contenteditable="true" spellcheck="false">${d['담임교사에게'] || ''}</td>
+              <td class="value" colspan="6" contenteditable="true" spellcheck="false">${d['유치원에게'] || ''}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="footer">
+        <div class="intent">한미유치원에 입학하고자 합니다</div>
+        <div class="date">${dt.getFullYear()} 년<span class="ds"></span>${dt.getMonth()+1} 월<span class="ds"></span>${dt.getDate()} 일</div>
+        <div class="sign">보호자<span class="dn"></span>(서명)</div>
+        <div class="to">한미유치원장귀하</div>
+      </div>`;
+            
+            let elPage = document.createElement('div');
+            elPage.className = 'page';
+            elPage.innerHTML = html;
+            pagesContainer.appendChild(elPage);    
+        }
+    </script>
+</body>
