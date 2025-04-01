@@ -7,7 +7,7 @@
     <style>
         body { font-family: sans-serif; padding: 20px; }
         /* 편집 가능한 요소에만 점선 테두리 표시 */
-        h1[contenteditable="true"], p[contenteditable="true"], .desc[contenteditable="true"] {
+        h2[contenteditable="true"], p[contenteditable="true"], .desc[contenteditable="true"] {
             border: 1px dashed #ccc;
             padding: 4px;
             margin-bottom: 12px;
@@ -38,8 +38,6 @@
             padding-top: 4px;
             font-size: 14px;
             color: #555;
-            /* 편집 가능하도록 설정 */
-            /* contenteditable="true" 는 JS에서 동적으로 추가 */
             min-height: 20px; /* 내용 없을 때 최소 높이 */
         }
         #copyButton {
@@ -72,7 +70,6 @@
             color: blue;
             font-weight: bold; /* 강조 */
             margin-bottom: 12px; /* 제목과의 간격 */
-            font-size: 1.5em; /* h2 기본 스타일과 유사하게 */
         }
         hr {
             margin-top: 20px; /* 본문과의 간격 */
@@ -83,7 +80,7 @@
 </head>
 <body>
     
-    <h1 id="title" class="editable" data-placeholder="제목" contenteditable="true" spellcheck="false"></h1>
+    <h2 id="title" class="editable" data-placeholder="제목" contenteditable="true" spellcheck="false"></h2>
     
     <label class="date-label">날짜: <input type="date" id="dateInput"></label>
     
@@ -243,6 +240,9 @@
         copyButton.addEventListener('click', () => {
             // 1. 복사할 내용만 담을 임시 컨테이너 생성
             const tempContainer = document.createElement('div');
+            const blankSpace = document.createElement('div');
+            blankSpace.textContent = '\u200B'; // 빈 공간을 위한 유니코드 문자
+            tempContainer.appendChild(blankSpace);
             
             // 2. 제목 복제 및 추가
             const clonedTitle = titleEl.cloneNode(true);
@@ -253,10 +253,10 @@
             tempContainer.appendChild(clonedTitle);
             
             // 3. 날짜 생성 및 추가
-            const h2 = document.createElement('h2');
-            h2.className = 'date-display'; // 스타일 적용
-            h2.textContent = formatDateKorean(dateInput.value);
-            tempContainer.appendChild(h2);
+            const h3 = document.createElement('h3');
+            h3.className = 'date-display'; // 스타일 적용
+            h3.textContent = formatDateKorean(dateInput.value);
+            tempContainer.appendChild(h3);
             
             // 4. 테이블 복제 및 정리 후 추가
             const clonedTable = table.cloneNode(true);
