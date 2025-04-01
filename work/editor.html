@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>개선된 이미지 편집기</title>
+    <script src="https://unpkg.com/pica@8.0.0/dist/pica.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        /* 편집 가능한 요소에만 점선 테두리 표시 */
+        h1[contenteditable="true"], p[contenteditable="true"], .desc[contenteditable="true"] {
+            border: 1px dashed #ccc;
+            padding: 4px;
+            margin-bottom: 12px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+            /* 복사 시 테두리 없애기 위한 기본값 */
+            border: 1px solid #ccc;
+        }
+        td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            vertical-align: top;
+            width: 33.33%; /* 3열 레이아웃 */
+            text-align: center;
+        }
+        img {
+            /* td 너비 100% 채우고 비율 유지 */
+            width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .desc {
+            border-top: 1px dashed #ccc;
+            padding-top: 4px;
+            font-size: 14px;
+            color: #555;
+            /* 편집 가능하도록 설정 */
+            /* contenteditable="true" 는 JS에서 동적으로 추가 */
+            min-height: 20px; /* 내용 없을 때 최소 높이 */
+        }
+        #copyButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px; /* 구분선과의 간격 */
+        }
+        #dropzone {
+            border: 2px dashed #888;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .date-label {
+            display: block; /* 라벨을 블록 요소로 만들어 줄바꿈 */
+            margin-bottom: 15px; /* 날짜 입력칸 아래 여백 */
+        }
+        .editable {
+            line-height: 1.2em;
+        }
+        .editable:empty::before {
+            content: attr(data-placeholder);
+            color: #aaa;
+            pointer-events: none;
+        }
+        /* 복사 시 임시로 생성되는 날짜 표시용 스타일 */
+        .date-display {
+            color: blue;
+            font-weight: bold; /* 강조 */
+            margin-bottom: 12px; /* 제목과의 간격 */
+            font-size: 1.5em; /* h2 기본 스타일과 유사하게 */
+        }
+        hr {
+            margin-top: 20px; /* 본문과의 간격 */
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1 id="title" class="editable" data-placeholder="제목" contenteditable="true" spellcheck="false"></h1>
+    
+    <label class="date-label">날짜: <input type="date" id="dateInput"></label>
+    
+    <div id="dropzone">📥 이미지를 드래그하거나 복사해서 붙여넣으세요</div>
+    
+    <table id="imageTable" contenteditable="true"></table>
+    
+    <p id="bodyText" class="editable" data-placeholder="본문" contenteditable="true" spellcheck="false"></p>
+    
+    <hr>
+    
+    <button id="copyButton">📋 복사 (Google Docs용)</button>
+    
+    <script>
+        const picaInstance = window.pica();
+        const table = document.getElementById('imageTable');
+        const dateInput = document.getElementById('dateInput');
+        const dropzone = document.getElementById('dropzone');
+        const copyButton = document.getElementById('copyButton');
+        const titleEl = document.getElementById('title');
+        const bodyEl = document.getElementById('bodyText');
+        
+        // 오늘 날짜 기본값 설정
+        dateInput.valueAsDate = new Date();
+        
+        // 붙여넣기 이벤트 리스너
+        document.addEventListener('paste', e => {
+            const items = e.clipboardData.items;
+            const files = [];
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    files.push(item.getAsFile());
+                }
+            }
+            if (files.length > 0) {
+                // 이미지가 있을 때만 기본 붙여넣기 동작 방지
+                e.preventDefault();
+                handleFiles(files);
+            }
+        });
+        
+        // 드래그 앤 드롭 이벤트 리스너
+        dropzone.addEventListener('dragover', e => {
+            e.preventDefault(); // 필수: 드롭을 허용하기 위함
+            dropzone.style.backgroundColor = '#eee'; // 드래그 중 배경색 변경 (선택 사항)
+        });
+        dropzone.addEventListener('dragleave', e => {
+            dropzone.style.backgroundColor = ''; // 원래 배경색 복원
+        });
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault(); // 필수: 브라우저 기본 동작(파일 열기) 방지
+            dropzone.style.backgroundColor = ''; // 원래 배경색 복원
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        let cellCount = 0; // 추가된 셀 개수 추적
+        
+        async function handleFiles(files) {
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) continue; // 이미지 파일만 처리
+                
+                const img = new Image();
+                const reader = new FileReader();
+                
+                // 파일을 읽고 이미지 객체 생성 (비동기 처리)
+                const loadImage = new Promise((resolve, reject) => {
+                    reader.onload = (e) => {
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file); // Base64 인코딩으로 읽기
+                });
+                
+                try {
+                    await loadImage; // 이미지 로딩 완료까지 대기
+                    
+                    // 이미지 리사이징 (Pica.js 사용)
+                    const maxSize = 400; // 최대 너비/높이
+                    let targetWidth = img.width;
+                    let targetHeight = img.height;
+                    
+                    if (img.width > maxSize || img.height > maxSize) {
+                        const scale = maxSize / Math.max(img.width, img.height);
+                        targetWidth = Math.round(img.width * scale);
+                        targetHeight = Math.round(img.height * scale);
+                    }
+                    
+                    // 원본 이미지를 그릴 캔버스
+                    const srcCanvas = document.createElement('canvas');
+                    srcCanvas.width = img.width;
+                    srcCanvas.height = img.height;
+                    srcCanvas.getContext('2d').drawImage(img, 0, 0);
+                    
+                    // 리사이즈된 이미지를 그릴 캔버스
+                    const targetCanvas = document.createElement('canvas');
+                    targetCanvas.width = targetWidth;
+                    targetCanvas.height = targetHeight;
+                    
+                    // Pica로 리사이징 실행
+                    await picaInstance.resize(srcCanvas, targetCanvas);
+                    
+                    // 리사이즈된 이미지를 JPEG Data URL로 변환 (품질 70%)
+                    const dataUrl = targetCanvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // 테이블에 셀 추가 로직
+                    let currentRow;
+                    if (cellCount % 3 === 0) {
+                        // 새 행 추가
+                        currentRow = table.insertRow();
+                    } else {
+                        // 마지막 행 가져오기
+                        currentRow = table.rows[table.rows.length - 1];
+                    }
+                    // 새 셀 추가
+                    const cell = currentRow.insertCell();
+                    
+                    // 결과 이미지 요소 생성 및 설정
+                    const resultImg = document.createElement('img');
+                    resultImg.style.width = '100%'; // 셀 너비에 맞춤
+                    resultImg.style.height = 'auto'; // 비율 유지
+                    resultImg.style.objectFit = 'contain'; // 비율 유지
+                    resultImg.src = dataUrl;
+                    
+                    // 설명(div) 요소 생성 및 설정
+                    const desc = document.createElement('div');
+                    desc.className = 'desc';
+                    desc.contentEditable = "true"; // 편집 가능하게 설정
+                    desc.innerText = ""; // 기본 텍스트
+                    
+                    // 셀에 이미지와 설명 추가
+                    cell.appendChild(resultImg);
+                    cell.appendChild(desc);
+                    
+                    cellCount++; // 셀 카운트 증가
+                } catch (error) {
+                    console.error("파일 처리 중 오류 발생:", error);
+                    alert(`이미지 처리 중 오류가 발생했습니다: ${file.name}`);
+                }
+            }
+        }
+        
+        // 날짜를 "YYYY년 MM월 DD일" 형식으로 변환하는 함수
+        function formatDateKorean(dateString) {
+            if (!dateString) return ""; // 날짜 입력이 없으면 빈 문자열 반환
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1; // 월은 0부터 시작하므로 +1
+            const day = date.getDate();
+            const dayofweek = date.getDay();
+            const dayofweekKorean = ['일', '월', '화', '수', '목', '금', '토'];
+            return `${year}년 ${month}월 ${day}일 ${dayofweekKorean[dayofweek]}요일`;
+        }
+        
+        // 복사 버튼 클릭 이벤트 리스너
+        copyButton.addEventListener('click', () => {
+            // 1. 복사할 내용만 담을 임시 컨테이너 생성
+            const tempContainer = document.createElement('div');
+            
+            // 2. 제목 복제 및 추가
+            const clonedTitle = titleEl.cloneNode(true);
+            clonedTitle.removeAttribute('contenteditable'); // 편집 속성 제거
+            clonedTitle.style.border = 'none'; // 테두리 제거
+            clonedTitle.style.padding = '0';
+            clonedTitle.style.marginBottom = '12px'; // 원본 스타일 유지
+            tempContainer.appendChild(clonedTitle);
+            
+            // 3. 날짜 생성 및 추가
+            const h2 = document.createElement('h2');
+            h2.className = 'date-display'; // 스타일 적용
+            h2.textContent = formatDateKorean(dateInput.value);
+            tempContainer.appendChild(h2);
+            
+            // 4. 테이블 복제 및 정리 후 추가
+            const clonedTable = table.cloneNode(true);
+            // 테이블 및 내부 요소 스타일 정리 (테두리 제거 등)
+            clonedTable.style.border = 'none';
+            const cells = clonedTable.getElementsByTagName('td');
+            for (let cell of cells) {
+                cell.style.border = 'none';
+                cell.style.padding = '4px'; // 패딩은 유지하거나 필요에 맞게 조정
+                const desc = cell.querySelector('.desc');
+                if (desc) {
+                    desc.removeAttribute('contenteditable'); // 편집 속성 제거
+                    desc.style.border = 'none'; // 테두리 제거
+                    desc.style.paddingTop = '4px'; // 원본 스타일 유지
+                }
+                const img = cell.querySelector('img');
+                if (img) {
+                    // 이미지 스타일은 원본 CSS(width:100%, height:auto)가 적용되므로 그대로 둠
+                    img.style.width = '100px';
+                    img.style.height = 'auto'; // 비율 유지
+                    img.style.objectFit = 'contain'; // 비율 유지
+                }
+            }
+            tempContainer.appendChild(clonedTable);
+            
+            // 5. 본문 복제 및 추가
+            const clonedBody = bodyEl.cloneNode(true);
+            clonedBody.removeAttribute('contenteditable'); // 편집 속성 제거
+            clonedBody.style.border = 'none'; // 테두리 제거
+            clonedBody.style.padding = '0';
+            tempContainer.appendChild(clonedBody);
+            
+            // 6. 구분선(hr) 추가
+            const hrElement = document.createElement('hr');
+            // Google Docs 등에서 기본 hr 스타일이 적용되도록 별도 스타일은 지정하지 않음
+            // 필요 시 스타일 추가: hrElement.style.borderTop = '1px solid #ccc';
+            tempContainer.appendChild(hrElement);
+            
+            // 7. 임시 컨테이너를 body에 잠시 추가 (선택을 위해)
+            document.body.appendChild(tempContainer);
+            
+            // 8. 임시 컨테이너의 내용 선택
+            const range = document.createRange();
+            range.selectNodeContents(tempContainer);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // 9. 복사 실행
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('복사되었습니다! Google Docs 등에 붙여넣으세요.');
+                } else {
+                    alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.');
+                }
+            } catch (err) {
+                console.error('복사 중 오류 발생:', err);
+                alert('복사 중 오류가 발생했습니다.');
+            }
+            
+            // 9. 선택 해제 및 임시 컨테이너 제거
+            selection.removeAllRanges();
+            document.body.removeChild(tempContainer);
+        });
+    </script>
+    
+</body>
+</html>
