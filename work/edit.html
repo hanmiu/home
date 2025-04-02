@@ -14,16 +14,14 @@
         }
         table {
             border-collapse: collapse;
-            width: 700px;
+            width: 700px; /* 원본 너비 유지 */
             margin-bottom: 20px;
-            /* 복사 시 테두리 없애기 위한 기본값 */
             border: 1px solid #ccc;
         }
         td {
             border: 1px solid #ccc;
             padding: 4px;
             vertical-align: top;
-            width: 33.33%; /* 3열 레이아웃 */
             text-align: center;
             position: relative; /* 삭제 버튼 위치 기준 */
         }
@@ -42,13 +40,34 @@
             min-height: 20px; /* 내용 없을 때 최소 높이 */
             text-align: left; /* 설명 텍스트 왼쪽 정렬 */
         }
-        #copyButton, #newButton { /* 버튼 공통 스타일 */
-            padding: 10px 20px;
-            font-size: 16px;
+
+        /* --- 개선된 버튼 스타일 --- */
+        #newButton, #copyButton {
+            padding: 9px 16px; /* 패딩 약간 조정 */
+            font-size: 15px;  /* 폰트 크기 약간 조정 */
             cursor: pointer;
-            margin-top: 15px; /* 구분선과의 간격 */
-            margin-right: 10px; /* 버튼 간 간격 */
+            margin-top: 15px;
+            margin-right: 10px;
+            border: none; /* 테두리 제거 */
+            border-radius: 5px; /* 둥근 모서리 */
+            color: white; /* 텍스트 색상 */
+            transition: background-color 0.2s ease; /* 부드러운 배경색 전환 */
+            font-weight: 500; /* 약간 굵게 */
         }
+        #newButton {
+            background-color: #28a745; /* 녹색 계열 */
+        }
+        #newButton:hover {
+            background-color: #218838; /* 호버 시 약간 어둡게 */
+        }
+        #copyButton {
+            background-color: #007bff; /* 파란색 계열 */
+        }
+        #copyButton:hover {
+            background-color: #0056b3; /* 호버 시 약간 어둡게 */
+        }
+        /* --- --- */
+
         #dropzone {
             border: 2px dashed #888;
             padding: 30px;
@@ -56,9 +75,15 @@
             margin-bottom: 20px;
             color: #555;
         }
-        .date-label {
-            display: block; /* 라벨을 블록 요소로 만들어 줄바꿈 */
-            margin-bottom: 15px; /* 날짜 입력칸 아래 여백 */
+        .date-label, .column-label { /* 열 개수 라벨 추가 */
+            display: block;
+            margin-bottom: 15px;
+        }
+        /* 열 개수 input 기본 스타일 사용 */
+        .column-label input[type="number"] {
+            margin-left: 5px;
+            width: 50px; /* 너비 살짝 지정 */
+            padding: 2px 4px;
         }
         .editable {
             line-height: 1.2em;
@@ -68,43 +93,39 @@
             color: #aaa;
             pointer-events: none;
         }
-        /* 복사 시 임시로 생성되는 날짜 표시용 스타일 */
         .date-display {
             color: rgb(112, 11, 255);
-            font-weight: bold; /* 강조 */
-            margin-bottom: 12px; /* 제목과의 간격 */
+            font-weight: bold;
+            margin-bottom: 12px;
         }
         hr {
-            margin-top: 20px; /* 본문과의 간격 */
+            margin-top: 20px;
             border: none;
             border-top: 1px solid #ccc;
         }
-
-        /* --- 삭제 버튼 스타일 --- */
         .delete-button {
             position: absolute;
-            top: 2px; /* 위쪽 여백 */
-            right: 2px; /* 오른쪽 여백 */
-            background-color: rgba(255, 0, 0, 0.7); /* 반투명 빨간 배경 */
+            top: 2px;
+            right: 2px;
+            background-color: rgba(255, 0, 0, 0.7);
             color: white;
             border: none;
-            border-radius: 50%; /* 원형 모양 */
+            border-radius: 50%;
             width: 20px;
             height: 20px;
             font-size: 12px;
-            line-height: 20px; /* 텍스트 세로 중앙 정렬 */
+            line-height: 20px;
             text-align: center;
             cursor: pointer;
-            opacity: 0; /* 평소에는 숨김 */
-            transition: opacity 0.2s ease-in-out; /* 부드러운 효과 */
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
             font-weight: bold;
         }
         td:hover .delete-button {
-            opacity: 1; /* 마우스 올리면 보이게 */
+            opacity: 1;
         }
-        /* --- 복사 시 제외될 요소 스타일 (JavaScript에서 직접 제거하므로 필수는 아님) --- */
         .no-copy {
-             /* 이 클래스는 복사 시 제외됨을 명시적으로 나타내기 위해 사용 */
+             /* 복사 시 제외됨 */
         }
 
     </style>
@@ -117,6 +138,10 @@
     <h2 id="title" class="editable" data-placeholder="핵심 내용, 제목" contenteditable="true" spellcheck="false"></h2>
 
     <label class="date-label">날짜: <input type="date" id="dateInput"></label>
+
+    <label class="column-label">이미지 열 개수:
+        <input type="number" id="columnCountInput" min="3" max="10" value="3">
+    </label>
 
     <div id="dropzone">
         📥 이미지를 드래그하거나 복사해서 붙여넣으세요.<br>
@@ -141,28 +166,92 @@
         const newButton = document.getElementById('newButton');
         const titleEl = document.getElementById('title');
         const bodyEl = document.getElementById('bodyText');
+        const columnCountInput = document.getElementById('columnCountInput'); // 열 개수 input 가져오기
 
-        // localStorage에서 제목과 본문 불러오기
-        const savedTitle = localStorage.getItem('savedTitle');
-        const savedBody = localStorage.getItem('savedBody');
-        if (savedTitle) {
-            titleEl.textContent = savedTitle;
+        let maxColumns = 3; // 기본 최대 열 개수
+
+        // --- 설정 로드 (기존 + 열 개수) ---
+        function loadSettings() {
+            const savedTitle = localStorage.getItem('savedTitle');
+            const savedBody = localStorage.getItem('savedBody');
+            const savedMaxColumns = localStorage.getItem('maxColumns'); // 저장된 열 개수 불러오기
+
+            if (savedTitle) titleEl.textContent = savedTitle;
+            if (savedBody) bodyEl.textContent = savedBody;
+
+            // 저장된 열 개수 적용
+            if (savedMaxColumns && parseInt(savedMaxColumns) >= 3) {
+                maxColumns = parseInt(savedMaxColumns);
+                columnCountInput.value = maxColumns;
+            } else {
+                // 저장된 값이 없거나 유효하지 않으면 기본값으로 설정
+                maxColumns = 3;
+                columnCountInput.value = maxColumns;
+                localStorage.setItem('maxColumns', maxColumns.toString()); // 기본값 저장
+            }
+            // console.log(`Current max columns: ${maxColumns}`); // 로드된 값 확인용
         }
-        if (savedBody) {
-            bodyEl.textContent = savedBody;
+
+        // --- 현재 테이블의 내용을 maxColumns 설정에 맞게 재구성하는 함수 ---
+        function reorganizeTable() {
+            console.log('Reorganizing table layout...');
+            const allCells = table.getElementsByTagName('td');
+            const cellContents = [];
+
+            // 1. 모든 셀 내용 추출 (순서대로)
+            for (let i = 0; i < allCells.length; i++) {
+                // innerHTML을 사용하면 내부 요소(img, div, button)와 내용이 모두 복사됨
+                cellContents.push(allCells[i].innerHTML);
+            }
+
+            // 내용이 없으면 재구성할 필요 없음
+            if (cellContents.length === 0) {
+                console.log('Table is empty, no reorganization needed.');
+                return;
+            }
+
+            // 2. 테이블 비우기 (모든 행 삭제)
+            while (table.rows.length > 0) {
+                table.deleteRow(0);
+            }
+
+            // 3. 셀 내용 재배치
+            let currentRow = null;
+            for (let i = 0; i < cellContents.length; i++) {
+                // 새 행이 필요한지 확인 (첫 번째 셀이거나 현재 행이 꽉 찼을 때)
+                if (i % maxColumns === 0) {
+                    currentRow = table.insertRow(); // 새 행 추가
+                }
+
+                // 현재 행에 새 셀 추가
+                const newCell = currentRow.insertCell();
+                // 저장했던 내용 채우기
+                newCell.innerHTML = cellContents[i];
+            }
+            console.log('Table reorganized.');
         }
-        // 제목과 본문 변경 시 localStorage에 저장
+
+        // --- 로컬 스토리지 저장 리스너 (기존 + 열 개수) ---
         titleEl.addEventListener('input', () => {
             localStorage.setItem('savedTitle', titleEl.textContent);
         });
         bodyEl.addEventListener('input', () => {
             localStorage.setItem('savedBody', bodyEl.textContent);
         });
+        // 열 개수 변경 시 저장
+        columnCountInput.addEventListener('change', () => {
+            const newValue = parseInt(columnCountInput.value);
+            maxColumns = newValue;
+            localStorage.setItem('maxColumns', maxColumns.toString());
+            reorganizeTable();    
+        });
 
-        // 오늘 날짜 기본값 설정
+        // --- 초기화 ---
         dateInput.valueAsDate = new Date();
+        loadSettings(); // 페이지 로드 시 모든 설정 불러오기
 
-        // 붙여넣기 이벤트 리스너
+
+        // 붙여넣기 이벤트 리스너 
         document.addEventListener('paste', e => {
             const items = e.clipboardData.items;
             const files = [];
@@ -172,40 +261,35 @@
                 }
             }
             if (files.length > 0) {
-                // 이미지가 있을 때만 기본 붙여넣기 동작 방지
                 e.preventDefault();
                 handleFiles(files);
             }
         });
 
-        // 드래그 앤 드롭 이벤트 리스너
+        // 드래그 앤 드롭 이벤트 리스너 
         dropzone.addEventListener('dragover', e => {
-            e.preventDefault(); // 필수: 드롭을 허용하기 위함
-            dropzone.style.backgroundColor = '#eee'; // 드래그 중 배경색 변경 (선택 사항)
+            e.preventDefault();
+            dropzone.style.backgroundColor = '#eee';
         });
         dropzone.addEventListener('dragleave', e => {
-            dropzone.style.backgroundColor = ''; // 원래 배경색 복원
+            dropzone.style.backgroundColor = '';
         });
         dropzone.addEventListener('drop', e => {
-            e.preventDefault(); // 필수: 브라우저 기본 동작(파일 열기) 방지
-            dropzone.style.backgroundColor = ''; // 원래 배경색 복원
+            e.preventDefault();
+            dropzone.style.backgroundColor = '';
             handleFiles(e.dataTransfer.files);
         });
 
-        // 테이블 클릭 이벤트 위임 (삭제 버튼 처리)
+        // 테이블 클릭 이벤트 위임 (삭제 버튼 처리) 
         table.addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-button')) {
-                const cellToDelete = e.target.closest('td'); // 클릭된 버튼이 속한 td 찾기
+                const cellToDelete = e.target.closest('td');
                 if (cellToDelete) {
                     const row = cellToDelete.parentNode;
-                    row.removeChild(cellToDelete); // 셀 삭제
-
-                    // 행에 셀이 하나도 없으면 행 자체를 삭제
+                    row.removeChild(cellToDelete);
                     if (row.cells.length === 0) {
                         table.deleteRow(row.rowIndex);
                     }
-                    // 삭제 후 셀 개수 재정렬 (옵션: 필요하다면 구현)
-                    // reorderCells(); // 셀 삭제 후 빈 공간 채우는 로직 (필요 시)
                 }
             }
         });
@@ -213,91 +297,56 @@
 
         async function handleFiles(files) {
             for (let file of files) {
-                if (!file.type.startsWith('image/')) continue; // 이미지 파일만 처리
+                if (!file.type.startsWith('image/')) continue;
 
+                // 이미지 로드 및 리사이징 
                 const img = new Image();
                 const reader = new FileReader();
-
-                // 파일을 읽고 이미지 객체 생성 (비동기 처리)
                 const loadImage = new Promise((resolve, reject) => {
-                    reader.onload = (e) => {
-                        img.onload = () => resolve(img);
-                        img.onerror = reject;
-                        img.src = e.target.result;
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file); // Base64 인코딩으로 읽기
+                    reader.onload = (e) => { img.onload = () => resolve(img); img.onerror = reject; img.src = e.target.result; };
+                    reader.onerror = reject; reader.readAsDataURL(file);
                 });
 
                 try {
-                    await loadImage; // 이미지 로딩 완료까지 대기
-
-                    // 이미지 리사이징 (Pica.js 사용)
-                    const maxSize = 400; // 최대 너비/높이
-                    let targetWidth = img.width;
-                    let targetHeight = img.height;
-
-                    if (img.width > maxSize || img.height > maxSize) {
-                        const scale = maxSize / Math.max(img.width, img.height);
-                        targetWidth = Math.round(img.width * scale);
-                        targetHeight = Math.round(img.height * scale);
-                    }
-
-                    // 원본 이미지를 그릴 캔버스
-                    const srcCanvas = document.createElement('canvas');
-                    srcCanvas.width = img.width;
-                    srcCanvas.height = img.height;
-                    srcCanvas.getContext('2d').drawImage(img, 0, 0);
-
-                    // 리사이즈된 이미지를 그릴 캔버스
-                    const targetCanvas = document.createElement('canvas');
-                    targetCanvas.width = targetWidth;
-                    targetCanvas.height = targetHeight;
-
-                    // Pica로 리사이징 실행
+                    await loadImage;
+                    const maxSize = 400;
+                    let targetWidth = img.width; let targetHeight = img.height;
+                    if (img.width > maxSize || img.height > maxSize) { const scale = maxSize / Math.max(img.width, img.height); targetWidth = Math.round(img.width * scale); targetHeight = Math.round(img.height * scale); }
+                    const srcCanvas = document.createElement('canvas'); srcCanvas.width = img.width; srcCanvas.height = img.height; srcCanvas.getContext('2d').drawImage(img, 0, 0);
+                    const targetCanvas = document.createElement('canvas'); targetCanvas.width = targetWidth; targetCanvas.height = targetHeight;
                     await picaInstance.resize(srcCanvas, targetCanvas);
-
-                    // 리사이즈된 이미지를 JPEG Data URL로 변환
                     const dataUrl = targetCanvas.toDataURL('image/jpeg', 0.8);
 
-                    // 테이블에 셀 추가 로직
-                    let currentRow;
-                    // 현재 테이블의 총 셀 개수 계산 (정확하게)
-                    let currentCellCount = 0;
-                    for (let i = 0; i < table.rows.length; i++) {
-                        currentCellCount += table.rows[i].cells.length;
-                    }
+                    // --- 테이블에 셀 추가 로직 (maxColumns 반영) ---
+                    let currentRow = table.rows[table.rows.length - 1]; // 마지막 행 가져오기
 
-                    if (currentCellCount % 3 === 0 || table.rows.length === 0) {
-                        // 새 행 추가 (셀이 없거나 3의 배수일 때)
-                        currentRow = table.insertRow();
-                    } else {
-                        // 마지막 행 가져오기
-                        currentRow = table.rows[table.rows.length - 1];
+                    // 새 행이 필요하거나 마지막 행이 꽉 찼는지 확인 (maxColumns 기준)
+                    if (!currentRow || currentRow.cells.length >= maxColumns) {
+                        currentRow = table.insertRow(); // 새 행 추가
                     }
                     // 새 셀 추가
                     const cell = currentRow.insertCell();
 
-                    // 결과 이미지 요소 생성 및 설정
+                    // 결과 이미지 요소 생성 및 설정 
                     const resultImg = document.createElement('img');
-                    resultImg.style.objectFit = 'contain'; // 비율 유지
+                    resultImg.style.objectFit = 'contain';
                     resultImg.src = dataUrl;
 
-                    // 설명(div) 요소 생성 및 설정
+                    // 설명(div) 요소 생성 및 설정 
                     const desc = document.createElement('div');
                     desc.className = 'desc';
-                    desc.contentEditable = "true"; // 편집 가능하게 설정
-                    desc.innerText = ""; // 기본 텍스트
-                    desc.setAttribute('data-placeholder', '이미지 설명'); // 플레이스홀더 추가
+                    desc.contentEditable = "true";
+                    desc.innerText = "";
+                    desc.setAttribute('data-placeholder', '이미지 설명');
 
-                    // 삭제 버튼 생성
+                    // 삭제 버튼 생성 
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-button no-copy'; // 복사 제외 클래스 추가
-                    deleteBtn.innerHTML = '&times;'; // 'X' 모양 (HTML 엔티티 사용)
-                    deleteBtn.title = '이미지와 설명 삭제'; // 툴팁
+                    deleteBtn.className = 'delete-button no-copy';
+                    deleteBtn.innerHTML = '&times;';
+                    deleteBtn.title = '이미지와 설명 삭제';
 
-                    // 셀에 이미지, 설명, 삭제 버튼 추가
-                    cell.appendChild(deleteBtn); // 버튼 먼저 추가 (z-index 고려 시)
+                    // 셀에 요소 추가 
+                    cell.appendChild(deleteBtn);
                     cell.appendChild(resultImg);
                     cell.appendChild(desc);
 
@@ -308,131 +357,58 @@
             }
         }
 
-        // 날짜를 "YYYY년 MM월 DD일" 형식으로 변환하는 함수
+        // 날짜를 "YYYY년 MM월 DD일" 형식으로 변환하는 함수 
         function formatDateKorean(dateString) {
-            if (!dateString) return ""; // 날짜 입력이 없으면 빈 문자열 반환
-            const date = new Date(dateString);
-            const year = date.getFullYear();
-            const month = date.getMonth() + 1; // 월은 0부터 시작하므로 +1
-            const day = date.getDate();
-            const dayofweek = date.getDay();
-            const dayofweekKorean = ['일', '월', '화', '수', '목', '금', '토'];
-            return `${year}년 ${month}월 ${day}일 ${dayofweekKorean[dayofweek]}요일`;
+            if (!dateString) return ""; const date = new Date(dateString); const year = date.getFullYear(); const month = date.getMonth() + 1; const day = date.getDate(); const dayofweek = date.getDay(); const dayofweekKorean = ['일', '월', '화', '수', '목', '금', '토']; return `${year}년 ${month}월 ${day}일 ${dayofweekKorean[dayofweek]}요일`;
         }
 
+        // 새로 작성하기 버튼
         newButton.addEventListener('click', () => {
-            // 새로 만들기 버튼 클릭 시 확인 메시지 후 내용 비우기
-            const confirmNew = confirm('새로 작성하시겠습니까? 현재 내용은 저장되지 않습니다.');
+            const confirmNew = confirm('새로 작성하시겠습니까? 현재 내용은 저장되지 않습니다. (최대 열 개수 설정은 유지됩니다)');
             if (confirmNew) {
                 titleEl.textContent = '';
                 dateInput.valueAsDate = new Date();
                 bodyEl.textContent = '';
                 while (table.rows.length > 0) {
-                    table.deleteRow(0); // 모든 행 삭제
+                    table.deleteRow(0);
                 }
-                localStorage.removeItem('savedTitle'); // 로컬 스토리지에서도 삭제
+                localStorage.removeItem('savedTitle');
                 localStorage.removeItem('savedBody');
+                // localStorage.removeItem('maxColumns'); // 이 줄은 주석 처리 또는 삭제하여 설정 유지
             }
         });
 
-        // 복사 버튼 클릭 이벤트 리스너
+        // 복사 버튼 클릭 이벤트 리스너 
         copyButton.addEventListener('click', () => {
-            // 1. 복사할 내용만 담을 임시 컨테이너 생성
             const tempContainer = document.createElement('div');
-            const blankSpace = document.createElement('div');
-            blankSpace.textContent = '\u200B'; // 빈 공간을 위한 유니코드 문자
-            tempContainer.appendChild(blankSpace);
+            const blankSpace = document.createElement('div'); blankSpace.textContent = '\u200B'; tempContainer.appendChild(blankSpace);
 
-            // 2. 제목 복제 및 추가
-            const clonedTitle = titleEl.cloneNode(true);
-            clonedTitle.removeAttribute('contenteditable'); // 편집 속성 제거
-            clonedTitle.style.border = 'none'; // 테두리 제거
-            clonedTitle.style.padding = '0';
-            if(clonedTitle.textContent.trim() === '') {
-                clonedTitle.textContent = '핵심 내용, 제목'; // 제목이 비어있을 경우 기본 제목 설정
-            }
-            tempContainer.appendChild(clonedTitle);
+            const clonedTitle = titleEl.cloneNode(true); clonedTitle.removeAttribute('contenteditable'); clonedTitle.style.border = 'none'; clonedTitle.style.padding = '0'; if(clonedTitle.textContent.trim() === '') clonedTitle.textContent = '핵심 내용, 제목'; tempContainer.appendChild(clonedTitle);
 
-            // 3. 날짜 생성 및 추가
-            const h3 = document.createElement('h3');
-            h3.className = 'date-display'; // 스타일 적용
-            h3.textContent = formatDateKorean(dateInput.value);
-            tempContainer.appendChild(h3);
+            const h3 = document.createElement('h3'); h3.className = 'date-display'; h3.textContent = formatDateKorean(dateInput.value); tempContainer.appendChild(h3);
 
-            // 4. 테이블 복제 및 정리 후 추가
             const clonedTable = table.cloneNode(true);
-            // 테이블 및 내부 요소 스타일 정리 (테두리 제거 등)
             clonedTable.style.border = 'none';
             const cells = clonedTable.getElementsByTagName('td');
             for (let cell of cells) {
-                // *** 복사 전 삭제 버튼 제거 ***
-                const deleteBtn = cell.querySelector('.delete-button');
-                if (deleteBtn) {
-                    cell.removeChild(deleteBtn);
-                }
-                // *** --- ***
-
-                cell.style.border = 'none';
-                cell.style.padding = '4px'; // 패딩은 유지하거나 필요에 맞게 조정
-                cell.style.position = 'static'; // 복사 시 relative 제거
-                const desc = cell.querySelector('.desc');
-                if (desc) {
-                    desc.removeAttribute('contenteditable'); // 편집 속성 제거
-                    desc.style.border = 'none'; // 테두리 제거
-                    if(desc.textContent.trim() === '') {
-                        desc.textContent = '\u200B'; // 설명이 비어있을 경우 공백 문자
-                    }
-                }
-                const img = cell.querySelector('img');
-                if (img) {
-                    // 이미지 크기 고정 (Google Docs 등에서 일관된 크기 유지 위함)
-                    img.style.width = '150px'; // 너비 고정 (조절 가능)
-                    img.style.height = 'auto'; // 높이 자동 (비율 유지)
-                    img.style.objectFit = 'contain';
-                }
+                const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
+                cell.style.border = 'none'; cell.style.padding = '4px'; cell.style.position = 'static';
+                const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); desc.style.border = 'none'; if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
+                const img = cell.querySelector('img'); if (img) { img.style.width = '150px'; img.style.height = 'auto'; img.style.objectFit = 'contain'; }
             }
             tempContainer.appendChild(clonedTable);
 
-            // 5. 본문 복제 및 추가
-            const clonedBody = bodyEl.cloneNode(true);
-            clonedBody.removeAttribute('contenteditable'); // 편집 속성 제거
-            clonedBody.style.border = 'none'; // 테두리 제거
-            clonedBody.style.padding = '0';
-            if(clonedBody.textContent.trim() === '') {
-                clonedBody.textContent = '...'; // 본문이 비어있을 경우 기본 본문 설정
-            }
-            tempContainer.appendChild(clonedBody);
+            const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
 
-            // 6. 구분선(hr) 추가
-            const hrElement = document.createElement('hr');
-            tempContainer.appendChild(hrElement);
+            const hrElement = document.createElement('hr'); tempContainer.appendChild(hrElement);
 
-            // 7. 임시 컨테이너를 body에 잠시 추가 (선택을 위해)
             document.body.appendChild(tempContainer);
-
-            // 8. 임시 컨테이너의 내용 선택
-            const range = document.createRange();
-            range.selectNodeContents(tempContainer);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-
-            // 9. 복사 실행
+            const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
             try {
                 const successful = document.execCommand('copy');
-                if (successful) {
-                    alert('복사되었습니다! Google Docs 등에 붙여넣으세요.');
-                } else {
-                    alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.');
-                }
-            } catch (err) {
-                console.error('복사 중 오류 발생:', err);
-                alert('복사 중 오류가 발생했습니다.');
-            }
-
-            // 10. 선택 해제 및 임시 컨테이너 제거
-            selection.removeAllRanges();
-            document.body.removeChild(tempContainer);
+                if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
+            } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
+            selection.removeAllRanges(); document.body.removeChild(tempContainer);
         });
     </script>
 
