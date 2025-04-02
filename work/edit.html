@@ -20,7 +20,7 @@
         }
         td {
             border: 1px solid #ccc;
-            padding: 4px;
+            padding: 2px;
             vertical-align: top;
             text-align: center;
             position: relative; /* 삭제 버튼 위치 기준 */
@@ -37,12 +37,11 @@
             margin-top: 4px;
             border-top: 1px dashed #ccc;
             color: #555;
-            min-height: 20px; /* 내용 없을 때 최소 높이 */
             text-align: left; /* 설명 텍스트 왼쪽 정렬 */
         }
 
         /* --- 개선된 버튼 스타일 --- */
-        #newButton, #copyButton {
+        #newButton, #copyButton, #copyImagesButton {
             padding: 9px 16px; /* 패딩 약간 조정 */
             font-size: 15px;  /* 폰트 크기 약간 조정 */
             cursor: pointer;
@@ -60,10 +59,10 @@
         #newButton:hover {
             background-color: #218838; /* 호버 시 약간 어둡게 */
         }
-        #copyButton {
+        #copyButton, #copyImagesButton {
             background-color: #007bff; /* 파란색 계열 */
         }
-        #copyButton:hover {
+        #copyButton:hover, #copyImagesButton:hover {
             background-color: #0056b3; /* 호버 시 약간 어둡게 */
         }
         /* --- --- */
@@ -155,7 +154,8 @@
 
     <hr>
 
-    <button id="copyButton">📋 복사 (Google Docs용)</button>
+    <button id="copyButton">📋 문서 복사</button>
+    <button id="copyImagesButton">🏞 이미지 복사</button>
 
     <script>
         const picaInstance = window.pica();
@@ -163,6 +163,7 @@
         const dateInput = document.getElementById('dateInput');
         const dropzone = document.getElementById('dropzone');
         const copyButton = document.getElementById('copyButton');
+        const copyImagesButton = document.getElementById('copyImagesButton');
         const newButton = document.getElementById('newButton');
         const titleEl = document.getElementById('title');
         const bodyEl = document.getElementById('bodyText');
@@ -392,15 +393,44 @@
             const cells = clonedTable.getElementsByTagName('td');
             for (let cell of cells) {
                 const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
-                cell.style.border = 'none'; cell.style.padding = '4px'; cell.style.position = 'static';
+                cell.style.border = 'none'; 
+                // cell.style.padding = '4px'; 
+                cell.style.position = 'static';
                 const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); desc.style.border = 'none'; if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
-                const img = cell.querySelector('img'); if (img) { img.style.width = '150px'; img.style.height = 'auto'; img.style.objectFit = 'contain'; }
+                const img = cell.querySelector('img'); 
             }
             tempContainer.appendChild(clonedTable);
 
             const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
 
             const hrElement = document.createElement('hr'); tempContainer.appendChild(hrElement);
+
+            document.body.appendChild(tempContainer);
+            const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
+            } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
+            selection.removeAllRanges(); document.body.removeChild(tempContainer);
+        });
+
+        copyImagesButton.addEventListener('click', () => {
+            const tempContainer = document.createElement('div');
+            
+            const clonedTable = table.cloneNode(true);
+            clonedTable.style.border = '1px solid #ddd';
+            const cells = clonedTable.getElementsByTagName('td');
+            for (let cell of cells) {
+                const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
+                /*cell.style.border = 'none'; cell.style.padding = '4px'; */ 
+                cell.style.position = 'static';
+                const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); 
+                // desc.style.border = 'none';
+                desc.style.textAlign = 'center';  
+                if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
+                const img = cell.querySelector('img'); 
+            }
+            tempContainer.appendChild(clonedTable);
 
             document.body.appendChild(tempContainer);
             const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
