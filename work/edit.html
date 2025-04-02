@@ -414,31 +414,127 @@
             selection.removeAllRanges(); document.body.removeChild(tempContainer);
         });
 
+        // copyImagesButton.addEventListener('click', () => {
+        //     const tempContainer = document.createElement('div');
+            
+        //     const clonedTable = table.cloneNode(true);
+        //     clonedTable.style.border = '1px solid #ddd';
+        //     const cells = clonedTable.getElementsByTagName('td');
+        //     for (let cell of cells) {
+        //         const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
+        //         /*cell.style.border = 'none'; cell.style.padding = '4px'; */ 
+        //         cell.style.position = 'static';
+        //         const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); 
+        //         // desc.style.border = 'none';
+        //         desc.style.textAlign = 'center';  
+        //         if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
+        //         const img = cell.querySelector('img'); 
+        //     }
+        //     tempContainer.appendChild(clonedTable);
+
+        //     document.body.appendChild(tempContainer);
+        //     const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+        //     try {
+        //         const successful = document.execCommand('copy');
+        //         if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
+        //     } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
+        //     selection.removeAllRanges(); document.body.removeChild(tempContainer);
+        // });
+
         copyImagesButton.addEventListener('click', () => {
             const tempContainer = document.createElement('div');
-            
-            const clonedTable = table.cloneNode(true);
-            clonedTable.style.border = '1px solid #ddd';
-            const cells = clonedTable.getElementsByTagName('td');
-            for (let cell of cells) {
-                const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
-                /*cell.style.border = 'none'; cell.style.padding = '4px'; */ 
-                cell.style.position = 'static';
-                const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); 
-                // desc.style.border = 'none';
-                desc.style.textAlign = 'center';  
-                if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
-                const img = cell.querySelector('img'); 
-            }
-            tempContainer.appendChild(clonedTable);
 
+            // 1. Clone the original table to easily access its structure and content
+            const originalTableClone = table.cloneNode(true);
+
+            // 2. Create a NEW table element for the restructured content
+            const newStructureTable = document.createElement('table');
+            // Apply basic table styles for copying
+            newStructureTable.style.borderCollapse = 'collapse';
+            newStructureTable.style.width = table.style.width || '700px'; // Inherit width or use default
+            newStructureTable.style.border = '1px solid #ddd'; // Apply border to the table itself
+
+            const originalRows = originalTableClone.rows;
+
+            // 3. Iterate through rows of the original (cloned) table
+            for (let i = 0; i < originalRows.length; i++) {
+                const originalCells = originalRows[i].cells;
+
+                // Create TWO new rows in the new table for each original row
+                const imgRow = newStructureTable.insertRow();    // Row for images
+                const descRow = newStructureTable.insertRow();   // Row for descriptions
+
+                // 4. Iterate through cells of the original row
+                for (let j = 0; j < originalCells.length; j++) {
+                    const originalCell = originalCells[j];
+
+                    // Find image and description elements in the original cell
+                    const imgElement = originalCell.querySelector('img');
+                    const descElement = originalCell.querySelector('.desc');
+
+                    // --- Create and populate the IMAGE cell in the imgRow ---
+                    const imgCell = imgRow.insertCell();
+                    imgCell.style.border = '1px solid #ddd'; // Apply border to cell
+                    // imgCell.style.padding = '4px';
+                    imgCell.style.textAlign = 'center';    // Center align content
+                    imgCell.style.verticalAlign = 'middle'; // Vertically center image if needed
+
+                    if (imgElement) {
+                        const clonedImg = imgElement.cloneNode(true); // Clone image
+                        // Apply specific styles for the copied image if needed
+                        // clonedImg.style.width = '150px'; // Example: resize if necessary
+                        // clonedImg.style.height = 'auto';
+                        clonedImg.style.display = 'block'; // Ensure image is block for centering
+                        clonedImg.style.margin = '0 auto'; // Center image horizontally
+                        imgCell.appendChild(clonedImg);
+                    } else {
+                        imgCell.innerHTML = '&nbsp;'; // Add space if no image
+                    }
+
+                    // --- Create and populate the DESCRIPTION cell in the descRow ---
+                    const descCell = descRow.insertCell();
+                    descCell.style.border = '1px solid #ddd'; // Apply border to cell
+                    // descCell.style.padding = '4px';
+                    descCell.style.textAlign = 'center';    // Center align description text
+                    descCell.style.verticalAlign = 'top';   // Align text to top
+                    descCell.style.color = '#333';
+
+                    if (descElement) {
+                        let descText = descElement.textContent.trim();
+                        // Use zero-width space for empty cells to maintain structure when pasting
+                        if (descText === '') {
+                            descText = '\u200B';
+                        }
+                        descCell.textContent = descText;
+                    } else {
+                        descCell.innerHTML = '\u200B'; // Add zero-width space if no description
+                    }
+                }
+            }
+
+            // 5. Append the NEWLY structured table to the temporary container
+            tempContainer.appendChild(newStructureTable);
+
+            // --- The rest of the copy process (select, copy, cleanup) remains the same ---
             document.body.appendChild(tempContainer);
-            const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+            const range = document.createRange();
+            range.selectNodeContents(tempContainer);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
             try {
                 const successful = document.execCommand('copy');
-                if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
-            } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
-            selection.removeAllRanges(); document.body.removeChild(tempContainer);
+                if (successful) {
+                    alert('재구성된 테이블이 복사되었습니다! Google Docs 등에 붙여넣으세요.');
+                } else {
+                    alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.');
+                }
+            } catch (err) {
+                console.error('복사 중 오류 발생:', err);
+                alert('복사 중 오류가 발생했습니다.');
+            }
+            selection.removeAllRanges();
+            document.body.removeChild(tempContainer);
         });
     </script>
 
