@@ -10,36 +10,20 @@
         h2[contenteditable="true"], p[contenteditable="true"], .desc[contenteditable="true"] {
             border: 1px dashed #ccc;
             padding: 4px;
-            margin-bottom: 12px;
         }
         table {
             border-collapse: collapse;
-            width: 700px; /* 원본 너비 유지 */
-            margin-bottom: 20px;
+            /* width: 700px; */
             border: 1px solid #ccc;
         }
         td {
             border: 1px solid #ccc;
-            padding: 2px;
-            vertical-align: top;
-            text-align: center;
+            padding: 1px;
+            /* vertical-align: top;
+            text-align: center; */
             position: relative; /* 삭제 버튼 위치 기준 */
         }
-        img {
-            /* td 너비 100% 채우고 비율 유지 */
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-            max-height: 200px;
-            display: block;
-        }
-        .desc {
-            margin-top: 4px;
-            border-top: 1px dashed #ccc;
-            color: #555;
-            text-align: left; /* 설명 텍스트 왼쪽 정렬 */
-        }
-
+        
         /* --- 개선된 버튼 스타일 --- */
         #newButton, #copyButton, #copyImagesButton {
             padding: 9px 16px; /* 패딩 약간 조정 */
@@ -66,7 +50,7 @@
             background-color: #0056b3; /* 호버 시 약간 어둡게 */
         }
         /* --- --- */
-
+        
         #dropzone {
             border: 2px dashed #888;
             padding: 30px;
@@ -124,9 +108,9 @@
             opacity: 1;
         }
         .no-copy {
-             /* 복사 시 제외됨 */
+            /* 복사 시 제외됨 */
         }
-
+        
     </style>
 </head>
 <body>
@@ -135,28 +119,28 @@
         <button id="newButton">✨ 새로 작성하기</button>
     </div>
     <h2 id="title" class="editable" data-placeholder="핵심 내용, 제목" contenteditable="true" spellcheck="false"></h2>
-
+    
     <label class="date-label">날짜: <input type="date" id="dateInput"></label>
-
+    
     <label class="column-label">이미지 열 개수:
         <input type="number" id="columnCountInput" min="3" max="10" value="3">
     </label>
-
+    
     <div id="dropzone">
         📥 이미지를 드래그하거나 복사해서 붙여넣으세요.<br>
         이미지는 원본은 폴더에 날짜별로 잘 저장해 주세요.
     </div>
-
+    
     <table id="imageTable">
-        </table>
-
+    </table>
+    
     <p id="bodyText" class="editable" data-placeholder="부연 설명, 대화 내용 등" contenteditable="true" spellcheck="false"></p>
-
+    
     <hr>
-
+    
     <button id="copyButton">📋 문서 복사</button>
     <button id="copyImagesButton">🏞 이미지 복사</button>
-
+    
     <script>
         const picaInstance = window.pica();
         const table = document.getElementById('imageTable');
@@ -167,19 +151,20 @@
         const newButton = document.getElementById('newButton');
         const titleEl = document.getElementById('title');
         const bodyEl = document.getElementById('bodyText');
-        const columnCountInput = document.getElementById('columnCountInput'); // 열 개수 input 가져오기
-
+        const columnCountInput = document.getElementById('columnCountInput');
+        const tableWidth = 692;
+        
         let maxColumns = 3; // 기본 최대 열 개수
-
+        
         // --- 설정 로드 (기존 + 열 개수) ---
         function loadSettings() {
             const savedTitle = localStorage.getItem('savedTitle');
             const savedBody = localStorage.getItem('savedBody');
             const savedMaxColumns = localStorage.getItem('maxColumns'); // 저장된 열 개수 불러오기
-
+            
             if (savedTitle) titleEl.textContent = savedTitle;
             if (savedBody) bodyEl.textContent = savedBody;
-
+            
             // 저장된 열 개수 적용
             if (savedMaxColumns && parseInt(savedMaxColumns) >= 3) {
                 maxColumns = parseInt(savedMaxColumns);
@@ -192,30 +177,30 @@
             }
             // console.log(`Current max columns: ${maxColumns}`); // 로드된 값 확인용
         }
-
+        
         // --- 현재 테이블의 내용을 maxColumns 설정에 맞게 재구성하는 함수 ---
         function reorganizeTable() {
             console.log('Reorganizing table layout...');
             const allCells = table.getElementsByTagName('td');
             const cellContents = [];
-
+            
             // 1. 모든 셀 내용 추출 (순서대로)
             for (let i = 0; i < allCells.length; i++) {
                 // innerHTML을 사용하면 내부 요소(img, div, button)와 내용이 모두 복사됨
                 cellContents.push(allCells[i].innerHTML);
             }
-
+            
             // 내용이 없으면 재구성할 필요 없음
             if (cellContents.length === 0) {
                 console.log('Table is empty, no reorganization needed.');
                 return;
             }
-
+            
             // 2. 테이블 비우기 (모든 행 삭제)
             while (table.rows.length > 0) {
                 table.deleteRow(0);
             }
-
+            
             // 3. 셀 내용 재배치
             let currentRow = null;
             for (let i = 0; i < cellContents.length; i++) {
@@ -223,7 +208,7 @@
                 if (i % maxColumns === 0) {
                     currentRow = table.insertRow(); // 새 행 추가
                 }
-
+                
                 // 현재 행에 새 셀 추가
                 const newCell = currentRow.insertCell();
                 // 저장했던 내용 채우기
@@ -231,7 +216,7 @@
             }
             console.log('Table reorganized.');
         }
-
+        
         // --- 로컬 스토리지 저장 리스너 (기존 + 열 개수) ---
         titleEl.addEventListener('input', () => {
             localStorage.setItem('savedTitle', titleEl.textContent);
@@ -246,12 +231,12 @@
             localStorage.setItem('maxColumns', maxColumns.toString());
             reorganizeTable();    
         });
-
+        
         // --- 초기화 ---
         dateInput.valueAsDate = new Date();
         loadSettings(); // 페이지 로드 시 모든 설정 불러오기
-
-
+        
+        
         // 붙여넣기 이벤트 리스너 
         document.addEventListener('paste', e => {
             const items = e.clipboardData.items;
@@ -266,7 +251,7 @@
                 handleFiles(files);
             }
         });
-
+        
         // 드래그 앤 드롭 이벤트 리스너 
         dropzone.addEventListener('dragover', e => {
             e.preventDefault();
@@ -280,7 +265,7 @@
             dropzone.style.backgroundColor = '';
             handleFiles(e.dataTransfer.files);
         });
-
+        
         // 테이블 클릭 이벤트 위임 (삭제 버튼 처리) 
         table.addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-button')) {
@@ -294,12 +279,12 @@
                 }
             }
         });
-
-
+        
+        
         async function handleFiles(files) {
             for (let file of files) {
                 if (!file.type.startsWith('image/')) continue;
-
+                
                 // 이미지 로드 및 리사이징 
                 const img = new Image();
                 const reader = new FileReader();
@@ -307,62 +292,77 @@
                     reader.onload = (e) => { img.onload = () => resolve(img); img.onerror = reject; img.src = e.target.result; };
                     reader.onerror = reject; reader.readAsDataURL(file);
                 });
-
+                
                 try {
                     await loadImage;
                     const maxSize = 400;
-                    let targetWidth = img.width; let targetHeight = img.height;
-                    if (img.width > maxSize || img.height > maxSize) { const scale = maxSize / Math.max(img.width, img.height); targetWidth = Math.round(img.width * scale); targetHeight = Math.round(img.height * scale); }
-                    const srcCanvas = document.createElement('canvas'); srcCanvas.width = img.width; srcCanvas.height = img.height; srcCanvas.getContext('2d').drawImage(img, 0, 0);
-                    const targetCanvas = document.createElement('canvas'); targetCanvas.width = targetWidth; targetCanvas.height = targetHeight;
+                    let targetWidth = img.width; 
+                    let targetHeight = img.height;
+                    if (img.width > maxSize || img.height > maxSize) {  
+                        const scale = maxSize / Math.max(img.width, img.height);
+                        targetWidth = Math.round(img.width * scale);
+                        targetHeight = Math.round(img.height * scale); 
+                    }
+                    const srcCanvas = document.createElement('canvas'); 
+                    srcCanvas.width = img.width; 
+                    srcCanvas.height = img.height; 
+                    srcCanvas.getContext('2d').drawImage(img, 0, 0);
+                    const targetCanvas = document.createElement('canvas'); 
+                    targetCanvas.width = targetWidth; 
+                    targetCanvas.height = targetHeight;
                     await picaInstance.resize(srcCanvas, targetCanvas);
                     const dataUrl = targetCanvas.toDataURL('image/jpeg', 0.8);
-
+                    
                     // --- 테이블에 셀 추가 로직 (maxColumns 반영) ---
                     let currentRow = table.rows[table.rows.length - 1]; // 마지막 행 가져오기
-
+                    
                     // 새 행이 필요하거나 마지막 행이 꽉 찼는지 확인 (maxColumns 기준)
                     if (!currentRow || currentRow.cells.length >= maxColumns) {
                         currentRow = table.insertRow(); // 새 행 추가
                     }
                     // 새 셀 추가
                     const cell = currentRow.insertCell();
-
+                    cell.style.textAlign = 'center';
+                    
                     // 결과 이미지 요소 생성 및 설정 
                     const resultImg = document.createElement('img');
+                    resultImg.style.width = '100%';
+                    resultImg.style.height = 'auto';
                     resultImg.style.objectFit = 'contain';
+                    // const aspectRatio = targetWidth / targetHeight;
+                    // const height = parseInt(tableWidth / maxColumns * 0.8);
+                    // resultImg.style.height = `${height}px`;
+                    // resultImg.style.width = `${parseInt(height * aspectRatio)}px`;
                     resultImg.src = dataUrl;
-
+                    
                     // 설명(div) 요소 생성 및 설정 
                     const desc = document.createElement('div');
                     desc.className = 'desc';
-                    desc.contentEditable = "true";
-                    desc.innerText = "";
-                    desc.setAttribute('data-placeholder', '이미지 설명');
-
+                    desc.contentEditable = true;
+                    
                     // 삭제 버튼 생성 
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-button no-copy';
                     deleteBtn.innerHTML = '&times;';
                     deleteBtn.title = '이미지와 설명 삭제';
-
+                    
                     // 셀에 요소 추가 
                     cell.appendChild(deleteBtn);
                     cell.appendChild(resultImg);
                     cell.appendChild(desc);
-
+                    cell.style.verticalAlign = 'bottom';
                 } catch (error) {
                     console.error("파일 처리 중 오류 발생:", error);
                     alert(`이미지 처리 중 오류가 발생했습니다: ${file.name}`);
                 }
             }
         }
-
+        
         // 날짜를 "YYYY년 MM월 DD일" 형식으로 변환하는 함수 
         function formatDateKorean(dateString) {
             if (!dateString) return ""; const date = new Date(dateString); const year = date.getFullYear(); const month = date.getMonth() + 1; const day = date.getDate(); const dayofweek = date.getDay(); const dayofweekKorean = ['일', '월', '화', '수', '목', '금', '토']; return `${year}년 ${month}월 ${day}일 ${dayofweekKorean[dayofweek]}요일`;
         }
-
+        
         // 새로 작성하기 버튼
         newButton.addEventListener('click', () => {
             const confirmNew = confirm('새로 작성하시겠습니까? 현재 내용은 저장되지 않습니다. (최대 열 개수 설정은 유지됩니다)');
@@ -379,126 +379,59 @@
             }
         });
 
-        // 복사 버튼 클릭 이벤트 리스너 
-        copyButton.addEventListener('click', () => {
-            const tempContainer = document.createElement('div');
-            const blankSpace = document.createElement('div'); blankSpace.textContent = '\u200B'; tempContainer.appendChild(blankSpace);
-
-            const clonedTitle = titleEl.cloneNode(true); clonedTitle.removeAttribute('contenteditable'); clonedTitle.style.border = 'none'; clonedTitle.style.padding = '0'; if(clonedTitle.textContent.trim() === '') clonedTitle.textContent = '핵심 내용, 제목'; tempContainer.appendChild(clonedTitle);
-
-            const h3 = document.createElement('h3'); h3.className = 'date-display'; h3.textContent = formatDateKorean(dateInput.value); tempContainer.appendChild(h3);
-
-            const clonedTable = table.cloneNode(true);
-            clonedTable.style.border = 'none';
-            const cells = clonedTable.getElementsByTagName('td');
-            for (let cell of cells) {
-                const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
-                cell.style.border = 'none'; 
-                // cell.style.padding = '4px'; 
-                cell.style.position = 'static';
-                const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); desc.style.border = 'none'; if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
-                const img = cell.querySelector('img'); 
-            }
-            tempContainer.appendChild(clonedTable);
-
-            const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
-
-            const hrElement = document.createElement('hr'); tempContainer.appendChild(hrElement);
-
-            document.body.appendChild(tempContainer);
-            const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
-            } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
-            selection.removeAllRanges(); document.body.removeChild(tempContainer);
-        });
-
-        // copyImagesButton.addEventListener('click', () => {
-        //     const tempContainer = document.createElement('div');
-            
-        //     const clonedTable = table.cloneNode(true);
-        //     clonedTable.style.border = '1px solid #ddd';
-        //     const cells = clonedTable.getElementsByTagName('td');
-        //     for (let cell of cells) {
-        //         const deleteBtn = cell.querySelector('.delete-button'); if (deleteBtn) cell.removeChild(deleteBtn);
-        //         /*cell.style.border = 'none'; cell.style.padding = '4px'; */ 
-        //         cell.style.position = 'static';
-        //         const desc = cell.querySelector('.desc'); if (desc) { desc.removeAttribute('contenteditable'); 
-        //         // desc.style.border = 'none';
-        //         desc.style.textAlign = 'center';  
-        //         if(desc.textContent.trim() === '') desc.textContent = '\u200B'; }
-        //         const img = cell.querySelector('img'); 
-        //     }
-        //     tempContainer.appendChild(clonedTable);
-
-        //     document.body.appendChild(tempContainer);
-        //     const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
-        //     try {
-        //         const successful = document.execCommand('copy');
-        //         if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
-        //     } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
-        //     selection.removeAllRanges(); document.body.removeChild(tempContainer);
-        // });
-
-        copyImagesButton.addEventListener('click', () => {
-            const tempContainer = document.createElement('div');
-
+        function buildTable() {
             // 1. Clone the original table to easily access its structure and content
             const originalTableClone = table.cloneNode(true);
-
+            
             // 2. Create a NEW table element for the restructured content
             const newStructureTable = document.createElement('table');
             // Apply basic table styles for copying
             newStructureTable.style.borderCollapse = 'collapse';
-            newStructureTable.style.width = table.style.width || '700px'; // Inherit width or use default
+            newStructureTable.style.width = `${tableWidth}px`;
             newStructureTable.style.border = '1px solid #ddd'; // Apply border to the table itself
-
+            
             const originalRows = originalTableClone.rows;
-
+            
             // 3. Iterate through rows of the original (cloned) table
             for (let i = 0; i < originalRows.length; i++) {
                 const originalCells = originalRows[i].cells;
-
+                
                 // Create TWO new rows in the new table for each original row
                 const imgRow = newStructureTable.insertRow();    // Row for images
                 const descRow = newStructureTable.insertRow();   // Row for descriptions
-
+                
                 // 4. Iterate through cells of the original row
                 for (let j = 0; j < originalCells.length; j++) {
                     const originalCell = originalCells[j];
-
+                    
                     // Find image and description elements in the original cell
                     const imgElement = originalCell.querySelector('img');
                     const descElement = originalCell.querySelector('.desc');
-
+                    
                     // --- Create and populate the IMAGE cell in the imgRow ---
                     const imgCell = imgRow.insertCell();
-                    imgCell.style.border = '1px solid #ddd'; // Apply border to cell
-                    // imgCell.style.padding = '4px';
-                    imgCell.style.textAlign = 'center';    // Center align content
-                    imgCell.style.verticalAlign = 'middle'; // Vertically center image if needed
-
+                    imgCell.style.border = '1px solid #ddd';
+                    imgCell.style.textAlign = 'center';
+                    imgCell.style.verticalAlign = 'bottom';
+                    
                     if (imgElement) {
-                        const clonedImg = imgElement.cloneNode(true); // Clone image
-                        // Apply specific styles for the copied image if needed
-                        // clonedImg.style.width = '150px'; // Example: resize if necessary
-                        // clonedImg.style.height = 'auto';
-                        clonedImg.style.display = 'block'; // Ensure image is block for centering
-                        clonedImg.style.margin = '0 auto'; // Center image horizontally
+                        const clonedImg = imgElement.cloneNode(true);
+                        const aspectRatio = imgElement.naturalWidth / imgElement.naturalHeight;
+                        const height = parseInt(tableWidth / maxColumns * 0.8);
+                        clonedImg.style.height = `${height}px`;
+                        clonedImg.style.width = `${parseInt(height * aspectRatio)}px`;
                         imgCell.appendChild(clonedImg);
                     } else {
                         imgCell.innerHTML = '&nbsp;'; // Add space if no image
                     }
-
+                    
                     // --- Create and populate the DESCRIPTION cell in the descRow ---
                     const descCell = descRow.insertCell();
-                    descCell.style.border = '1px solid #ddd'; // Apply border to cell
-                    // descCell.style.padding = '4px';
-                    descCell.style.textAlign = 'center';    // Center align description text
-                    descCell.style.verticalAlign = 'top';   // Align text to top
+                    descCell.style.border = '1px solid #ddd';
+                    descCell.style.textAlign = 'center';
+                    descCell.style.verticalAlign = 'middle';
                     descCell.style.color = '#333';
-
+                    
                     if (descElement) {
                         let descText = descElement.textContent.trim();
                         // Use zero-width space for empty cells to maintain structure when pasting
@@ -512,9 +445,42 @@
                 }
             }
 
+            return newStructureTable;
+        }
+        
+        // 복사 버튼 클릭 이벤트 리스너 
+        copyButton.addEventListener('click', () => {
+            const tempContainer = document.createElement('div');
+            const blankSpace = document.createElement('div'); blankSpace.textContent = '\u200B'; tempContainer.appendChild(blankSpace);
+            
+            const clonedTitle = titleEl.cloneNode(true); clonedTitle.removeAttribute('contenteditable'); clonedTitle.style.border = 'none'; clonedTitle.style.padding = '0'; if(clonedTitle.textContent.trim() === '') clonedTitle.textContent = '핵심 내용, 제목'; tempContainer.appendChild(clonedTitle);
+            
+            const h3 = document.createElement('h3'); h3.className = 'date-display'; h3.textContent = formatDateKorean(dateInput.value); tempContainer.appendChild(h3);
+            
+            const newStructureTable = buildTable();
+            tempContainer.appendChild(newStructureTable);
+            
+            const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
+            
+            const hrElement = document.createElement('hr'); tempContainer.appendChild(hrElement);
+            
+            document.body.appendChild(tempContainer);
+            const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
+            } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
+            selection.removeAllRanges(); document.body.removeChild(tempContainer);
+        });
+        
+        copyImagesButton.addEventListener('click', () => {
+            const tempContainer = document.createElement('div');
+            
+            const newStructureTable = buildTable();
+            
             // 5. Append the NEWLY structured table to the temporary container
             tempContainer.appendChild(newStructureTable);
-
+            
             // --- The rest of the copy process (select, copy, cleanup) remains the same ---
             document.body.appendChild(tempContainer);
             const range = document.createRange();
@@ -537,6 +503,6 @@
             document.body.removeChild(tempContainer);
         });
     </script>
-
+    
 </body>
 </html>
