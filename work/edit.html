@@ -58,7 +58,7 @@
             margin-bottom: 20px;
             color: #555;
         }
-        .date-label, .column-label { /* 열 개수 라벨 추가 */
+        .date-label { /* 열 개수 라벨 추가 */
             display: block;
             margin-bottom: 15px;
         }
@@ -122,9 +122,18 @@
     
     <label class="date-label">날짜: <input type="date" id="dateInput"></label>
     
-    <label class="column-label">이미지 열 개수:
-        <input type="number" id="columnCountInput" min="1" max="10" value="3">
-    </label>
+    <div style="margin-bottom: 15px;">
+        <label class="column-label" style="margin-right: 15px">이미지 열 개수:
+            <input type="number" id="columnCountInput" min="1" max="10" value="3">
+        </label>
+        <label>테두리:
+            <input type="checkbox" id="borderCheckbox">
+        </label>
+        <label>설명 칸:
+            <input type="checkbox" id="labelCheckbox" checked>
+        </label>
+    </div>
+    
     
     <div id="dropzone">
         📥 이미지를 드래그하거나 복사해서 붙여넣으세요.<br>
@@ -152,6 +161,8 @@
         const titleEl = document.getElementById('title');
         const bodyEl = document.getElementById('bodyText');
         const columnCountInput = document.getElementById('columnCountInput');
+        const borderCheckbox = document.getElementById('borderCheckbox');
+        const labelCheckbox = document.getElementById('labelCheckbox');
         const tableWidth = 692;
         
         let maxColumns = 3; // 기본 최대 열 개수
@@ -392,7 +403,8 @@
             }
         });
 
-        function buildTable(border = true) {
+        function buildTable() {
+            const border = borderCheckbox.checked;
             // 1. Clone the original table to easily access its structure and content
             const originalTableClone = table.cloneNode(true);
             
@@ -416,7 +428,10 @@
                 
                 // Create TWO new rows in the new table for each original row
                 const imgRow = newStructureTable.insertRow();    // Row for images
-                const descRow = newStructureTable.insertRow();   // Row for descriptions
+                let descRow;
+                if(labelCheckbox.checked) {
+                    descRow = newStructureTable.insertRow();   // Row for descriptions
+                }
                 
                 // 4. Iterate through cells of the original row
                 for (let j = 0; j < originalCells.length; j++) {
@@ -449,32 +464,45 @@
                     }
                     
                     // --- Create and populate the DESCRIPTION cell in the descRow ---
-                    const descCell = descRow.insertCell();
-                    if(border) {
-                        descCell.style.border = '1px solid #ddd';
-                    }
-                    else {
-                        descCell.style.border = 'none';
-                    }
-                    descCell.style.textAlign = 'center';
-                    descCell.style.verticalAlign = 'middle';
-                    descCell.style.color = '#333';
-                    
-                    if (descElement) {
-                        let descText = descElement.textContent.trim();
-                        // Use zero-width space for empty cells to maintain structure when pasting
-                        if (descText === '') {
-                            descText = '\u200B';
+                    if(labelCheckbox.checked) {
+                        const descCell = descRow.insertCell();
+                        if(border) {
+                            descCell.style.border = '1px solid #ddd';
                         }
-                        descCell.textContent = descText;
-                    } else {
-                        descCell.innerHTML = '\u200B'; // Add zero-width space if no description
+                        else {
+                            descCell.style.border = 'none';
+                        }
+                        descCell.style.textAlign = 'center';
+                        descCell.style.verticalAlign = 'middle';
+                        descCell.style.color = '#333';
+                        
+                        if (descElement) {
+                            let descText = descElement.textContent.trim();
+                            // Use zero-width space for empty cells to maintain structure when pasting
+                            if (descText === '') {
+                                descText = '\u200B';
+                            }
+                            descCell.textContent = descText;
+                        } else {
+                            descCell.innerHTML = '\u200B'; // Add zero-width space if no description
+                        }
                     }
                 }
             }
 
             return newStructureTable;
         }
+
+        labelCheckbox.addEventListener('input', () => {
+            const descElements = table.querySelectorAll('.desc');
+            descElements.forEach(desc => {
+                if (labelCheckbox.checked) {
+                    desc.style.display = 'block';
+                } else {
+                    desc.style.display = 'none';
+                }
+            });
+        });
         
         // 복사 버튼 클릭 이벤트 리스너 
         copyButton.addEventListener('click', () => {
@@ -485,7 +513,7 @@
             
             const h3 = document.createElement('h3'); h3.className = 'date-display'; h3.textContent = formatDateKorean(dateInput.value); tempContainer.appendChild(h3);
             
-            const newStructureTable = buildTable(false);
+            const newStructureTable = buildTable();
             tempContainer.appendChild(newStructureTable);
             
             const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
@@ -504,7 +532,7 @@
         copyImagesButton.addEventListener('click', () => {
             const tempContainer = document.createElement('div');
             
-            const newStructureTable = buildTable(true);
+            const newStructureTable = buildTable();
             
             // 5. Append the NEWLY structured table to the temporary container
             tempContainer.appendChild(newStructureTable);
