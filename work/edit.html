@@ -13,7 +13,7 @@
         }
         table {
             border-collapse: collapse;
-            /* width: 700px; */
+            width: 100%;
             border: 1px solid #ccc;
         }
         td {
@@ -123,7 +123,7 @@
     <label class="date-label">날짜: <input type="date" id="dateInput"></label>
     
     <label class="column-label">이미지 열 개수:
-        <input type="number" id="columnCountInput" min="3" max="10" value="3">
+        <input type="number" id="columnCountInput" min="1" max="10" value="3">
     </label>
     
     <div id="dropzone">
@@ -166,7 +166,7 @@
             if (savedBody) bodyEl.textContent = savedBody;
             
             // 저장된 열 개수 적용
-            if (savedMaxColumns && parseInt(savedMaxColumns) >= 3) {
+            if (savedMaxColumns && parseInt(savedMaxColumns) >= 1) {
                 maxColumns = parseInt(savedMaxColumns);
                 columnCountInput.value = maxColumns;
             } else {
@@ -183,6 +183,7 @@
             console.log('Reorganizing table layout...');
             const allCells = table.getElementsByTagName('td');
             const cellContents = [];
+            const rect = dropzone.getBoundingClientRect();
             
             // 1. 모든 셀 내용 추출 (순서대로)
             for (let i = 0; i < allCells.length; i++) {
@@ -211,8 +212,16 @@
                 
                 // 현재 행에 새 셀 추가
                 const newCell = currentRow.insertCell();
+                newCell.style.textAlign = 'center';
+                newCell.style.verticalAlign = 'bottom';
                 // 저장했던 내용 채우기
                 newCell.innerHTML = cellContents[i];
+                const img = newCell.querySelector('img');
+                if(img) {
+                    img.style.height = `${parseInt(rect.width / maxColumns * 0.7)}px`;
+                    img.style.width = 'auto';
+                    img.style.objectFit = 'contain';
+                }
             }
             console.log('Table reorganized.');
         }
@@ -251,6 +260,10 @@
                 handleFiles(files);
             }
         });
+
+        window.addEventListener('resize', () => {
+            reorganizeTable();
+        });
         
         // 드래그 앤 드롭 이벤트 리스너 
         dropzone.addEventListener('dragover', e => {
@@ -276,12 +289,13 @@
                     if (row.cells.length === 0) {
                         table.deleteRow(row.rowIndex);
                     }
+                    reorganizeTable();
                 }
             }
         });
         
-        
         async function handleFiles(files) {
+            const rect = dropzone.getBoundingClientRect();
             for (let file of files) {
                 if (!file.type.startsWith('image/')) continue;
                 
@@ -323,16 +337,15 @@
                     // 새 셀 추가
                     const cell = currentRow.insertCell();
                     cell.style.textAlign = 'center';
+                    cell.style.verticalAlign = 'bottom';
                     
                     // 결과 이미지 요소 생성 및 설정 
                     const resultImg = document.createElement('img');
-                    resultImg.style.width = '100%';
-                    resultImg.style.height = 'auto';
+                    const aspectRatio = targetWidth / targetHeight;
+                    const height = parseInt(rect.width / maxColumns * 0.7);
+                    resultImg.style.height = `${height}px`;
+                    resultImg.style.width = 'auto';
                     resultImg.style.objectFit = 'contain';
-                    // const aspectRatio = targetWidth / targetHeight;
-                    // const height = parseInt(tableWidth / maxColumns * 0.8);
-                    // resultImg.style.height = `${height}px`;
-                    // resultImg.style.width = `${parseInt(height * aspectRatio)}px`;
                     resultImg.src = dataUrl;
                     
                     // 설명(div) 요소 생성 및 설정 
@@ -379,7 +392,7 @@
             }
         });
 
-        function buildTable() {
+        function buildTable(border = true) {
             // 1. Clone the original table to easily access its structure and content
             const originalTableClone = table.cloneNode(true);
             
@@ -388,7 +401,12 @@
             // Apply basic table styles for copying
             newStructureTable.style.borderCollapse = 'collapse';
             newStructureTable.style.width = `${tableWidth}px`;
-            newStructureTable.style.border = '1px solid #ddd'; // Apply border to the table itself
+            if(border) {
+                newStructureTable.style.border = '1px solid #ddd';
+            }
+            else {
+                newStructureTable.style.border = 'none';
+            }
             
             const originalRows = originalTableClone.rows;
             
@@ -410,7 +428,12 @@
                     
                     // --- Create and populate the IMAGE cell in the imgRow ---
                     const imgCell = imgRow.insertCell();
-                    imgCell.style.border = '1px solid #ddd';
+                    if(border) {
+                        imgCell.style.border = '1px solid #ddd';
+                    }
+                    else {
+                        imgCell.style.border = 'none';
+                    }
                     imgCell.style.textAlign = 'center';
                     imgCell.style.verticalAlign = 'bottom';
                     
@@ -427,7 +450,12 @@
                     
                     // --- Create and populate the DESCRIPTION cell in the descRow ---
                     const descCell = descRow.insertCell();
-                    descCell.style.border = '1px solid #ddd';
+                    if(border) {
+                        descCell.style.border = '1px solid #ddd';
+                    }
+                    else {
+                        descCell.style.border = 'none';
+                    }
                     descCell.style.textAlign = 'center';
                     descCell.style.verticalAlign = 'middle';
                     descCell.style.color = '#333';
@@ -457,7 +485,7 @@
             
             const h3 = document.createElement('h3'); h3.className = 'date-display'; h3.textContent = formatDateKorean(dateInput.value); tempContainer.appendChild(h3);
             
-            const newStructureTable = buildTable();
+            const newStructureTable = buildTable(false);
             tempContainer.appendChild(newStructureTable);
             
             const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
@@ -476,7 +504,7 @@
         copyImagesButton.addEventListener('click', () => {
             const tempContainer = document.createElement('div');
             
-            const newStructureTable = buildTable();
+            const newStructureTable = buildTable(true);
             
             // 5. Append the NEWLY structured table to the temporary container
             tempContainer.appendChild(newStructureTable);
