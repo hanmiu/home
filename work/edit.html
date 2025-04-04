@@ -569,12 +569,13 @@
             const tempColumnCountInputValue = columnCountInput.value;
             const tempBorderCheckboxValue = borderCheckbox.checked;
             const tempLabelCheckboxValue = labelCheckbox.checked;
-            columnCountInput.value = 3;
+            columnCountInput.value = maxColumns = 3;
             borderCheckbox.checked = false;
             labelCheckbox.checked = true;
             reorganizeTable();
             copyDocument();
             columnCountInput.value = tempColumnCountInputValue;
+            maxColumns = parseInt(tempColumnCountInputValue);
             borderCheckbox.checked = tempBorderCheckboxValue;
             labelCheckbox.checked = tempLabelCheckboxValue;
         });
