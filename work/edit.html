@@ -171,10 +171,14 @@
         function loadSettings() {
             const savedTitle = localStorage.getItem('savedTitle');
             const savedBody = localStorage.getItem('savedBody');
-            const savedMaxColumns = localStorage.getItem('maxColumns'); // 저장된 열 개수 불러오기
+            const savedMaxColumns = localStorage.getItem('maxColumns');
+            const savedBorder = localStorage.getItem('borderCheckbox');
+            const savedLabel = localStorage.getItem('labelCheckbox');
             
             if (savedTitle) titleEl.textContent = savedTitle;
             if (savedBody) bodyEl.textContent = savedBody;
+            if (savedBorder) borderCheckbox.checked = savedBorder === 'true';
+            if (savedLabel) labelCheckbox.checked = savedLabel === 'true';
             
             // 저장된 열 개수 적용
             if (savedMaxColumns && parseInt(savedMaxColumns) >= 1) {
@@ -270,6 +274,22 @@
                 e.preventDefault();
                 handleFiles(files);
             }
+        });
+
+        labelCheckbox.addEventListener('input', () => {
+            const descElements = table.querySelectorAll('.desc');
+            descElements.forEach(desc => {
+                if (labelCheckbox.checked) {
+                    desc.style.display = 'block';
+                } else {
+                    desc.style.display = 'none';
+                }
+            });
+            localStorage.setItem('labelCheckbox', labelCheckbox.checked);
+        });
+
+        borderCheckbox.addEventListener('input', () => {
+            localStorage.setItem('borderCheckbox', borderCheckbox.checked);
         });
 
         window.addEventListener('resize', () => {
@@ -492,17 +512,6 @@
 
             return newStructureTable;
         }
-
-        labelCheckbox.addEventListener('input', () => {
-            const descElements = table.querySelectorAll('.desc');
-            descElements.forEach(desc => {
-                if (labelCheckbox.checked) {
-                    desc.style.display = 'block';
-                } else {
-                    desc.style.display = 'none';
-                }
-            });
-        });
         
         // 복사 버튼 클릭 이벤트 리스너 
         copyButton.addEventListener('click', () => {
