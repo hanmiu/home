@@ -25,7 +25,7 @@
         }
         
         /* --- 개선된 버튼 스타일 --- */
-        #newButton, #copyButton, #copyImagesButton {
+        #newButton, #defaultCopyButton, #copyButton, #copyImagesButton {
             padding: 9px 16px; /* 패딩 약간 조정 */
             font-size: 15px;  /* 폰트 크기 약간 조정 */
             cursor: pointer;
@@ -43,10 +43,10 @@
         #newButton:hover {
             background-color: #218838; /* 호버 시 약간 어둡게 */
         }
-        #copyButton, #copyImagesButton {
+        #defaultCopyButton, #copyButton, #copyImagesButton {
             background-color: #007bff; /* 파란색 계열 */
         }
-        #copyButton:hover, #copyImagesButton:hover {
+        #defaultCopyButton:hover, #copyButton:hover, #copyImagesButton:hover {
             background-color: #0056b3; /* 호버 시 약간 어둡게 */
         }
         /* --- --- */
@@ -147,6 +147,7 @@
     
     <hr>
     
+    <button id="defaultCopyButton">⚡️ 문서 복사</button>
     <button id="copyButton">📋 문서 복사</button>
     <button id="copyImagesButton">🏞 이미지 복사</button>
     
@@ -513,9 +514,8 @@
 
             return newStructureTable;
         }
-        
-        // 복사 버튼 클릭 이벤트 리스너 
-        copyButton.addEventListener('click', () => {
+
+        function copyDocument() {
             const tempContainer = document.createElement('div');
             const blankSpace = document.createElement('div');
             blankSpace.textContent = '\u200B';
@@ -558,6 +558,25 @@
                 if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
             } catch (err) { console.error('복사 중 오류 발생:', err); alert('복사 중 오류가 발생했습니다.'); }
             selection.removeAllRanges(); document.body.removeChild(tempContainer);
+        }
+        
+        // 복사 버튼 클릭 이벤트 리스너 
+        copyButton.addEventListener('click', () => {
+            copyDocument();
+        });
+
+        defaultCopyButton.addEventListener('click', () => {
+            const tempColumnCountInputValue = columnCountInput.value;
+            const tempBorderCheckboxValue = borderCheckbox.checked;
+            const tempLabelCheckboxValue = labelCheckbox.checked;
+            columnCountInput.value = 3;
+            borderCheckbox.checked = false;
+            labelCheckbox.checked = true;
+            reorganizeTable();
+            copyDocument();
+            columnCountInput.value = tempColumnCountInputValue;
+            borderCheckbox.checked = tempBorderCheckboxValue;
+            labelCheckbox.checked = tempLabelCheckboxValue;
         });
         
         copyImagesButton.addEventListener('click', () => {
