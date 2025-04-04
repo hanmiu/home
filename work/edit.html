@@ -525,7 +525,7 @@
             const newStructureTable = buildTable();
             tempContainer.appendChild(newStructureTable);
             
-            const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '...'; tempContainer.appendChild(clonedBody);
+            const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '✏️'; tempContainer.appendChild(clonedBody);
             
             const hrElement = document.createElement('hr'); tempContainer.appendChild(hrElement);
             
