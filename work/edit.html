@@ -503,6 +503,7 @@
                                 descText = '\u200B';
                             }
                             descCell.textContent = descText;
+                            descCell.innerHTML = descText;
                         } else {
                             descCell.innerHTML = '\u200B'; // Add zero-width space if no description
                         }
@@ -516,21 +517,42 @@
         // 복사 버튼 클릭 이벤트 리스너 
         copyButton.addEventListener('click', () => {
             const tempContainer = document.createElement('div');
-            const blankSpace = document.createElement('div'); blankSpace.textContent = '\u200B'; tempContainer.appendChild(blankSpace);
+            const blankSpace = document.createElement('div');
+            blankSpace.textContent = '\u200B';
+            tempContainer.appendChild(blankSpace);
             
-            const clonedTitle = titleEl.cloneNode(true); clonedTitle.removeAttribute('contenteditable'); clonedTitle.style.border = 'none'; clonedTitle.style.padding = '0'; if(clonedTitle.textContent.trim() === '') clonedTitle.textContent = '핵심 내용, 제목'; tempContainer.appendChild(clonedTitle);
+            const clonedTitle = titleEl.cloneNode(true);
+            clonedTitle.removeAttribute('contenteditable');
+            clonedTitle.style.border = 'none';
+            clonedTitle.style.padding = '0';
+            if(clonedTitle.textContent.trim() === '') clonedTitle.textContent = '핵심 내용, 제목';
+            clonedTitle.innerHTML = clonedTitle.textContent;
+            tempContainer.appendChild(clonedTitle);
             
-            const h3 = document.createElement('h3'); h3.className = 'date-display'; h3.textContent = formatDateKorean(dateInput.value); tempContainer.appendChild(h3);
+            const h3 = document.createElement('h3');
+            h3.className = 'date-display';
+            h3.textContent = formatDateKorean(dateInput.value);
+            tempContainer.appendChild(h3);
             
             const newStructureTable = buildTable();
             tempContainer.appendChild(newStructureTable);
             
-            const clonedBody = bodyEl.cloneNode(true); clonedBody.removeAttribute('contenteditable'); clonedBody.style.border = 'none'; clonedBody.style.padding = '0'; if(clonedBody.textContent.trim() === '') clonedBody.textContent = '✏️'; tempContainer.appendChild(clonedBody);
+            const clonedBody = bodyEl.cloneNode(true);
+            clonedBody.removeAttribute('contenteditable');
+            clonedBody.style.border = 'none';
+            clonedBody.style.padding = '0';
+            if(clonedBody.textContent.trim() === '') clonedBody.textContent = '\u200B';
+            clonedBody.innerHTML = clonedBody.textContent;
+            tempContainer.appendChild(clonedBody);
             
             const hrElement = document.createElement('hr'); tempContainer.appendChild(hrElement);
             
             document.body.appendChild(tempContainer);
-            const range = document.createRange(); range.selectNodeContents(tempContainer); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+            const range = document.createRange();
+            range.selectNodeContents(tempContainer);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
             try {
                 const successful = document.execCommand('copy');
                 if (successful) { alert('복사되었습니다! Google Docs 등에 붙여넣으세요.'); } else { alert('복사 실패 ㅠㅠ 브라우저 호환성 문제일 수 있습니다.'); }
