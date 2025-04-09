@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI/Keyboard Synth Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: black;
+            overflow: hidden; /* Prevent scrollbars */
+            color: white; /* For the start message */
+            font-family: sans-serif;
+        }
+        canvas#visualizer {
+            display: block; /* Remove extra space below canvas */
+            position: fixed; /* Position absolutely relative to viewport */
+            top: 0;
+            left: 0;
+            width: 100vw; /* 100% viewport width */
+            height: 100vh; /* 100% viewport height */
+        }
+        #startMessage, #midiMessage {
+            position: fixed; /* Keep message centered over canvas */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 11; /* Ensure it's above the canvas */
+            background: rgba(0,0,0,0.7); /* Optional: slight background */
+            padding: 1em;
+            border-radius: 5px;
+            text-align: center;
+        }
+         #midiMessage {
+            top: 60%; /* Position MIDI message slightly lower */
+            font-size: 0.9em;
+            display: none; /* Hidden by default */
+         }
+        /* Help Icon (?) */
+        #help-icon {
+            position: fixed;
+            top: 15px;
+            left: 15px; /* Position top-left */
+            width: 25px;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 12; /* Above GUI */
+            user-select: none;
+        }
+        #help-icon:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        /* Help Modal */
+        #help-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+        }
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2a2a2a; /* Dark background */
+            color: #eee; /* Light text */
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 450px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 101;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        #help-modal h2 {
+            margin-top: 0;
+            color: white;
+        }
+        #help-modal ul {
+             padding-left: 20px;
+        }
+        #modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+        #modal-close:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="help-icon">?</div>
+    <div id="help-overlay"></div>
+    <div id="help-modal">
+        <span id="modal-close">×</span>
+        <h2>Synth Controls</h2>
+        <p>Play notes using your keyboard or a connected MIDI controller (25-key layout assumed).</p>
+        <p>Keyboard Mapping:</p>
+        <ul>
+            <li><strong>Lower Octave:</strong> ASDFGHJK L;'</li>
+            <li><strong>Upper Octave:</strong> QWERTYUIOP []</li>
+        </ul>
+        <p>Adjust settings:</p>
+         <ul>
+             <li><strong>Change Octave:</strong> Z (down), X (up)</li>
+             <li><strong>Change Key:</strong> Left Arrow (down), Right Arrow (up)</li>
+        </ul>
+         <p>Use the controls panel (top-right) to modify the sound (envelope, waveform, volume) and visuals.</p>
+         <p>MIDI velocity affects the initial size of the visual.</p>
+    </div>
+
+    <canvas id="visualizer"></canvas>
+    <div id="midiMessage">Searching for MIDI devices...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        // --- Canvas and Visuals Setup ---
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        let visualizerWidth, visualizerHeight;
+
+        const noteColors = { // Consistent colors
+            'C':  '#e33059', 'C#': '#f75839', 'D':  '#f7943d', 'D#': '#f3b72f',
+            'E':  '#edd929', 'F':  '#95c631', 'F#': '#56a754', 'G':  '#11826d',
+            'G#': '#3160a3', 'A':  '#5b37cc', 'A#': '#a347bf', 'B':  '#ea57b2'
+        };
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const activeVisuals = []; // { midiNote, color, startTime, state, currentRadius, baseRadius, x, y, velocityX, velocityY, oscFreq, currentAmpMultiplier, attackEndTime, releaseStartTime, radiusAtRelease }
+
+        // --- Store Initial Parameter Values ---
+        const initialParams = {
+            attack: 0.2, decay: 0.1, sustain: 1.0, release: 0.7, volume: -12,
+            oscillatorType: 'triangle', minDotSize: 10, maxDotSize: 80,
+            releaseAcceleration: 0.001, rootMidi: 48 // Initial root MIDI note (C3)
+        };
+
+        // --- Keyboard Mapping & Scale ---
+        const majorScaleIntervals = [
+            0,  2,  4,  5,  7,  9, 11, 12, 14, 16, 17, 19, 21, 23, 24, 26, 28, 29, 31, 33, 35, 36, 38
+        ]; // 23 intervals for keyboard keys
+        const keyMap = { // Maps keyboard key to scale degree (1-23)
+            'a': 1, 's': 2, 'd': 3, 'f': 4, 'g': 5, 'h': 6, 'j': 7, 'k': 8, 'l': 9, ';': 10, '\'': 11,
+            'q': 12, 'w': 13, 'e': 14, 'r': 15, 't': 16, 'y': 17, 'u': 18, 'i': 19, 'o': 20, 'p': 21, '[': 22, ']': 23
+        };
+        // Define MIDI range for keyboard mapping (relative to rootMidi)
+        const MIN_KEYBOARD_MIDI_NOTE = 36; // C2 (lowest possible root)
+        const MAX_KEYBOARD_MIDI_NOTE = 60 + majorScaleIntervals[keyMap[']'] - 1]; // C4 root + highest interval = 98 (D7)
+
+        // --- MIDI Constants ---
+        const MIDI_LOWEST_NOTE = 48; // Assume 25-key controller starts at C3
+        const MIDI_HIGHEST_NOTE = 72; // Assume 25-key controller ends at C5
+        const MIDI_NOTE_RANGE = MIDI_HIGHEST_NOTE - MIDI_LOWEST_NOTE;
+        const WHITE_KEYS_IN_25_RANGE = 15; // C3 to C5 has 15 white keys
+        const HORIZONTAL_MARGIN_PERCENT = 0.05; // 5% margin on each side
+
+        // --- Physics Constants ---
+        const restitution = 0.9;
+        const MIN_VISUAL_ATTACK_TIME = 0.2;
+        const MIN_OSC_FREQ = 1; const MAX_OSC_FREQ = 7;
+        const OSCILLATION_AMP_FACTOR = 0.08;
+        const OSCILLATION_AMP_DECAY_TIME = 1.0;
+        const STRING_LENGTH_SCALE = 0.8;
+        const WIND_UPDATE_INTERVAL = 3; const MAX_WIND_STRENGTH = 0.002;
+        const WIND_SMOOTHING_FACTOR = 0.01;
+        const STRING_WOBBLE_FREQ = 1; const STRING_WOBBLE_AMP = 2;
+        let windX = 0; let targetWindX = 0; let windChangeTimer = 0;
+
+        // --- Audio Setup ---
+        let audioStarted = false;
+        const synth = new Tone.PolySynth(Tone.Synth, {
+            volume: initialParams.volume,
+            oscillator: { type: initialParams.oscillatorType },
+            envelope: {
+                attack: initialParams.attack, decay: initialParams.decay,
+                sustain: initialParams.sustain, release: initialParams.release
+            }
+        }).toDestination();
+
+        // --- GUI Setup ---
+        let rootMidi = initialParams.rootMidi; // C3
+        const guiParams = { ...initialParams, displayKey: '', displayOctave: '', reset: function() { resetAll(); } };
+        const gui = new dat.GUI({ autoPlace: false, closed: true });
+        gui.domElement.style.position = 'fixed'; gui.domElement.style.top = '10px';
+        gui.domElement.style.right = '10px'; gui.domElement.style.zIndex = '10';
+        document.body.appendChild(gui.domElement);
+
+        // GUI Folders and Controls (Condensed setup)
+        const synthFolder = gui.addFolder('Synthesizer');
+        synthFolder.add(guiParams, 'attack', 0.001, 2, 0.001).onChange(v => synth.set({ envelope: { attack: v } }));
+        synthFolder.add(guiParams, 'decay', 0.001, 2, 0.001).onChange(v => synth.set({ envelope: { decay: v } }));
+        synthFolder.add(guiParams, 'sustain', 0, 1, 0.01).onChange(v => synth.set({ envelope: { sustain: v } }));
+        synthFolder.add(guiParams, 'release', 0.01, 4, 0.01).onChange(v => synth.set({ envelope: { release: v } }));
+        synthFolder.add(guiParams, 'volume', -60, 0, 1).onChange(v => synth.volume.value = v);
+        synthFolder.add(guiParams, 'oscillatorType', ['sine', 'square', 'sawtooth', 'triangle']).onChange(v => synth.set({ oscillator: { type: v } }));
+
+        const visualFolder = gui.addFolder('Visuals');
+        visualFolder.add(guiParams, 'minDotSize', 5, 50, 1).name('Min Note Size');
+        visualFolder.add(guiParams, 'maxDotSize', 20, 200, 1).name('Max Note Size');
+        visualFolder.add(guiParams, 'releaseAcceleration', 0.0001, 0.004, 0.0001).name('Drift Speed');
+
+        const statusFolder = gui.addFolder('Status & Controls');
+        const displayKeyController = statusFolder.add(guiParams, 'displayKey').name('Root Key').listen();
+        const displayOctaveController = statusFolder.add(guiParams, 'displayOctave').name('Root Octave').listen();
+        statusFolder.add(guiParams, 'reset').name('Reset All');
+
+        // --- Helper Functions ---
+        function resizeCanvas() {
+            visualizerWidth = canvas.clientWidth;
+            visualizerHeight = canvas.clientHeight;
+            canvas.width = visualizerWidth * window.devicePixelRatio;
+            canvas.height = visualizerHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        function hexToRgba(hex, alpha) { /* ... (same as before) ... */ }
+
+        function updateGuiDisplay() {
+            const rootNoteName = noteNames[rootMidi % 12];
+            const octave = Math.floor(rootMidi / 12) - 1; // MIDI C4=60 -> Octave 4
+            guiParams.displayKey = rootNoteName;
+            guiParams.displayOctave = `Octave ${octave}`;
+            if (displayKeyController) displayKeyController.updateDisplay();
+            if (displayOctaveController) displayOctaveController.updateDisplay();
+        }
+
+        function resetAll() {
+            console.log("Resetting parameters...");
+            Object.assign(guiParams, initialParams); // Reset GUI params object
+            synth.set({ // Apply resets to the synth
+                envelope: { attack: guiParams.attack, decay: guiParams.decay, sustain: guiParams.sustain, release: guiParams.release },
+                oscillator: { type: guiParams.oscillatorType }
+            });
+            synth.volume.value = guiParams.volume;
+            rootMidi = initialParams.rootMidi; // Reset root MIDI
+            updateGuiDisplay();
+            for (let i in gui.__controllers) gui.__controllers[i].updateDisplay(); // Update all GUI controllers visually
+            for (let f in gui.__folders) {
+                 for (let i in gui.__folders[f].__controllers) {
+                     gui.__folders[f].__controllers[i].updateDisplay();
+                 }
+            }
+        }
+
+        /**
+         * Calculates the horizontal (X) position for a balloon based on its MIDI note number.
+         * Assumes a 25-key layout (C3-C5) spanning the canvas width with margins.
+         * @param {number} midiNote - The MIDI note number.
+         * @param {number} canvasWidth - The current width of the canvas.
+         * @returns {number} The calculated X coordinate.
+         */
+        function calculateNoteXPosition(midiNote, canvasWidth) {
+            const margin = canvasWidth * HORIZONTAL_MARGIN_PERCENT;
+            const usableWidth = canvasWidth - 2 * margin;
+
+            // --- Map MIDI note to a 0-based index within the 25-key range ---
+            // This requires knowing the layout (white/black keys)
+            // C3=48, C#3=49, D3=50, D#3=51, E3=52, F3=53, F#3=54, G3=55, G#3=56, A3=57, A#3=58, B3=59
+            // C4=60, C#4=61, D4=62, D#4=63, E4=64, F4=65, F#4=66, G4=67, G#4=68, A4=69, A#4=70, B4=71
+            // C5=72
+            const keyInfo = [ // Represents the 25 keys from C3 to C5
+                { midi: 48, type: 'white', whiteIdx: 0 }, { midi: 49, type: 'black' },
+                { midi: 50, type: 'white', whiteIdx: 1 }, { midi: 51, type: 'black' },
+                { midi: 52, type: 'white', whiteIdx: 2 },
+                { midi: 53, type: 'white', whiteIdx: 3 }, { midi: 54, type: 'black' },
+                { midi: 55, type: 'white', whiteIdx: 4 }, { midi: 56, type: 'black' },
+                { midi: 57, type: 'white', whiteIdx: 5 }, { midi: 58, type: 'black' },
+                { midi: 59, type: 'white', whiteIdx: 6 },
+                { midi: 60, type: 'white', whiteIdx: 7 }, { midi: 61, type: 'black' }, // Middle C (C4)
+                { midi: 62, type: 'white', whiteIdx: 8 }, { midi: 63, type: 'black' },
+                { midi: 64, type: 'white', whiteIdx: 9 },
+                { midi: 65, type: 'white', whiteIdx: 10 }, { midi: 66, type: 'black' },
+                { midi: 67, type: 'white', whiteIdx: 11 }, { midi: 68, type: 'black' },
+                { midi: 69, type: 'white', whiteIdx: 12 }, { midi: 70, type: 'black' },
+                { midi: 71, type: 'white', whiteIdx: 13 },
+                { midi: 72, type: 'white', whiteIdx: 14 } // C5
+            ];
+
+            const noteData = keyInfo.find(k => k.midi === midiNote);
+
+            // Fallback for notes outside the expected 25-key range (e.g., from keyboard mapping)
+            // We can try to estimate or just center them
+            if (!noteData) {
+                 // Simple fallback: map linearly across the full range
+                 const normalizedMidi = Math.max(0, Math.min(1, (midiNote - MIN_KEYBOARD_MIDI_NOTE) / (MAX_KEYBOARD_MIDI_NOTE - MIN_KEYBOARD_MIDI_NOTE)));
+                 return margin + normalizedMidi * usableWidth;
+                 // return canvasWidth / 2; // Or just center it
+            }
+
+            const whiteKeyWidth = usableWidth / WHITE_KEYS_IN_25_RANGE;
+            let xPos;
+
+            if (noteData.type === 'white') {
+                // Center of the white key's area
+                xPos = margin + (noteData.whiteIdx * whiteKeyWidth) + (whiteKeyWidth / 2);
+            } else {
+                // Black key: find the white key before it
+                let precedingWhiteKeyIndex = -1;
+                for(let i = 0; i < keyInfo.length; i++) {
+                    if (keyInfo[i].midi === midiNote) {
+                        // Look backwards for the nearest white key
+                        for (let j = i - 1; j >= 0; j--) {
+                            if (keyInfo[j].type === 'white') {
+                                precedingWhiteKeyIndex = keyInfo[j].whiteIdx;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                 // Position it at the boundary between the preceding white key and the next one
+                 if (precedingWhiteKeyIndex !== -1) {
+                     xPos = margin + (precedingWhiteKeyIndex + 1) * whiteKeyWidth;
+                 } else {
+                     // Should not happen with the defined map, but fallback
+                     xPos = margin + whiteKeyWidth / 2; // Position like the first white key
+                 }
+            }
+
+            return xPos;
+        }
+
+        // --- Audio Interaction ---
+        async function startAudio() {
+            if (!audioStarted) {
+                try {
+                    await Tone.start();
+                    console.log("Audio context started successfully!");
+                    audioStarted = true;
+                    const startMessage = document.getElementById('startMessage');
+                    if (startMessage) startMessage.remove();
+                } catch (error) {
+                    console.error("Error starting audio context:", error);
+                    const startMessage = document.getElementById('startMessage');
+                    if (startMessage) startMessage.textContent = 'Error starting audio. Please refresh.';
+                }
+            }
+        }
+
+        // --- Note Handling Logic ---
+        function handleNoteOn(midiNote, velocity = 1.0) { // Velocity defaults to 1.0 for keyboard
+             if (!audioStarted) return; // Don't process if audio not ready
+
+            const freq = Tone.Frequency(midiNote, "midi").toFrequency();
+            const noteName = noteNames[midiNote % 12];
+            const color = noteColors[noteName];
+            const velocityNormalized = velocity / 127.0; // Normalize MIDI velocity (0-1)
+
+            // Trigger synth note with velocity
+            synth.triggerAttack(freq, Tone.now(), velocityNormalized);
+
+            // --- Visual Creation ---
+            const { minDotSize, maxDotSize } = guiParams;
+            // Size based on velocity (higher velocity = closer to maxDotSize)
+            const calculatedBaseRadius = minDotSize + (maxDotSize - minDotSize) * velocityNormalized;
+
+            // Oscillation frequency based on MIDI note pitch (higher pitch = faster oscillation)
+            const midiRange = MAX_KEYBOARD_MIDI_NOTE - MIN_KEYBOARD_MIDI_NOTE; // Use full potential range for mapping
+            let normalizedMidi = 0;
+            if (midiRange > 0) {
+                normalizedMidi = Math.max(0, Math.min(1, (midiNote - MIN_KEYBOARD_MIDI_NOTE) / midiRange));
+            }
+            const calculatedOscFreq = MIN_OSC_FREQ + normalizedMidi * (MAX_OSC_FREQ - MIN_OSC_FREQ);
+
+            // Calculate X position based on the MIDI note
+            const initialX = calculateNoteXPosition(midiNote, visualizerWidth);
+            const initialY = visualizerHeight / 2; // Start in vertical center
+
+            activeVisuals.push({
+                midiNote: midiNote, // Store MIDI note instead of key
+                color: color,
+                startTime: Tone.now(),
+                state: 'attack',
+                currentRadius: 0,
+                baseRadius: calculatedBaseRadius,
+                x: initialX,
+                y: initialY,
+                velocityX: 0,
+                velocityY: 0,
+                oscFreq: calculatedOscFreq,
+                currentAmpMultiplier: 1.0,
+                attackEndTime: Infinity,
+                releaseStartTime: Infinity,
+                radiusAtRelease: 0
+            });
+        }
+
+        function handleNoteOff(midiNote) {
+             if (!audioStarted) return;
+
+            const freq = Tone.Frequency(midiNote, "midi").toFrequency();
+            synth.triggerRelease(freq, Tone.now());
+
+            // Find the OLDEST active visual for this midiNote that is NOT already releasing
+            let visualToRelease = null;
+            let oldestStartTime = Infinity;
+
+            for (let i = 0; i < activeVisuals.length; i++) {
+                const visual = activeVisuals[i];
+                if (visual.midiNote === midiNote && visual.state !== 'release') {
+                    if (visual.startTime < oldestStartTime) {
+                        oldestStartTime = visual.startTime;
+                        visualToRelease = visual;
+                    }
+                }
+            }
+
+            if (visualToRelease) {
+                visualToRelease.state = 'release';
+                visualToRelease.releaseStartTime = Tone.now();
+                visualToRelease.radiusAtRelease = visualToRelease.currentRadius; // Capture size at release
+                // Keep current velocity and position
+            }
+        }
+
+        // --- Drawing Loop ---
+        function draw() {
+            requestAnimationFrame(draw);
+            const now = Tone.now();
+
+            // --- Update Wind ---
+             if (now > windChangeTimer) {
+                targetWindX = (Math.random() - 0.5) * 2 * MAX_WIND_STRENGTH;
+                windChangeTimer = now + WIND_UPDATE_INTERVAL;
+            }
+            windX += (targetWindX - windX) * WIND_SMOOTHING_FACTOR;
+
+            // 1. Clear canvas
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, visualizerWidth, visualizerHeight);
+
+            const { releaseAcceleration } = guiParams;
+            const { attack, decay } = guiParams; // Get synth ADSR for visual timing
+
+            // --- First Loop: Update State, Radius, Position, Velocity ---
+            for (let i = activeVisuals.length - 1; i >= 0; i--) {
+                const visual = activeVisuals[i];
+                let elapsed; let progress;
+
+                // Apply wind drift
+                visual.velocityX += windX;
+
+                // Update position based on last frame's velocity
+                visual.x += visual.velocityX;
+                visual.y += visual.velocityY;
+
+                // Apply release acceleration upwards if releasing
+                if (visual.state === 'release') {
+                    visual.velocityY -= releaseAcceleration;
+                }
+
+                // Update visual state and radius
+                switch (visual.state) {
+                    case 'attack':
+                        elapsed = now - visual.startTime;
+                        const currentAttack = Math.max(0.001, attack);
+                        const visualAttackDuration = Math.max(currentAttack, MIN_VISUAL_ATTACK_TIME);
+                        progress = Math.min(1, elapsed / visualAttackDuration);
+                        visual.currentRadius = progress * visual.baseRadius;
+                        if (progress >= 1) {
+                            visual.state = 'sustain'; // Go directly to sustain after attack
+                            visual.currentRadius = visual.baseRadius;
+                            visual.attackEndTime = visual.startTime + visualAttackDuration; // Mark end time
+                        }
+                        break;
+                    case 'sustain':
+                        // Radius stays at baseRadius.
+                        visual.currentRadius = visual.baseRadius;
+                        visual.currentAmpMultiplier = 1.0; // Keep oscillation full
+                        // State changes externally on note off
+                        break;
+                    case 'release':
+                        // Radius is fixed at radiusAtRelease. Position/velocity updated above.
+                        // Decay oscillation amplitude
+                        const elapsedRelease = now - visual.releaseStartTime;
+                        const decayProgress = Math.min(1, elapsedRelease / OSCILLATION_AMP_DECAY_TIME);
+                        visual.currentAmpMultiplier = 1.0 - decayProgress;
+
+                        // Remove if moved off the top edge
+                        if (visual.y + visual.radiusAtRelease < 0) {
+                            activeVisuals.splice(i, 1);
+                            continue; // Skip collision/drawing
+                        }
+                        break;
+                }
+            } // --- End First Loop ---
+
+
+            // --- Collision Detection & Resolution Loop ---
+            for (let i = 0; i < activeVisuals.length; i++) {
+                for (let j = i + 1; j < activeVisuals.length; j++) {
+                    const vA = activeVisuals[i];
+                    const vB = activeVisuals[j];
+
+                    // Use appropriate radius based on state
+                    const radiusA = (vA.state === 'release') ? vA.radiusAtRelease : vA.currentRadius;
+                    const radiusB = (vB.state === 'release') ? vB.radiusAtRelease : vB.currentRadius;
+                    if (radiusA <= 0 || radiusB <= 0) continue; // Skip collision if invisible
+
+                    const sumRadii = radiusA + radiusB;
+                    const dx = vB.x - vA.x;
+                    const dy = vB.y - vA.y;
+                    const distSq = dx * dx + dy * dy;
+
+                    if (distSq < sumRadii * sumRadii && distSq > 0) { // Added distSq > 0 check
+                        const distance = Math.sqrt(distSq);
+                        const overlap = sumRadii - distance;
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+
+                        // Static Resolution
+                        const pushFactor = 0.5;
+                        vA.x -= nx * overlap * pushFactor; vA.y -= ny * overlap * pushFactor;
+                        vB.x += nx * overlap * (1 - pushFactor); vB.y += ny * overlap * (1 - pushFactor);
+
+                        // Dynamic Resolution
+                        const relativeVelX = vB.velocityX - vA.velocityX;
+                        const relativeVelY = vB.velocityY - vA.velocityY;
+                        const velAlongNormal = relativeVelX * nx + relativeVelY * ny;
+
+                        if (velAlongNormal < 0) {
+                            const impulse = -(1 + restitution) * velAlongNormal / 2;
+                            const impulseX = impulse * nx; const impulseY = impulse * ny;
+                            vA.velocityX -= impulseX; vA.velocityY -= impulseY;
+                            vB.velocityX += impulseX; vB.velocityY += impulseY;
+                        }
+                    }
+                }
+            } // --- End Collision Loop ---
+
+            // --- Final Drawing Loop ---
+            ctx.globalCompositeOperation = 'lighter'; // Blend mode for dots
+            for (let i = 0; i < activeVisuals.length; i++) {
+                const visual = activeVisuals[i];
+                const baseDrawRadius = (visual.state === 'release') ? visual.radiusAtRelease : visual.currentRadius;
+                if (baseDrawRadius <= 0) continue; // Don't draw if invisible
+
+                const oscillationAmplitude = baseDrawRadius * OSCILLATION_AMP_FACTOR * visual.currentAmpMultiplier;
+                const timeSinceStart = now - visual.startTime;
+                const angle = timeSinceStart * visual.oscFreq * 2 * Math.PI;
+                const oscillationOffsetX = oscillationAmplitude * Math.cos(angle);
+                const oscillationOffsetY = oscillationAmplitude * Math.sin(angle);
+
+                const radiusX = Math.max(0, baseDrawRadius + oscillationOffsetX);
+                const radiusY = Math.max(0, baseDrawRadius + oscillationOffsetY);
+
+                // Draw Ellipse
+                ctx.beginPath();
+                ctx.ellipse(visual.x, visual.y, radiusX, radiusY, 0, 0, Math.PI * 2);
+                ctx.fillStyle = visual.color;
+                ctx.fill();
+
+                // Draw String
+                const stringStartX = visual.x;
+                const stringStartY = visual.y + radiusY; // Bottom of ellipse
+                const stringLength = Math.max(5, baseDrawRadius * STRING_LENGTH_SCALE);
+                const stringEndXBase = stringStartX;
+                const stringEndY = stringStartY + stringLength;
+                const wobbleAngle = timeSinceStart * STRING_WOBBLE_FREQ * 2 * Math.PI;
+                const wobbleOffsetX = STRING_WOBBLE_AMP * Math.sin(wobbleAngle);
+                const stringEndXWobble = stringEndXBase + wobbleOffsetX;
+                const controlX = stringStartX - wobbleOffsetX;
+                const controlY = stringStartY + stringLength * 0.5;
+
+                ctx.beginPath();
+                ctx.moveTo(stringStartX, stringStartY);
+                ctx.quadraticCurveTo(controlX, controlY, stringEndXWobble, stringEndY);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; // Slightly transparent white
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            // --- End Final Drawing Loop ---
+        }
+        // --- End Drawing Loop ---
+
+        // --- Event Listeners Setup ---
+
+        // Initial message and audio start trigger
+        document.addEventListener('DOMContentLoaded', () => {
+            if (Tone.context.state !== 'running') {
+                const startMessage = document.createElement('p');
+                startMessage.id = 'startMessage';
+                startMessage.textContent = 'Click or press a key to start audio.';
+                document.body.appendChild(startMessage);
+            }
+            // Attempt to initialize MIDI after DOM is loaded
+            initializeMIDI();
+        });
+
+        // Keyboard Listeners
+        document.addEventListener('keydown', async (e) => {
+            if (e.repeat) return; // Ignore key repeats
+            await startAudio(); // Ensure audio is started
+
+            const key = e.key.toLowerCase();
+            const scaleDegree = keyMap[key];
+
+            if (scaleDegree) { // It's a note key
+                const midiNote = rootMidi + majorScaleIntervals[scaleDegree - 1];
+                 // Clamp note to prevent excessively high/low notes if rootMidi is extreme
+                const clampedMidiNote = Math.max(MIN_KEYBOARD_MIDI_NOTE, Math.min(MAX_KEYBOARD_MIDI_NOTE, midiNote));
+                handleNoteOn(clampedMidiNote, 127); // Use full velocity (127) for keyboard
+                e.preventDefault(); // Prevent default browser actions for note keys
+            } else { // It's a control key
+                if (key === 'z') { // Octave Down
+                    rootMidi = Math.max(MIN_KEYBOARD_MIDI_NOTE, rootMidi - 12); // Clamp at C2
+                    updateGuiDisplay();
+                } else if (key === 'x') { // Octave Up
+                    rootMidi = Math.min(60, rootMidi + 12); // Clamp root at C4 for keyboard range
+                    updateGuiDisplay();
+                } else if (key === 'arrowleft') { // Key Down (Transpose)
+                     // Allow temporary excursion below MIN_KEYBOARD_MIDI_NOTE before wrapping/clamping
+                     rootMidi = rootMidi - 1;
+                     if (rootMidi < MIN_KEYBOARD_MIDI_NOTE) rootMidi = MIN_KEYBOARD_MIDI_NOTE; // Simple clamp for now
+                     updateGuiDisplay();
+                } else if (key === 'arrowright') { // Key Up (Transpose)
+                     // Allow temporary excursion above 60 before wrapping/clamping
+                     rootMidi = rootMidi + 1;
+                     if (rootMidi > 60) rootMidi = 60; // Simple clamp for now
+                     updateGuiDisplay();
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            const scaleDegree = keyMap[key];
+
+            if (scaleDegree) { // It's a note key being released
+                const midiNote = rootMidi + majorScaleIntervals[scaleDegree - 1];
+                const clampedMidiNote = Math.max(MIN_KEYBOARD_MIDI_NOTE, Math.min(MAX_KEYBOARD_MIDI_NOTE, midiNote));
+                handleNoteOff(clampedMidiNote);
+            }
+        });
+
+        // Click listener to start audio
+        document.addEventListener('click', startAudio);
+
+        // --- Web MIDI API Implementation ---
+        const midiMessageElement = document.getElementById('midiMessage');
+
+        function initializeMIDI() {
+            if (navigator.requestMIDIAccess) {
+                 midiMessageElement.style.display = 'block'; // Show searching message
+                navigator.requestMIDIAccess({ sysex: false }) // No sysex needed
+                    .then(onMIDISuccess, onMIDIFailure);
+            } else {
+                console.warn("WebMIDI is not supported in this browser.");
+                midiMessageElement.textContent = "Web MIDI not supported in this browser.";
+                midiMessageElement.style.display = 'block';
+            }
+        }
+
+        function onMIDISuccess(midiAccess) {
+            console.log("MIDI Access Object:", midiAccess);
+            const inputs = midiAccess.inputs.values();
+            let deviceFound = false;
+            for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+                console.log("Found MIDI input:", input.value.name, input.value.id);
+                input.value.onmidimessage = onMIDIMessage; // Attach listener
+                deviceFound = true;
+            }
+
+            if (deviceFound) {
+                 midiMessageElement.textContent = "MIDI device(s) connected. Ready to play!";
+                 // Optionally hide the message after a delay
+                 setTimeout(() => { midiMessageElement.style.display = 'none'; }, 3000);
+            } else {
+                 midiMessageElement.textContent = "No MIDI input devices found.";
+            }
+
+             // Listen for connect/disconnect events (optional but good practice)
+             midiAccess.onstatechange = (event) => {
+                 console.log("MIDI state change:", event.port.name, event.port.state);
+                 // Could update UI or re-scan here
+                 // Simple refresh message for now
+                 midiMessageElement.textContent = `MIDI device ${event.port.name} ${event.port.state}. Re-initializing...`;
+                 midiMessageElement.style.display = 'block';
+                 // Re-initialize listeners on all inputs after a short delay
+                 setTimeout(() => {
+                     midiMessageElement.textContent = "Scanning for MIDI devices...";
+                     const currentInputs = midiAccess.inputs.values();
+                     let anyDevice = false;
+                     for (let input = currentInputs.next(); input && !input.done; input = currentInputs.next()) {
+                         input.value.onmidimessage = onMIDIMessage;
+                         anyDevice = true;
+                         console.log("Re-attached listener to:", input.value.name);
+                     }
+                     if(anyDevice) {
+                        midiMessageElement.textContent = "MIDI device(s) connected.";
+                        setTimeout(() => { midiMessageElement.style.display = 'none'; }, 2000);
+                     } else {
+                         midiMessageElement.textContent = "No MIDI input devices found.";
+                     }
+                 }, 500);
+             };
+        }
+
+        function onMIDIFailure(msg) {
+            console.error(`Failed to get MIDI access - ${msg}`);
+            midiMessageElement.textContent = "Failed to access MIDI devices.";
+            midiMessageElement.style.display = 'block';
+        }
+
+        function onMIDIMessage(event) {
+            startAudio(); // Ensure audio context is running on first MIDI message
+
+            const data = event.data; // Uint8Array [command/channel, note, velocity]
+            const command = data[0] >> 4; // Isolate command bits
+            const channel = data[0] & 0xf; // Isolate channel bits (0-15)
+            const note = data[1]; // MIDI note number (0-127)
+            const velocity = data[2]; // Velocity (0-127)
+
+            // console.log(`MIDI Ch${channel+1}: Cmd=${command}, Note=${note}, Vel=${velocity}`);
+
+            // Note On command (usually 9) or Note Off (usually 8)
+            // Some controllers send Note On with velocity 0 for Note Off
+            if (command === 9 && velocity > 0) { // Note On
+                handleNoteOn(note, velocity);
+            } else if (command === 8 || (command === 9 && velocity === 0)) { // Note Off
+                handleNoteOff(note);
+            }
+        }
+        // --- End Web MIDI ---
+
+        // --- Help Modal Logic ---
+        const helpIcon = document.getElementById('help-icon');
+        const helpOverlay = document.getElementById('help-overlay');
+        const helpModal = document.getElementById('help-modal');
+        const modalClose = document.getElementById('modal-close');
+        function showHelp() { helpOverlay.style.display = 'block'; helpModal.style.display = 'block'; }
+        function hideHelp() { helpOverlay.style.display = 'none'; helpModal.style.display = 'none'; }
+        helpIcon.addEventListener('click', showHelp);
+        modalClose.addEventListener('click', hideHelp);
+        helpOverlay.addEventListener('click', hideHelp);
+        // --- End Help Modal Logic ---
+
+
+        // --- Initial Setup ---
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Initial size
+        updateGuiDisplay(); // Set initial GUI display values
+        resetAll(); // Apply initial parameters from initialParams object
+        draw(); // Start the animation loop
+
+    </script>
+</body>
+</html>
