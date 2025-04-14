@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>한미 프로젝션 맵핑</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --header-height: 50px;
+            --asset-manager-width: 300px;
+            --selected-color: #007bff;
+            --canvas-aspect-ratio: calc(16 / 9);
+            --canvas-border-color: #555; /* Darker border for black bg */
+            --handle-size: 10px;
+            --handle-size-half: calc(var(--handle-size) / 2);
+            --cp-handle-size: 8px;
+            --cp-handle-size-half: calc(var(--cp-handle-size) / 2);
+            --handle-color-corner: rgba(255, 0, 0, 0.8);
+            --handle-color-bezier: rgba(0, 255, 0, 0.8);
+            --handle-line-color: rgba(255, 255, 0, 0.7);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; background-color: #f0f0f0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; user-select: none;
+        }
+        button { cursor: pointer; }
+        button:disabled { cursor: not-allowed; opacity: 0.6; }
+        .hidden { display: none !important; }
+        input[type="range"] { vertical-align: middle; }
+        input[type="number"] { width: 50px; margin: 0 5px; text-align: right;}
+        
+        /* --- Header --- */
+        #app-header {
+            height: var(--header-height); background-color: #343a40; color: white; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100;
+        }
+        #app-header h1 { margin: 0; font-size: 1.4em; color: white; }
+        #app-header nav button {
+            padding: 8px 15px; margin-left: 5px; border: none; border-radius: 4px; background-color: #6c757d; color: white;
+        }
+        #app-header nav button.active { background-color: var(--selected-color); font-weight: bold; }
+        #app-header nav button:hover:not(.active) { background-color: #5a6268; }
+        #grid-density-controls { margin-left: 20px; display: flex; align-items: center; font-size: 0.9em;}
+        #grid-density-controls label { margin-right: 5px; }
+        
+        /* --- Main Content --- */
+        #main-content {
+            flex-grow: 1; display: flex; flex-direction: row; overflow: hidden;
+        }
+        
+        /* --- Asset Manager (Mode 1 - Left Panel) --- */
+        #asset-manager-container {
+            width: var(--asset-manager-width); background-color: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; border-right: 1px solid #ddd;
+        }
+        #asset-list-area {
+            padding: 15px; display: flex; flex-direction: column; height: 100%; overflow-y: auto;
+        }
+        #asset-list-area h2, #asset-list-area h3 { font-size: 1.1em; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+        #asset-list-area #controls { margin-bottom: 10px; }
+        #asset-list-area #controls p { font-size: 0.9em; color: #666; margin-top: 0; }
+        #asset-list-area #add-file-button { background-color: #28a745; color: white; border: none; padding: 8px 12px; margin-bottom: 10px; width: 100%; }
+        #asset-list-area #add-file-button:hover { background-color: #218838; }
+        #asset-list-area #drop-zone { padding: 15px; margin-bottom: 10px; border: 2px dashed #ccc; text-align: center; background: #fafafa; font-size: 0.9em; color: #aaa; }
+        #asset-list-area #drop-zone.dragover { background-color: #e9f5ff; border-color: var(--selected-color); }
+        #asset-list-area #asset-list-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        #asset-list-area #asset-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; }
+        .asset-item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; background: white; position: relative; }
+        .asset-item:last-child { border-bottom: none; }
+        .asset-item:hover { background-color: #f8f9fa; }
+        .asset-item.selected { background-color: #cfe2ff; border-left: 3px solid var(--selected-color); font-weight: bold; }
+        .asset-item .thumbnail { width: 40px; height: 40px; object-fit: cover; margin-right: 10px; border: 1px solid #ddd; flex-shrink: 0; background-color: #eee; }
+        .asset-item .info { flex-grow: 1; min-width: 0; }
+        .asset-item .name { font-weight: 500; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .asset-item .type { font-size: 0.8em; color: #777; }
+        .asset-item .actions { margin-left: auto; flex-shrink: 0; display: flex; align-items: center;}
+        .asset-item .actions button { padding: 3px 6px; font-size: 0.8em; background: none; border: none; }
+        .asset-item .actions .remove-button { color: #dc3545; }
+        .asset-item .actions .remove-button:hover { background-color: #dc3545; color: white; border-radius: 3px;}
+        
+        /* --- Editing Panel (Mode 1 - Flexible Right Panel) --- */
+        #editing-panel {
+            flex-grow: 1; padding: 15px; background-color: #fafafa; display: flex; flex-direction: column; overflow: hidden;
+        }
+        #editing-panel h2 { font-size: 1.1em; margin-top: 0; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+        #editing-panel #edit-controls { margin-bottom: 15px; flex-shrink: 0; }
+        #editing-panel #edit-controls button { margin-right: 5px; padding: 5px 10px; }
+        #editing-panel #edit-controls label { margin-right: 5px; font-size: 0.9em; }
+        #editing-panel #preview-container {
+            position: relative; flex-grow: 1; width: 100%; background: #e0e0e0; margin-bottom: 15px; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        #editing-panel #preview-canvas {
+            display: block; max-width: 100%; max-height: 100%; background-color: #ccc; object-fit: contain;
+        }
+        #editing-panel #crop-overlay {
+            position: absolute; top: 0; left: 0; cursor: grab;
+        }
+        #editing-panel #crop-box {
+            position: absolute; border: 2px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); cursor: move;
+        }
+        #editing-panel .crop-handle {
+            position: absolute; width: var(--handle-size); height: var(--handle-size); background-color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.5); border-radius: 2px;
+        }
+        .crop-handle.tl { top: calc(-1 * var(--handle-size) / 2); left: calc(-1 * var(--handle-size) / 2); cursor: nwse-resize; }
+        .crop-handle.tr { top: calc(-1 * var(--handle-size) / 2); right: calc(-1 * var(--handle-size) / 2); cursor: nesw-resize; }
+        .crop-handle.bl { bottom: calc(-1 * var(--handle-size) / 2); left: calc(-1 * var(--handle-size) / 2); cursor: nesw-resize; }
+        .crop-handle.br { bottom: calc(-1 * var(--handle-size) / 2); right: calc(-1 * var(--handle-size) / 2); cursor: nwse-resize; }
+        #editing-panel #edit-info {
+            font-size: 0.8em; color: #555; flex-shrink: 0; max-height: 100px; overflow-y: auto;
+        }
+        
+        /* --- Mapping Editor (Mode 2 - Flexible Main Panel) --- */
+        #mapping-editor {
+            flex-grow: 1; position: relative; background-color: #222; /* Darker background */ display: flex; justify-content: center; align-items: center; overflow: hidden;
+        }
+        #canvas-container {
+            position: relative; width: 95%; max-width: calc((100vh - var(--header-height)) * var(--canvas-aspect-ratio)); margin: auto;
+        }
+        #canvas-container::before {
+            content: ""; display: block; padding-top: calc(100% / var(--canvas-aspect-ratio));
+        }
+        #mapping-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; /* Black background */ border: 1px solid var(--canvas-border-color); cursor: default; display: block; /* Remove potential inline spacing */
+        }
+        #mapping-canvas.grabbing { cursor: grabbing; }
+        #ui-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 10; /* Handles above canvas */
+        }
+        
+        /* UI Handles */
+        .control-handle {
+            position: absolute; border-radius: 50%; /* Make handles circular */
+            transform: translate(-50%, -50%); /* Center handles */
+            pointer-events: auto; /* Allow interaction */
+            cursor: grab;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            z-index: 11; /* Above overlay default */
+        }
+        .control-handle.corner {
+            width: var(--handle-size);
+            height: var(--handle-size);
+            background-color: var(--handle-color-corner);
+        }
+        .control-handle.bezier {
+            width: var(--cp-handle-size);
+            height: var(--cp-handle-size);
+            background-color: var(--handle-color-bezier);
+        }
+        .control-handle:active { cursor: grabbing; filter: brightness(1.2); }
+        
+        /* Handle Lines */
+        .handle-line {
+            position: absolute;
+            height: 1px;
+            background-color: var(--handle-line-color);
+            transform-origin: 0 50%;
+            pointer-events: none; /* No interaction with lines */
+            z-index: 10; /* Below handles */
+        }
+        
+        /* Fullscreen Mode */
+        body.fullscreen-mode #app-header,
+        body.fullscreen-mode #asset-manager-container,
+        body.fullscreen-mode #editing-panel {
+            display: none;
+        }
+        body.fullscreen-mode #main-content {
+            height: 100%; /* Ensure main content takes full height */
+        }
+        body.fullscreen-mode #mapping-editor {
+            width: 100%; height: 100%; padding: 0; margin: 0;
+        }
+        body.fullscreen-mode #canvas-container {
+            width: 100%; height: 100%; max-width: none; margin: 0;
+        }
+        /* Ensure canvas fills container in fullscreen */
+        body.fullscreen-mode #mapping-canvas {
+            /* Handled by onWindowResize */
+        }
+        body.fullscreen-mode #ui-overlay {
+            /* Positioned relative to canvas-container which is now fullscreen */
+        }
+        
+    </style>
+</head>
+<body>
+    <header id="app-header">
+        <h1>한미 프로젝션</h1>
+        <div id="grid-density-controls" class="hidden">
+            <label for="grid-nx">Grid X:</label>
+            <input type="number" id="grid-nx" min="2" max="100" value="10">
+            <label for="grid-ny">Grid Y:</label>
+            <input type="number" id="grid-ny" min="2" max="100" value="10">
+        </div>
+        <nav id="mode-switcher">
+            <button data-mode="mode1" class="active">1. 에셋</button>
+            <button data-mode="mode2">2. 맵핑</button>
+            <button id="fullscreen-button">전체화면</button>
+        </nav>
+    </header>
+    
+    <main id="main-content">
+        <aside id="asset-manager-container">
+            <div id="asset-list-area">
+                <h2>에셋 관리</h2>
+                <div id="controls">
+                    <p>파일 드롭, 추가 또는 붙여넣기.</p>
+                    <input type="file" id="file-input" accept="image/*,video/*" multiple style="display: none;">
+                    <button id="add-file-button">파일 추가</button>
+                </div>
+                <div id="drop-zone"><p>여기에 파일을 드롭하세요</p></div>
+                <div id="asset-list-controls"><h3>에셋 목록</h3></div>
+                <ul id="asset-list"></ul>
+                <template id="asset-item-template">
+                    <li class="asset-item" data-id="">
+                        <img class="thumbnail" src="" alt="Thumb">
+                        <div class="info">
+                            <span class="name">File Name</span>
+                            <span class="type">File Type</span>
+                        </div>
+                        <div class="actions">
+                            <button class="remove-button" title="에셋 제거">X</button>
+                        </div>
+                    </li>
+                </template>
+            </div>
+        </aside>
+        <aside id="editing-panel" class="hidden">
+            <h2>에셋 편집</h2>
+            <div id="edit-controls">
+                <button id="rotate-button" title="90도 회전">회전 ↻</button>
+                <button id="reset-crop-button" title="크롭 리셋">크롭 리셋</button>
+                <button id="close-edit-button" title="편집 닫기" style="float: right;">X</button>
+                <p style="margin-top: 10px; font-size:0.9em; color: #666;">캔버스 위 영역을 드래그/리사이즈하여 크롭.</p>
+            </div>
+            <div id="preview-container">
+                <canvas id="preview-canvas"></canvas>
+                <div id="crop-overlay">
+                    <div id="crop-box">
+                        <div class="crop-handle tl"></div>
+                        <div class="crop-handle tr"></div>
+                        <div class="crop-handle bl"></div>
+                        <div class="crop-handle br"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="edit-info"></div>
+        </aside>
+        <section id="mapping-editor" class="hidden">
+            <div id="canvas-container">
+                <canvas id="mapping-canvas"></canvas>
+                <div id="ui-overlay"></div>
+            </div>
+        </section>
+    </main>
+    
+    <script type="module">
+        // ========================================================================
+        // Application Core (ProjectionMapperApp) - Fullscreen & Density UI Added
+        // ========================================================================
+        class ProjectionMapperApp {
+            constructor() {
+                console.log("Initializing Projection Mapper App (Final)...");
+                this.currentMode = 'mode1';
+                this.lastSelectedAssetIdMode1 = null; // Remember selection in Mode 1
+                
+                this.assetManagerContainerEl = document.getElementById('asset-manager-container');
+                this.mappingEditorEl = document.getElementById('mapping-editor');
+                this.editingPanelEl = document.getElementById('editing-panel');
+                this.gridDensityControlsEl = document.getElementById('grid-density-controls');
+                this.gridNxInput = document.getElementById('grid-nx');
+                this.gridNyInput = document.getElementById('grid-ny');
+                
+                this.assetManager = new AssetManager(this, '#asset-manager-container');
+                this.mappingEditor = new MappingEditor(this, '#mapping-editor');
+                
+                this.bindGlobalEvents();
+                this.updateModeUI(); // Initial UI setup
+            }
+            
+            bindGlobalEvents() {
+                // Mode Switching
+                document.getElementById('mode-switcher').addEventListener('click', (event) => {
+                    const button = event.target.closest('button[data-mode]');
+                    if (button) this.switchMode(button.dataset.mode);
+                });
+                
+                // Fullscreen Button
+                document.getElementById('fullscreen-button').addEventListener('click', () => {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(err => {
+                            console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                        });
+                    } else {
+                        document.exitFullscreen();
+                    }
+                });
+                
+                // Listen for fullscreen changes
+                document.addEventListener('fullscreenchange', () => {
+                    document.body.classList.toggle('fullscreen-mode', !!document.fullscreenElement);
+                    // Trigger resize event for mapping editor to adjust layout
+                    window.dispatchEvent(new Event('resize'));
+                });
+                
+                // Grid Density Controls
+                this.gridNxInput.addEventListener('change', this.handleDensityChange.bind(this));
+                this.gridNyInput.addEventListener('change', this.handleDensityChange.bind(this));
+                this.gridNxInput.addEventListener('input', this.handleDensityChange.bind(this)); // Update more frequently
+                this.gridNyInput.addEventListener('input', this.handleDensityChange.bind(this));
+            }
+            
+            handleDensityChange() {
+                if(this.currentMode !== 'mode2' || !this.mappingEditor.selectedObject) return;
+                
+                const assetId = this.mappingEditor.selectedObject.userData.assetId;
+                const nx = parseInt(this.gridNxInput.value);
+                const ny = parseInt(this.gridNyInput.value);
+                
+                // Clamp values
+                const clampedNx = Math.max(2, Math.min(100, nx));
+                const clampedNy = Math.max(2, Math.min(100, ny));
+                
+                if (clampedNx !== nx) this.gridNxInput.value = clampedNx;
+                if (clampedNy !== ny) this.gridNyInput.value = clampedNy;
+                
+                this.mappingEditor.updateGridDensity(assetId, clampedNx, clampedNy);
+            }
+            
+            switchMode(newMode) {
+                if (this.currentMode === newMode) return;
+                console.log(`Switching mode to ${newMode}`);
+                const oldMode = this.currentMode;
+                this.currentMode = newMode;
+                
+                if (newMode !== 'mode1') { // Switching away from Mode 1
+                    this.assetManager.closeEditingPanel(false); // Close editor, don't notify app yet
+                }
+                if (newMode !== 'mode2') { // Switching away from Mode 2
+                    this.mappingEditor.setSelectedObject(null); // Deselect object
+                }
+                
+                this.updateModeUI(); // Update visibility based on new mode
+                
+                if (newMode === 'mode2') { // Entering Mode 2
+                    this.mappingEditorEl.classList.remove('hidden');
+                    // Use requestAnimationFrame for smoother transition after potential layout shifts
+                    requestAnimationFrame(() => {
+                        this.mappingEditor.onWindowResize(); // Resize canvas
+                        this.mappingEditor.updateAssetsOnCanvas(this.assetManager.getAllAssets()); // Update assets
+                    });
+                } else { // Entering Mode 1 or others
+                    this.mappingEditorEl.classList.add('hidden');
+                    this.gridDensityControlsEl.classList.add('hidden'); // Ensure density controls are hidden
+                    if (newMode === 'mode1') {
+                        // Try to re-select the last asset if returning to Mode 1
+                        if(this.lastSelectedAssetIdMode1) {
+                            this.assetManager.selectAsset(this.lastSelectedAssetIdMode1);
+                        }
+                    }
+                }
+            }
+            
+            updateModeUI() {
+                const isMode1 = this.currentMode === 'mode1';
+                const isMode2 = this.currentMode === 'mode2';
+                const isEditingMode1 = isMode1 && this.assetManager.selectedAssetId !== null;
+                const isSelectingMode2 = isMode2 && this.mappingEditor.selectedObject !== null;
+                
+                this.assetManagerContainerEl.classList.toggle('hidden', !isMode1);
+                this.editingPanelEl.classList.toggle('hidden', !isEditingMode1);
+                this.mappingEditorEl.classList.toggle('hidden', !isMode2);
+                
+                // Show density controls only in Mode 2 when an asset is selected
+                this.gridDensityControlsEl.classList.toggle('hidden', !isSelectingMode2);
+                if(isSelectingMode2) {
+                    const asset = this.getAssetData(this.mappingEditor.selectedObject.userData.assetId);
+                    if (asset && asset.gridDensity) {
+                        this.gridNxInput.value = asset.gridDensity.nx;
+                        this.gridNyInput.value = asset.gridDensity.ny;
+                    }
+                }
+                
+                
+                // Update header buttons
+                document.querySelectorAll('#mode-switcher button[data-mode]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === this.currentMode);
+                });
+                
+                // If editing panel becomes visible, redraw preview
+                if (isEditingMode1) {
+                    this.assetManager.redrawPreviewIfNeeded();
+                }
+            }
+            
+            getAssetData(assetId) {
+                return this.assetManager.getAssetById(assetId);
+            }
+            
+            // Called by AssetManager to get all assets
+            getAllAssets() {
+                return this.assetManager.getAllAssets();
+            }
+            
+            notifyAssetRemoved(assetId) {
+                const wasSelectedInMode2 = this.mappingEditor.selectedObject?.userData?.assetId === assetId;
+                
+                this.mappingEditor.removeMappedObjectByAssetId(assetId);
+                // If the removed asset was being edited in mode 1
+                if (this.assetManager.selectedAssetId === assetId) {
+                    this.assetManager.closeEditingPanel(false); // Close internally
+                    this.lastSelectedAssetIdMode1 = null; // Forget removed asset
+                    this.updateModeUI(); // Update layout
+                }
+                // If the removed asset was the last selected one in mode 1
+                if (this.lastSelectedAssetIdMode1 === assetId) {
+                    this.lastSelectedAssetIdMode1 = null;
+                }
+                // If the removed asset was selected in mode 2, hide density controls
+                if (wasSelectedInMode2) {
+                    this.gridDensityControlsEl.classList.add('hidden');
+                }
+            }
+            
+            notifyAssetUpdated(assetId) { // From AssetManager (crop/rotate)
+                // Update Mapping Editor only if it's the active mode or will be entered
+                if (this.currentMode === 'mode2' || this.mappingEditor.mappedObjects.has(assetId)) {
+                    this.mappingEditor.updateAssetTextureProperties(assetId);
+                    this.mappingEditor.updateObjectGeometry(assetId); // Aspect ratio might change
+                }
+            }
+            
+            notifyEditPanelVisibility(isVisible) { // From AssetManager
+                // This function now primarily triggers a UI update
+                this.updateModeUI();
+            }
+            
+            setLastSelectedAssetId(assetId) { // From AssetManager
+                this.lastSelectedAssetIdMode1 = assetId;
+            }
+            
+            // Called by MappingEditor when selection changes
+            notifyMappingSelectionChanged(selectedMesh) {
+                this.updateModeUI(); // Update grid density UI visibility & values
+            }
+        }
+        
+        
+        // ========================================================================
+        // AssetManager Class (Mode 1 Logic) - Added warpingPoints/gridDensity
+        // ========================================================================
+        class AssetManager {
+            constructor(app, containerSelector) {
+                this.app = app;
+                const container = document.querySelector(containerSelector);
+                if (!container) throw new Error(`AssetManager container not found: ${containerSelector}`);
+                this.containerEl = container;
+                this.assets = []; // Stores all asset data objects
+                this.selectedAssetId = null; // ID of asset currently open in editing panel
+                // this.lastSelectedAssetId is managed by the app now
+                
+                this.previewImage = new Image();
+                this.previewVideo = null;
+                this.previewDisplay = { scale: 1, width: 0, height: 0, offsetX: 0, offsetY: 0, scaledOriginalW: 0, scaledOriginalH: 0 };
+                
+                // DOM References (ensure all are correctly selected)
+                this.assetListAreaEl = container.querySelector('#asset-list-area');
+                this.dropZoneEl = container.querySelector('#drop-zone');
+                this.assetListEl = container.querySelector('#asset-list');
+                this.fileInputEl = container.querySelector('#file-input');
+                this.addFileButtonEl = container.querySelector('#add-file-button');
+                this.assetItemTemplate = document.getElementById('asset-item-template'); // Use getElementById if outside container
+                this.editingPanel = {
+                    el: document.getElementById('editing-panel'),
+                    previewContainer: document.getElementById('preview-container'),
+                    previewCanvas: document.getElementById('preview-canvas'),
+                    previewCtx: document.getElementById('preview-canvas').getContext('2d'),
+                    cropOverlay: document.getElementById('crop-overlay'),
+                    cropBox: document.getElementById('crop-box'),
+                    rotateButton: document.getElementById('rotate-button'),
+                    resetCropButton: document.getElementById('reset-crop-button'),
+                    closeEditButton: document.getElementById('close-edit-button'),
+                    infoEl: document.getElementById('edit-info')
+                };
+                
+                // Cropping state
+                this.isCropping = false;
+                this.cropDragStart = { x: 0, y: 0 };
+                this.cropStartRectRotatedNorm = { x: 0, y: 0, width: 0, height: 0 };
+                this.activeHandle = null;
+                
+                this.bindEvents();
+                this.renderAssetList();
+                console.log("AssetManager Initialized.");
+                
+                window.am = this; // For debugging
+            }
+            
+            bindEvents() {
+                // File Handling
+                this.dropZoneEl.addEventListener('dragover', (e) => { e.preventDefault(); this.dropZoneEl.classList.add('dragover'); });
+                this.dropZoneEl.addEventListener('dragleave', () => this.dropZoneEl.classList.remove('dragover'));
+                this.dropZoneEl.addEventListener('drop', (e) => { e.preventDefault(); this.dropZoneEl.classList.remove('dragover'); this.handleFiles(e.dataTransfer?.files); });
+                window.addEventListener('paste', (e) => {
+                    // Allow paste in inputs/textareas or within editing panel
+                    const targetTagName = e.target.tagName.toLowerCase();
+                    if (targetTagName === 'input' || targetTagName === 'textarea' || this.editingPanel.el.contains(e.target)) {
+                        return;
+                    }
+                    // Only process paste if Mode 1 is active and editing panel is NOT focused
+                    if (this.app.currentMode !== 'mode1' || document.activeElement === this.editingPanel.el || this.editingPanel.el.contains(document.activeElement)) {
+                        return;
+                    }
+                    
+                    const items = e.clipboardData?.items; if (!items) return;
+                    let foundFile = false;
+                    for (const item of items) { if (item.kind === 'file' && this.isSupportedFileType(item)) { const file = item.getAsFile(); if (file) { this.addAsset(file); foundFile = true;}} }
+                    if(foundFile) e.preventDefault(); // Prevent default paste if we handled a file
+                });
+                this.addFileButtonEl.addEventListener('click', () => this.fileInputEl.click());
+                this.fileInputEl.addEventListener('change', (e) => { this.handleFiles(e.target.files); e.target.value = null; });
+                
+                // Asset List Interaction
+                this.assetListEl.addEventListener('click', (event) => {
+                    const listItem = event.target.closest('.asset-item');
+                    if (!listItem) return;
+                    const assetId = listItem.dataset.id;
+                    if (!assetId) return;
+                    
+                    const removeButton = event.target.closest('.remove-button');
+                    if (removeButton) {
+                        event.stopPropagation(); // Prevent selection when clicking remove
+                        this.removeAsset(assetId);
+                    } else {
+                        this.app.setLastSelectedAssetId(assetId); // Remember selection
+                        this.selectAsset(assetId);
+                    }
+                });
+                
+                // Editing Panel Controls
+                this.editingPanel.rotateButton.addEventListener('click', () => this.rotateSelectedAsset());
+                this.editingPanel.resetCropButton.addEventListener('click', () => this.resetSelectedAssetCrop());
+                this.editingPanel.closeEditButton.addEventListener('click', () => this.closeEditingPanel());
+                
+                // Cropping Interaction
+                this.editingPanel.cropOverlay.addEventListener('mousedown', this.handleCropMouseDown.bind(this));
+                window.addEventListener('mousemove', this.handleCropMouseMove.bind(this));
+                window.addEventListener('mouseup', this.handleCropMouseUp.bind(this));
+                
+                // Resize Observer for Preview Panel
+                this.previewResizeObserver = new ResizeObserver(() => {
+                    if (this.selectedAssetId && !this.editingPanel.el.classList.contains('hidden')) {
+                        // Use rAF to avoid layout thrashing if resize is rapid
+                        requestAnimationFrame(() => this.redrawPreviewIfNeeded());
+                    }
+                });
+                this.previewResizeObserver.observe(this.editingPanel.previewContainer);
+            }
+            
+            // --- File & Asset Processing ---
+            handleFiles(fileList) { if (!fileList) return; for (const file of fileList) this.addAsset(file); }
+            isSupportedFileType(fileOrItem) { const type = fileOrItem.type; return type.startsWith('image/') || type.startsWith('video/'); }
+            readFileAsDataURL(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            async addAsset(file) {
+                if (!this.isSupportedFileType(file)) { console.warn(`Unsupported file type: ${file.name}`); return; }
+                try {
+                    const sourceDataURL = await this.readFileAsDataURL(file);
+                    const newAsset = {
+                        id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+                        type: file.type, name: file.name, source: sourceDataURL, file: file, // Keep file ref if needed later
+                        rotation: 0, crop: { x: 0, y: 0, width: 1, height: 1 },
+                        originalDims: { width: 0, height: 0 },
+                        // Add placeholders for mapping state
+                        warpingPoints: null, // Will be calculated in MappingEditor first time
+                        gridDensity: { nx: 30, ny: 30 } // Default grid density
+                    };
+                    
+                    // Get dimensions before adding to list for better initial display
+                    const getDimsPromise = new Promise((resolve, reject) => {
+                        if (newAsset.type.startsWith('image/')) {
+                            const img = new Image();
+                            img.onload = () => { newAsset.originalDims = { width: img.naturalWidth, height: img.naturalHeight }; resolve(); };
+                            img.onerror = (e) => { console.error("Failed to load image for dimensions", e); reject(new Error("Image load error")); };
+                            img.src = sourceDataURL;
+                        } else if (newAsset.type.startsWith('video/')) {
+                            const video = document.createElement('video');
+                            video.onloadedmetadata = () => { newAsset.originalDims = { width: video.videoWidth, height: video.videoHeight }; resolve(); };
+                            video.onerror = (e) => { console.error("Failed to load video metadata", e); reject(new Error("Video load error")); };
+                            video.preload = 'metadata'; // Only need metadata here
+                            video.src = sourceDataURL;
+                        } else {
+                            reject(new Error("Unsupported type after check"));
+                        }
+                    });
+                    
+                    await getDimsPromise; // Wait for dimensions
+                    this.assets.push(newAsset);
+                    this.renderAssetList();
+                    console.log(`Asset ${newAsset.name} added with dims: ${newAsset.originalDims.width}x${newAsset.originalDims.height}`);
+                    
+                } catch (error) { console.error(`Error processing file ${file.name}:`, error); }
+            }
+            
+            removeAsset(id) {
+                const index = this.assets.findIndex(a => a.id === id);
+                if (index > -1) {
+                    const removedAssetName = this.assets[index].name;
+                    // Clean up Blob URL / Data URL if necessary? (Not strictly needed with Data URLs)
+                    this.assets.splice(index, 1);
+                    this.renderAssetList();
+                    this.app.notifyAssetRemoved(id); // App handles state/UI updates (incl. mapping editor)
+                    console.log(`Asset removed: ${removedAssetName}`);
+                }
+            }
+            getAssetById(id) { return this.assets.find(a => a.id === id); }
+            getAllAssets() { return this.assets; }
+            
+            // --- Selection & Editing Panel Logic ---
+            selectAsset(id) {
+                if (this.selectedAssetId === id && !this.editingPanel.el.classList.contains('hidden')) {
+                    // Already selected and visible, maybe just ensure redraw?
+                    this.redrawPreviewIfNeeded();
+                    return;
+                }
+                const asset = this.getAssetById(id); if (!asset) return;
+                this.selectedAssetId = id;
+                // this.app.setLastSelectedAssetId(id); // App handles this now
+                this.renderAssetList(); // Update selection highlight
+                this.showEditingPanel(asset); // Load and draw preview
+                this.app.notifyEditPanelVisibility(true); // Update layout via App
+            }
+            
+            closeEditingPanel(notifyApp = true) {
+                if (!this.selectedAssetId) return; // No panel is open
+                const closingAssetId = this.selectedAssetId;
+                this.selectedAssetId = null;
+                // Reset preview elements
+                this.previewImage = new Image();
+                if (this.previewVideo) { this.previewVideo.pause(); this.previewVideo.removeAttribute('src'); this.previewVideo.load(); this.previewVideo = null; }
+                const canvas = this.editingPanel.previewCanvas; this.editingPanel.previewCtx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0; // Reset size
+                this.editingPanel.infoEl.textContent = '';
+                this.editingPanel.cropOverlay.style.display = 'none'; // Hide crop elements
+                
+                // Notify app AFTER clearing internal state
+                if (notifyApp) { this.app.notifyEditPanelVisibility(false); }
+                this.renderAssetList(); // Update selection highlight
+                console.log(`Closed editing panel for asset ${closingAssetId}`);
+            }
+            
+            showEditingPanel(asset) {
+                if (!asset || !asset.originalDims || asset.originalDims.width === 0) {
+                    console.warn("Asset dimensions not ready or asset invalid, cannot show editing panel.");
+                    this.closeEditingPanel(); // Ensure panel closes if asset is bad
+                    return;
+                }
+                this.editingPanel.infoEl.textContent = '프리뷰 로딩 중...';
+                // Clear previous preview source to prevent flickering old content
+                this.previewImage.src = '';
+                if (this.previewVideo) { this.previewVideo.src = ''; }
+                
+                if (asset.type.startsWith("image/")) {
+                    this.previewVideo = null; // Ensure no video conflict
+                    this.previewImage = new Image();
+                    this.previewImage.onload = () => { this.calculateScaleAndDraw(); };
+                    this.previewImage.onerror = () => { console.error("Preview image load error"); this.editingPanel.infoEl.textContent = '프리뷰 이미지 로드 실패';};
+                    this.previewImage.src = asset.source;
+                } else if (asset.type.startsWith("video/")) {
+                    this.previewImage = new Image(); // Ensure no image conflict
+                    // Reuse video element if it exists, otherwise create
+                    if (!this.previewVideo) this.previewVideo = document.createElement("video");
+                    this.previewVideo.src = asset.source;
+                    this.previewVideo.muted = true; this.previewVideo.loop = true; this.previewVideo.preload = 'auto'; this.previewVideo.playsInline = true;
+                    // Use 'canplay' event for better readiness check
+                    this.previewVideo.oncanplay = () => {
+                        if (this.selectedAssetId === asset.id) { // Ensure this video is still relevant
+                            this.calculateScaleAndDraw();
+                            this.previewVideo.play().catch(e => console.warn("Video autoplay likely prevented:", e));
+                        }
+                    };
+                    this.previewVideo.onerror = () => { console.error("Preview video load error"); this.editingPanel.infoEl.textContent = '프리뷰 비디오 로드 실패';};
+                    // Load the video metadata/data
+                    this.previewVideo.load();
+                } else {
+                    console.error("Unsupported asset type in showEditingPanel:", asset.type);
+                    this.closeEditingPanel(); return;
+                }
+            }
+            
+            redrawPreviewIfNeeded() {
+                if(this.selectedAssetId && !this.editingPanel.el.classList.contains('hidden')) {
+                    const asset = this.getAssetById(this.selectedAssetId);
+                    if (asset && asset.originalDims.width > 0) {
+                        // Check if media is ready to be drawn
+                        const isImageReady = asset.type.startsWith('image/') && this.previewImage.complete && this.previewImage.naturalWidth > 0;
+                        const isVideoReady = asset.type.startsWith('video/') && this.previewVideo && this.previewVideo.readyState >= 2; // HAVE_CURRENT_DATA or more
+                        
+                        if (isImageReady || isVideoReady) {
+                            // console.log("Redrawing preview..."); // Can be spammy, disable if needed
+                            this.calculateScaleAndDraw();
+                        }
+                    }
+                }
+            }
+            
+            
+            // --- Drawing & Preview Scaling ---
+            calculateScaleAndDraw() {
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset || !asset.originalDims || asset.originalDims.width === 0) return;
+                const container = this.editingPanel.previewContainer; const canvas = this.editingPanel.previewCanvas; const overlay = this.editingPanel.cropOverlay;
+                const containerW = container.clientWidth; const containerH = container.clientHeight; if (containerW <= 0 || containerH <= 0) return; // Skip if container not rendered
+                
+                let effectiveW = asset.originalDims.width; let effectiveH = asset.originalDims.height;
+                if (asset.rotation === 90 || asset.rotation === 270) { [effectiveW, effectiveH] = [effectiveH, effectiveW]; } // Swap dimensions
+                
+                const scaleX = containerW / effectiveW; const scaleY = containerH / effectiveH; const scale = Math.min(scaleX, scaleY);
+                const displayW = Math.floor(effectiveW * scale); const displayH = Math.floor(effectiveH * scale);
+                // Calculate scaled original dimensions *before* rotation for drawing
+                const scaledOriginalW = Math.floor(asset.originalDims.width * scale);
+                const scaledOriginalH = Math.floor(asset.originalDims.height * scale);
+                
+                // Set canvas physical size
+                canvas.width = displayW; canvas.height = displayH;
+                // Set canvas display size (CSS pixels)
+                canvas.style.width = `${displayW}px`; canvas.style.height = `${displayH}px`;
+                
+                
+                // Use rAF to get position after layout calculation
+                requestAnimationFrame(() => {
+                    // Ensure asset is still selected before proceeding
+                    if (this.selectedAssetId !== asset.id) return;
+                    
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    const offsetX = canvasRect.left - containerRect.left;
+                    const offsetY = canvasRect.top - containerRect.top;
+                    
+                    // Store calculated values including offsets and scaled original size
+                    this.previewDisplay = { scale, width: displayW, height: displayH, offsetX, offsetY, scaledOriginalW, scaledOriginalH };
+                    
+                    overlay.style.left = `${offsetX}px`; overlay.style.top = `${offsetY}px`;
+                    overlay.style.width = `${displayW}px`; overlay.style.height = `${displayH}px`;
+                    overlay.style.display = 'block'; // Make sure it's visible
+                    
+                    // Draw content AFTER positioning overlay
+                    this.drawPreviewContent();
+                });
+            }
+            
+            drawPreviewContent() { // Draws the image/video and crop box
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset) return;
+                const canvas = this.editingPanel.previewCanvas; const ctx = this.editingPanel.previewCtx;
+                const { width: displayW, height: displayH, scaledOriginalW, scaledOriginalH } = this.previewDisplay;
+                
+                if (displayW <= 0 || displayH <= 0) return; // Skip if dimensions invalid
+                
+                const mediaSource = asset.type.startsWith('video/') ? this.previewVideo : this.previewImage;
+                // More robust check for media readiness
+                const isImageReady = asset.type.startsWith('image/') && mediaSource.complete && mediaSource.naturalWidth > 0;
+                const isVideoReady = asset.type.startsWith('video/') && mediaSource && mediaSource.readyState >= 2; // HAVE_CURRENT_DATA
+                
+                if (!mediaSource || (!isImageReady && !isVideoReady)) {
+                    // Media not ready, request redraw later if video
+                    if (asset.type.startsWith('video/')) {
+                        requestAnimationFrame(this.drawPreviewContent.bind(this));
+                    }
+                    return;
+                }
+                
+                ctx.clearRect(0, 0, displayW, displayH); ctx.save();
+                ctx.translate(displayW / 2, displayH / 2); ctx.rotate(asset.rotation * Math.PI / 180);
+                // Draw image centered using SCALED ORIGINAL dimensions (calculated in previewDisplay)
+                const drawX = -scaledOriginalW / 2;
+                const drawY = -scaledOriginalH / 2;
+                
+                if (scaledOriginalW > 0 && scaledOriginalH > 0) {
+                    ctx.drawImage(mediaSource, drawX, drawY, scaledOriginalW, scaledOriginalH);
+                } else {
+                    console.warn("Scaled original dimensions zero or negative, skipping drawImage.");
+                }
+                ctx.restore();
+                
+                // --- Draw Crop Box ---
+                const crop = asset.crop; const cropBox = this.editingPanel.cropBox;
+                const rotatedCropNorm = this.transformNormCrop(crop, asset.rotation); // Convert original crop to rotated space for display
+                const boxPixelX = rotatedCropNorm.x * displayW;
+                const boxPixelY = rotatedCropNorm.y * displayH;
+                const boxPixelW = rotatedCropNorm.width * displayW;
+                const boxPixelH = rotatedCropNorm.height * displayH;
+                
+                cropBox.style.left = `${boxPixelX}px`; cropBox.style.top = `${boxPixelY}px`;
+                cropBox.style.width = `${boxPixelW}px`; cropBox.style.height = `${boxPixelH}px`;
+                
+                this.updateEditInfo(asset); // Update text info
+                
+                // If it's a video and playing, keep requesting frames
+                if (asset.type.startsWith('video/') && this.previewVideo && !this.previewVideo.paused) {
+                    requestAnimationFrame(this.drawPreviewContent.bind(this));
+                }
+            }
+            
+            
+            // --- Coordinate Transformation Helpers ---
+            // Transforms normalized crop from ORIGINAL image space to ROTATED display space
+            transformNormCrop(normCrop, rotation) {
+                const { x, y, width, height } = normCrop;
+                switch (rotation) {
+                    case 90: return { x: 1 - y - height, y: x, width: height, height: width }; // ok
+                    case 180: return { x: 1 - x - width, y: 1 - y - height, width: width, height: height }; // ok
+                    case 270: return { x: y, y: 1 - x - width, width: height, height: width }; // ok
+                    default: return { ...normCrop }; // 0 degrees
+                }
+            }
+            // Transforms normalized crop from ROTATED display space back to ORIGINAL image space
+            inverseTransformNormCrop(rotatedNormCrop, rotation) {
+                const { x, y, width, height } = rotatedNormCrop;
+                switch (rotation) {
+                    case 90: return { x: y, y: 1 - x - width, width: height, height: width }; // ok
+                    case 180: return { x: 1 - x - width, y: 1 - y - height, width: width, height: height }; // ok
+                    case 270: return { x: 1 - y - height, y: x, width: height, height: width }; // ok
+                    default: return { ...rotatedNormCrop }; // 0 degrees
+                }
+            }
+            
+            
+            // --- Editing Actions ---
+            rotateSelectedAsset() {
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset) return;
+                asset.rotation = (asset.rotation + 90) % 360;
+                console.log(`Rotated asset ${asset.id} to ${asset.rotation} degrees`);
+                this.calculateScaleAndDraw(); // Recalculate scale and redraw
+                this.app.notifyAssetUpdated(asset.id); // Notify app (updates mapping editor)
+            }
+            
+            resetSelectedAssetCrop() {
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset) return;
+                asset.crop = { x: 0, y: 0, width: 1, height: 1 };
+                console.log(`Reset crop for asset ${asset.id}`);
+                this.drawPreviewContent(); // Only need to redraw content/crop box
+                this.app.notifyAssetUpdated(asset.id);
+            }
+            
+            updateAssetCrop(originalNormCrop) {
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset) return;
+                const minSize = 0.001; // Minimum crop dimension
+                // Clamp values within [0, 1] and ensure positive width/height
+                const x = Math.max(0, Math.min(originalNormCrop.x, 1 - minSize));
+                const y = Math.max(0, Math.min(originalNormCrop.y, 1 - minSize));
+                const w = Math.max(minSize, Math.min(originalNormCrop.width, 1 - x));
+                const h = Math.max(minSize, Math.min(originalNormCrop.height, 1 - y));
+                asset.crop = { x, y, width: w, height: h };
+                // No need to log here, happens frequently during drag
+                this.drawPreviewContent(); // Redraw preview with new crop box
+                this.app.notifyAssetUpdated(asset.id); // Notify mapping editor
+            }
+            
+            
+            // --- Cropping Mouse Handlers ---
+            handleCropMouseDown(e) {
+                if (!this.selectedAssetId) return;
+                const target = e.target;
+                // Only proceed if the target is the overlay, box, or a handle
+                if (!(target === this.editingPanel.cropOverlay || target === this.editingPanel.cropBox || target.classList.contains('crop-handle'))) {
+                    return;
+                }
+                e.preventDefault(); e.stopPropagation(); // Prevent text selection, etc.
+                
+                const overlayRect = this.editingPanel.cropOverlay.getBoundingClientRect();
+                const mouseX = e.clientX - overlayRect.left; const mouseY = e.clientY - overlayRect.top;
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset) return;
+                
+                this.isCropping = true;
+                this.cropDragStart = { x: mouseX, y: mouseY };
+                // Store the starting crop box in ROTATED normalized coordinates
+                this.cropStartRectRotatedNorm = this.transformNormCrop(asset.crop, asset.rotation);
+                
+                if (target.classList.contains('crop-handle')) {
+                    this.activeHandle = target.classList[1]; // tl, tr, bl, br
+                } else if (target === this.editingPanel.cropBox || target === this.editingPanel.cropOverlay) {
+                    // Check if click is inside the box to initiate move
+                    const displayW = this.previewDisplay.width; const displayH = this.previewDisplay.height;
+                    const boxPixelX = this.cropStartRectRotatedNorm.x * displayW; const boxPixelY = this.cropStartRectRotatedNorm.y * displayH;
+                    const boxPixelW = this.cropStartRectRotatedNorm.width * displayW; const boxPixelH = this.cropStartRectRotatedNorm.height * displayH;
+                    if (mouseX >= boxPixelX && mouseX <= boxPixelX + boxPixelW && mouseY >= boxPixelY && mouseY <= boxPixelY + boxPixelH) {
+                        this.activeHandle = 'move';
+                        this.editingPanel.cropOverlay.style.cursor = 'move'; // Change cursor
+                    } else {
+                        // Clicked outside the box on the overlay - do nothing
+                        this.isCropping = false; return;
+                    }
+                } else {
+                    this.isCropping = false; // Should not happen with initial check
+                }
+                this.editingPanel.cropOverlay.style.cursor = target.style.cursor || 'grabbing'; // Use handle cursor or grabbing
+            }
+            
+            handleCropMouseMove(e) {
+                if (!this.isCropping || !this.selectedAssetId || !this.activeHandle) return;
+                e.preventDefault();
+                const asset = this.getAssetById(this.selectedAssetId); if (!asset) return;
+                const overlayRect = this.editingPanel.cropOverlay.getBoundingClientRect();
+                const mouseX = e.clientX - overlayRect.left; const mouseY = e.clientY - overlayRect.top;
+                const displayW = this.previewDisplay.width; const displayH = this.previewDisplay.height;
+                if (displayW <= 0 || displayH <= 0) return; // Prevent division by zero
+                
+                const deltaX = mouseX - this.cropDragStart.x; const deltaY = mouseY - this.cropDragStart.y;
+                const deltaNormX = deltaX / displayW; const deltaNormY = deltaY / displayH;
+                let newRotatedNormCrop = { ...this.cropStartRectRotatedNorm }; // Start from initial rect each move
+                
+                // Apply delta based on active handle
+                switch (this.activeHandle) {
+                    case 'move': newRotatedNormCrop.x += deltaNormX; newRotatedNormCrop.y += deltaNormY; break;
+                    case 'tl': newRotatedNormCrop.x += deltaNormX; newRotatedNormCrop.y += deltaNormY; newRotatedNormCrop.width -= deltaNormX; newRotatedNormCrop.height -= deltaNormY; break;
+                    case 'tr': newRotatedNormCrop.y += deltaNormY; newRotatedNormCrop.width += deltaNormX; newRotatedNormCrop.height -= deltaNormY; break;
+                    case 'bl': newRotatedNormCrop.x += deltaNormX; newRotatedNormCrop.width -= deltaNormX; newRotatedNormCrop.height += deltaNormY; break;
+                    case 'br': newRotatedNormCrop.width += deltaNormX; newRotatedNormCrop.height += deltaNormY; break;
+                }
+                
+                // Handle negative width/height by flipping coordinates (simplistic approach)
+                if (newRotatedNormCrop.width < 0) { newRotatedNormCrop.x += newRotatedNormCrop.width; newRotatedNormCrop.width *= -1; }
+                if (newRotatedNormCrop.height < 0) { newRotatedNormCrop.y += newRotatedNormCrop.height; newRotatedNormCrop.height *= -1; }
+                
+                // Convert back to original image space and update the asset
+                const newOriginalNormCrop = this.inverseTransformNormCrop(newRotatedNormCrop, asset.rotation);
+                this.updateAssetCrop(newOriginalNormCrop);
+            }
+            
+            handleCropMouseUp(e) {
+                if (this.isCropping) {
+                    e.preventDefault();
+                    this.isCropping = false; this.activeHandle = null;
+                    this.editingPanel.cropOverlay.style.cursor = 'grab'; // Reset cursor
+                    console.log("Cropping finished");
+                }
+            }
+            
+            
+            // --- UI Rendering ---
+            updateEditInfo(asset) {
+                if (!asset) asset = this.getAssetById(this.selectedAssetId);
+                if (!asset || !asset.originalDims || asset.originalDims.width === 0) { this.editingPanel.infoEl.textContent = ''; return; };
+                const crop = asset.crop; const W = asset.originalDims.width; const H = asset.originalDims.height;
+                const cropW = Math.round(crop.width * W); const cropH = Math.round(crop.height * H);
+                const cropX = Math.round(crop.x * W); const cropY = Math.round(crop.y * H);
+                this.editingPanel.infoEl.innerHTML = ` 원본: ${W}x${H}px<br> 회전: ${asset.rotation}°<br> 크롭: ${cropW}x${cropH}px at (${cropX}, ${cropY})<br> <span style="font-size: 0.9em; color: #888;">(표시 크기: ${this.previewDisplay.width}x${this.previewDisplay.height}px)</span> `;
+            }
+            
+            renderAssetList() {
+                const currentSelectedId = this.selectedAssetId; // ID of asset in editor
+                this.assetListEl.innerHTML = ''; // Clear list
+                if (this.assets.length === 0) { this.assetListEl.innerHTML = '<li style="padding: 10px; color: #888;">에셋 없음</li>'; return; }
+                
+                this.assets.forEach(asset => {
+                    const templateClone = this.assetItemTemplate.content.cloneNode(true);
+                    const listItem = templateClone.querySelector('.asset-item');
+                    const thumbnail = templateClone.querySelector('.thumbnail');
+                    const nameSpan = templateClone.querySelector('.name');
+                    const typeSpan = templateClone.querySelector('.type');
+                    
+                    listItem.dataset.id = asset.id;
+                    // Set thumbnail (consider placeholder for video)
+                    if (asset.type.startsWith('image/')) {
+                        thumbnail.src = asset.source; thumbnail.alt = asset.name;
+                    } else if (asset.type.startsWith('video/')) {
+                        // Simple video placeholder
+                        thumbnail.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23aaa"><path d="M20 10h60v80H20z M40 30l30 20-30 20z"/></svg>';
+                        thumbnail.alt = `Video: ${asset.name}`;
+                        // Future enhancement: Generate video thumbnail using canvas
+                    }
+                    nameSpan.textContent = asset.name;
+                    typeSpan.textContent = asset.type;
+                    
+                    // Highlight if currently selected in the editor panel
+                    if (asset.id === currentSelectedId) { listItem.classList.add('selected'); }
+                    
+                    this.assetListEl.appendChild(templateClone);
+                });
+            }
+        } // End of AssetManager Class
+        
+        
+        // ========================================================================
+        // MappingEditor Class (Mode 2 Logic) - Warping, Handles, Density Added
+        // ========================================================================
+        class MappingEditor {
+            constructor(app, containerSelector) {
+                this.app = app;
+                const container = document.querySelector(containerSelector);
+                if (!container) throw new Error(`MappingEditor container not found: ${containerSelector}`);
+                this.containerEl = container;
+                this.canvasEl = container.querySelector('#mapping-canvas');
+                this.canvasContainerEl = container.querySelector('#canvas-container');
+                this.uiOverlayEl = container.querySelector('#ui-overlay');
+                
+                this.scene = null; this.camera = null; this.renderer = null;
+                this.raycaster = new THREE.Raycaster();
+                this.pointer = new THREE.Vector2(); // Use pointer instead of mouse for broader compatibility
+                this.plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0); // Z=0 plane for intersections
+                
+                this.textures = {}; // Texture cache { assetId: THREE.Texture }
+                this.mappedObjects = new Map(); // { assetId: { mesh: THREE.Mesh, asset: AssetData } }
+                this.worldSize = { width: 1600, height: 900 }; // Reference world size for ortho camera
+                
+                // Selection and Dragging State
+                this.selectedObject = null; // The selected THREE.Mesh
+                this.dragOffset = new THREE.Vector3();
+                this.isDraggingObject = false; // 오브젝트 전체 드래그 여부 플래그
+                this.draggedObject = null; // 드래그 중인 오브젝트 임시 저장
+                
+                // Handle Dragging State
+                this.handles = [];
+                this.handleLines = [];
+                this.draggedHandleIndex = -1;
+                this.isDraggingHandle = false;
+                
+                this.tempVec2 = new THREE.Vector2(); // Reusable vector for calculations
+                this.tempVec3 = new THREE.Vector3(); // Reusable vector for calculations
+                
+                // Bezier calculation helpers (static or bound methods)
+                this.lerp = (a, b, t) => a + (b - a) * t;
+                this.v2Lerp = (vA, vB, t, target) => target.copy(vA).lerp(vB, t);
+                this.v3Lerp = (vA, vB, t, target) => target.copy(vA).lerp(vB, t);
+                // Need intermediate vectors for Bezier calculation to avoid modifying inputs
+                this._p0 = new THREE.Vector3(); this._p1 = new THREE.Vector3(); this._p2 = new THREE.Vector3(); this._p3 = new THREE.Vector3();
+                this._ab = new THREE.Vector3(); this._bc = new THREE.Vector3(); this._cd = new THREE.Vector3();
+                this._abc = new THREE.Vector3(); this._bcd = new THREE.Vector3();
+                
+                
+                this.initThree();
+                this.bindInteractionEvents();
+                this.animate();
+                console.log("MappingEditor Initialized.");
+                window.me = this; // Debugging
+            }
+            
+            initThree() {
+                this.scene = new THREE.Scene();
+                // Orthographic Camera setup to match worldSize
+                this.camera = new THREE.OrthographicCamera(
+                this.worldSize.width / -2, this.worldSize.width / 2,
+                this.worldSize.height / 2, this.worldSize.height / -2,
+                1, 1000 // Near, Far planes
+                );
+                this.camera.position.z = 500;
+                this.scene.add(this.camera);
+                
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvasEl,
+                    alpha: true, // Allow transparency if needed (though bg is black now)
+                    antialias: true
+                });
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.renderer.setClearColor(0x000000, 1); // Black background
+                
+                this.scene.add(new THREE.AmbientLight(0xffffff, 1.0)); // Basic lighting
+                
+                window.addEventListener('resize', this.onWindowResize.bind(this), false);
+                this.onWindowResize(); // Initial size calculation
+            }
+            
+            bindInteractionEvents() {
+                // Use pointer events for better touch/mouse compatibility
+                this.canvasEl.addEventListener('pointerdown', this.onPointerDown.bind(this), false);
+                window.addEventListener('pointermove', this.onPointerMove.bind(this), false); // Listen on window for dragging outside canvas
+                window.addEventListener('pointerup', this.onPointerUp.bind(this), false);     // Listen on window
+            }
+            
+            onWindowResize() {
+                if (!this.canvasContainerEl || !this.renderer || !this.camera) return;
+                
+                const bounds = this.canvasContainerEl.getBoundingClientRect();
+                if (bounds.width === 0 || bounds.height === 0) return; // Skip if not visible
+                
+                const containerW = bounds.width; const containerH = bounds.height;
+                const targetAspect = this.worldSize.width / this.worldSize.height;
+                const containerAspect = containerW / containerH;
+                let renderW, renderH;
+                
+                // Calculate renderer size to fit container while maintaining aspect ratio
+                if (containerAspect > targetAspect) {
+                    renderH = containerH; renderW = renderH * targetAspect;
+                } else {
+                    renderW = containerW; renderH = renderW / targetAspect;
+                }
+                
+                this.renderer.setSize(renderW, renderH);
+                
+                // Adjust camera to match worldSize regardless of render size
+                this.camera.left = this.worldSize.width / -2; this.camera.right = this.worldSize.width / 2;
+                this.camera.top = this.worldSize.height / 2; this.camera.bottom = this.worldSize.height / -2;
+                this.camera.updateProjectionMatrix();
+                
+                // Center the canvas element within its container using CSS styles
+                this.canvasEl.style.width = `${renderW}px`;
+                this.canvasEl.style.height = `${renderH}px`;
+                this.canvasEl.style.left = `${(containerW - renderW) / 2}px`;
+                this.canvasEl.style.top = `${(containerH - renderH) / 2}px`;
+                
+                // Update positions of all objects if needed (though world coords don't change)
+                // this.updateAllObjectPositions(); // Might not be necessary if world coords are stable
+                // Update UI handle positions as screen coords change
+                if (this.selectedObject) {
+                    this.updateHandlePositions();
+                }
+            }
+            
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                
+                // Update video textures
+                this.mappedObjects.forEach(obj => {
+                    if (obj.asset.type.startsWith('video/') && obj.mesh.material.map?.isVideoTexture) {
+                        const video = obj.mesh.material.map.image;
+                        if ( video.readyState >= video.HAVE_CURRENT_DATA ) {
+                            obj.mesh.material.map.needsUpdate = true;
+                        }
+                    }
+                });
+                
+                // Update UI handle positions every frame if an object is selected
+                if (this.selectedObject) {
+                    this.updateHandlePositions();
+                }
+                
+                if (this.renderer && this.scene && this.camera) {
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+            
+            // --- Pointer, Raycasting, and Coordinate Conversion ---
+            
+            updatePointerCoords(event) {
+                const rect = this.canvasEl.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) return false; // Canvas not visible
+                
+                const canvasX = event.clientX - rect.left;
+                const canvasY = event.clientY - rect.top;
+                
+                // Check if pointer is inside the canvas rendering area
+                if (canvasX < 0 || canvasX > rect.width || canvasY < 0 || canvasY > rect.height) {
+                    return false; // Outside canvas bounds
+                }
+                
+                this.pointer.x = (canvasX / rect.width) * 2 - 1;
+                this.pointer.y = -(canvasY / rect.height) * 2 + 1;
+                return true;
+            }
+            
+            getIntersection(event) {
+                if (!this.updatePointerCoords(event)) return null; // Update pointer coords and check if inside canvas
+                this.raycaster.setFromCamera(this.pointer, this.camera);
+                // Intersect only with meshes that are part of mappedObjects
+                const intersectableObjects = Array.from(this.mappedObjects.values()).map(obj => obj.mesh);
+                const intersects = this.raycaster.intersectObjects(intersectableObjects);
+                return intersects.length > 0 ? intersects[0] : null; // Return closest intersection
+            }
+            
+            // Converts PointerEvent screen coordinates to Three.js world coordinates on the Z=0 plane
+            screenToWorld(screenX, screenY) {
+                const rect = this.canvasEl.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) return null; // Avoid division by zero
+                
+                const canvasX = screenX - rect.left;
+                const canvasY = screenY - rect.top;
+                
+                this.tempVec2.x = (canvasX / rect.width) * 2 - 1;
+                this.tempVec2.y = -(canvasY / rect.height) * 2 + 1;
+                
+                this.raycaster.setFromCamera(this.tempVec2, this.camera);
+                // Intersect the ray with the Z=0 plane
+                return this.raycaster.ray.intersectPlane(this.plane, this.tempVec3) ? this.tempVec3.clone() : null;
+            }
+            
+            // Converts Three.js world coordinates to CSS screen pixel coordinates relative to uiOverlayEl
+            worldToScreen(worldVector3) {
+                if (!this.camera || !this.uiOverlayEl) return null;
+                
+                const screenPos = worldVector3.clone().project(this.camera); // Project world -> NDC [-1, 1]
+                const overlayRect = this.uiOverlayEl.getBoundingClientRect();
+                
+                // Convert NDC to pixel coordinates relative to the overlay div
+                const x = (screenPos.x * 0.5 + 0.5) * overlayRect.width;
+                const y = (-screenPos.y * 0.5 + 0.5) * overlayRect.height;
+                
+                return { x, y };
+            }
+            
+            
+            // --- Interaction Handlers ---
+            
+            onPointerDown(event) {
+                if (event.button !== 0) return;
+                if (this.isDraggingHandle) return;
+                
+                const intersection = this.getIntersection(event);
+                const altKeyPressed = event.altKey;
+                
+                if (intersection) {
+                    const clickedMesh = intersection.object;
+                    
+                    if (altKeyPressed) {
+                        // --- Alt + 클릭: 그리드 편집 모드 ---
+                        event.stopPropagation();
+                        this.isDraggingObject = false; // 오브젝트 드래그 비활성화
+                        this.draggedObject = null;
+                        
+                        this.setSelectedObject(clickedMesh); // 선택 (핸들 표시)
+                        
+                        console.log(`Alt-clicked object: ${clickedMesh.userData.assetId}. Entering grid edit.`);
+                        
+                    } else {
+                        // --- 일반 클릭: 오브젝트 이동 시작 ---
+                        if (this.selectedObject && this.selectedObject !== clickedMesh) {
+                            this.setSelectedObject(null); // 다른 에셋 선택 시 기존 선택 해제
+                        }
+                        
+                        this.isDraggingObject = true; // 오브젝트 드래그 활성화
+                        this.draggedObject = clickedMesh; // 이동 대상 저장
+                        this.canvasEl.style.cursor = 'grabbing';
+                        
+                        // 드래그 오프셋 계산 (로컬 좌표 방식에서는 시작 위치 저장은 불필요)
+                        const intersectionPoint = intersection.point;
+                        this.plane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 0, 1), intersectionPoint);
+                        this.dragOffset.copy(intersectionPoint).sub(this.draggedObject.position);
+                        
+                        console.log(`Clicked object: ${clickedMesh.userData.assetId}. Starting potential drag.`);
+                    }
+                    
+                } else {
+                    // --- 빈 공간 클릭: 선택 해제 ---
+                    if (this.selectedObject) {
+                        this.setSelectedObject(null);
+                    }
+                    this.isDraggingObject = false; // 드래그 관련 상태 초기화
+                    this.draggedObject = null;
+                }
+            }
+            
+            onPointerMove(event) {
+                // Handle object dragging
+                if (this.isDraggingObject && this.draggedObject) {
+                    // Don't update pointer coords here, use screenToWorld directly for world position
+                    const targetPos = this.screenToWorld(event.clientX, event.clientY);
+                    
+                    if (targetPos) {
+                        const newWorldPos = targetPos.sub(this.dragOffset); // Apply offset
+                        this.draggedObject.position.copy(newWorldPos);
+                        const assetId = this.draggedObject.userData.assetId;
+                        const asset = this.app.getAssetData(assetId);
+                        // Update the CORNER points based on drag if the object is selected
+                        // This assumes dragging the object moves the whole warping frame
+                        if (asset && this.selectedObject === this.draggedObject) {
+                            // Calculate delta move
+                            // TODO: Update warping points based on the drag delta.
+                            // This requires knowing the original position when drag started.
+                            // Simpler approach: Let users reposition with handles after drag.
+                            // For now, just move the mesh. Handle repositioning will update warping points.
+                        }
+                    }
+                }
+                // Handle UI Handle dragging (delegated to window listener added in onHandleMouseDown)
+            }
+            
+            onPointerUp(event) {
+                if (event.button !== 0) return;
+                
+                // 오브젝트 드래그 중이었다면 종료
+                if (this.isDraggingObject) {
+                    console.log(`Drag ended for object: ${this.draggedObject?.userData?.assetId}`);
+                    this.isDraggingObject = false; // 드래그 플래그 해제
+                    this.draggedObject = null;     // 드래그 대상 해제
+                    this.canvasEl.style.cursor = 'default'; // 커서 복원
+                    
+                    // *** 로컬 좌표 방식에서는 warpingPoints 업데이트 로직이 필요 없음 ***
+                }
+                
+                // 핸들 드래그 종료는 onHandleMouseUp 에서 처리
+            }
+            
+            // --- Asset Synchronization & Placement ---
+            
+            updateAssetsOnCanvas(allAssets) {
+                console.log("Updating assets on canvas (Layout Preservation)...");
+                const currentAssetIds = new Set(allAssets.map(a => a.id));
+                const objectsToRemove = [];
+                const assetsToAdd = [];
+                const existingAssetIds = [];
+                
+                // 1. Identify removals & existing assets
+                this.mappedObjects.forEach((obj, assetId) => {
+                    if (!currentAssetIds.has(assetId)) {
+                        objectsToRemove.push(assetId);
+                    } else {
+                        existingAssetIds.push(assetId); // Keep track of existing ones
+                    }
+                });
+                objectsToRemove.forEach(assetId => this.removeMappedObjectByAssetId(assetId));
+                
+                // 2. Identify new assets
+                allAssets.forEach((asset) => {
+                    if (!this.mappedObjects.has(asset.id)) {
+                        assetsToAdd.push(asset);
+                    }
+                });
+                
+                // 3. Place new assets (position calculation can happen inside placeNewAsset)
+                const placementPromises = assetsToAdd.map(asset => this.placeNewAsset(asset));
+                
+                // 4. Update existing assets (ensure texture, geometry are current)
+                existingAssetIds.forEach(assetId => {
+                    const asset = this.app.getAssetData(assetId);
+                    if (asset) {
+                        this.updateAssetTextureProperties(assetId); // Ensure texture crop/rot is correct
+                        this.updateObjectGeometry(assetId);       // Ensure geometry matches crop/rot aspect
+                        // Ensure position is correct based on potentially updated state? (Not needed if stored in asset)
+                        // const mappedObj = this.mappedObjects.get(assetId);
+                        // this.updateObjectPosition(mappedObj); // Position from state if needed
+                    }
+                });
+                
+                Promise.all(placementPromises)
+                .then(() => { console.log("Canvas asset update complete."); })
+                .catch(error => console.error("Error during asset placement/update:", error));
+            }
+            
+            async placeNewAsset(asset) {
+                console.log(`Placing asset: ${asset.name}`);
+                try {
+                    if (!asset.originalDims || asset.originalDims.width === 0 || asset.originalDims.height === 0) {
+                        throw new Error(`Asset ${asset.name} has invalid original dimensions.`);
+                    }
+                    const texture = await this.getTexture(asset);
+                    if (!texture.image) throw new Error("Texture image not loaded");
+                    
+                    // --- Calculate Initial Geometry Size ---
+                    const crop = asset.crop;
+                    const croppedWidth = asset.originalDims.width * crop.width;
+                    const croppedHeight = asset.originalDims.height * crop.height;
+                    if (croppedWidth <= 0 || croppedHeight <= 0) throw new Error(`Asset ${asset.name} has invalid crop dimensions.`);
+                    let effectiveCroppedAspect = croppedWidth / croppedHeight;
+                    if (asset.rotation === 90 || asset.rotation === 270) { effectiveCroppedAspect = 1 / effectiveCroppedAspect; }
+                    if (!isFinite(effectiveCroppedAspect)) throw new Error(`Invalid effective aspect ratio for ${asset.name}.`);
+                    
+                    // Define initial size in world units (e.g., 1/4 of world height)
+                    const initialWorldHeight = this.worldSize.height * 0.25;
+                    const initialWorldWidth = initialWorldHeight * effectiveCroppedAspect;
+                    if (initialWorldWidth <= 0 || !isFinite(initialWorldWidth)) throw new Error(`Invalid initial world size for ${asset.name}.`);
+                    
+                    // --- Calculate and Store Initial Warping Points (if needed) ---
+                    if (!asset.warpingPoints) {
+                        console.log(`Calculating initial warping points for ${asset.name}`);
+                        asset.warpingPoints = this.calculateInitialWarpingPoints(initialWorldWidth, initialWorldHeight);
+                    }
+                    
+                    // --- Create Geometry ---
+                    const gridDensity = asset.gridDensity || { nx: 10, ny: 10 }; // Use default if missing
+                    const geometry = new THREE.PlaneGeometry(
+                    initialWorldWidth, initialWorldHeight,
+                    gridDensity.nx - 1, gridDensity.ny - 1 // Segments = density - 1
+                    );
+                    
+                    // --- Create Material ---
+                    const material = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        transparent: true,
+                        depthTest: false, // Render without depth testing initially
+                        depthWrite: false,
+                        side: THREE.DoubleSide // Render both sides
+                    });
+                    
+                    // --- Create Mesh ---
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.userData.assetId = asset.id;
+                    // Initial position - center of the screen for now
+                    mesh.position.set(0, 0, 0);
+                    
+                    // Apply initial texture mapping (crop/rotation)
+                    this.applyTextureUVs(mesh, asset);
+                    
+                    // Apply initial warping based on stored/calculated points
+                    this.updateGeometryVertices(asset.id, mesh, asset.warpingPoints, asset.gridDensity); // Pass mesh etc directly
+                    
+                    const mappedObject = { mesh, asset };
+                    this.mappedObjects.set(asset.id, mappedObject);
+                    this.scene.add(mesh);
+                    console.log(`Placed ${asset.name}`);
+                    
+                } catch (error) { console.error(`Failed to place asset ${asset.name}:`, error); }
+            }
+            
+            // Calculate initial warping points based on unwarped rectangle size
+            calculateInitialWarpingPoints(width, height) {
+                const halfW = width / 2;
+                const halfH = height / 2;
+                // Corners in world space (relative to mesh center at 0,0,0 initially)
+                const lt = new THREE.Vector3(-halfW,  halfH, 0);
+                const rt = new THREE.Vector3( halfW,  halfH, 0);
+                const rb = new THREE.Vector3( halfW, -halfH, 0);
+                const lb = new THREE.Vector3(-halfW, -halfH, 0);
+                
+                // Calculate default Bezier points (1/3, 2/3 along straight edges)
+                const cp_t0 = new THREE.Vector3().lerpVectors(lt, rt, 1/3);
+                const cp_t1 = new THREE.Vector3().lerpVectors(lt, rt, 2/3);
+                const cp_r0 = new THREE.Vector3().lerpVectors(rt, rb, 1/3);
+                const cp_r1 = new THREE.Vector3().lerpVectors(rt, rb, 2/3);
+                const cp_b0 = new THREE.Vector3().lerpVectors(lb, rb, 1/3); // Note: Lerp from left for bottom
+                const cp_b1 = new THREE.Vector3().lerpVectors(lb, rb, 2/3);
+                const cp_l0 = new THREE.Vector3().lerpVectors(lt, lb, 1/3);
+                const cp_l1 = new THREE.Vector3().lerpVectors(lt, lb, 2/3);
+                
+                // Order: lt, rt, rb, lb, cp_t0, cp_t1, cp_r0, cp_r1, cp_b0, cp_b1, cp_l0, cp_l1
+                return [
+                lt, rt, rb, lb,
+                cp_t0, cp_t1, cp_r0, cp_r1, cp_b0, cp_b1, cp_l0, cp_l1
+                ];
+            }
+            
+            
+            // --- Geometry and Texture Updates ---
+            
+            updateObjectGeometry(assetId) {
+                // This function now primarily recalculates size if aspect ratio changes
+                const mappedObj = this.mappedObjects.get(assetId);
+                const asset = this.app.getAssetData(assetId);
+                if (!mappedObj || !asset || !asset.originalDims || asset.originalDims.width === 0 || asset.originalDims.height === 0 || !mappedObj.mesh.geometry) return;
+                
+                const geometry = mappedObj.mesh.geometry;
+                // We assume geometry size is derived from warping points now, but let's check aspect ratio
+                const crop = asset.crop; const croppedWidth = asset.originalDims.width * crop.width; const croppedHeight = asset.originalDims.height * crop.height;
+                if (croppedWidth <= 0 || croppedHeight <= 0) return;
+                let effectiveCroppedAspect = croppedWidth / croppedHeight;
+                if (asset.rotation === 90 || asset.rotation === 270) { effectiveCroppedAspect = 1 / effectiveCroppedAspect; }
+                if (!isFinite(effectiveCroppedAspect)) return;
+                
+                // TODO: Decide how to handle geometry size update.
+                // Option 1: Rescale warping points based on aspect change (complex).
+                // Option 2: Recreate geometry with initial size *then* apply warping (might reset user warp).
+                // Option 3: Leave geometry size alone, let warping handle the shape. (Simplest for now)
+                console.log(`Geometry aspect check for ${asset.name}. Size update logic deferred.`);
+                // Ensure UVs are updated though
+                this.applyTextureUVs(mappedObj.mesh, asset);
+            }
+            
+            // Applies texture UVs based on crop/rotation
+            applyTextureUVs(mesh, asset) {
+                if (!mesh || !mesh.geometry || !asset || !asset.crop) {
+                    console.warn("applyTextureUVs: 필수 인자 누락");
+                    return;
+                }
+                const geometry = mesh.geometry;
+                // 지오메트리에 UV 속성이 있는지 확인
+                if (!geometry.attributes.uv) {
+                    console.warn(`applyTextureUVs: Geometry for asset ${asset.id} lacks UV attribute.`);
+                    return;
+                }
+                
+                const uvs = geometry.attributes.uv; // UV 버퍼 속성 가져오기
+                const crop = asset.crop;
+                const rotation = asset.rotation; // 도(degree) 단위 회전 값
+                const gridDensity = asset.gridDensity || { nx: 10, ny: 10 }; // 그리드 밀도
+                const nx = gridDensity.nx;
+                const ny = gridDensity.ny;
+                
+                // 크롭 영역 유효성 검사
+                if (crop.width <= 0 || crop.height <= 0) {
+                    console.warn(`Invalid crop for ${asset.name}, cannot apply UVs.`);
+                    // 필요하다면 기본 UV (0,0) ~ (1,1)를 설정할 수 있으나, 보통 오류 상황임
+                    return;
+                }
+                
+                // 회전 각도를 라디안으로 변환 (텍스처 좌표계는 일반적으로 시계 반대 방향이 양수)
+                const rotationRad = -rotation * Math.PI / 180;
+                const cosR = Math.cos(rotationRad);
+                const sinR = Math.sin(rotationRad);
+                const center = { x: 0.5, y: 0.5 }; // UV 좌표계의 중심
+                
+                // 지오메트리 정점 루프 (nx * ny 개)
+                for (let iy = 0; iy < ny; iy++) { // iy = 0 이 지오메트리 상단 행이라고 가정
+                    for (let ix = 0; ix < nx; ix++) { // ix = 0 이 지오메트리 왼쪽 열이라고 가정
+                        const i = iy * nx + ix; // 현재 처리 중인 정점의 인덱스
+                        
+                        // 1. 기본 UV 좌표 계산 (정규화된 그리드 위치)
+                        // U: 왼쪽(0) -> 오른쪽(1)
+                        let base_u = ix / (nx - 1);
+                        // V: 위쪽(0) -> 아래쪽(1) (지오메트리 기준)
+                        let geom_v = iy / (ny - 1);
+                        
+                        // *** 중요: 텍스처 좌표계(V=0이 아래, V=1이 위)에 맞게 V값 뒤집기 ***
+                        let base_v = 1.0 - geom_v;
+                        
+                        // 2. 중심점(0.5, 0.5) 기준으로 회전 적용
+                        const cu = base_u - center.x;
+                        const cv = base_v - center.y;
+                        const ru = cu * cosR - cv * sinR + center.x; // 회전된 U
+                        const rv = cu * sinR + cv * cosR + center.y; // 회전된 V
+                        
+                        // 3. 크롭(Crop) 적용: 회전된 UV 좌표를 크롭 영역에 맞게 스케일 및 오프셋
+                        const finalU = crop.x + ru * crop.width;
+                        const finalV = crop.y + rv * crop.height;
+                        
+                        // 4. 계산된 최종 UV 좌표를 버퍼에 설정
+                        uvs.setXY(i, finalU, finalV);
+                    }
+                }
+                
+                // UV 버퍼 업데이트 플래그 설정
+                uvs.needsUpdate = true;
+                
+                // 텍스처 자체의 속성은 기본값으로 유지 (UV를 직접 조작하므로)
+                if (mesh.material.map) {
+                    mesh.material.map.center.set(0.5, 0.5);
+                    mesh.material.map.rotation = 0;
+                    mesh.material.map.offset.set(0, 0);
+                    mesh.material.map.repeat.set(1, 1);
+                    // mesh.material.map.flipY = true; // 기본값이므로 명시적으로 설정할 필요는 없음
+                    mesh.material.map.needsUpdate = true; // 텍스처 속성 변경 시 필요할 수 있음
+                }
+                // console.log(`Applied texture UVs for ${asset.name}`); // 디버깅 완료 후 주석 처리
+            }
+            
+            
+            // Core Warping Function - Updates geometry vertices based on control points
+            updateGeometryVertices(assetId, mesh = null, warpingPoints = null, gridDensity = null) {
+                if (!assetId) return;
+                // 메쉬, 에셋 데이터, 워핑 포인트, 그리드 밀도 가져오기
+                const mappedObj = mesh ? { mesh } : this.mappedObjects.get(assetId);
+                const asset = this.app.getAssetData(assetId);
+                if (!mappedObj || !asset || !mappedObj.mesh || !mappedObj.mesh.geometry) {
+                    console.warn(`updateGeometryVertices: Cannot find mesh/geometry for asset ${assetId}`); return;
+                }
+                const geometry = mappedObj.mesh.geometry;
+                if (!geometry.attributes.position) {
+                    console.warn(`updateGeometryVertices: Geometry for ${assetId} lacks position attribute.`); return;
+                }
+                const points = warpingPoints || asset.warpingPoints; // 로컬 좌표 배열
+                const density = gridDensity || asset.gridDensity;
+                if (!points || points.length !== 12) {
+                    console.warn(`updateGeometryVertices: Invalid warpingPoints for asset ${assetId}`); return;
+                }
+                if (!density || density.nx < 2 || density.ny < 2) {
+                    console.warn(`updateGeometryVertices: Invalid gridDensity for asset ${assetId}`); return;
+                }
+                
+                const nx = density.nx;
+                const ny = density.ny;
+                const positions = geometry.attributes.position.array; // 로컬 좌표 버퍼
+                
+                // 로컬 좌표 기준 컨트롤 포인트 추출
+                const lt = points[0], rt = points[1], rb = points[2], lb = points[3];
+                const cp_t0= points[4], cp_t1= points[5], cp_r0= points[6], cp_r1= points[7];
+                const cp_b0= points[8], cp_b1= points[9], cp_l0= points[10], cp_l1= points[11];
+                
+                // Bezier 함수 (로컬 좌표 연산)
+                const bezierV3Local = (p0, p1, p2, p3, t, target) => {
+                    this.v3Lerp(p0, p1, t, this._ab);
+                    this.v3Lerp(p1, p2, t, this._bc);
+                    this.v3Lerp(p2, p3, t, this._cd);
+                    this.v3Lerp(this._ab, this._bc, t, this._abc);
+                    this.v3Lerp(this._bc, this._cd, t, this._bcd);
+                    return this.v3Lerp(this._abc, this._bcd, t, target);
+                };
+                
+                // 그리드 정점 루프 (nx * ny 개)
+                for (let iy = 0; iy < ny; iy++) {
+                    const v = iy / (ny - 1); // 세로 파라미터 (0 ~ 1)
+                    
+                    // 현재 행(iy)에 해당하는 좌/우 경계 베지어 곡선 상의 로컬 좌표 계산
+                    const yl = bezierV3Local(lt, cp_l0, cp_l1, lb, v, this._p0); // 왼쪽 경계 로컬 좌표
+                    const yr = bezierV3Local(rt, cp_r0, cp_r1, rb, v, this._p1); // 오른쪽 경계 로컬 좌표
+                    
+                    // 현재 행(iy)에 해당하는 보간된 가로 컨트롤 포인트의 로컬 좌표 계산
+                    const row_cp0 = this.v3Lerp(cp_t0, cp_b0, v, this._p2);
+                    const row_cp1 = this.v3Lerp(cp_t1, cp_b1, v, this._p3);
+                    
+                    for (let ix = 0; ix < nx; ix++) {
+                        const u = ix / (nx - 1); // 가로 파라미터 (0 ~ 1)
+                        const vertexIndex = iy * nx + ix; // 정점 버퍼 인덱스
+                        
+                        // 최종 정점의 로컬 좌표 계산 (가로 베지어 보간)
+                        const finalLocalPos = bezierV3Local(yl, row_cp0, row_cp1, yr, u, this.tempVec3);
+                        
+                        // *** 계산된 로컬 좌표를 정점 버퍼(로컬 좌표)에 직접 저장 ***
+                        positions[vertexIndex * 3 + 0] = finalLocalPos.x;
+                        positions[vertexIndex * 3 + 1] = finalLocalPos.y;
+                        positions[vertexIndex * 3 + 2] = finalLocalPos.z; // Z는 보통 0
+                    }
+                }
+                
+                // 정점 버퍼 업데이트 알림
+                geometry.attributes.position.needsUpdate = true;
+            }
+            
+            
+            updateAssetTextureProperties(assetId) {
+                const mappedObj = this.mappedObjects.get(assetId);
+                const asset = this.app.getAssetData(assetId);
+                if (mappedObj && asset && mappedObj.mesh) {
+                    console.log(`Updating texture UVs for ${asset.name} due to asset update.`);
+                    this.applyTextureUVs(mappedObj.mesh, asset);
+                }
+            }
+            
+            updateGridDensity(assetId, nx, ny) {
+                const mappedObj = this.mappedObjects.get(assetId);
+                const asset = this.app.getAssetData(assetId);
+                if (!mappedObj || !asset || !mappedObj.mesh) return;
+                
+                const currentDensity = asset.gridDensity;
+                if (currentDensity.nx === nx && currentDensity.ny === ny) return; // No change
+                
+                console.log(`Updating grid density for ${asset.name} to ${nx}x${ny}`);
+                asset.gridDensity = { nx, ny };
+                
+                const mesh = mappedObj.mesh;
+                const oldGeometry = mesh.geometry;
+                const warpingPoints = asset.warpingPoints; // Use current warping points
+                
+                // Create new geometry with new density
+                // Assuming warping doesn't change the overall width/height fundamentally
+                // We need the original *intended* width/height before warping for PlaneGeometry
+                // This is tricky. Let's approximate from current corner points for now.
+                const approxWidth = warpingPoints ? warpingPoints[1].distanceTo(warpingPoints[0]) : 100; // rt to lt
+                const approxHeight = warpingPoints ? warpingPoints[0].distanceTo(warpingPoints[3]) : 100; // lt to lb
+                
+                const newGeometry = new THREE.PlaneGeometry(
+                approxWidth, approxHeight, // Use approximate size
+                nx - 1, ny - 1
+                );
+                
+                // Dispose old geometry
+                if (oldGeometry) oldGeometry.dispose();
+                
+                // Assign new geometry
+                mesh.geometry = newGeometry;
+                
+                // Re-apply texture UVs based on the new geometry structure
+                this.applyTextureUVs(mesh, asset);
+                
+                // Re-apply warping using current control points to the new geometry
+                this.updateGeometryVertices(assetId, mesh, warpingPoints, asset.gridDensity);
+                
+                console.log(`Grid density updated for ${asset.name}`);
+            }
+            
+            // --- Texture Loading ---
+            getTexture(asset) {
+                return new Promise((resolve, reject) => {
+                    if (this.textures[asset.id]) {
+                        // Handle video playback state if needed
+                        if (asset.type.startsWith('video/')) {
+                            const texture = this.textures[asset.id];
+                            if (texture.image && texture.image.paused) {
+                                texture.image.play().catch(e=>console.warn("Video play() failed on reuse:", e));
+                            }
+                        }
+                        resolve(this.textures[asset.id]);
+                        return;
+                    }
+                    console.log(`Loading texture for ${asset.name}`);
+                    
+                    const onTextureLoad = (texture) => {
+                        texture.needsUpdate = true;
+                        // Set properties for non-power-of-two textures if needed, usually default ClampToEdgeWrapping is fine
+                        texture.wrapS = THREE.ClampToEdgeWrapping;
+                        texture.wrapT = THREE.ClampToEdgeWrapping;
+                        texture.minFilter = THREE.LinearFilter; // Default
+                        texture.magFilter = THREE.LinearFilter; // Default
+                        // texture.flipY = false; // Important: Keep UV convention consistent (default)
+                        
+                        this.textures[asset.id] = texture;
+                        console.log(`Texture loaded: ${asset.name}`);
+                        resolve(texture);
+                    };
+                    const onTextureError = (error) => { console.error(`Texture load error: ${asset.name}`, error); reject(error); };
+                    
+                    if (asset.type.startsWith('image/')) {
+                        new THREE.TextureLoader().load(asset.source, onTextureLoad, undefined, onTextureError);
+                    } else if (asset.type.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.src = asset.source;
+                        video.loop = true; video.muted = true; video.preload = 'auto'; video.playsInline = true; video.crossOrigin = 'anonymous'; // If needed
+                        // Use 'loadeddata' or 'canplay' event
+                        video.addEventListener('canplay', () => {
+                            if (!this.textures[asset.id]) { // Ensure texture hasn't been created by another event
+                            const texture = new THREE.VideoTexture(video);
+                            video.play().catch(e => console.warn("Video autoplay prevented on load:", e));
+                            onTextureLoad(texture); // Resolve promise once video can play
+                        }
+                    }, { once: true });
+                    video.addEventListener('error', (e) => { onTextureError(`Video element error: ${e.message || e.type}`); });
+                    video.load(); // Start loading video data
+                } else { reject(new Error(`Unsupported type for texture: ${asset.type}`)); }
+            });
+        }
+        
+        // --- Object Removal ---
+        removeMappedObjectByAssetId(assetId) {
+            const obj = this.mappedObjects.get(assetId);
+            if (obj) {
+                // If this was the selected object, deselect it first
+                if (this.selectedObject === obj.mesh) {
+                    this.setSelectedObject(null);
+                }
+                
+                this.scene.remove(obj.mesh);
+                if (obj.mesh.geometry) obj.mesh.geometry.dispose();
+                if (obj.mesh.material) {
+                    // Dispose texture only if it's cached and not used elsewhere (unlikely in current setup)
+                    if (obj.mesh.material.map && this.textures[assetId] === obj.mesh.material.map) {
+                        // Simple approach: dispose if cached (assume 1 mesh per asset)
+                        console.log(`Disposing texture for asset ${assetId}`);
+                        this.textures[assetId].dispose();
+                        delete this.textures[assetId];
+                    }
+                    obj.mesh.material.dispose();
+                }
+                this.mappedObjects.delete(assetId);
+                console.log(`Removed mapped object for asset ${assetId}`);
+            }
+        }
+        
+        // --- Selection ---
+        setSelectedObject(meshOrNull) {
+            if (this.selectedObject === meshOrNull) return; // No change
+            
+            this.selectedObject = meshOrNull;
+            const assetId = meshOrNull ? meshOrNull.userData.assetId : null;
+            
+            // Manage UI Handles
+            this.createOrUpdateHandles(assetId);
+            
+            // Notify App about selection change (for Grid Density UI)
+            this.app.notifyMappingSelectionChanged(this.selectedObject);
+            
+            console.log(assetId ? `Selected asset ${assetId}` : "Selection cleared");
+        }
+        
+        // --- UI Handle Management ---
+        createOrUpdateHandles(assetId) {
+            // 1. 기존 핸들과 라인 DOM 요소 제거 및 배열 초기화
+            this.handles.forEach(handle => handle.remove());
+            // *** FIX: lineInfo 객체의 lineElement 속성에 접근하여 remove() 호출 ***
+            this.handleLines.forEach(lineInfo => lineInfo.lineElement.remove());
+            this.handles = [];
+            this.handleLines = [];
+            
+            // 선택된 에셋이 없으면 여기서 종료
+            if (!assetId) return;
+            
+            // 에셋 데이터와 워핑 포인트 가져오기
+            const asset = this.app.getAssetData(assetId);
+            // *** 중요: asset.warpingPoints는 이제 오브젝트 이동 후 업데이트된 월드 좌표를 가짐 ***
+            const points = asset ? asset.warpingPoints : null;
+            
+            // 워핑 포인트 데이터가 유효하지 않으면 핸들 생성 중단
+            if (!points || points.length !== 12) {
+                console.warn(`Cannot create handles for ${assetId}: warpingPoints missing or invalid.`);
+                return;
+            }
+            
+            // 2. 12개의 핸들 DOM 요소 생성 및 추가
+            for (let i = 0; i < 12; i++) {
+                const handle = document.createElement('div');
+                handle.classList.add('control-handle');
+                handle.classList.add(i < 4 ? 'corner' : 'bezier'); // 0~3: 코너, 4~11: 베지어
+                handle.dataset.pointIndex = i; // 핸들 인덱스 저장 (0-11)
+                handle.style.position = 'absolute'; // CSS로 위치 지정
+                // 터치 스크롤 방지 (핸들 드래그 시 중요)
+                handle.style.touchAction = 'none';
+                // 각 핸들에 포인터 다운 이벤트 리스너 추가 -> onHandleMouseDown 호출
+                handle.addEventListener('pointerdown', this.onHandleMouseDown.bind(this), false);
+                this.uiOverlayEl.appendChild(handle); // 오버레이에 추가
+                this.handles.push(handle); // 배열에 핸들 요소 저장
+            }
+            
+            // 3. 코너-베지어 포인트 연결선 DOM 요소 생성 및 추가 (총 8개)
+            // 연결 정보: [코너 인덱스, 연결된 CP 인덱스]
+            const lineIndices = [
+            [0, 10], [0, 4], // lt -> cp_l0, cp_t0
+            [1, 5], [1, 6],  // rt -> cp_t1, cp_r0
+            [2, 7], [2, 9],  // rb -> cp_r1, cp_b1
+            [3, 11],[3, 8]   // lb -> cp_l1, cp_b0
+            ];
+            for (const pair of lineIndices) {
+                const line = document.createElement('div');
+                line.classList.add('handle-line');
+                line.style.position = 'absolute'; // CSS로 위치 및 회전 지정
+                this.uiOverlayEl.appendChild(line); // 오버레이에 추가
+                // 배열에 라인 요소와 연결 정보 저장
+                this.handleLines.push({ lineElement: line, fromIndex: pair[0], toIndex: pair[1] });
+            }
+            
+            // 4. 핸들 및 라인의 초기 화면 위치 업데이트
+            // (animate 루프의 updateHandlePositions가 계속 위치를 갱신하지만,
+            //  생성 직후 한 번 호출하여 즉시 보이도록 함)
+            this.updateHandlePositions();
+        }
+        
+        // Updates screen position of handles and lines based on current world coords
+        updateHandlePositions() {
+            if (!this.selectedObject) return; // 선택된 객체가 없으면 종료
+            
+            const assetId = this.selectedObject.userData.assetId;
+            const asset = this.app.getAssetData(assetId);
+            const points = asset ? asset.warpingPoints : null; // 로컬 좌표 배열
+            
+            if (!points || points.length !== 12 || this.handles.length !== 12) return; // 유효성 검사
+            
+            // 메쉬의 현재 월드 변환 매트릭스 가져오기
+            this.selectedObject.updateMatrixWorld(); // 최신 매트릭스 보장
+            const worldMatrix = this.selectedObject.matrixWorld;
+            
+            const screenPoints = []; // 변환된 화면 좌표 저장 배열
+            
+            // 로컬 좌표 -> 월드 좌표 -> 화면 좌표 변환
+            for(let i = 0; i < 12; i++) {
+                const localP = points[i];
+                // 로컬 좌표에 월드 매트릭스를 적용하여 월드 좌표 계산
+                const worldP = localP.clone().applyMatrix4(worldMatrix);
+                // 월드 좌표를 화면 좌표로 변환
+                screenPoints.push(this.worldToScreen(worldP));
+            }
+            
+            // 핸들 DOM 요소 위치 업데이트
+            for (let i = 0; i < 12; i++) {
+                if (screenPoints[i] && this.handles[i]) { // 화면 좌표 및 핸들 요소 유효성 확인
+                    this.handles[i].style.left = `${screenPoints[i].x}px`;
+                    this.handles[i].style.top = `${screenPoints[i].y}px`;
+                }
+            }
+            
+            // 연결 라인 DOM 요소 위치 및 각도 업데이트
+            this.handleLines.forEach(lineInfo => {
+                const p1 = screenPoints[lineInfo.fromIndex]; // 시작점 화면 좌표
+                const p2 = screenPoints[lineInfo.toIndex];   // 끝점 화면 좌표
+                if (p1 && p2 && lineInfo.lineElement) { // 좌표 및 라인 요소 유효성 확인
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    const angle = Math.atan2(dy, dx); // 라디안 각도
+                    
+                    lineInfo.lineElement.style.left = `${p1.x}px`;
+                    lineInfo.lineElement.style.top = `${p1.y}px`;
+                    lineInfo.lineElement.style.width = `${dist}px`;
+                    // CSS transform을 사용하여 회전 적용 (중심점은 왼쪽)
+                    lineInfo.lineElement.style.transform = `rotate(${angle}rad)`;
+                }
+            });
+        }
+        
+        
+        // --- Handle Dragging Logic ---
+        onHandleMouseDown(event) {
+            if (event.button !== 0) return;
+            event.stopPropagation(); // Prevent canvas pointerdown when clicking handle
+            
+            const handle = event.target;
+            const index = parseInt(handle.dataset.pointIndex, 10);
+            if (isNaN(index) || index < 0 || index > 11) return;
+            
+            this.draggedHandleIndex = index;
+            this.isDraggingHandle = true;
+            handle.style.cursor = 'grabbing';
+            this.uiOverlayEl.style.pointerEvents = 'auto'; // Ensure overlay catches events during drag
+            
+            // Add listeners to window to capture moves/up outside the handle/canvas
+            window.addEventListener('pointermove', this.onHandleMouseMove.bind(this), false);
+            window.addEventListener('pointerup', this.onHandleMouseUp.bind(this), false);
+        }
+        
+        onHandleMouseMove(event) {
+            if (!this.isDraggingHandle || this.draggedHandleIndex === -1 || !this.selectedObject) return;
+            event.preventDefault();
+            
+            const assetId = this.selectedObject.userData.assetId;
+            const asset = this.app.getAssetData(assetId);
+            if (!asset || !asset.warpingPoints) return;
+            
+            // 1. 마우스 위치를 월드 좌표로 변환
+            const newWorldPos = this.screenToWorld(event.clientX, event.clientY);
+            if (!newWorldPos) return; // 변환 실패 시 중단
+            
+            // 2. 월드 좌표를 메쉬의 로컬 좌표로 변환
+            // 메쉬의 월드 매트릭스 가져오기
+            this.selectedObject.updateMatrixWorld(); // 최신 매트릭스 보장
+            const inverseMatrix = new THREE.Matrix4().copy(this.selectedObject.matrixWorld).invert();
+            const newLocalPos = newWorldPos.clone().applyMatrix4(inverseMatrix);
+            
+            const points = asset.warpingPoints;
+            const index = this.draggedHandleIndex;
+            
+            // 3. Shift 키 로직 (로컬 좌표 기준)
+            if (event.shiftKey && index < 4) { // Shift + 코너 핸들 드래그
+                const cornerLocalPos = newLocalPos; // 새로운 코너의 로컬 위치
+                points[index].copy(cornerLocalPos); // 드래그된 코너의 로컬 좌표 업데이트
+                
+                // 인접 코너 및 관련 CP 인덱스 정보
+                const neighbors = [
+                { next: 1, prev: 3, cp1Idx: 4, cp2Idx: 10 }, // lt -> cp_t0, cp_l0
+                { next: 2, prev: 0, cp1Idx: 5, cp2Idx: 6 },  // rt -> cp_t1, cp_r0
+                { next: 3, prev: 1, cp1Idx: 7, cp2Idx: 9 },  // rb -> cp_r1, cp_b1
+                { next: 0, prev: 2, cp1Idx: 11, cp2Idx: 8 }  // lb -> cp_l1, cp_b0
+                ];
+                const info = neighbors[index];
+                const nextCornerLocalPos = points[info.next];
+                const prevCornerLocalPos = points[info.prev];
+                
+                // 연결된 CP들을 로컬 좌표 기준으로 직선 1/3 위치에 배치
+                points[info.cp1Idx].lerpVectors(cornerLocalPos, nextCornerLocalPos, 1/3);
+                points[info.cp2Idx].lerpVectors(cornerLocalPos, prevCornerLocalPos, 1/3);
+                
+            } else { // 일반 핸들 드래그
+                // 해당 핸들의 로컬 좌표 업데이트
+                points[index].copy(newLocalPos);
+            }
+            
+            // 4. 지오메트리 정점 업데이트 (로컬 warpingPoints 사용)
+            this.updateGeometryVertices(assetId);
+            
+            // 핸들 위치는 animate 루프의 updateHandlePositions 에서 자동으로 갱신됨
+        }
+        
+        onHandleMouseUp(event) {
+            if (!this.isDraggingHandle) return;
+            event.preventDefault();
+            
+            if(this.handles[this.draggedHandleIndex]) {
+                this.handles[this.draggedHandleIndex].style.cursor = 'grab'; // Reset cursor
+            }
+            this.isDraggingHandle = false;
+            this.draggedHandleIndex = -1;
+            this.uiOverlayEl.style.pointerEvents = 'none'; // Allow canvas interaction again
+            
+            // Remove window listeners
+            window.removeEventListener('pointermove', this.onHandleMouseMove.bind(this), false);
+            window.removeEventListener('pointerup', this.onHandleMouseUp.bind(this), false);
+            console.log("Handle drag finished");
+        }
+        
+        
+    } // End of MappingEditor Class
+    
+    
+    // ========================================================================
+    // App Initialization
+    // ========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            window.projectionMapperApp = new ProjectionMapperApp();
+            console.log("Projection Mapper App (Final) is ready.");
+        } catch (error) {
+            console.error("Failed to initialize the application:", error);
+            alert("애플리케이션 초기화 실패! 콘솔을 확인하세요.");
+        }
+    });
+    
+</script>
+</body>
+</html>
