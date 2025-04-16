@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaPipe 손 상호작용 - 객체 집어 옮기기</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #e8e8e8;
+            color: #333;
+        }
+        header {
+            background-color: #ffffff;
+            padding: 12px 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+            width: fit-content;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-size: 0.95em;
+        }
+        input[type="range"], input[type="checkbox"] {
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        input[type="checkbox"] { width: 16px; height: 16px; }
+        #numHandsValue { font-weight: bold; min-width: 15px; display: inline-block; text-align: center; }
+        #output_canvas {
+            border: 2px solid #ccc;
+            max-width: 90%;
+            height: auto;
+            display: block;
+            margin: auto;
+            background-color: #f0f0f0; /* Canvas 배경색 약간 지정 */
+            border-radius: 5px;
+            cursor: default; /* 기본 커서 사용 */
+        }
+        #loading {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.3em; background: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none; z-index: 10; text-align: center;
+        }
+        .hidden { display: none; }
+        .info { margin-top: 10px; font-size: 0.9em; color: #555;}
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="control-group">
+        <label for="numHands">최대 손 개수: <span id="numHandsValue">2</span></label>
+        <input type="range" id="numHands" min="1" max="2" value="2">
+    </div>
+    <div class="control-group">
+        <input type="checkbox" id="flipHorizontal">
+        <label for="flipHorizontal">좌우 반전</label>
+    </div>
+    <div class="control-group">
+        <input type="checkbox" id="flipVertical">
+        <label for="flipVertical">상하 반전</label>
+    </div>
+</header>
+
+<div id="loading">모델과 웹캠을 로딩 중입니다...</div>
+<div class="info">엄지와 집게손가락으로 원을 집어 옮겨보세요!</div>
+
+<video id="webcam" class="hidden" autoplay playsinline></video>
+<canvas id="output_canvas"></canvas>
+
+<script type="module">
+    import { HandLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+    // --- DOM 요소 및 전역 변수 ---
+    const video = document.getElementById('webcam');
+    const outputCanvas = document.getElementById('output_canvas');
+    const outputCtx = outputCanvas.getContext('2d');
+    const numHandsSlider = document.getElementById('numHands');
+    const numHandsValueSpan = document.getElementById('numHandsValue');
+    const flipHorizontalCheckbox = document.getElementById('flipHorizontal');
+    const flipVerticalCheckbox = document.getElementById('flipVertical');
+    const loadingDiv = document.getElementById('loading');
+
+    let handLandmarker;
+    let drawingUtils;
+    let webcamRunning = false;
+    let lastVideoTime = -1;
+    let numHands = 2;
+    let flipHorizontal = false;
+    let flipVertical = false;
+    let objectsInitialized = false; // 객체 초기화 플래그
+
+    const inputCanvas = document.createElement('canvas');
+    const inputCtx = inputCanvas.getContext('2d', { willReadFrequently: true });
+
+    // --- 상호작용 관련 변수 ---
+    let draggableObjects = []; // 드래그 가능한 객체 배열
+    const pinchThreshold = 35; // 집게 감지 거리 임계값 (픽셀 단위, 조정 필요)
+    let handStates = [ // 각 손의 상태 추적 (최대 2개)
+        // 손 0 상태
+        { isPinching: false, wasPinching: false, grabbedObject: null, grabOffset: { x: 0, y: 0 }, pinchPoint: { x: 0, y: 0 } },
+        // 손 1 상태
+        { isPinching: false, wasPinching: false, grabbedObject: null, grabOffset: { x: 0, y: 0 }, pinchPoint: { x: 0, y: 0 } }
+    ];
+
+    // --- 함수 정의 ---
+
+    // 랜덤 정수 생성 헬퍼
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // 랜덤 색상 생성 헬퍼
+    function getRandomColor() {
+        return `hsl(${Math.random() * 360}, 70%, 60%)`;
+    }
+
+    // 1. 객체 초기화 함수
+    function initializeObjects(canvasWidth, canvasHeight) {
+        if (objectsInitialized) return; // 이미 초기화되었으면 실행 안 함
+        console.log("객체 초기화 중...");
+        draggableObjects = []; // 기존 객체 초기화
+        const numObjects = 5;
+        for (let i = 0; i < numObjects; i++) {
+            const radius = getRandomInt(10, 25);
+            // 캔버스 경계 안쪽에 위치하도록 (반지름 고려)
+            const x = getRandomInt(radius, canvasWidth - radius);
+            const y = getRandomInt(radius, canvasHeight - radius);
+            draggableObjects.push({
+                id: i,
+                x: x,
+                y: y,
+                radius: radius,
+                color: getRandomColor(),
+                isGrabbed: false,
+                grabbedByHand: null // 어떤 손에 잡혔는지 (null, 0, 1)
+            });
+        }
+        console.log(`${numObjects}개의 객체 생성 완료:`, draggableObjects);
+        objectsInitialized = true;
+    }
+
+    // 2. 객체 그리기 함수
+    function drawObjects(ctx) {
+        draggableObjects.forEach(obj => {
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, obj.radius, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 잡혔을 때 외곽선 그리기
+            if (obj.isGrabbed) {
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        });
+    }
+
+     // 3. 시각적 집게 포인트 그리기 함수
+     function drawPinchPoints(ctx, states) {
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.7)'; // 노란색 반투명
+        ctx.lineWidth = 1;
+        states.forEach(state => {
+            if (state.isPinching) {
+                ctx.beginPath();
+                ctx.arc(state.pinchPoint.x, state.pinchPoint.y, 5, 0, 2 * Math.PI); // 작은 원
+                ctx.fill();
+            }
+        });
+    }
+
+    // 4. HandLandmarker 생성 및 설정
+    async function createHandLandmarker() {
+        loadingDiv.style.display = 'block';
+        try {
+            const vision = await FilesetResolver.forVisionTasks(
+                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+            );
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                    delegate: "GPU"
+                },
+                runningMode: "VIDEO",
+                numHands: numHands, // 초기값 사용
+                minHandDetectionConfidence: 0.6, // 감지 신뢰도 약간 높임
+                minHandPresenceConfidence: 0.6,
+                minTrackingConfidence: 0.6
+            });
+            drawingUtils = new DrawingUtils(outputCtx); // outputCtx 사용
+            console.log("Hand Landmarker 모델 로드 완료.");
+            enableCam(); // 모델 로드 후 웹캠 활성화
+        } catch (error) {
+            console.error("Hand Landmarker 모델 로드 실패:", error);
+            loadingDiv.innerText = "오류: 모델 로드 실패. 콘솔을 확인하세요.";
+        }
+    }
+
+    // 5. 웹캠 활성화
+    function enableCam() {
+        if (!handLandmarker) return;
+        if (webcamRunning) return; // 이미 실행 중이면 중복 실행 방지
+
+        const constraints = { video: { width: 640, height: 480, facingMode: "user" } }; // 해상도 지정 시도
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+                video.srcObject = stream;
+                video.addEventListener("loadeddata", () => {
+                    // 비디오 로드 완료 시점에 캔버스 크기 설정 및 객체 초기화
+                    outputCanvas.width = video.videoWidth;
+                    outputCanvas.height = video.videoHeight;
+                    inputCanvas.width = video.videoWidth;
+                    inputCanvas.height = video.videoHeight;
+                    initializeObjects(outputCanvas.width, outputCanvas.height); // 여기서 객체 초기화!
+
+                    webcamRunning = true;
+                    lastVideoTime = -1;
+                    loadingDiv.style.display = 'none';
+                    console.log("웹캠 활성화 및 준비 완료.");
+                    predictWebcam(); // 예측 루프 시작
+                });
+            })
+            .catch((err) => {
+                console.error("웹캠 접근 오류:", err);
+                loadingDiv.innerText = "오류: 웹캠에 접근할 수 없습니다.";
+            });
+    }
+
+    // 6. 실시간 예측 및 프레임 처리
+    async function predictWebcam() {
+        if (!webcamRunning || !handLandmarker || video.paused || video.ended) {
+            requestAnimationFrame(predictWebcam); // 계속 루프는 돌림
+            return;
+        }
+
+        const currentTime = video.currentTime;
+        if (currentTime > lastVideoTime) {
+            lastVideoTime = currentTime;
+
+            // --- 입력 Canvas 준비 (반전 등 적용) ---
+            inputCtx.save();
+            inputCtx.clearRect(0, 0, inputCanvas.width, inputCanvas.height);
+            if (flipHorizontal || flipVertical) {
+                inputCtx.translate(inputCanvas.width / 2, inputCanvas.height / 2);
+                inputCtx.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
+                inputCtx.translate(-inputCanvas.width / 2, -inputCanvas.height / 2);
+            }
+            inputCtx.drawImage(video, 0, 0, inputCanvas.width, inputCanvas.height);
+            inputCtx.restore();
+
+            // --- MediaPipe 처리 ---
+             try {
+                 const results = handLandmarker.detectForVideo(inputCanvas, performance.now());
+                 processFrameAndDrawResults(results); // 결과 처리 및 그리기 함수 호출
+             } catch (error) {
+                 console.error("Hand detection error:", error);
+             }
+        }
+        requestAnimationFrame(predictWebcam);
+    }
+
+    // 7. 프레임 처리 및 그리기 (핵심 로직)
+    function processFrameAndDrawResults(results) {
+        outputCtx.save(); // 캔버스 상태 저장
+        outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height); // 캔버스 클리어
+
+        // --- 배경 그리기 (변형된 inputCanvas 사용) ---
+        outputCtx.drawImage(inputCanvas, 0, 0, outputCanvas.width, outputCanvas.height);
+
+        // --- 상호작용 로직 업데이트 ---
+        const landmarksPresent = results.landmarks && results.landmarks.length > 0;
+
+        // 7-1. 각 손의 집게 상태 업데이트 (Loop 1)
+        handStates.forEach(state => state.isPinching = false); // 이번 프레임 상태 초기화
+
+        if (landmarksPresent) {
+            for (let handIndex = 0; handIndex < results.landmarks.length && handIndex < 2; handIndex++) {
+                const landmarks = results.landmarks[handIndex];
+                // 엄지(4)와 집게(8) 랜드마크 유효성 검사
+                if (landmarks && landmarks[4] && landmarks[8]) {
+                    const thumbTip = landmarks[4];
+                    const indexTip = landmarks[8];
+                    const thumbPixel = { x: thumbTip.x * outputCanvas.width, y: thumbTip.y * outputCanvas.height };
+                    const indexPixel = { x: indexTip.x * outputCanvas.width, y: indexTip.y * outputCanvas.height };
+
+                    const dx = thumbPixel.x - indexPixel.x;
+                    const dy = thumbPixel.y - indexPixel.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    handStates[handIndex].isPinching = distance < pinchThreshold;
+                    handStates[handIndex].pinchPoint = { x: (thumbPixel.x + indexPixel.x) / 2, y: (thumbPixel.y + indexPixel.y) / 2 };
+                } else {
+                    handStates[handIndex].isPinching = false; // 랜드마크 없으면 집기 아님
+                }
+            }
+        }
+
+        // 7-2. 잡기 / 놓기 / 끌기 로직 (Loop 2)
+        for (let handIndex = 0; handIndex < 2; handIndex++) {
+            const state = handStates[handIndex];
+            const objectCurrentlyGrabbedByThisHand = state.grabbedObject;
+
+            // --- 잡기 시작 ---
+            if (state.isPinching && !state.wasPinching && objectCurrentlyGrabbedByThisHand === null) {
+                let objectToGrab = null;
+                let minDistanceToObject = Infinity;
+
+                draggableObjects.forEach(obj => {
+                    // 다른 손에 잡혀있지 않은 객체만 고려
+                    if (obj.grabbedByHand === null) {
+                        const distToPinch = Math.sqrt(Math.pow(state.pinchPoint.x - obj.x, 2) + Math.pow(state.pinchPoint.y - obj.y, 2));
+                        // 집게 포인트가 객체 내부에 있고, 가장 가까운 객체를 선택
+                        if (distToPinch < obj.radius && distToPinch < minDistanceToObject) {
+                             minDistanceToObject = distToPinch;
+                             objectToGrab = obj;
+                        }
+                    }
+                });
+
+                if (objectToGrab) {
+                    state.grabbedObject = objectToGrab;
+                    objectToGrab.isGrabbed = true;
+                    objectToGrab.grabbedByHand = handIndex; // 이 손이 잡았다고 표시
+                    state.grabOffset = {
+                        x: state.pinchPoint.x - objectToGrab.x,
+                        y: state.pinchPoint.y - objectToGrab.y
+                    };
+                    console.log(`손 ${handIndex}가 객체 ${objectToGrab.id}를 잡음`);
+                }
+            }
+            // --- 놓기 ---
+            else if (!state.isPinching && state.wasPinching && objectCurrentlyGrabbedByThisHand !== null) {
+                console.log(`손 ${handIndex}가 객체 ${objectCurrentlyGrabbedByThisHand.id}를 놓음`);
+                objectCurrentlyGrabbedByThisHand.isGrabbed = false;
+                objectCurrentlyGrabbedByThisHand.grabbedByHand = null; // 잡은 손 정보 해제
+                state.grabbedObject = null;
+            }
+            // --- 끌기 ---
+            else if (state.isPinching && objectCurrentlyGrabbedByThisHand !== null) {
+                const targetX = state.pinchPoint.x - state.grabOffset.x;
+                const targetY = state.pinchPoint.y - state.grabOffset.y;
+                const radius = objectCurrentlyGrabbedByThisHand.radius;
+
+                // 캔버스 경계 제한 적용
+                objectCurrentlyGrabbedByThisHand.x = Math.max(radius, Math.min(targetX, outputCanvas.width - radius));
+                objectCurrentlyGrabbedByThisHand.y = Math.max(radius, Math.min(targetY, outputCanvas.height - radius));
+            }
+        }
+
+        // 7-3. 객체 그리기
+        drawObjects(outputCtx);
+
+        // 7-4. 시각적 집게 포인트 그리기
+        drawPinchPoints(outputCtx, handStates);
+
+        // 7-5. 손 랜드마크 그리기
+        if (landmarksPresent && drawingUtils) {
+            for (const landmarks of results.landmarks) {
+                drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 3 });
+                drawingUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 1, radius: 3 });
+            }
+        }
+
+        // 7-6. 다음 프레임을 위해 현재 집게 상태 저장
+        for (let i = 0; i < 2; i++) {
+            handStates[i].wasPinching = handStates[i].isPinching;
+        }
+
+        outputCtx.restore(); // 캔버스 상태 복원
+    }
+
+
+    // --- UI 이벤트 리스너 ---
+    numHandsSlider.addEventListener('input', (event) => {
+        numHands = parseInt(event.target.value, 10);
+        numHandsValueSpan.textContent = numHands;
+        if (handLandmarker) {
+             handLandmarker.setOptions({ numHands: numHands })
+                .then(() => console.log(`최대 손 개수 ${numHands}로 변경됨`))
+                .catch(err => console.error("손 개수 옵션 변경 실패:", err));
+        }
+    });
+
+    flipHorizontalCheckbox.addEventListener('change', (event) => {
+        flipHorizontal = event.target.checked;
+        console.log(`좌우 반전: ${flipHorizontal}`);
+    });
+
+    flipVerticalCheckbox.addEventListener('change', (event) => {
+        flipVertical = event.target.checked;
+        console.log(`상하 반전: ${flipVertical}`);
+    });
+
+    // --- 초기화 시작 ---
+    createHandLandmarker();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹캠 Unwarp (three.js)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            background-color: #222;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            padding: 10px;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap; /* Ensure wrapping on smaller screens */
+            z-index: 10;
+            position: relative; /* Ensure header stays above container */
+        }
+        header label {
+            margin-right: 5px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        button, select, input {
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #555;
+            color: #eee;
+            border: 1px solid #777;
+            border-radius: 3px;
+        }
+        button:hover, select:hover, input:hover {
+            background-color: #666;
+        }
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        #container {
+            flex-grow: 1; /* Take remaining height */
+            position: relative;
+            min-height: 0; /* Prevent flex item from overflowing */
+            background-color: #000; /* Background for the rendering area */
+        }
+        #webgl {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none; /* SVG itself doesn't capture mouse events */
+            overflow: visible; /* Allow controls outside bounds if needed */
+        }
+        #overlay polygon {
+            fill: none;
+            stroke: rgba(255, 0, 0, 0.7);
+            stroke-width: 2;
+            vector-effect: non-scaling-stroke; /* Keep stroke width constant on zoom */
+        }
+        #overlay circle {
+            fill: rgba(255, 0, 0, 0.8);
+            stroke: rgba(255, 255, 255, 0.9);
+            stroke-width: 1;
+            cursor: grab;
+            pointer-events: all; /* Circles capture mouse events */
+            vector-effect: non-scaling-stroke;
+        }
+        #overlay circle:active {
+            cursor: grabbing;
+            fill: rgba(255, 100, 100, 0.9);
+        }
+        video {
+            /* Hidden, only used as texture source */
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .hidden {
+            display: none !important;
+        }
+        /* Fullscreen specific styles */
+        body:fullscreen header {
+            display: none;
+        }
+        body:-webkit-full-screen header {
+            display: none;
+        }
+        body:-moz-full-screen header {
+            display: none;
+        }
+        body:-ms-fullscreen header {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <button id="mode-toggle">모드: Calibration</button>
+    <label for="flip-x">
+        <input type="checkbox" id="flip-x">
+        좌우 반전
+    </label>
+    <label for="flip-y">
+        <input type="checkbox" id="flip-y">
+        상하 반전
+    </label>
+    <span>
+        <label for="resolution-select">해상도:</label>
+        <select id="resolution-select"></select>
+    </span>
+    <span id="aspect-ratio-control" class="hidden">
+        <label for="aspect-ratio-w">화면 비율:</label>
+        <input type="number" id="aspect-ratio-w" min="1" step="1" value="16" style="width: 45px; text-align: right;">
+        <span style="margin: 0 2px;">:</span>
+        <input type="number" id="aspect-ratio-h" min="1" step="1" value="9" style="width: 45px; text-align: right;">
+    </span>
+    <button id="fullscreen">전체 화면</button>
+</header>
+
+<div id="container">
+    <canvas id="webgl"></canvas>
+    <svg id="overlay">
+        <polygon id="outline-polygon" points=""></polygon>
+    </svg>
+    <video id="webcam-video" playsinline autoplay muted></video>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.163.0/build/three.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    // --- Constants & Variables ---
+    const GRID_SIZE = 10; // 10x10 grid
+    const INITIAL_PADDING = 0.05; // 5% padding for initial points
+    const CONTROL_POINT_RADIUS = 8; // SVG circle radius in pixels
+
+    let scene, camera, renderer;
+    let videoElement, videoTexture, videoDimensions = { width: 640, height: 480 }; // Default
+    let planeGeometry, planeMaterial, planeMesh; // Foreground plane (the one being calibrated/unwarped)
+    let backgroundPlaneGeometry, backgroundPlaneMaterial, backgroundPlaneMesh; // Background plane (dimmed full video)
+    let svgOverlay, svgPolygon, svgCircles = [];
+    let container;
+
+    let currentResolution = { width: 0, height: 0 };
+    let availableResolutions = [ // Common resolutions to offer
+        { width: 640, height: 480 },
+        { width: 1280, height: 720 },
+        { width: 1920, height: 1080 },
+        // Add more common resolutions if desired
+    ];
+    let currentStream = null;
+    let currentVideoTrack = null;
+
+    let isDragging = false;
+    let draggedControlPointIndex = -1;
+    let mode = 'calibration'; // 'calibration' or 'unwarped'
+    let targetAspectRatio = 16 / 9; // Default aspect ratio for unwarped view
+    let sourcePointsUV = [ // Stored as Vector2 (u, v) - (0,0) is bottom-left in THREE UV
+        new THREE.Vector2(INITIAL_PADDING, 1 - INITIAL_PADDING),       // Top-left
+        new THREE.Vector2(1 - INITIAL_PADDING, 1 - INITIAL_PADDING),   // Top-right
+        new THREE.Vector2(1 - INITIAL_PADDING, INITIAL_PADDING),       // Bottom-right
+        new THREE.Vector2(INITIAL_PADDING, INITIAL_PADDING)            // Bottom-left
+    ];
+    let isFlippedX = false;
+    let isFlippedY = false;
+
+    // --- DOM Elements ---
+    const modeToggleButton = document.getElementById('mode-toggle');
+    const flipXCheckbox = document.getElementById('flip-x');
+    const flipYCheckbox = document.getElementById('flip-y');
+    const resolutionSelect = document.getElementById('resolution-select');
+    const aspectRatioControl = document.getElementById('aspect-ratio-control');
+    const aspectRatioWInput = document.getElementById('aspect-ratio-w');
+    const aspectRatioHInput = document.getElementById('aspect-ratio-h');
+    const fullscreenButton = document.getElementById('fullscreen');
+    const canvasElement = document.getElementById('webgl');
+    container = document.getElementById('container');
+    videoElement = document.getElementById('webcam-video');
+    svgOverlay = document.getElementById('overlay');
+    svgPolygon = document.getElementById('outline-polygon');
+
+    // --- Utility Functions ---
+    function gcd(a, b) {
+        if (!b) {
+            return a;
+        }
+        return gcd(b, a % b);
+    }
+
+    // --- Initialization ---
+    function init() {
+        // Scene
+        scene = new THREE.Scene();
+
+        // Camera (Orthographic)
+        camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+        camera.position.z = 1;
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(container.clientWidth, container.clientHeight);
+
+        // Video Texture (placeholder initially)
+        videoTexture = new THREE.VideoTexture(videoElement);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat; // Or RGBFormat depending on source
+        window.videoTexture = videoTexture;
+
+        // Foreground Plane Geometry (10x10 grid) - The main interactive plane
+        planeGeometry = new THREE.PlaneGeometry(1, 1, GRID_SIZE, GRID_SIZE);
+        planeMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.DoubleSide });
+        planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        scene.add(planeMesh);
+
+        // --- Background Plane (Dimmed Full Video) ---
+        backgroundPlaneGeometry = new THREE.PlaneGeometry(1, 1); // Simple 1x1 plane, scaled later
+        backgroundPlaneMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            opacity: 0.4,       // Semi-transparent
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false  // Avoid issues with transparency rendering order
+        });
+        backgroundPlaneMesh = new THREE.Mesh(backgroundPlaneGeometry, backgroundPlaneMaterial);
+        backgroundPlaneMesh.position.z = -0.01; // Position slightly behind the main plane
+        backgroundPlaneMesh.visible = false;   // Initially hidden (only visible in calibration mode)
+        scene.add(backgroundPlaneMesh);
+
+        // SVG Overlay Setup
+        setupSVGControls();
+
+        // UI Event Listeners
+        modeToggleButton.addEventListener('click', toggleMode);
+        flipXCheckbox.addEventListener('input', toggleFlipX);
+        flipYCheckbox.addEventListener('input', toggleFlipY);
+        resolutionSelect.addEventListener('input', changeResolution);
+        aspectRatioWInput.addEventListener('input', updateAspectRatio);
+        aspectRatioHInput.addEventListener('input', updateAspectRatio);
+        fullscreenButton.addEventListener('click', toggleFullscreen);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        // Start Webcam
+        populateResolutionSelect();
+        setupWebcam();
+
+        // Start Animation Loop
+        animate();
+
+        // Handle Window Resize
+        window.addEventListener('resize', onWindowResize);
+    }
+
+    // --- Webcam & Resolution ---
+    async function setupWebcam() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const selectedResolution = availableResolutions[resolutionSelect.selectedIndex];
+        const constraints = {
+            video: {
+                width: { ideal: selectedResolution.width },
+                height: { ideal: selectedResolution.height },
+            }
+        };
+
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            videoElement.srcObject = currentStream;
+            videoElement.onloadedmetadata = () => {
+                videoDimensions.width = videoElement.videoWidth;
+                videoDimensions.height = videoElement.videoHeight;
+                console.log(`Webcam started: ${videoDimensions.width}x${videoDimensions.height}`);
+
+                currentResolution.width = videoDimensions.width;
+                currentResolution.height = videoDimensions.height;
+                updateResolutionSelectValue(currentResolution.width, currentResolution.height);
+
+                // Calculate aspect ratio and update UI using GCD
+                targetAspectRatio = videoDimensions.width / videoDimensions.height;
+                const common = gcd(videoDimensions.width, videoDimensions.height);
+                aspectRatioWInput.value = videoDimensions.width / common;
+                aspectRatioHInput.value = videoDimensions.height / common;
+
+                calculateInitialPoints();
+                updateBackgroundPlaneSize();
+                applyCurrentModeGeometry();
+                if (backgroundPlaneMesh) {
+                    backgroundPlaneMesh.visible = (mode === 'calibration');
+                }
+                onWindowResize();
+            };
+
+            const tracks = currentStream.getVideoTracks();
+            if (tracks.length > 0) {
+                currentVideoTrack = tracks[0];
+            }
+
+        } catch (err) {
+            console.error("Error accessing webcam:", err);
+            alert("웹캠에 접근할 수 없습니다. 권한을 확인하거나 다른 카메라를 선택해주세요.");
+        }
+    }
+
+    function populateResolutionSelect() {
+        resolutionSelect.innerHTML = ''; // Clear existing options
+        availableResolutions.forEach((res, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${res.width}x${res.height}`;
+            resolutionSelect.appendChild(option);
+        });
+        updateResolutionSelectValue(1920, 1080); // Attempt to select preferred default
+    }
+
+    function updateResolutionSelectValue(width, height) {
+        for (let i = 0; i < resolutionSelect.options.length; i++) {
+            const res = availableResolutions[i];
+            if (res.width === width && res.height === height) {
+                resolutionSelect.selectedIndex = i;
+                return;
+            }
+        }
+    }
+
+    function changeResolution() {
+        console.log(`Changing resolution to: ${availableResolutions[resolutionSelect.selectedIndex].width}x${availableResolutions[resolutionSelect.selectedIndex].height}`);
+        setupWebcam(); // Re-setup webcam with new constraints
+    }
+
+    // --- Control Points & Calibration ---
+    function setupSVGControls() {
+        svgCircles.forEach(circle => circle.remove());
+        svgCircles = [];
+
+        for (let i = 0; i < 4; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', CONTROL_POINT_RADIUS);
+            circle.setAttribute('data-index', i);
+            circle.addEventListener('pointerdown', onPointerDown);
+            svgOverlay.appendChild(circle);
+            svgCircles.push(circle);
+        }
+        updateSVGOverlay();
+    }
+
+    function calculateInitialPoints() {
+        sourcePointsUV = [
+            new THREE.Vector2(INITIAL_PADDING, 1 - INITIAL_PADDING),       // Top-left
+            new THREE.Vector2(1 - INITIAL_PADDING, 1 - INITIAL_PADDING),   // Top-right
+            new THREE.Vector2(1 - INITIAL_PADDING, INITIAL_PADDING),       // Bottom-right
+            new THREE.Vector2(INITIAL_PADDING, INITIAL_PADDING)            // Bottom-left
+        ];
+    }
+
+    function updateSVGOverlay() {
+        if (!container || svgCircles.length !== 4 || !camera) return;
+
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        const points = [];
+        const flippedUV = getFlippedSourcePoints();
+
+        for (let i = 0; i < 4; i++) {
+            const screenPos = uvToScreen(flippedUV[i]); // Map UV to screen coordinates
+            if (screenPos && isFinite(screenPos.x) && isFinite(screenPos.y)) {
+                const clampedX = Math.max(CONTROL_POINT_RADIUS, Math.min(rect.width - CONTROL_POINT_RADIUS, screenPos.x));
+                const clampedY = Math.max(CONTROL_POINT_RADIUS, Math.min(rect.height - CONTROL_POINT_RADIUS, screenPos.y));
+
+                svgCircles[i].setAttribute('cx', clampedX);
+                svgCircles[i].setAttribute('cy', clampedY);
+                points.push(`${clampedX},${clampedY}`);
+            } else {
+                svgCircles[i].setAttribute('cx', 0);
+                svgCircles[i].setAttribute('cy', 0);
+                points.push(`0,0`);
+            }
+        }
+        svgPolygon.setAttribute('points', points.join(' '));
+    }
+
+    function onPointerDown(event) {
+        if (mode !== 'calibration') return;
+        isDragging = true;
+        draggedControlPointIndex = parseInt(event.target.getAttribute('data-index'));
+        event.target.style.cursor = 'grabbing';
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointerleave', onPointerUp);
+    }
+
+    function onPointerMove(event) {
+        if (!isDragging || draggedControlPointIndex < 0) return;
+        event.preventDefault();
+
+        const newUV = screenToUV(event.clientX, event.clientY);
+
+        if (newUV) {
+            // Store the canonical (unflipped) UV
+            let targetU = newUV.x;
+            let targetV = newUV.y;
+            
+            // Apply reverse flip if needed
+            if (isFlippedX) targetU = 1.0 - targetU;
+            if (isFlippedY) targetV = 1.0 - targetV;
+
+            sourcePointsUV[draggedControlPointIndex].set(
+                Math.max(0, Math.min(1, targetU)), // Clamp UV 0-1
+                Math.max(0, Math.min(1, targetV))
+            );
+
+            updateGeometryCalibration();
+            updateSVGOverlay();
+        }
+    }
+
+    function onPointerUp(event) {
+        if (!isDragging) return;
+        
+        if (event.target && event.target.style && event.target.style.cursor === 'grabbing') {
+            event.target.style.cursor = 'grab';
+        } else if (draggedControlPointIndex >= 0 && svgCircles[draggedControlPointIndex]) {
+            svgCircles[draggedControlPointIndex].style.cursor = 'grab';
+        }
+
+        isDragging = false;
+        draggedControlPointIndex = -1;
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointerleave', onPointerUp);
+    }
+
+    // --- Coordinate Conversion ---
+    function screenToUV(screenX, screenY) {
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
+
+        // Get video display bounds within container
+        const displayBounds = getVideoDisplayBounds();
+        
+        // Calculate click position relative to container, not to viewport
+        const containerX = screenX - rect.left;
+        const containerY = screenY - rect.top;
+        
+        // Adjust coordinates relative to video display area
+        const relX = containerX - displayBounds.x;
+        const relY = containerY - displayBounds.y;
+        
+        // Calculate UV coordinates (0-1)
+        let u = relX / displayBounds.width;
+        let v = 1.0 - (relY / displayBounds.height); // Flip Y for UV origin
+        
+        // Clamp values
+        u = Math.max(0, Math.min(1, u));
+        v = Math.max(0, Math.min(1, v));
+
+        return new THREE.Vector2(u, v);
+    }
+
+    function uvToScreen(uv) {
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
+        
+        // Get video display bounds within container
+        const displayBounds = getVideoDisplayBounds();
+        
+        // Convert UV to screen coordinates within container
+        const containerX = displayBounds.x + (uv.x * displayBounds.width);
+        const containerY = displayBounds.y + ((1.0 - uv.y) * displayBounds.height);
+
+        return { x: containerX, y: containerY };
+    }
+    
+    // New function to calculate video display bounds
+    function getVideoDisplayBounds() {
+        // Only use container dimensions, not position
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const containerAspect = width / height;
+        const videoAspect = videoDimensions.width / videoDimensions.height;
+        
+        let displayWidth, displayHeight, offsetX, offsetY;
+        
+        if (containerAspect > videoAspect) {
+            // Container is wider than video - fit by height
+            displayHeight = height;
+            displayWidth = displayHeight * videoAspect;
+            offsetX = (width - displayWidth) / 2;
+            offsetY = 0;
+        } else {
+            // Container is taller than video - fit by width
+            displayWidth = width;
+            displayHeight = displayWidth / videoAspect;
+            offsetX = 0;
+            offsetY = (height - displayHeight) / 2;
+        }
+        
+        return {
+            x: offsetX,
+            y: offsetY,
+            width: displayWidth,
+            height: displayHeight
+        };
+    }
+
+    // --- Geometry Update ---
+    function updateGeometryCalibration() {
+        if (!planeGeometry || !container || !camera) return;
+
+        const positionAttribute = planeGeometry.attributes.position;
+        const uvAttribute = planeGeometry.attributes.uv;
+        const segmentsX = GRID_SIZE;
+        const segmentsY = GRID_SIZE;
+
+        const displayBounds = getVideoDisplayBounds();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        if (width === 0 || height === 0) return;
+
+        // Get flipped UVs for display
+        const flippedUVs = getFlippedSourcePoints();
+        
+        // Convert UV points to world coordinates
+        const worldCorners = flippedUVs.map(uv => {
+            const screenPos = uvToScreen(uv);
+            if (!screenPos) return new THREE.Vector2(0, 0);
+            
+            // Convert container-relative coordinates to normalized device coordinates (-1 to 1)
+            const ndcX = (screenPos.x / width) * 2 - 1;
+            const ndcY = -(screenPos.y / height) * 2 + 1;
+            
+            // Convert NDC to world coordinates based on camera view
+            const viewWidth = camera.right - camera.left;
+            const viewHeight = camera.top - camera.bottom;
+            const worldX = ndcX * (viewWidth / 2);
+            const worldY = ndcY * (viewHeight / 2);
+            
+            return new THREE.Vector2(worldX, worldY);
+        });
+
+        // Interpolate positions and UVs
+        for (let j = 0; j <= segmentsY; j++) {
+            const vFrac = j / segmentsY;
+            const posLeft = worldCorners[3].clone().lerp(worldCorners[0], vFrac);
+            const posRight = worldCorners[2].clone().lerp(worldCorners[1], vFrac);
+            
+            // Use the original sourcePointsUV for texture mapping (not flipped)
+            const uvLeft = sourcePointsUV[3].clone().lerp(sourcePointsUV[0], vFrac);
+            const uvRight = sourcePointsUV[2].clone().lerp(sourcePointsUV[1], vFrac);
+
+            for (let i = 0; i <= segmentsX; i++) {
+                const hFrac = i / segmentsX;
+                const index = j * (segmentsX + 1) + i;
+                
+                const finalPos = posLeft.clone().lerp(posRight, hFrac);
+                const finalUV = uvLeft.clone().lerp(uvRight, hFrac);
+                
+                // Apply flips to UVs directly instead of texture manipulation
+                let u = finalUV.x;
+                let v = finalUV.y;
+                if (isFlippedX) u = 1.0 - u;
+                if (isFlippedY) v = 1.0 - v;
+                
+                positionAttribute.setXYZ(index, finalPos.x, finalPos.y, 0);
+                uvAttribute.setXY(index, u, v);
+            }
+        }
+
+        positionAttribute.needsUpdate = true;
+        uvAttribute.needsUpdate = true;
+    }
+
+    // updateGeometryUnwarped 함수를 수정합니다.
+    function updateGeometryUnwarped() {
+        if (!planeGeometry || !camera) return;
+
+        const positionAttribute = planeGeometry.attributes.position;
+        const uvAttribute = planeGeometry.attributes.uv;
+        const segmentsX = GRID_SIZE;
+        const segmentsY = GRID_SIZE;
+
+        // 카메라 뷰 영역의 크기를 구합니다
+        const viewWidth = camera.right - camera.left;
+        const viewHeight = camera.top - camera.bottom;
+        if (viewWidth <= 0 || viewHeight <= 0) return;
+
+        // 타겟 화면비에 맞게 크기 조정
+        let targetWidth = viewWidth;
+        let targetHeight = viewHeight;
+
+        // 화면비에 맞게 크기 조정 (카메라 뷰 내에서 최대 크기로)
+        if (viewWidth / viewHeight > targetAspectRatio) {
+            // 뷰가 더 넓은 경우 높이에 맞춤
+            targetWidth = targetHeight * targetAspectRatio;
+        } else {
+            // 뷰가 더 높은 경우 너비에 맞춤
+            targetHeight = targetWidth / targetAspectRatio;
+        }
+
+        const halfWidth = targetWidth / 2;
+        const halfHeight = targetHeight / 2;
+
+        // 사용자가 calibration 모드에서 설정한 네 점의 UV 좌표 (source points)
+        // 순서: 좌상, 우상, 우하, 좌하
+        const srcPoints = [
+            sourcePointsUV[0].clone(), // 좌상
+            sourcePointsUV[1].clone(), // 우상
+            sourcePointsUV[2].clone(), // 우하
+            sourcePointsUV[3].clone()  // 좌하
+        ];
+
+        // Perspective transform matrix 계산
+        // 이 부분은 아래의 perspective 행렬 계산 코드로 대체됩니다
+        
+        // 모든 격자점에 대해 position과 UV 값을 설정
+        for (let j = 0; j <= segmentsY; j++) {
+            const v = j / segmentsY;
+            
+            for (let i = 0; i <= segmentsX; i++) {
+                const u = i / segmentsX;
+                const index = j * (segmentsX + 1) + i;
+                
+                // 위치는 타겟 화면비의 직사각형 내에 위치시킵니다
+                const x = -halfWidth + u * targetWidth;
+                const y = -halfHeight + v * targetHeight;
+                positionAttribute.setXYZ(index, x, y, 0);
+                
+                // Unwarp UV 좌표 계산 - perspective transform 적용
+                // (u,v) 좌표를 이용해 calibration 영역 내의 실제 UV 좌표를 계산
+                const unwarpedUV = perspectiveTransform(u, v, srcPoints);
+                
+                // 반전 적용 (필요한 경우)
+                let texU = unwarpedUV.x;
+                let texV = unwarpedUV.y;
+                if (isFlippedX) texU = 1.0 - texU;
+                if (isFlippedY) texV = 1.0 - texV;
+                
+                uvAttribute.setXY(index, texU, texV);
+            }
+        }
+
+        positionAttribute.needsUpdate = true;
+        uvAttribute.needsUpdate = true;
+
+        planeMesh.scale.x = isFlippedX ? -1 : 1;
+        planeMesh.scale.y = isFlippedY ? -1 : 1;
+    }
+
+    // Perspective transform을 적용하는 함수
+    function perspectiveTransform(u, v, srcQuad) {
+        // 대상 좌표는 직사각형 (normalized coordinates)
+        const dstQuad = [
+            new THREE.Vector2(0, 1),  // 좌상
+            new THREE.Vector2(1, 1),  // 우상
+            new THREE.Vector2(1, 0),  // 우하
+            new THREE.Vector2(0, 0)   // 좌하
+        ];
+        
+        // Projective transformation을 계산 (homography)
+        // 아래 계산은 four-point mapping 공식을 기반으로 합니다
+        const H = computeHomography(dstQuad, srcQuad);
+        
+        // 해당 매핑 함수를 통해 UV 좌표 변환
+        const denominator = H[6] * u + H[7] * v + H[8];
+        if (Math.abs(denominator) < 1e-10) {
+            return new THREE.Vector2(0.5, 0.5); // 안전값
+        }
+        
+        const newU = (H[0] * u + H[1] * v + H[2]) / denominator;
+        const newV = (H[3] * u + H[4] * v + H[5]) / denominator;
+        
+        // UV 좌표의 경계 확인 (0-1 사이)
+        return new THREE.Vector2(
+            Math.max(0, Math.min(1, newU)),
+            Math.max(0, Math.min(1, newV))
+        );
+    }
+
+    // 호모그래피 행렬 계산
+    function computeHomography(srcPoints, dstPoints) {
+        // 호모그래피 계산을 위한 행렬 설정
+        const A = [];
+        
+        for (let i = 0; i < 4; i++) {
+            const s = srcPoints[i];
+            const d = dstPoints[i];
+            
+            // 각 점에 대한 호모그래피 방정식 구성
+            A.push([
+                s.x, s.y, 1, 0, 0, 0, -d.x * s.x, -d.x * s.y, -d.x
+            ]);
+            
+            A.push([
+                0, 0, 0, s.x, s.y, 1, -d.y * s.x, -d.y * s.y, -d.y
+            ]);
+        }
+        
+        // Solve AH = 0 using SVD (Singular Value Decomposition)
+        // 여기서는 간소화된 Gaussian elimination을 사용
+        const H = solveHomographyEquation(A);
+        
+        // 행렬 정규화
+        if (Math.abs(H[8]) > 1e-10) {
+            for (let i = 0; i < 8; i++) {
+                H[i] /= H[8];
+            }
+            H[8] = 1.0;
+        }
+        
+        return H;
+    }
+
+    // 호모그래피 방정식 해결 (simplified Gaussian elimination)
+    function solveHomographyEquation(A) {
+        // Deep copy로 행렬 복사
+        const M = A.map(row => [...row]);
+        const n = M.length;
+        
+        // 가우스 소거법 (pivoting 포함)
+        for (let i = 0; i < n - 1; i++) {
+            // Partial pivoting
+            let maxRow = i;
+            let maxVal = Math.abs(M[i][i]);
+            
+            for (let j = i + 1; j < n; j++) {
+                const absVal = Math.abs(M[j][i]);
+                if (absVal > maxVal) {
+                    maxVal = absVal;
+                    maxRow = j;
+                }
+            }
+            
+            // Swap rows if needed
+            if (maxRow !== i) {
+                [M[i], M[maxRow]] = [M[maxRow], M[i]];
+            }
+            
+            // 소거
+            for (let j = i + 1; j < n; j++) {
+                const factor = M[j][i] / M[i][i];
+                for (let k = i; k < M[i].length; k++) {
+                    M[j][k] -= factor * M[i][k];
+                }
+            }
+        }
+        
+        // 호모그래피 행렬 초기화
+        const H = Array(9).fill(0);
+        H[8] = 1.0; // 마지막 요소는 1로 정규화
+        
+        // 역대입으로 해 구하기 (simplified, set h33=1)
+        // 마지막 행은 h33=1 제약 조건으로 처리됨
+        for (let i = n - 1; i >= 0; i--) {
+            let sum = 0;
+            for (let j = i + 1; j < 9; j++) {
+                if (j < M[i].length) {
+                    sum += M[i][j] * H[j];
+                }
+            }
+            
+            if (i < 8) {
+                H[i] = (0 - sum) / M[i][i];
+            }
+        }
+        
+        return H;
+    }
+
+    function updateBackgroundPlaneSize() {
+        if (!backgroundPlaneMesh || !camera || camera.right - camera.left <= 0) {
+            return;
+        }
+
+        // Get the video display bounds that maintain aspect ratio
+        const displayBounds = getVideoDisplayBounds();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        // Set background plane to match the video display bounds
+        const viewWidth = camera.right - camera.left;
+        const viewHeight = camera.top - camera.bottom;
+        
+        // Calculate scale relative to camera view
+        const scaleX = (displayBounds.width / width) * viewWidth;
+        const scaleY = (displayBounds.height / height) * viewHeight;
+        
+        // Position to center in container
+        const posX = ((displayBounds.x / width) * viewWidth) - (viewWidth / 2) + (scaleX / 2);
+        const posY = -((displayBounds.y / height) * viewHeight) + (viewHeight / 2) - (scaleY / 2);
+        
+        backgroundPlaneMesh.scale.set(scaleX, scaleY, 1);
+        backgroundPlaneMesh.position.set(posX, posY, -0.01);
+    }
+
+    // --- UI Logic ---
+    function toggleMode() {
+        mode = (mode === 'calibration') ? 'unwarped' : 'calibration';
+        modeToggleButton.textContent = `모드: ${mode === 'calibration' ? 'Calibration' : 'Unwarped'}`;
+
+        if (mode === 'calibration') {
+            aspectRatioControl.classList.add('hidden');
+            svgOverlay.classList.remove('hidden');
+            if (backgroundPlaneMesh) backgroundPlaneMesh.visible = true;
+            updateSVGOverlay();
+            planeMesh.scale.x = 1;
+            planeMesh.scale.y = 1;
+        } else { // mode === 'unwarped'
+            aspectRatioControl.classList.remove('hidden');
+            svgOverlay.classList.add('hidden');
+            if (backgroundPlaneMesh) backgroundPlaneMesh.visible = false;
+        }
+        applyCurrentModeGeometry();
+        updateBackgroundPlaneSize();
+    }
+
+    function getFlippedSourcePoints() {
+        // Calculate UVs for display considering current flip state
+        return sourcePointsUV.map(uv => {
+            let u = uv.x;
+            let v = uv.y;
+            if (isFlippedX) u = 1.0 - u;
+            if (isFlippedY) v = 1.0 - v;
+            return new THREE.Vector2(u, v);
+        });
+    }
+
+    function toggleFlipX() {
+        isFlippedX = !isFlippedX;
+        videoTexture.repeat.x = isFlippedX ? -1 : 1;
+        videoTexture.offset.x = isFlippedX ? 1 : 0;
+        videoTexture.needsUpdate = true;
+        
+        if (mode === 'calibration') {
+            updateGeometryCalibration();
+            updateSVGOverlay();
+        } else {
+            updateGeometryUnwarped();
+        }
+    }
+
+    function toggleFlipY() {
+        isFlippedY = !isFlippedY;
+        videoTexture.repeat.y = isFlippedY ? -1 : 1;
+        videoTexture.offset.y = isFlippedY ? 1 : 0;
+        videoTexture.needsUpdate = true;
+        
+        if (mode === 'calibration') {
+            updateGeometryCalibration();
+            updateSVGOverlay();
+        } else {
+            updateGeometryUnwarped();
+        }
+    }
+
+    function updateAspectRatio() {
+        const aspectW = parseInt(aspectRatioWInput.value, 10);
+        const aspectH = parseInt(aspectRatioHInput.value, 10);
+
+        if (!isNaN(aspectW) && aspectW > 0 && !isNaN(aspectH) && aspectH > 0) {
+            targetAspectRatio = aspectW / aspectH;
+            console.log(`Target Aspect Ratio set to: ${aspectW}:${aspectH} (${targetAspectRatio.toFixed(3)})`);
+            if (mode === 'unwarped') {
+                updateGeometryUnwarped();
+            }
+            onWindowResize();
+        } else {
+            console.warn("Invalid aspect ratio input. Both values must be positive numbers.");
+        }
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+            const el = document.body;
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+        }
+    }
+
+    function handleFullscreenChange() {
+        setTimeout(onWindowResize, 100);
+    }
+
+    function applyCurrentModeGeometry() {
+        if (mode === 'calibration') {
+            updateGeometryCalibration();
+        } else {
+            updateGeometryUnwarped();
+        }
+    }
+
+    // --- Rendering & Resizing ---
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+            videoTexture.needsUpdate = true;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        if (!renderer || !camera || !container) return;
+
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        if (width === 0 || height === 0) return;
+
+        renderer.setSize(width, height);
+
+        // Adjust orthographic camera view volume based on container size
+        const displayAspect = width / height;
+        let viewHeight = 1.0;
+        let viewWidth = displayAspect * viewHeight;
+
+        camera.left = -viewWidth / 2;
+        camera.right = viewWidth / 2;
+        camera.top = viewHeight / 2;
+        camera.bottom = -viewHeight / 2;
+        camera.updateProjectionMatrix();
+
+        // Update sizes of planes and SVG overlay
+        updateBackgroundPlaneSize();
+        applyCurrentModeGeometry();
+        updateSVGOverlay();
+    }
+
+    // --- Start Application ---
+    init();
+
+</script>
+
+</body>
+</html>
