@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaPipe 손 인식 드로잉</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #e8e8e8;
+            height: 100vh; /* 전체 높이 사용 */
+            overflow: hidden; /* 스크롤 방지 */
+        }
+        header {
+            background-color: #ffffff;
+            padding: 10px 20px; /* 약간 줄임 */
+            margin-bottom: 10px; /* 간격 줄임 */
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+            width: fit-content;
+            z-index: 10; /* 캔버스 위에 표시 */
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        label {
+            font-size: 0.9em;
+            color: #333;
+        }
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
+        button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #6c757d;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #5a6268;
+        }
+        #canvas-container {
+            position: relative; /* 자식 요소(캔버스) absolute 포지셔닝 기준 */
+            width: 95%; /* 화면 너비의 95% */
+            flex-grow: 1; /* 남은 세로 공간 차지 */
+            display: flex; /* 내부 요소 정렬 위해 */
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+             overflow: hidden; /* 내부 캔버스 넘침 방지 */
+        }
+        canvas {
+            position: absolute; /* 캔버스 겹치기 */
+            top: 0;
+            left: 0;
+            display: block;
+            /* 크기는 JS에서 비율에 맞게 조정 */
+            max-width: 100%;
+            max-height: 100%;
+             border-radius: 5px;
+        }
+        #feedback-canvas {
+             /* 상호작용이 아래 캔버스에 전달되도록 */
+            /* pointer-events: none; */
+            /* 팔레트 상호작용 위해 필요 */
+             z-index: 5; /* 비디오/드로잉보다 위 */
+        }
+         #drawing-canvas {
+             z-index: 4; /* 비디오보다 위 */
+         }
+         #video-canvas {
+             z-index: 3; /* 배경보다 위 */
+         }
+          #background-canvas {
+              background-color: #ffffff; /* 기본 흰색 배경 */
+              z-index: 2;
+          }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.3em;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: block; /* 기본 표시 */
+            z-index: 100;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <button id="clearButton">다 지우기</button>
+    <div class="control-group">
+        <input type="checkbox" id="hideWebcam">
+        <label for="hideWebcam">웹캠 숨기기</label>
+    </div>
+</header>
+
+<div id="loading">모델과 웹캠을 로딩 중입니다...</div>
+
+<div id="canvas-container">
+    <canvas id="background-canvas"></canvas>
+    <canvas id="video-canvas"></canvas>
+    <canvas id="drawing-canvas"></canvas>
+    <canvas id="feedback-canvas"></canvas>
+</div>
+
+<video id="webcam" class="hidden" autoplay playsinline></video>
+
+<script type="module">
+    import { HandLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+    // --- DOM 요소 ---
+    const video = document.getElementById('webcam');
+    const loadingDiv = document.getElementById('loading');
+    const clearButton = document.getElementById('clearButton');
+    const hideWebcamCheckbox = document.getElementById('hideWebcam');
+    const canvasContainer = document.getElementById('canvas-container');
+
+    // --- 캔버스 및 컨텍스트 ---
+    const backgroundCanvas = document.getElementById('background-canvas');
+    const videoCanvas = document.getElementById('video-canvas');
+    const drawingCanvas = document.getElementById('drawing-canvas');
+    const feedbackCanvas = document.getElementById('feedback-canvas'); // 랜드마크, 팔레트, 브러시 피드백용
+
+    const backgroundCtx = backgroundCanvas.getContext('2d');
+    const videoCtx = videoCanvas.getContext('2d');
+    const drawingCtx = drawingCanvas.getContext('2d');
+    const feedbackCtx = feedbackCanvas.getContext('2d');
+
+    // --- MediaPipe 설정 ---
+    const MAX_HANDS = 4;
+    const DEFAULT_HANDS = 2;
+    let handLandmarker;
+    let drawingUtils; // feedbackCtx 용으로 생성
+
+    // --- 상태 변수 ---
+    let webcamRunning = false;
+    let webcamHidden = false;
+    let lastVideoTime = -1;
+    let targetWidth = 1280; // 목표 해상도 (16:9 비율)
+    let targetHeight = 720;
+
+    // --- 그리기 관련 변수 ---
+    const PALETTE_COLORS = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#000000"]; // 빨, 녹, 파, 노, 검
+    const ERASER_COLOR = "#FFFFFF"; // 지우개는 배경색
+    const PALETTE_HEIGHT = 50;
+    const PALETTE_ITEM_WIDTH = 50;
+    const ERASER_WIDTH = 60;
+    const PINCH_THRESHOLD = 0.06; // 엄지-검지 끝 사이 거리 임계값 (정규화된 좌표 기준)
+    const DRAWING_LINE_WIDTH = 10; // 기본 선 굵기
+    const ERASER_LINE_WIDTH = 20; // 지우개 굵기
+
+    let currentDrawingColor = PALETTE_COLORS[4]; // 기본 검정색
+    let isErasing = false;
+    let activeTouches = {}; // 손 ID별 그리기 상태 관리 { handId: { isPinching: false, lastPoint: null } }
+
+    // --- 팔레트 및 지우개 위치 계산 ---
+    let paletteRects = [];
+    let eraserRect;
+
+    function calculatePalettePositions(canvasWidth) {
+        paletteRects = [];
+        const totalPaletteWidth = PALETTE_COLORS.length * PALETTE_ITEM_WIDTH + ERASER_WIDTH + 10; // 색상 + 지우개 + 간격
+        let startX = (canvasWidth - totalPaletteWidth) / 2; // 중앙 정렬
+
+        PALETTE_COLORS.forEach((color, index) => {
+            const x = startX + index * PALETTE_ITEM_WIDTH;
+            paletteRects.push({ x: x, y: 10, width: PALETTE_ITEM_WIDTH, height: PALETTE_HEIGHT, color: color });
+        });
+
+        const eraserX = startX + PALETTE_COLORS.length * PALETTE_ITEM_WIDTH + 10; // 약간 간격 둠
+        eraserRect = { x: eraserX, y: 10, width: ERASER_WIDTH, height: PALETTE_HEIGHT };
+    }
+
+    // --- HandLandmarker 초기화 ---
+    async function createHandLandmarker() {
+        try {
+            const vision = await FilesetResolver.forVisionTasks(
+                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+            );
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                    delegate: "GPU"
+                },
+                runningMode: "VIDEO",
+                numHands: MAX_HANDS, // 최대 4개 인식
+                minHandDetectionConfidence: 0.5,
+                minHandPresenceConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            // DrawingUtils는 피드백 캔버스에 그림
+            drawingUtils = new DrawingUtils(feedbackCtx);
+            console.log("Hand Landmarker 모델 로드 완료.");
+            enableCam();
+        } catch (error) {
+            console.error("Hand Landmarker 모델 로드 실패:", error);
+            loadingDiv.innerText = "오류: 모델 로드 실패. 콘솔 확인";
+        }
+    }
+
+    // --- 웹캠 활성화 ---
+    function enableCam() {
+        if (!handLandmarker) return;
+
+        const constraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                aspectRatio: 16 / 9 // 16:9 비율 요청
+            }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+                video.srcObject = stream;
+                video.addEventListener("loadeddata", startWebcamProcessing);
+            })
+            .catch((err) => {
+                console.error("웹캠 접근 오류:", err);
+                loadingDiv.innerText = "오류: 웹캠 접근 불가";
+            });
+    }
+
+    // --- 웹캠 처리 시작 ---
+    function startWebcamProcessing() {
+        if (webcamRunning) return; // 이미 실행 중이면 중복 실행 방지
+
+        // 비디오 실제 크기로 목표 크기 업데이트 (요청과 다를 수 있음)
+        targetWidth = video.videoWidth;
+        targetHeight = video.videoHeight;
+
+        if (targetWidth === 0 || targetHeight === 0) {
+             console.warn("비디오 크기 아직 0, 잠시 후 재시도");
+             setTimeout(startWebcamProcessing, 100); // 잠시 후 다시 시도
+             return;
+        }
+
+        console.log(`웹캠 시작됨. 해상도: ${targetWidth}x${targetHeight}`);
+
+        // 모든 캔버스 크기 조정
+        resizeCanvases();
+        // 팔레트 위치 계산
+        calculatePalettePositions(feedbackCanvas.width);
+
+        webcamRunning = true;
+        lastVideoTime = -1;
+        loadingDiv.style.display = 'none';
+        predictWebcam();
+    }
+
+    // --- 캔버스 크기 조정 ---
+    function resizeCanvases() {
+        const containerWidth = canvasContainer.clientWidth;
+        const containerHeight = canvasContainer.clientHeight;
+
+        // 16:9 비율 유지하며 컨테이너에 맞춤
+        let newWidth, newHeight;
+        if (containerWidth / containerHeight > 16 / 9) {
+            // 컨테이너가 비디오보다 가로로 넓음 -> 높이에 맞춤
+            newHeight = containerHeight;
+            newWidth = (newHeight * 16) / 9;
+        } else {
+            // 컨테이너가 비디오보다 세로로 넓거나 같음 -> 너비에 맞춤
+            newWidth = containerWidth;
+            newHeight = (newWidth * 9) / 16;
+        }
+
+        // 모든 캔버스 크기 설정
+        [backgroundCanvas, videoCanvas, drawingCanvas, feedbackCanvas].forEach(canvas => {
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            // CSS로 중앙 정렬을 위해 스타일 조정
+            canvas.style.width = `${newWidth}px`;
+            canvas.style.height = `${newHeight}px`;
+            // absolute position 이므로 left/top 조정으로 중앙정렬
+             canvas.style.left = `${(containerWidth - newWidth) / 2}px`;
+             canvas.style.top = `${(containerHeight - newHeight) / 2}px`;
+        });
+
+        // 리사이즈 후 팔레트 위치 재계산
+        calculatePalettePositions(feedbackCanvas.width);
+         // 드로잉 컨텍스트 선 스타일 초기화 (리사이즈 시 초기화될 수 있음)
+        setupDrawingContext();
+        console.log(`캔버스 크기 조정: ${newWidth}x${newHeight}`);
+    }
+
+    // --- 드로잉 컨텍스트 설정 ---
+    function setupDrawingContext() {
+        drawingCtx.lineWidth = DRAWING_LINE_WIDTH;
+        drawingCtx.strokeStyle = currentDrawingColor;
+        drawingCtx.lineCap = "round";
+        drawingCtx.lineJoin = "round";
+        drawingCtx.globalCompositeOperation = 'source-over'; // 기본 그리기 모드
+    }
+
+
+    // --- 실시간 예측 루프 ---
+    async function predictWebcam() {
+        if (!webcamRunning || !handLandmarker || video.paused || video.ended) {
+            webcamRunning = false; // 비디오 중지 시 상태 업데이트
+            return;
+        }
+
+        const currentTime = video.currentTime;
+        if (currentTime > lastVideoTime) {
+            lastVideoTime = currentTime;
+
+            // 1. 피드백 캔버스 지우기 (매 프레임 새로 그림)
+            feedbackCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
+
+            // 2. 배경 또는 비디오 그리기
+            if (webcamHidden) {
+                videoCanvas.style.opacity = '0';
+            }
+            else {
+                videoCanvas.style.opacity = '1';
+            }
+            videoCtx.save();
+            videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+            // 웹캠 화면은 좌우 반전시켜 그리는 것이 자연스러움
+            videoCtx.translate(videoCanvas.width, 0);
+            videoCtx.scale(-1, 1);
+            videoCtx.drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height);
+            videoCtx.restore();
+
+            // 3. 팔레트 그리기 (피드백 캔버스에)
+            drawPalette();
+
+            // 4. 손 탐지 수행 (좌우 반전된 비디오 기준)
+            try {
+                // videoCanvas를 입력으로 사용 (좌우 반전된 상태)
+                const results = handLandmarker.detectForVideo(videoCanvas, performance.now());
+                processHandResults(results); // 결과 처리 및 그리기 로직 분리
+            } catch (error) {
+                console.error("Hand detection error:", error);
+                // 오류 발생 시 루프 중단 방지
+            }
+        }
+
+        requestAnimationFrame(predictWebcam);
+    }
+
+    // --- 팔레트 그리기 함수 ---
+    function drawPalette() {
+        // 색상 팔레트
+        paletteRects.forEach(rect => {
+            feedbackCtx.fillStyle = rect.color;
+            feedbackCtx.fillRect(rect.x, rect.y, rect.width, rect.height);
+            feedbackCtx.strokeStyle = '#CCCCCC'; // 구분선
+            feedbackCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        });
+
+        // 지우개 아이콘 (간단한 X 표시)
+        feedbackCtx.fillStyle = '#EEEEEE'; // 지우개 배경색
+        feedbackCtx.fillRect(eraserRect.x, eraserRect.y, eraserRect.width, eraserRect.height);
+        feedbackCtx.strokeStyle = '#CCCCCC';
+        feedbackCtx.strokeRect(eraserRect.x, eraserRect.y, eraserRect.width, eraserRect.height);
+        feedbackCtx.strokeStyle = '#888888'; // X자 색상
+        feedbackCtx.lineWidth = 2;
+        feedbackCtx.beginPath();
+        feedbackCtx.moveTo(eraserRect.x + 10, eraserRect.y + 10);
+        feedbackCtx.lineTo(eraserRect.x + eraserRect.width - 10, eraserRect.y + eraserRect.height - 10);
+        feedbackCtx.moveTo(eraserRect.x + eraserRect.width - 10, eraserRect.y + 10);
+        feedbackCtx.lineTo(eraserRect.x + 10, eraserRect.y + eraserRect.height - 10);
+        feedbackCtx.stroke();
+        feedbackCtx.lineWidth = 1; // 기본값 복원
+    }
+
+    // --- 랜드마크 좌표를 캔버스 좌표로 변환 ---
+    function getCanvasCoordinates(landmark) {
+        // 입력이 videoCanvas (좌우 반전된 상태)이므로 x좌표 반전 필요 없음
+        return {
+            x: landmark.x * feedbackCanvas.width,
+            y: landmark.y * feedbackCanvas.height
+        };
+    }
+
+     // --- 두 점 사이의 정규화된 거리 계산 ---
+     function calculateNormalizedDistance(p1, p2) {
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        // z는 깊이 정보로, 2D 거리에선 무시하거나 필요시 고려
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+
+    // --- 손 결과 처리 및 그리기 ---
+    function processHandResults(results) {
+        const detectedHands = results.landmarks; // 감지된 손 랜드마크 배열
+
+        // 현재 프레임에서 활성화된(감지된) 손 ID 집합
+        const currentFrameHandIds = new Set();
+
+        if (detectedHands && drawingUtils) {
+            // 각 손에 대한 처리
+            detectedHands.forEach((landmarks, handIndex) => {
+                 const handId = handIndex; // 간단하게 인덱스를 ID로 사용
+                 currentFrameHandIds.add(handId);
+
+                 // 현재 손의 터치 상태 초기화 (없으면 생성)
+                 if (!activeTouches[handId]) {
+                    activeTouches[handId] = { isPinching: false, lastPoint: null };
+                 }
+                 let touchState = activeTouches[handId];
+
+                // 1. 랜드마크 그리기 (피드백 캔버스에)
+                drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { color: "#CCCCCC", lineWidth: 1 });
+                drawingUtils.drawLandmarks(landmarks, { color: "#999999", lineWidth: 1, radius: 2 });
+
+                // 2. 주요 랜드마크 좌표 얻기 (캔버스 좌표)
+                const thumbTip = getCanvasCoordinates(landmarks[4]); // 엄지 끝
+                const indexTip = getCanvasCoordinates(landmarks[8]); // 검지 끝
+                const indexBase = getCanvasCoordinates(landmarks[5]); // 검지 뿌리 (팔레트 터치 판정용)
+
+                // 3. 팔레트 / 지우개 상호작용 (한 손만 있을 때 & 검지로 터치)
+                 // 여기서는 손 개수 제한 없이, 해당 손의 검지로 처리
+                 // if (detectedHands.length === 1) {
+                    // 팔레트 색상 확인
+                    paletteRects.forEach(rect => {
+                        if (indexTip.x >= rect.x && indexTip.x <= rect.x + rect.width &&
+                            indexTip.y >= rect.y && indexTip.y <= rect.y + rect.height) {
+                            currentDrawingColor = rect.color;
+                            isErasing = false;
+                            console.log("색상 변경:", currentDrawingColor);
+                             setupDrawingContext(); // 드로잉 컨텍스트 업데이트
+                        }
+                    });
+                    // 지우개 확인
+                    if (indexTip.x >= eraserRect.x && indexTip.x <= eraserRect.x + eraserRect.width &&
+                        indexTip.y >= eraserRect.y && indexTip.y <= eraserRect.y + eraserRect.height) {
+                         isErasing = true;
+                         console.log("지우개 활성");
+                         setupDrawingContext(); // 드로잉 컨텍스트 업데이트
+                    }
+                // }
+
+                // 4. 핀치(엄지-검지 붙임) 감지
+                const pinchDistance = calculateNormalizedDistance(landmarks[4], landmarks[8]);
+                const isCurrentlyPinching = pinchDistance < PINCH_THRESHOLD;
+
+                const pinchMidPoint = {
+                    x: (thumbTip.x + indexTip.x) / 2,
+                    y: (thumbTip.y + indexTip.y) / 2
+                };
+
+                // 5. 브러시 피드백 그리기 (피드백 캔버스에) - 핀치할 때만
+                 if (isCurrentlyPinching) {
+                     feedbackCtx.fillStyle = isErasing ? 'rgba(200, 200, 200, 0.7)' : currentDrawingColor;
+                     feedbackCtx.beginPath();
+                     feedbackCtx.arc(pinchMidPoint.x, pinchMidPoint.y, (isErasing ? ERASER_LINE_WIDTH : DRAWING_LINE_WIDTH) / 2, 0, Math.PI * 2);
+                     feedbackCtx.fill();
+                     feedbackCtx.strokeStyle = '#555555';
+                     feedbackCtx.lineWidth = 1;
+                     feedbackCtx.stroke();
+                 }
+
+
+                // 6. 그리기 / 지우기 처리 (드로잉 캔버스에)
+                if (isCurrentlyPinching) {
+                    drawingCtx.lineWidth = isErasing ? ERASER_LINE_WIDTH : DRAWING_LINE_WIDTH;
+                    drawingCtx.strokeStyle = currentDrawingColor; // 색상은 항상 설정 (지우개 시에는 composite operation이 중요)
+                    drawingCtx.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
+
+                    if (touchState.isPinching && touchState.lastPoint) {
+                        // 이전 프레임에서도 핀치 중 -> 선 이어 그리기
+                        drawingCtx.beginPath();
+                        drawingCtx.moveTo(touchState.lastPoint.x, touchState.lastPoint.y);
+                        drawingCtx.lineTo(pinchMidPoint.x, pinchMidPoint.y);
+                        drawingCtx.stroke();
+                    } else {
+                        // 핀치 시작 -> 점 찍기 또는 시작점 설정
+                         // 작은 원을 그려 시작점을 표시할 수도 있음
+                         drawingCtx.beginPath();
+                         drawingCtx.arc(pinchMidPoint.x, pinchMidPoint.y, drawingCtx.lineWidth / 2, 0, Math.PI * 2);
+                         drawingCtx.fillStyle = isErasing ? 'rgba(0,0,0,0)' : currentDrawingColor; // 지우개는 투명하게
+                         if(!isErasing) drawingCtx.fill(); // 색칠할 때만 점 찍기
+
+                    }
+                    // 현재 상태 업데이트
+                     touchState.isPinching = true;
+                     touchState.lastPoint = pinchMidPoint;
+
+                } else {
+                    // 핀치하지 않음
+                    if (touchState.isPinching) {
+                         // 핀치를 방금 뗌
+                         touchState.isPinching = false;
+                         touchState.lastPoint = null;
+                          // 지우개 모드였으면 기본 그리기 모드로 복원
+                         // if (isErasing) {
+                         //     drawingCtx.globalCompositeOperation = 'source-over';
+                         // }
+                          // -> setupDrawingContext() 가 색상/지우개 변경 시 호출되므로 여기서 복원 불필요
+                    }
+                }
+                 // 마지막으로 activeTouches 업데이트
+                 activeTouches[handId] = touchState;
+
+            }); // end forEach hand
+        } // end if detectedHands
+
+         // --- 사라진 손 처리 ---
+         // 현재 프레임에 감지되지 않은 손은 activeTouches에서 제거하거나 상태 초기화
+         Object.keys(activeTouches).forEach(handId => {
+             if (!currentFrameHandIds.has(parseInt(handId))) {
+                 console.log(`손 ${handId} 사라짐, 터치 상태 리셋`);
+                 delete activeTouches[handId];
+             }
+         });
+
+    }
+
+
+    // --- 이벤트 리스너 ---
+    clearButton.addEventListener('click', () => {
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        console.log("드로잉 캔버스 지움");
+    });
+
+    hideWebcamCheckbox.addEventListener('change', (event) => {
+        webcamHidden = event.target.checked;
+        console.log(`웹캠 숨기기: ${webcamHidden}`);
+        // predictWebcam 루프 내에서 처리하므로 즉시 화면 변경
+    });
+
+    // 창 크기 변경 시 캔버스 리사이즈 (Debounce 추천)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+         clearTimeout(resizeTimeout);
+         resizeTimeout = setTimeout(() => {
+             if (webcamRunning) { // 웹캠 실행 중일 때만 리사이즈
+                resizeCanvases();
+                // 리사이즈 후 첫 프레임 예측 강제 실행 (선택적)
+                lastVideoTime = -1; // 다음 프레임 무조건 처리하도록
+             }
+         }, 250); // 250ms 디바운스
+    });
+
+    // --- 초기화 시작 ---
+    createHandLandmarker();
+    setupDrawingContext(); // 초기 드로잉 컨텍스트 설정
+
+</script>
+
+</body>
+</html>
