@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediaPipe 손 인식 드로잉</title>
+    <title>한미 손 인식 드로잉</title>
     <style>
         body {
             margin: 0;
@@ -170,12 +170,12 @@
     let targetHeight = 720;
 
     // --- 그리기 관련 변수 ---
-    const PALETTE_COLORS = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#000000"]; // 빨, 녹, 파, 노, 검
+    const PALETTE_COLORS = ["#FFFFFF", "#A3CCAB", "#34675C", "#053D38", "#14140F"]; // 빨, 녹, 파, 노, 검
     const ERASER_COLOR = "#FFFFFF"; // 지우개는 배경색
     const PALETTE_HEIGHT = 50;
     const PALETTE_ITEM_WIDTH = 50;
     const ERASER_WIDTH = 60;
-    const PINCH_THRESHOLD = 0.06; // 엄지-검지 끝 사이 거리 임계값 (정규화된 좌표 기준)
+    const PINCH_THRESHOLD = 0.04; // 엄지-검지 끝 사이 거리 임계값 (정규화된 좌표 기준)
     const DRAWING_LINE_WIDTH = 10; // 기본 선 굵기
     const ERASER_LINE_WIDTH = 20; // 지우개 굵기
 
@@ -193,11 +193,11 @@
         let startX = (canvasWidth - totalPaletteWidth) / 2; // 중앙 정렬
 
         PALETTE_COLORS.forEach((color, index) => {
-            const x = startX + index * PALETTE_ITEM_WIDTH;
+            const x = startX + index * PALETTE_ITEM_WIDTH + index * 20; // 간격 추가
             paletteRects.push({ x: x, y: 10, width: PALETTE_ITEM_WIDTH, height: PALETTE_HEIGHT, color: color });
         });
 
-        const eraserX = startX + PALETTE_COLORS.length * PALETTE_ITEM_WIDTH + 10; // 약간 간격 둠
+        const eraserX = startX + PALETTE_COLORS.length * PALETTE_ITEM_WIDTH + 120; // 약간 간격 둠
         eraserRect = { x: eraserX, y: 10, width: ERASER_WIDTH, height: PALETTE_HEIGHT };
     }
 
