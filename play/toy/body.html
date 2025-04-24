@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediaPipe Pose 예제</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    #header { position: absolute; top: 0; left: 0; width: 100%; background: rgba(0,0,0,0.5); color: #fff; display: flex; align-items: center; padding: 8px; z-index: 10; }
+    #container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    #input_video { display: none; }
+    button { margin-left: 16px; padding: 4px 8px; font-size: 14px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js"></script>
+</head>
+<body>
+  <div id="header">
+    <label><input type="checkbox" id="toggleVideo" checked> 웹캠 보기</label>
+    <button id="fullscreenBtn">전체화면</button>
+  </div>
+  <div id="container">
+    <video id="input_video" autoplay muted playsinline></video>
+    <canvas id="output_canvas"></canvas>
+  </div>
+  <script>
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const toggleVideo = document.getElementById('toggleVideo');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const header = document.getElementById('header');
+
+    function onResults(results) {
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      // Mirror horizontally
+      canvasCtx.scale(-1, 1);
+      canvasCtx.translate(-canvasElement.width, 0);
+      // Draw background or video
+      if (toggleVideo.checked) {
+        canvasCtx.drawImage(
+          results.image, 0, 0, canvasElement.width, canvasElement.height
+        );
+      } else {
+        canvasCtx.fillStyle = '#000';
+        canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+      }
+      // Draw up to two poses
+      const landmarksArray = results.multiPoseLandmarks || (results.poseLandmarks ? [results.poseLandmarks] : []);
+      for (let i = 0; i < Math.min(landmarksArray.length, 2); i++) {
+        const landmarks = landmarksArray[i];
+        drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+        drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1});
+      }
+      canvasCtx.restore();
+    }
+
+    const pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
+    });
+    pose.setOptions({
+      modelComplexity: 1,
+      enableSegmentation: false,
+      smoothLandmarks: true,
+      selfieMode: true,
+      maxNumPoses: 2,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => await pose.send({image: videoElement}),
+      width: 1280,
+      height: 720
+    });
+    camera.start();
+
+    // Resize canvas to match video
+    videoElement.addEventListener('loadedmetadata', () => {
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+    });
+
+    // Fullscreen toggle
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        header.style.display = 'none';
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        header.style.display = '';
+      }
+    });
+  </script>
+</body>
+</html>
