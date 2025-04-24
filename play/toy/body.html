@@ -1,102 +1,140 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MediaPipe Pose 예제</title>
-  <style>
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-    #header { position: absolute; top: 0; left: 0; width: 100%; background: rgba(0,0,0,0.5); color: #fff; display: flex; align-items: center; padding: 8px; z-index: 10; }
-    #container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-    video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-    #input_video { display: none; }
-    button { margin-left: 16px; padding: 4px 8px; font-size: 14px; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediaPipe PoseLandmarker 예제</title>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        #header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            z-index: 10;
+        }
+        #container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        video { display: none; }
+        button { margin-left: 16px; padding: 4px 8px; font-size: 14px; }
+    </style>
 </head>
 <body>
-  <div id="header">
-    <label><input type="checkbox" id="toggleVideo" checked> 웹캠 보기</label>
-    <button id="fullscreenBtn">전체화면</button>
-  </div>
-  <div id="container">
-    <video id="input_video" autoplay muted playsinline></video>
-    <canvas id="output_canvas"></canvas>
-  </div>
-  <script>
-    const videoElement = document.getElementById('input_video');
-    const canvasElement = document.getElementById('output_canvas');
-    const canvasCtx = canvasElement.getContext('2d');
-    const toggleVideo = document.getElementById('toggleVideo');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const header = document.getElementById('header');
-
-    function onResults(results) {
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      // Mirror horizontally
-      canvasCtx.scale(-1, 1);
-      canvasCtx.translate(-canvasElement.width, 0);
-      // Draw background or video
-      if (toggleVideo.checked) {
-        canvasCtx.drawImage(
-          results.image, 0, 0, canvasElement.width, canvasElement.height
-        );
-      } else {
-        canvasCtx.fillStyle = '#000';
-        canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
-      }
-      // Draw up to two poses
-      const landmarksArray = results.multiPoseLandmarks || (results.poseLandmarks ? [results.poseLandmarks] : []);
-      for (let i = 0; i < Math.min(landmarksArray.length, 2); i++) {
-        const landmarks = landmarksArray[i];
-        drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-        drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1});
-      }
-      canvasCtx.restore();
-    }
-
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-    });
-    pose.setOptions({
-      modelComplexity: 1,
-      enableSegmentation: false,
-      smoothLandmarks: true,
-      selfieMode: true,
-      maxNumPoses: 2,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    });
-    pose.onResults(onResults);
-
-    const camera = new Camera(videoElement, {
-      onFrame: async () => await pose.send({image: videoElement}),
-      width: 1280,
-      height: 720
-    });
-    camera.start();
-
-    // Resize canvas to match video
-    videoElement.addEventListener('loadedmetadata', () => {
-      canvasElement.width = videoElement.videoWidth;
-      canvasElement.height = videoElement.videoHeight;
-    });
-
-    // Fullscreen toggle
-    fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        header.style.display = 'none';
-      }
-    });
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement) {
-        header.style.display = '';
-      }
-    });
-  </script>
+    <div id="header">
+        <label><input type="checkbox" id="toggleVideo" checked /> 웹캠 보기</label>
+        <button id="fullscreenBtn">전체화면</button>
+    </div>
+    <div id="container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="output_canvas"></canvas>
+    </div>
+    
+    <script type="module">
+        import {
+            PoseLandmarker,
+            FilesetResolver,
+            DrawingUtils
+        } from "https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0";
+        
+        (async () => {
+            // MediaPipe 모델 로드
+            const vision = await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+            );
+            const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath:
+                    // "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+                    // "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_heavy.task",
+                    "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task",
+                    delegate: "GPU",
+                    smoothLandmarks: true,
+                    min_pose_detection_confidence: 0.5,
+                    min_pose_presence_confidence: 0.5,
+                    min_tracking_confidence: 0.5,
+                    output_segmentation_masks: false
+                },
+                runningMode: "VIDEO",
+                numPoses: 2
+            });
+            
+            // HTML 요소 참조
+            const video = document.getElementById("webcam");
+            const canvas = document.getElementById("output_canvas");
+            const ctx = canvas.getContext("2d");
+            const toggleCheckbox = document.getElementById("toggleVideo");
+            const fullscreenBtn = document.getElementById("fullscreenBtn");
+            const header = document.getElementById("header");
+            
+            // 웹캠 스트림 설정 (16:9)
+            const constraints = { video: { width: 1280, height: 720 } };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = stream;
+            await video.play();
+            
+            // 캔버스 크기 동기화
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // PoseLandmarker를 사용해 매 프레임 감지 및 렌더링
+            async function predict() {
+                ctx.save();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // 좌우 반전
+                ctx.scale(-1, 1);
+                ctx.translate(-canvas.width, 0);
+                
+                // 배경: 비디오 또는 검정
+                if (toggleCheckbox.checked) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                } else {
+                    ctx.fillStyle = "#000";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                // PoseLandmarker 감지
+                const result = await poseLandmarker.detectForVideo(
+                video,
+                performance.now()
+                );
+                const drawingUtils = new DrawingUtils(ctx);
+                const landmarksArray = result.landmarks;
+                if (landmarksArray) {
+                    for (let i = 0; i < Math.min(landmarksArray.length, 2); i++) {
+                        const landmarks = landmarksArray[i];
+                        drawingUtils.drawLandmarks(landmarks, {
+                            radius: (data) =>
+                            DrawingUtils.lerp(data.from.z, -0.15, 0.1, 5, 1)
+                        });
+                        drawingUtils.drawConnectors(
+                        landmarks,
+                        PoseLandmarker.POSE_CONNECTIONS
+                        );
+                    }
+                }
+                ctx.restore();
+                requestAnimationFrame(predict);
+            }
+            predict();
+            
+            // 전체화면 버튼 동작
+            fullscreenBtn.addEventListener("click", () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                    header.style.display = "none";
+                }
+            });
+            document.addEventListener("fullscreenchange", () => {
+                if (!document.fullscreenElement) {
+                    header.style.display = "flex";
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
