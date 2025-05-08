@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doodle Sound Machine (Tone.js)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            touch-action: none;
+        }
+
+        #app-container {
+            border: 3px solid #333;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 15px;
+            border: 2px solid #555;
+            padding: 10px;
+            border-radius: 5px;
+            width: 90%;
+        }
+
+        .color-brush {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 5px;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.1s ease-out;
+        }
+
+        .color-brush:hover {
+            transform: scale(1.1);
+        }
+
+        .color-brush.active {
+            border-color: #000;
+            box-shadow: 0 0 5px 2px currentColor;
+        }
+
+        #doodle-canvas {
+            width: 300px;
+            height: 250px;
+            border: 2px solid #555;
+            cursor: crosshair;
+            /* margin-bottom: 15px; */ /* canvas-wrapper가 담당 */
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .action-button {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            font-size: 16px;
+            padding: 10px 15px;
+            border: 2px solid #555;
+            background-color: #eee;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            width: 90%;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+
+        .action-button:hover {
+            background-color: #ddd;
+        }
+        .action-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .placeholder-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #aaa;
+            pointer-events: none;
+            text-align: center;
+        }
+        #canvas-wrapper {
+            position: relative;
+            width: 300px;
+            height: 250px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="color-palette-label" style="text-align: center; margin-bottom: 5px; font-size: 14px; color: #555;">
+            DIFFERENT COLOR BRUSHES
+        </div>
+        <div id="color-palette">
+            <!-- Color buttons will be added by JS -->
+        </div>
+
+        <div id="canvas-wrapper">
+            <canvas id="doodle-canvas" width="300" height="250"></canvas>
+            <div id="doodle-area-placeholder" class="placeholder-text">DOODLE<br>AREA</div>
+        </div>
+
+        <button id="sound-button" class="action-button">TURN DRAWING INTO SOUND</button>
+        <button id="clear-button" class="action-button" style="margin-top: 5px;">CLEAR DOODLE</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('doodle-canvas');
+        const ctx = canvas.getContext('2d');
+        const soundButton = document.getElementById('sound-button');
+        const clearButton = document.getElementById('clear-button');
+        const colorPalette = document.getElementById('color-palette');
+        const doodlePlaceholder = document.getElementById('doodle-area-placeholder');
+
+        let drawing = false;
+        let currentColor = '#000000';
+        let currentSynthOptions = { oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } };
+        let lastX = 0;
+        let lastY = 0;
+        let hasDrawn = false;
+
+        const lineWidth = 5;
+
+        // Define colors and their associated synth options for Tone.js
+        const colors = [
+            { name: 'Red', value: '#FF0000', synthOptions: { oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 } } },
+            { name: 'Orange', value: '#FFA500', synthOptions: { oscillator: { type: 'fmsine', modulationIndex: 10, harmonicity: 1.5 }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.6 } } },
+            { name: 'Yellow', value: '#FFFF00', synthOptions: { oscillator: { type: 'pulse', width: 0.4 }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.4, release: 0.4 } } },
+            { name: 'Green', value: '#008000', synthOptions: { oscillator: { type: 'fatsquare', count: 3, spread: 20 }, envelope: { attack: 0.05, decay: 0.1, sustain: 0.5, release: 0.3 } } },
+            { name: 'Blue', value: '#0000FF', synthOptions: { oscillator: { type: 'amsine', modulationType: 'triangle', harmonicity: 1.2 }, envelope: { attack: 0.1, decay: 0.05, sustain: 0.6, release: 0.5 } } },
+            { name: 'Purple', value: '#800080', synthOptions: { oscillator: { type: 'pwm', modulationFrequency: 0.5 }, envelope: { attack: 0.03, decay: 0.4, sustain: 0.1, release: 0.7 } } },
+            { name: 'Pink', value: '#FFC0CB', synthOptions: { oscillator: { type: 'fatsawtooth', count: 5, spread: 30 }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.6 } } },
+            { name: 'Brown', value: '#A52A2A', synthOptions: { oscillator: { type: 'triangle8' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.5 } } },
+            { name: 'Black', value: '#000000', synthOptions: { oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } } },
+            { name: 'Gray', value: '#808080', synthOptions: { oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0.2, release: 0.8 } } },
+        ];
+
+        // Musical Scale (C Major Pentatonic over 2 octaves)
+        const musicalScale = ['C3', 'D3', 'E3', 'G3', 'A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5', 'C6'];
+
+        function initializeColorPalette() {
+            colors.forEach((colorInfo, index) => {
+                const button = document.createElement('button');
+                button.classList.add('color-brush');
+                button.style.backgroundColor = colorInfo.value;
+                button.dataset.color = colorInfo.value;
+                // Store synthOptions as JSON string to retrieve later
+                button.dataset.synthOptions = JSON.stringify(colorInfo.synthOptions);
+                button.title = colorInfo.name;
+
+                if (colorInfo.value === '#000000') { // Default to black
+                    button.classList.add('active');
+                    currentColor = colorInfo.value;
+                    currentSynthOptions = colorInfo.synthOptions;
+                }
+                button.addEventListener('click', () => {
+                    currentColor = colorInfo.value;
+                    currentSynthOptions = JSON.parse(button.dataset.synthOptions);
+                    document.querySelectorAll('.color-brush').forEach(b => b.classList.remove('active'));
+                    button.classList.add('active');
+                });
+                colorPalette.appendChild(button);
+            });
+        }
+
+        function hidePlaceholder() {
+            if (!hasDrawn) {
+                doodlePlaceholder.style.display = 'none';
+                hasDrawn = true;
+            }
+        }
+
+        function showPlaceholder() {
+            doodlePlaceholder.style.display = 'block';
+            hasDrawn = false;
+        }
+
+        function getMousePos(canvasEl, evt) {
+            const rect = canvasEl.getBoundingClientRect();
+            const clientX = evt.clientX || (evt.touches && evt.touches[0].clientX);
+            const clientY = evt.clientY || (evt.touches && evt.touches[0].clientY);
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            e.preventDefault();
+            hidePlaceholder();
+            drawing = true;
+            const pos = getMousePos(canvas, e);
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        function draw(e) {
+            e.preventDefault();
+            if (!drawing) return;
+            const pos = getMousePos(canvas, e);
+
+            ctx.beginPath();
+            ctx.strokeStyle = currentColor; // Use the actual color for drawing
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        function stopDrawing() {
+            if (drawing) {
+                drawing = false;
+            }
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            showPlaceholder();
+            if (Tone.Transport.state === "started") {
+                Tone.Transport.stop();
+                Tone.Transport.cancel(0); // Clear all scheduled events
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+
+        clearButton.addEventListener('click', clearCanvas);
+
+        // --- Tone.js Sound Generation ---
+        let reverb = new Tone.Reverb(0.7).toDestination(); // Slightly wet reverb
+        let masterVolume = new Tone.Volume(-6).connect(reverb); // Reduce master volume a bit
+
+        function yPositionToNote(y, canvasHeight, scale) {
+            const numNotes = scale.length;
+            // Invert Y: 0 at top of canvas should be highest note in our scale mapping
+            const normalizedY = Math.max(0, Math.min(1, (canvasHeight - 1 - y) / (canvasHeight - 1)));
+            let noteIndex = Math.floor(normalizedY * numNotes);
+            noteIndex = Math.max(0, Math.min(numNotes - 1, noteIndex)); // Clamp index
+            return scale[noteIndex];
+        }
+
+        function findSynthOptionsForPixelColor(r, g, b) {
+            // Find the closest color from our palette and return its synthOptions
+            let minDistance = Infinity;
+            let bestOptions = colors.find(c => c.name === 'Black').synthOptions; // Default
+
+            colors.forEach(colorInfo => {
+                const cR = parseInt(colorInfo.value.slice(1, 3), 16);
+                const cG = parseInt(colorInfo.value.slice(3, 5), 16);
+                const cB = parseInt(colorInfo.value.slice(5, 7), 16);
+                const distance = Math.sqrt(Math.pow(r - cR, 2) + Math.pow(g - cG, 2) + Math.pow(b - cB, 2));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestOptions = colorInfo.synthOptions;
+                }
+            });
+            return bestOptions;
+        }
+
+
+        soundButton.addEventListener('click', async () => {
+            if (!hasDrawn) {
+                alert("먼저 그림을 그려주세요!");
+                return;
+            }
+
+            // Start Tone.js audio context on user gesture if not already started
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+                console.log('AudioContext started');
+            }
+
+            // Clear previous transport events
+            Tone.Transport.cancel(0);
+            Tone.Transport.position = 0;
+
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+
+            const totalDurationSeconds = 4; // Play for 4 seconds
+            const noteDuration = Tone.Time(totalDurationSeconds / canvasWidth).toNotation(); // e.g., "16n" or time value
+
+            const notesToPlay = [];
+
+            for (let x = 0; x < canvasWidth; x++) {
+                let foundPixelY = -1;
+                let pixelR = 0, pixelG = 0, pixelB = 0;
+
+                for (let y = 0; y < canvasHeight; y++) {
+                    const index = (y * canvasWidth + x) * 4;
+                    const alpha = data[index + 3];
+                    if (alpha > 128) { // Consider pixel drawn if alpha is > 50%
+                        foundPixelY = y;
+                        pixelR = data[index];
+                        pixelG = data[index + 1];
+                        pixelB = data[index + 2];
+                        break; // Take the first (top-most) colored pixel
+                    }
+                }
+
+                if (foundPixelY !== -1) {
+                    const note = yPositionToNote(foundPixelY, canvasHeight, musicalScale);
+                    const time = Tone.Time(x * (totalDurationSeconds / canvasWidth)).toNotation();
+                    const synthOpts = findSynthOptionsForPixelColor(pixelR, pixelG, pixelB);
+
+                    notesToPlay.push({ time, note, duration: noteDuration, synthOptions: synthOpts });
+                }
+            }
+
+            if (notesToPlay.length === 0) {
+                alert("그림에서 소리로 변환할 데이터를 찾지 못했습니다.");
+                return;
+            }
+
+            // Use Tone.Part for more complex scheduling if needed, or individual synths
+            notesToPlay.forEach(noteEvent => {
+                const synth = new Tone.Synth(noteEvent.synthOptions).connect(masterVolume);
+                Tone.Transport.scheduleOnce(time => {
+                    synth.triggerAttackRelease(noteEvent.note, noteEvent.duration, time);
+                    // Dispose synth after it's done playing to free up resources
+                    setTimeout(() => synth.dispose(), Tone.Time(noteEvent.duration).toSeconds() * 1000 + 500);
+                }, noteEvent.time);
+            });
+
+            soundButton.disabled = true;
+            Tone.Transport.start();
+
+            // Re-enable button after playback
+            Tone.Transport.scheduleOnce(() => {
+                soundButton.disabled = false;
+                Tone.Transport.stop(); // Ensure transport stops
+            }, `+${totalDurationSeconds + 0.5}`); // Add a little buffer
+        });
+
+
+        // Initialize
+        initializeColorPalette();
+        showPlaceholder();
+    </script>
+
+</body>
+</html>
