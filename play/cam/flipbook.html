@@ -23,18 +23,21 @@
             border-radius: 8px;
             margin: 10px;
             display: flex;
-            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+            flex-wrap: wrap; 
             align-items: center;
-            gap: 10px; /* Spacing between UI elements */
+            gap: 10px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            width: calc(100% - 40px); /* Full width with padding */
+            max-width: 700px; /* Max width for UI panels */
+            box-sizing: border-box;
         }
 
         .ui-panel label, .ui-panel button, .ui-panel input {
-            margin: 0 5px; /* Reduced margin as gap is used */
+            margin: 0 5px; 
         }
 
         input[type="number"], input[type="text"] {
-            width: 60px; /* Slightly wider for better usability */
+            width: 60px; 
             padding: 5px;
             border-radius: 4px;
             border: 1px solid #555;
@@ -58,7 +61,7 @@
             color: white;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            display: inline-flex; /* For aligning icon and text */
+            display: inline-flex; 
             align-items: center;
             justify-content: center;
         }
@@ -73,55 +76,74 @@
         }
 
         button svg {
-            width: 1em; /* SVG 아이콘 크기 */
+            width: 1em; 
             height: 1em;
-            margin-right: 0.4em; /* 아이콘과 텍스트 간격 */
-            fill: currentColor; /* 아이콘 색상을 버튼 텍스트 색상과 동일하게 */
+            margin-right: 0.4em; 
+            fill: currentColor; 
         }
         
-        /* 특정 아이콘 조정 */
         #recordButton svg.record-icon circle {
              fill: red;
         }
         #recordButton svg.stop-icon rect {
-            fill: #dc3545; /* Stop icon color */
+            fill: #dc3545; 
         }
          #playButton svg.play-icon polygon {
-            fill: #28a745; /* Play icon color */
+            fill: #28a745; 
         }
         #playButton svg.stop-icon rect {
-            fill: #ffc107; /* Pause/Stop icon color for play button */
-        }
-
-
-        .canvas-container {
-            display: flex;
-            flex-direction: column; 
-            align-items: center;
-            gap: 15px;
-            margin-top: 10px;
-            width: 100%;
-            max-width: 1280px; 
-        }
-        
-        canvas {
-            cursor: pointer;
-            border: 2px solid #444;
-            border-radius: 8px;
-            background-color: #222; 
-            max-width: 100%; 
-            height: auto; 
+            fill: #ffc107; 
         }
         
         #cameraCanvas {
             width: 640px; 
             height: 360px; 
+            cursor: crosshair;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #222; 
+            max-width: 100%; 
+            /* height: auto; Removed to fix aspect ratio for drawing */
         }
         
         #playbackCanvas {
-            width: 512px;  /* 정사각형 너비 */
-            height: 512px; /* 정사각형 높이 */
-            max-width: 100%; /* 반응형 최대 너비 */
+            /* Width and height will be set by JS based on aspect ratio */
+            /* Max width to control overall size */
+            max-width: 512px; 
+            max-height: 512px; /* Optional: also limit max height */
+            width: 100%; /* Start with full width within its container */
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #222; 
+            /* aspect-ratio will be set by JS if needed, or width/height directly */
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.6); 
+            padding-top: 100px;
+        }
+        .modal-content {
+            background-color: #444;
+            color: snow;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .modal-buttons button {
+            margin: 10px;
         }
         
         /* Responsive adjustments */
@@ -131,24 +153,20 @@
                 align-items: stretch;
             }
             .ui-panel input[type="number"], .ui-panel input[type="text"], .ui-panel button {
-                width: 100%;
+                width: calc(100% - 10px); /* Adjust for margin */
                 box-sizing: border-box;
                 margin-bottom: 5px;
-            }
-            .canvas-container {
-                flex-direction: column;
             }
             #cameraCanvas {
                 width: 95%; 
                 max-width: 512px; 
-                height: auto; /* 가로세로 비율 유지 */
+                height: auto; 
                 aspect-ratio: 16 / 9;
             }
              #playbackCanvas {
                 width: 95%; 
                 max-width: 512px;
-                height: auto; /* 가로세로 비율 유지 (정사각형) */
-                aspect-ratio: 1 / 1; /* 정사각형 비율 강제 */
+                /* height will be auto based on aspect ratio set by JS or CSS */
             }
         }
     </style>
@@ -160,17 +178,13 @@
         <input id="captureIntervalInput" type="number" value="5" min="1">
         <label for="captureIntervalInput">초 마다</label>
         <button id="recordButton">
-            {/* SVG Record Icon will be inserted by JS */}
             <span>캡쳐 시작</span>
         </button>
         <label id="captureCountLabel"></label>
         <label>(스페이스 키를 누르면 1장만 즉시 캡쳐)</label>
     </div>
 
-    <div class="canvas-container">
-        <canvas id="cameraCanvas"></canvas>
-        <canvas id="playbackCanvas"></canvas>
-    </div>
+    <canvas id="cameraCanvas"></canvas>
     
     <div id="uiPanelB" class="ui-panel">
         <input id="playbackNSecondsInput" type="number" value="1" min="1">
@@ -179,7 +193,6 @@
         <label for="playbackMFramesInput">장 속도로</label>
         
         <button id="playButton">
-            {/* SVG Play Icon will be inserted by JS */}
             <span>재생</span>
         </button>
         <button id="prevFrameButton">
@@ -202,12 +215,32 @@
         <label id="playbackHeadLabel">(/)</label>
     </div>
 
+    <canvas id="playbackCanvas"></canvas>
+
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <p id="modalMessage">메시지</p>
+            <div class="modal-buttons">
+                <button id="modalConfirmButton">확인</button>
+                <button id="modalCancelButton">취소</button>
+            </div>
+        </div>
+    </div>
+
 <script>
-    // Utility to ensure DOM is loaded before script execution
     document.addEventListener('DOMContentLoaded', () => {
         // --- DOM Elements ---
         const cameraCanvas = document.getElementById('cameraCanvas');
         const playbackCanvas = document.getElementById('playbackCanvas');
+        const uiPanelA = document.getElementById('uiPanelA'); // For ordering
+        const uiPanelB = document.getElementById('uiPanelB'); // For ordering
+        
+        // Insert cameraCanvas between uiPanelA and uiPanelB
+        uiPanelA.insertAdjacentElement('afterend', cameraCanvas);
+        // Insert playbackCanvas after uiPanelB
+        uiPanelB.insertAdjacentElement('afterend', playbackCanvas);
+
+
         const flipHorizontalCheckbox = document.getElementById('flipHorizontalCheckbox');
         const captureIntervalInput = document.getElementById('captureIntervalInput');
         const recordButton = document.getElementById('recordButton');
@@ -224,28 +257,86 @@
         const downloadSequenceButton = document.getElementById('downloadSequenceButton');
         const playbackHeadLabel = document.getElementById('playbackHeadLabel');
 
+        // Modal DOM Elements
+        const confirmationModal = document.getElementById('confirmationModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmButton = document.getElementById('modalConfirmButton');
+        const modalCancelButton = document.getElementById('modalCancelButton');
+
         // --- SVG Icons ---
         const svgIconRecord = '<svg class="record-icon" viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet"><circle cx="12" cy="12" r="7"></circle></svg>';
         const svgIconStop = '<svg class="stop-icon" viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet"><rect x="7" y="7" width="10" height="10"></rect></svg>';
         const svgIconPlay = '<svg class="play-icon" viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet"><polygon points="8 5 8 19 19 12"></polygon></svg>';
-        // Using a slightly different stop icon for play/pause context if needed, or same as record's stop
         const svgIconPause = '<svg class="stop-icon" viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet"><rect x="7" y="7" width="10" height="10"></rect></svg>';
+
+        // --- Helper Function Definitions (Moved Up) ---
+        function updateCaptureCountLabel() {
+            captureCountLabel.textContent = `${capturedFrames.length} 장 캡쳐`;
+        }
+        function updatePlaybackHeadLabel() {
+            if (capturedFrames.length > 0) {
+                playbackHeadLabel.textContent = `(${currentFrameIndex + 1} / ${capturedFrames.length})`;
+            } else {
+                playbackHeadLabel.textContent = `(0 / 0)`;
+            }
+        }
+        function updateRecordButtonStatus() {
+            if (isRecordingActive) {
+                recordButton.innerHTML = `${svgIconStop}<span>캡쳐 종료</span>`;
+            } else {
+                recordButton.innerHTML = `${svgIconRecord}<span>캡쳐 시작</span>`;
+            }
+        }
+        function updatePlayButtonStatus() {
+            if (isPlaying) {
+                playButton.innerHTML = `${svgIconPause}<span>멈춤</span>`;
+            } else {
+                playButton.innerHTML = `${svgIconPlay}<span>재생</span>`;
+            }
+        }
+        function calculatePlaybackRAFInterval() {
+            const nSeconds = parseFloat(playbackNSecondsInput.value);
+            const mFrames = parseFloat(playbackMFramesInput.value);
+            if (isNaN(nSeconds) || nSeconds <= 0 || isNaN(mFrames) || mFrames <= 0) {
+                return Math.max(1, Math.floor((1 * 30) / 5)); 
+            }
+            const interval = (nSeconds * 30) / mFrames;
+            return Math.max(1, Math.floor(interval)); 
+        }
+        function getDateString(date) {
+            const year = String(date.getFullYear()).slice(2,4).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        function getTimeString(date) {
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${hours}${minutes}${seconds}`;
+        }
 
 
         // --- Application State ---
-        let isRecordingActive = false; // For timed capture
+        let isRecordingActive = false;
         let isPlaying = false;
         let isDownloadingVideo = false;
-        let capturedFrames = []; // Stores Image objects
-        let captureTimestamps = []; // Stores Date objects for each capture
+        let capturedFrames = []; 
+        let captureTimestamps = []; 
         let currentFrameIndex = 0;
         let autoCaptureIntervalSeconds = parseInt(captureIntervalInput.value, 10);
-        
-        let playbackRAFInterval = calculatePlaybackRAFInterval(); 
-
+        let playbackRAFInterval = calculatePlaybackRAFInterval(); // Now defined
         let lastTimestamp = 0;
         let elapsedTimeForCapture = 0;
         let animationFrameCount = 0; 
+
+        // Selection Area State
+        let selectionRect = { x: 0, y: 0, width: 100, height: 100, aspectRatio: 1 }; 
+        let confirmedSelectionRect = { ...selectionRect }; 
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        const MIN_SELECTION_SIZE = 10;
+
 
         // --- Camera Class ---
         class CameraManager {
@@ -262,11 +353,6 @@
                 this.displayCanvas.width = this.videoWidth;
                 this.displayCanvas.height = this.videoHeight;
                 
-                this.croppedWidth = 512;
-                this.croppedHeight = 512;
-                this.captureCanvas.width = this.croppedWidth;
-                this.captureCanvas.height = this.croppedHeight;
-
                 this.shouldFlipHorizontal = flipHorizontalCheckbox.checked;
                 this.isCapturingEnabled = false; 
 
@@ -279,6 +365,20 @@
                     this.videoElement.srcObject = mediaStream;
                     this.videoElement.onloadedmetadata = () => {
                         this.videoElement.play();
+                        
+                        const ccWidth = this.displayCanvas.clientWidth; 
+                        const ccHeight = this.displayCanvas.clientHeight; 
+                        
+                        const sideLength = Math.min(ccWidth, ccHeight) * 0.8; 
+
+                        selectionRect.width = sideLength;
+                        selectionRect.height = sideLength; 
+                        selectionRect.x = (ccWidth - sideLength) / 2; 
+                        selectionRect.y = (ccHeight - sideLength) / 2; 
+                        selectionRect.aspectRatio = 1; 
+                        
+                        Object.assign(confirmedSelectionRect, selectionRect);
+                        updatePlaybackCanvasAspectRatio(); // Now defined
                     };
                 } catch (err) {
                     console.error("카메라 접근 오류:", err.name, err.message);
@@ -287,6 +387,9 @@
             }
 
             updatePreview() {
+                const scaleX = this.displayCanvas.width / this.displayCanvas.clientWidth;
+                const scaleY = this.displayCanvas.height / this.displayCanvas.clientHeight;
+
                 this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
                 this.displayCtx.save();
                 if (this.shouldFlipHorizontal) {
@@ -294,33 +397,59 @@
                     this.displayCtx.scale(-1, 1);
                 }
                 this.displayCtx.drawImage(this.videoElement, 0, 0, this.displayCanvas.width, this.displayCanvas.height);
-                
-                const rectLeft = (this.displayCanvas.width - this.croppedWidth) / 2;
-                const rectTop = (this.displayCanvas.height - this.croppedHeight) / 2;
+                this.displayCtx.restore(); 
+
                 this.displayCtx.strokeStyle = 'cyan';
-                this.displayCtx.lineWidth = 3;
-                this.displayCtx.strokeRect(rectLeft - 2, rectTop - 2, this.croppedWidth + 4, this.croppedHeight + 4);
+                const effectiveLineWidth = 2 / Math.max(0.1, Math.min(scaleX,scaleY)); 
+                this.displayCtx.lineWidth = effectiveLineWidth;
                 
-                this.displayCtx.restore();
+                this.displayCtx.strokeRect(
+                    selectionRect.x * scaleX, 
+                    selectionRect.y * scaleY, 
+                    selectionRect.width * scaleX, 
+                    selectionRect.height * scaleY
+                );
             }
 
             captureFrame() {
                 if (!this.isCapturingEnabled && !isRecordingActive) return null; 
 
-                const sourceX = (this.displayCanvas.width - this.croppedWidth) / 2;
-                const sourceY = (this.displayCanvas.height - this.croppedHeight) / 2;
+                const scaleX = this.displayCanvas.width / this.displayCanvas.clientWidth;
+                const scaleY = this.displayCanvas.height / this.displayCanvas.clientHeight;
+
+                const srcX = confirmedSelectionRect.x * scaleX;
+                const srcY = confirmedSelectionRect.y * scaleY;
+                const srcWidth = confirmedSelectionRect.width * scaleX;
+                const srcHeight = confirmedSelectionRect.height * scaleY;
+
+                if (srcWidth <= 0 || srcHeight <= 0) {
+                    console.warn("Invalid capture dimensions:", srcWidth, srcHeight);
+                    return Promise.resolve(null); 
+                }
+
+                this.captureCanvas.width = srcWidth; 
+                this.captureCanvas.height = srcHeight;
                 
-                this.captureCtx.clearRect(0, 0, this.croppedWidth, this.croppedHeight); 
+                this.captureCtx.clearRect(0,0,this.captureCanvas.width, this.captureCanvas.height);
+
+                const tempVidCanvas = document.createElement('canvas');
+                tempVidCanvas.width = this.displayCanvas.width;
+                tempVidCanvas.height = this.displayCanvas.height;
+                const tempVidCtx = tempVidCanvas.getContext('2d');
+
+                tempVidCtx.save();
+                if (this.shouldFlipHorizontal) {
+                    tempVidCtx.translate(tempVidCanvas.width, 0);
+                    tempVidCtx.scale(-1, 1);
+                }
+                tempVidCtx.drawImage(this.videoElement, 0, 0, tempVidCanvas.width, tempVidCanvas.height);
+                tempVidCtx.restore();
                 
-                this.captureCtx.save();
-                // The displayCanvas content is already transformed (flipped or not).
-                // We draw the relevant part of displayCanvas directly to captureCanvas.
                 this.captureCtx.drawImage(
-                    this.displayCanvas,
-                    sourceX, sourceY, this.croppedWidth, this.croppedHeight, 
-                    0, 0, this.croppedWidth, this.croppedHeight             
+                    tempVidCanvas, 
+                    srcX, srcY, srcWidth, srcHeight, 
+                    0, 0, srcWidth, srcHeight        
                 );
-                this.captureCtx.restore();
 
                 return new Promise((resolve) => {
                     const image = new Image();
@@ -328,7 +457,7 @@
                         if (blob) {
                             image.src = URL.createObjectURL(blob);
                             image.onload = () => resolve(image);
-                            image.onerror = () => resolve(null); // Corrected: removed extra '='
+                            image.onerror = () => resolve(null); 
                         } else {
                             resolve(null); 
                         }
@@ -338,98 +467,174 @@
         }
 
         const playbackCtx = playbackCanvas.getContext('2d');
-        // Playback canvas dimensions are set by CSS now for square aspect ratio.
-        // JS will use these dimensions.
-        // playbackCanvas.width = 512; 
-        // playbackCanvas.height = 512;
-
-
-        let videoChunks = [];
-        // Ensure playbackCanvas has dimensions before captureStream is called.
-        // It might be better to initialize MediaRecorder later or ensure canvas is sized.
-        // For now, assuming CSS sets initial size or JS will set it before first use.
-        const outputStream = playbackCanvas.captureStream(30); 
-        const videoMediaRecorder = new MediaRecorder(outputStream, { mimeType: 'video/webm' });
-        
-        videoMediaRecorder.ondataavailable = (event) => {
-            if (event.data && event.data.size > 0) {
-                videoChunks.push(event.data);
-            }
-        };
+        let videoMediaRecorder; 
 
         const cameraManager = new CameraManager(
-            { audio: false, video: { width: 1280, height: 720 } },
+            { audio: false, video: { width: 1280, height: 720 } }, 
             cameraCanvas
         );
 
-        function updateCaptureCountLabel() {
-            captureCountLabel.textContent = `${capturedFrames.length} 장 캡쳐`;
+        // --- Modal Functions ---
+        let modalConfirmCallback = null;
+        let modalCancelCallback = null;
+
+        function showModal(message, onConfirm, onCancel) {
+            modalMessage.textContent = message;
+            modalConfirmCallback = onConfirm;
+            modalCancelCallback = onCancel;
+            confirmationModal.style.display = "block";
         }
 
-        function updatePlaybackHeadLabel() {
-            if (capturedFrames.length > 0) {
-                playbackHeadLabel.textContent = `(${currentFrameIndex + 1} / ${capturedFrames.length})`;
-            } else {
-                playbackHeadLabel.textContent = `(0 / 0)`;
-            }
+        function hideModal() {
+            confirmationModal.style.display = "none";
+            modalConfirmCallback = null;
+            modalCancelCallback = null;
         }
+
+        modalConfirmButton.addEventListener('click', () => {
+            if (modalConfirmCallback) modalConfirmCallback();
+            hideModal();
+        });
+
+        modalCancelButton.addEventListener('click', () => {
+            if (modalCancelCallback) modalCancelCallback();
+            hideModal();
+        });
+        window.addEventListener('click', (event) => { 
+            if (event.target == confirmationModal) {
+                if (modalCancelCallback) modalCancelCallback(); 
+                hideModal();
+            }
+        });
+
+        // --- Helper Functions (continued, for aspect ratio and drawing) ---
+        function updatePlaybackCanvasAspectRatio() {
+            if (!confirmedSelectionRect || confirmedSelectionRect.width <= 0 || confirmedSelectionRect.height <= 0) {
+                playbackCanvas.width = Math.min(playbackCanvas.parentElement.clientWidth || 512, 512);
+                playbackCanvas.height = playbackCanvas.width;
+                playbackCanvas.style.width = `${playbackCanvas.width}px`;
+                playbackCanvas.style.height = `${playbackCanvas.height}px`;
+                return;
+            }
         
-        function updateRecordButtonStatus() {
-            if (isRecordingActive) {
-                recordButton.innerHTML = `${svgIconStop}<span>캡쳐 종료</span>`;
-            } else {
-                recordButton.innerHTML = `${svgIconRecord}<span>캡쳐 시작</span>`;
+            const aspectRatio = confirmedSelectionRect.aspectRatio;
+            const playbackContainer = playbackCanvas.parentElement;
+            
+            let targetWidth = Math.min(playbackContainer.clientWidth || 512, playbackCanvas.style.maxWidth ? parseInt(playbackCanvas.style.maxWidth) : 512);
+            
+            let displayWidth = targetWidth;
+            let displayHeight = displayWidth / aspectRatio;
+
+            const maxDisplayHeight = window.innerHeight * 0.35; 
+
+            if (displayHeight > maxDisplayHeight) {
+                displayHeight = maxDisplayHeight;
+                displayWidth = displayHeight * aspectRatio;
             }
-        }
+            
+            playbackCanvas.width = Math.round(displayWidth); 
+            playbackCanvas.height = Math.round(displayHeight);
 
-        function updatePlayButtonStatus() {
-            if (isPlaying) {
-                playButton.innerHTML = `${svgIconPause}<span>멈춤</span>`;
-            } else {
-                playButton.innerHTML = `${svgIconPlay}<span>재생</span>`;
-            }
-        }
-
-
-        function calculatePlaybackRAFInterval() {
-            const nSeconds = parseFloat(playbackNSecondsInput.value);
-            const mFrames = parseFloat(playbackMFramesInput.value);
-
-            if (isNaN(nSeconds) || nSeconds <= 0 || isNaN(mFrames) || mFrames <= 0) {
-                console.warn("잘못된 재생 속도 값입니다. 기본값(1초에 5프레임)으로 설정합니다.");
-                return Math.max(1, Math.floor((1 * 30) / 5)); 
-            }
-            const interval = (nSeconds * 30) / mFrames;
-            return Math.max(1, Math.floor(interval)); 
-        }
-
-        function getDateString(date) {
-            const year = String(date.getFullYear()).slice(2,4).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}${month}${day}`;
-        }
-
-        function getTimeString(date) {
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${hours}${minutes}${seconds}`;
+            playbackCanvas.style.width = `${Math.round(displayWidth)}px`;
+            playbackCanvas.style.height = `${Math.round(displayHeight)}px`;
         }
         
         function drawCurrentFrameOnPlayback() {
-            // Ensure playbackCanvas has correct dimensions from CSS for drawing
-            const pbCanvasWidth = playbackCanvas.width;
-            const pbCanvasHeight = playbackCanvas.height;
-            
-            playbackCtx.clearRect(0, 0, pbCanvasWidth, pbCanvasHeight);
+            updatePlaybackCanvasAspectRatio(); 
+            playbackCtx.clearRect(0, 0, playbackCanvas.width, playbackCanvas.height);
             if (capturedFrames.length > 0 && capturedFrames[currentFrameIndex]) {
-                // Draw the 512x512 image onto the (now potentially responsive) square canvas
-                playbackCtx.drawImage(capturedFrames[currentFrameIndex], 0, 0, pbCanvasWidth, pbCanvasHeight);
+                playbackCtx.drawImage(capturedFrames[currentFrameIndex], 0, 0, playbackCanvas.width, playbackCanvas.height);
             }
             updatePlaybackHeadLabel();
         }
 
+        function applyNewSelectionAndClearFrames(newRect) {
+            Object.assign(confirmedSelectionRect, newRect);
+            Object.assign(selectionRect, newRect); 
+            
+            if (capturedFrames.length > 0) { 
+                capturedFrames.forEach(img => { if(img.src.startsWith('blob:')) URL.revokeObjectURL(img.src); });
+                capturedFrames = [];
+                captureTimestamps = [];
+                updateCaptureCountLabel();
+                currentFrameIndex = 0;
+            }
+            
+            playbackCtx.clearRect(0, 0, playbackCanvas.width, playbackCanvas.height);
+            updatePlaybackHeadLabel();
+            updatePlaybackCanvasAspectRatio(); 
+            drawCurrentFrameOnPlayback(); 
+        }
+
+
+        // --- Event Handlers for Selection ---
+        cameraCanvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.offsetX;
+            dragStartY = e.offsetY;
+        });
+
+        cameraCanvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const currentX = e.offsetX;
+            const currentY = e.offsetY;
+
+            let newX = Math.min(dragStartX, currentX);
+            let newY = Math.min(dragStartY, currentY);
+            let newWidth = Math.abs(currentX - dragStartX);
+            let newHeight = Math.abs(currentY - dragStartY);
+
+            newX = Math.max(0, Math.min(newX, cameraCanvas.clientWidth - MIN_SELECTION_SIZE));
+            newY = Math.max(0, Math.min(newY, cameraCanvas.clientHeight - MIN_SELECTION_SIZE));
+            
+            newWidth = Math.max(MIN_SELECTION_SIZE, Math.min(newWidth, cameraCanvas.clientWidth - newX));
+            newHeight = Math.max(MIN_SELECTION_SIZE, Math.min(newHeight, cameraCanvas.clientHeight - newY));
+
+            selectionRect.x = newX;
+            selectionRect.y = newY;
+            selectionRect.width = newWidth;
+            selectionRect.height = newHeight;
+            if (newHeight === 0) selectionRect.aspectRatio = 1;
+            else selectionRect.aspectRatio = newWidth / newHeight;
+        });
+
+        cameraCanvas.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            if (selectionRect.width < MIN_SELECTION_SIZE) selectionRect.width = MIN_SELECTION_SIZE;
+            if (selectionRect.height < MIN_SELECTION_SIZE) selectionRect.height = MIN_SELECTION_SIZE;
+            if (selectionRect.height === 0) selectionRect.aspectRatio = 1; 
+            else selectionRect.aspectRatio = selectionRect.width / selectionRect.height;
+
+
+            const hasChangedSignificantly = 
+                Math.abs(selectionRect.x - confirmedSelectionRect.x) > 1 ||
+                Math.abs(selectionRect.y - confirmedSelectionRect.y) > 1 ||
+                Math.abs(selectionRect.width - confirmedSelectionRect.width) > 1 ||
+                Math.abs(selectionRect.height - confirmedSelectionRect.height) > 1;
+
+            if (capturedFrames.length > 0 && hasChangedSignificantly) {
+                showModal(
+                    "선택 영역이 변경되었습니다. 새로운 영역을 적용하고 기존에 캡처된 모든 프레임을 삭제하시겠습니까?",
+                    () => { applyNewSelectionAndClearFrames({ ...selectionRect }); }, 
+                    () => { Object.assign(selectionRect, confirmedSelectionRect); } 
+                );
+            } else if (hasChangedSignificantly) { 
+                applyNewSelectionAndClearFrames({ ...selectionRect }); 
+            } else {
+                Object.assign(selectionRect, confirmedSelectionRect); 
+            }
+        });
+        cameraCanvas.addEventListener('mouseleave', (e) => { 
+            if (isDragging) {
+                cameraCanvas.dispatchEvent(new MouseEvent('mouseup', e)); 
+            }
+        });
+
+
+        // --- Core Logic Functions (Capture, Playback, Download) ---
         async function performCaptureAndStore() {
             const image = await cameraManager.captureFrame();
             if (image) {
@@ -444,172 +649,33 @@
                 console.warn("프레임 캡쳐 실패");
             }
         }
-
         function startTimedCapture() {
             isRecordingActive = true;
             cameraManager.isCapturingEnabled = true; 
             updateRecordButtonStatus();
             elapsedTimeForCapture = 0; 
         }
-
         function stopTimedCapture() {
             isRecordingActive = false;
             cameraManager.isCapturingEnabled = false; 
             updateRecordButtonStatus();
         }
-        
-        flipHorizontalCheckbox.addEventListener('change', () => {
-            cameraManager.shouldFlipHorizontal = flipHorizontalCheckbox.checked;
-        });
-
-        captureIntervalInput.addEventListener('input', () => {
-            const value = parseInt(captureIntervalInput.value, 10);
-            if (!isNaN(value) && value > 0) {
-                autoCaptureIntervalSeconds = value;
-            }
-        });
-
-        recordButton.addEventListener('click', () => {
-            if (isRecordingActive) {
-                stopTimedCapture();
-            } else {
-                capturedFrames = []; 
-                captureTimestamps = []; 
-                updateCaptureCountLabel();
-                currentFrameIndex = 0;
-                // Ensure playbackCanvas is ready for clearing and drawing
-                playbackCtx.clearRect(0, 0, playbackCanvas.width, playbackCanvas.height); 
-                updatePlaybackHeadLabel();
-                startTimedCapture();
-            }
-        });
-        
-        window.addEventListener('keydown', async (event) => {
-            if (event.code === 'Space') {
-                event.preventDefault();
-                if (!isRecordingActive) { 
-                     cameraManager.isCapturingEnabled = true; 
-                     await performCaptureAndStore();
-                     cameraManager.isCapturingEnabled = false; 
-                } else { 
-                    await performCaptureAndStore();
-                }
-            }
-        });
-
-        playbackNSecondsInput.addEventListener('input', () => {
-            playbackRAFInterval = calculatePlaybackRAFInterval();
-        });
-        playbackMFramesInput.addEventListener('input', () => {
-            playbackRAFInterval = calculatePlaybackRAFInterval();
-        });
-
-        playButton.addEventListener('click', () => {
-            if (capturedFrames.length === 0) return;
-            isPlaying = !isPlaying;
-            updatePlayButtonStatus();
-            if (isPlaying) {
-                currentFrameIndex = 0; 
-                animationFrameCount = 0; 
-            }
-        });
-
-        prevFrameButton.addEventListener('click', () => {
-            if (capturedFrames.length === 0) return;
-            isPlaying = false;
-            updatePlayButtonStatus();
-            currentFrameIndex = (currentFrameIndex - 1 + capturedFrames.length) % capturedFrames.length;
-            drawCurrentFrameOnPlayback();
-        });
-
-        nextFrameButton.addEventListener('click', () => {
-            if (capturedFrames.length === 0) return;
-            isPlaying = false;
-            updatePlayButtonStatus();
-            currentFrameIndex = (currentFrameIndex + 1) % capturedFrames.length;
-            drawCurrentFrameOnPlayback();
-        });
-
-        deleteFrameButton.addEventListener('click', () => {
-            if (capturedFrames.length === 0) return;
-            
-            isPlaying = false;
-            updatePlayButtonStatus();
-
-            if (capturedFrames[currentFrameIndex] && capturedFrames[currentFrameIndex].src.startsWith('blob:')) {
-                URL.revokeObjectURL(capturedFrames[currentFrameIndex].src);
-            }
-
-            capturedFrames.splice(currentFrameIndex, 1);
-            captureTimestamps.splice(currentFrameIndex, 1);
-            
-            if (currentFrameIndex >= capturedFrames.length) {
-                currentFrameIndex = Math.max(0, capturedFrames.length - 1);
-            }
-            
-            if (capturedFrames.length === 0) {
-                playbackCtx.clearRect(0, 0, playbackCanvas.width, playbackCanvas.height);
-            } else {
-                drawCurrentFrameOnPlayback();
-            }
-            updateCaptureCountLabel();
-            updatePlaybackHeadLabel(); 
-        });
-
-        downloadVideoButton.addEventListener('click', () => {
-            if (capturedFrames.length === 0 || isDownloadingVideo) return;
-            if (playbackCanvas.width === 0 || playbackCanvas.height === 0) {
-                 alert("재생 캔버스 크기가 올바르지 않아 비디오를 생성할 수 없습니다. 페이지를 새로고침 해보세요.");
-                 return;
-            }
-
-            isDownloadingVideo = true;
-            isPlaying = true; 
-            updatePlayButtonStatus(); 
-            downloadVideoButton.disabled = true;
-            downloadSequenceButton.disabled = true;
-            playbackHeadLabel.textContent = "영상 생성 중...";
-
-            videoChunks = [];
-            // Ensure MediaRecorder uses the current canvas size
-            if (videoMediaRecorder.state === "inactive") {
-                 // Re-initialize if needed, though captureStream should be dynamic
-                 // For safety, ensure playbackCanvas has its dimensions set by CSS before this point.
-                videoMediaRecorder.start();
-            } else if (videoMediaRecorder.state === "paused") {
-                videoMediaRecorder.resume();
-            } else { // Already recording, or some other state
-                 console.warn("MediaRecorder was not in an ideal state:", videoMediaRecorder.state);
-                 // Potentially stop and restart if necessary, but start() should handle it.
-                 videoMediaRecorder.start();
-            }
-            
-            currentFrameIndex = 0; 
-            animationFrameCount = 0; 
-        });
-        
-        function finishVideoDownload() {
-            if (videoMediaRecorder.state === 'recording') {
-                videoMediaRecorder.stop();
-            }
-            setTimeout(() => {
+         function finishVideoDownload() { 
+            setTimeout(() => { 
                 const blob = new Blob(videoChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
-                
                 const firstTimestamp = captureTimestamps.length > 0 ? captureTimestamps[0] : new Date();
                 const lastTimestamp = captureTimestamps.length > 0 ? captureTimestamps[captureTimestamps.length - 1] : new Date();
                 const dateStr = getDateString(new Date());
                 const timeStrFirst = getTimeString(firstTimestamp);
                 const timeStrLast = getTimeString(lastTimestamp);
                 const filenameBase = filenameInput.value || "타임랩스";
-                
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
                 a.download = `${filenameBase}-(${dateStr}_${timeStrFirst}-${timeStrLast}-${capturedFrames.length}장).webm`;
                 document.body.appendChild(a);
                 a.click();
-                
                 setTimeout(() => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
@@ -623,19 +689,115 @@
             }, 500); 
         }
 
+
+        // --- General Event Handlers ---
+        flipHorizontalCheckbox.addEventListener('change', () => {
+            cameraManager.shouldFlipHorizontal = flipHorizontalCheckbox.checked;
+        });
+        captureIntervalInput.addEventListener('input', () => {
+            const value = parseInt(captureIntervalInput.value, 10);
+            if (!isNaN(value) && value > 0) autoCaptureIntervalSeconds = value;
+        });
+        recordButton.addEventListener('click', () => {
+            if (isRecordingActive) {
+                stopTimedCapture();
+            } else {
+                capturedFrames.forEach(img => { if(img.src.startsWith('blob:')) URL.revokeObjectURL(img.src); });
+                capturedFrames = []; 
+                captureTimestamps = []; 
+                updateCaptureCountLabel();
+                currentFrameIndex = 0;
+                playbackCtx.clearRect(0, 0, playbackCanvas.width, playbackCanvas.height); 
+                updatePlaybackHeadLabel();
+                startTimedCapture();
+            }
+        });
+        window.addEventListener('keydown', async (event) => {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                cameraManager.isCapturingEnabled = true; 
+                await performCaptureAndStore();
+                if (!isRecordingActive) cameraManager.isCapturingEnabled = false; 
+            }
+        });
+        playbackNSecondsInput.addEventListener('input', () => {
+            playbackRAFInterval = calculatePlaybackRAFInterval();
+        });
+        playbackMFramesInput.addEventListener('input', () => {
+            playbackRAFInterval = calculatePlaybackRAFInterval();
+        });
+        playButton.addEventListener('click', () => {
+            if (capturedFrames.length === 0) return;
+            isPlaying = !isPlaying;
+            updatePlayButtonStatus();
+            if (isPlaying) {
+                currentFrameIndex = 0; 
+                animationFrameCount = 0; 
+            }
+        });
+        prevFrameButton.addEventListener('click', () => {
+            if (capturedFrames.length === 0) return;
+            isPlaying = false; updatePlayButtonStatus();
+            currentFrameIndex = (currentFrameIndex - 1 + capturedFrames.length) % capturedFrames.length;
+            drawCurrentFrameOnPlayback();
+        });
+        nextFrameButton.addEventListener('click', () => {
+            if (capturedFrames.length === 0) return;
+            isPlaying = false; updatePlayButtonStatus();
+            currentFrameIndex = (currentFrameIndex + 1) % capturedFrames.length;
+            drawCurrentFrameOnPlayback();
+        });
+        deleteFrameButton.addEventListener('click', () => {
+            if (capturedFrames.length === 0) return;
+            isPlaying = false; updatePlayButtonStatus();
+            if (capturedFrames[currentFrameIndex] && capturedFrames[currentFrameIndex].src.startsWith('blob:')) {
+                URL.revokeObjectURL(capturedFrames[currentFrameIndex].src);
+            }
+            capturedFrames.splice(currentFrameIndex, 1);
+            captureTimestamps.splice(currentFrameIndex, 1);
+            if (currentFrameIndex >= capturedFrames.length) {
+                currentFrameIndex = Math.max(0, capturedFrames.length - 1);
+            }
+            if (capturedFrames.length === 0) {
+                playbackCtx.clearRect(0, 0, playbackCanvas.width, playbackCanvas.height);
+            } else { drawCurrentFrameOnPlayback(); }
+            updateCaptureCountLabel(); updatePlaybackHeadLabel(); 
+        });
+        downloadVideoButton.addEventListener('click', () => {
+            if (capturedFrames.length === 0 || isDownloadingVideo) return;
+            
+            updatePlaybackCanvasAspectRatio(); 
+            if (playbackCanvas.width === 0 || playbackCanvas.height === 0) {
+                 alert("재생 캔버스 크기가 올바르지 않아 비디오를 생성할 수 없습니다."); return;
+            }
+
+            const outputStream = playbackCanvas.captureStream(30); 
+            videoMediaRecorder = new MediaRecorder(outputStream, { 
+                mimeType: 'video/webm',
+                videoBitsPerSecond: 2500000 
+            });
+            videoMediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) videoChunks.push(event.data);
+            };
+            videoMediaRecorder.onstop = finishVideoDownload; 
+
+            isDownloadingVideo = true; isPlaying = true; 
+            updatePlayButtonStatus(); 
+            downloadVideoButton.disabled = true; downloadSequenceButton.disabled = true;
+            playbackHeadLabel.textContent = "영상 생성 중...";
+            videoChunks = [];
+            videoMediaRecorder.start();
+            currentFrameIndex = 0; animationFrameCount = 0; 
+        });
+
         downloadSequenceButton.addEventListener('click', async () => {
             if (capturedFrames.length === 0) return;
-
-            isPlaying = false;
-            updatePlayButtonStatus();
-            downloadVideoButton.disabled = true;
-            downloadSequenceButton.disabled = true;
+            isPlaying = false; updatePlayButtonStatus();
+            downloadVideoButton.disabled = true; downloadSequenceButton.disabled = true;
             playbackHeadLabel.textContent = `압축 중... (0/${capturedFrames.length})`;
-
             const zip = new JSZip();
             const numFrames = capturedFrames.length;
             const padLength = String(numFrames).length;
-
             for (let i = 0; i < numFrames; i++) {
                 try {
                     const imageElement = capturedFrames[i];
@@ -645,55 +807,44 @@
                     zip.file(filename, blob);
                     playbackHeadLabel.textContent = `압축 중... (${i+1}/${numFrames})`;
                 } catch (error) {
-                    console.error(`Error fetching or zipping frame ${i}:`, error);
-                    alert(`프레임 ${i} 압축 중 오류 발생: ${error.message}`);
-                    downloadVideoButton.disabled = false;
-                    downloadSequenceButton.disabled = false;
-                    updatePlaybackHeadLabel();
-                    return;
+                    console.error(`Error zipping frame ${i}:`, error);
+                    alert(`프레임 ${i} 압축 중 오류: ${error.message}`);
+                    downloadVideoButton.disabled = false; downloadSequenceButton.disabled = false;
+                    updatePlaybackHeadLabel(); return;
                 }
             }
-            
             try {
-                const zipBlob = await zip.generateAsync({ type: "blob" });
+                const zipBlob = await zip.generateAsync({type:"blob"});
                 const url = URL.createObjectURL(zipBlob);
-
                 const firstTimestamp = captureTimestamps.length > 0 ? captureTimestamps[0] : new Date();
                 const lastTimestamp = captureTimestamps.length > 0 ? captureTimestamps[captureTimestamps.length - 1] : new Date();
                 const dateStr = getDateString(new Date());
                 const timeStrFirst = getTimeString(firstTimestamp);
                 const timeStrLast = getTimeString(lastTimestamp);
                 const filenameBase = filenameInput.value || "타임랩스";
-
                 const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
+                a.style.display = 'none'; a.href = url;
                 a.download = `${filenameBase}-타임랩스(${dateStr}_${timeStrFirst}-${timeStrLast}-${numFrames}장).zip`;
-                document.body.appendChild(a);
-                a.click();
-
+                document.body.appendChild(a); a.click();
                 setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    downloadVideoButton.disabled = false;
-                    downloadSequenceButton.disabled = false;
+                    document.body.removeChild(a); URL.revokeObjectURL(url);
+                    downloadVideoButton.disabled = false; downloadSequenceButton.disabled = false;
                     updatePlaybackHeadLabel();
                 }, 100);
-
             } catch (error) {
-                console.error("ZIP 생성 오류:", error);
-                alert(`ZIP 파일 생성 중 오류 발생: ${error.message}`);
-                downloadVideoButton.disabled = false;
-                downloadSequenceButton.disabled = false;
+                console.error("ZIP 생성 오류:", error); alert(`ZIP 파일 생성 오류: ${error.message}`);
+                downloadVideoButton.disabled = false; downloadSequenceButton.disabled = false;
                 updatePlaybackHeadLabel();
             }
         });
 
+
+        // --- Main Animation Loop ---
         function animationLoop(timestamp) {
             const deltaTime = (lastTimestamp > 0) ? (timestamp - lastTimestamp) : 0;
             lastTimestamp = timestamp;
 
-            cameraManager.updatePreview();
+            cameraManager.updatePreview(); 
 
             if (isRecordingActive) {
                 elapsedTimeForCapture += deltaTime;
@@ -704,11 +855,7 @@
             }
             
             if (isPlaying && capturedFrames.length > 0) {
-                // Ensure playbackCanvas has its dimensions for drawing.
-                // Its width/height attributes are now set by CSS and might change on resize.
-                // For MediaRecorder, it's important that the canvas it's capturing from has stable dimensions during recording.
-                // The `drawImage` in `drawCurrentFrameOnPlayback` will use current canvas.width/height.
-                if (playbackCanvas.width > 0 && playbackCanvas.height > 0) { // Check if canvas is ready
+                if (playbackCanvas.width > 0 && playbackCanvas.height > 0) { 
                     if (animationFrameCount % playbackRAFInterval === 0) {
                         if (currentFrameIndex < capturedFrames.length) {
                             drawCurrentFrameOnPlayback();                             
@@ -717,7 +864,9 @@
                         
                         if (currentFrameIndex >= capturedFrames.length) { 
                             if (isDownloadingVideo) {
-                                finishVideoDownload(); 
+                                if (videoMediaRecorder && videoMediaRecorder.state === 'recording') {
+                                    videoMediaRecorder.stop(); 
+                                }
                             } else {
                                 currentFrameIndex = 0; 
                             }
@@ -733,21 +882,10 @@
         function init() {
             updateCaptureCountLabel();
             updatePlaybackHeadLabel();
-            updateRecordButtonStatus(); // Initialize record button icon and text
-            updatePlayButtonStatus();   // Initialize play button icon and text
-            playbackRAFInterval = calculatePlaybackRAFInterval(); 
+            updateRecordButtonStatus(); 
+            updatePlayButtonStatus();   
+            playbackRAFInterval = calculatePlaybackRAFInterval(); // Now defined
             
-            // Ensure playback canvas has dimensions before starting loop if it relies on them immediately
-            // CSS should define initial sizes.
-            if (playbackCanvas.width === 0 || playbackCanvas.height === 0) {
-                // Fallback or warning if CSS hasn't set dimensions yet, though modern browsers are good.
-                // This might happen if script runs before CSS fully applied to get computed styles.
-                // However, DOMContentLoaded should ensure CSS is parsed.
-                console.warn("Playback canvas dimensions not set by CSS at init. Using default 512x512 for JS if needed.");
-                // playbackCanvas.width = 512; // Not strictly needed if CSS is primary source
-                // playbackCanvas.height = 512;
-            }
-
             requestAnimationFrame(animationLoop); 
         }
 
