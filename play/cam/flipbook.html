@@ -32,8 +32,13 @@
             box-sizing: border-box;
         }
 
-        .ui-panel label, .ui-panel button, .ui-panel input {
-            margin: 0 5px; 
+        /* Removed specific horizontal margins, rely on gap for spacing */
+        .ui-panel label, 
+        .ui-panel button, 
+        .ui-panel input[type="number"],
+        .ui-panel input[type="text"],
+        .ui-panel input[type="checkbox"] {
+            margin: 0; 
         }
 
         input[type="number"], input[type="text"] {
@@ -50,7 +55,7 @@
 
         input[type="checkbox"] {
             width: auto;
-            margin-right: 5px;
+            /* margin-right: 5px; Replaced by gap */
         }
 
         button {
@@ -152,10 +157,20 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            .ui-panel input[type="number"], .ui-panel input[type="text"], .ui-panel button {
-                width: calc(100% - 10px); /* Adjust for margin */
+            .ui-panel input[type="number"], 
+            .ui-panel input[type="text"], 
+            .ui-panel input[type="checkbox"], /* Ensure checkbox also full width if needed in column */
+            .ui-panel button,
+            .ui-panel label { /* Labels might also need width adjustment in column layout */
+                width: calc(100% - 10px); /* Adjust for margin if any, or use 100% if no internal margins */
                 box-sizing: border-box;
-                margin-bottom: 5px;
+                margin-bottom: 5px; /* Vertical spacing in column layout */
+                margin-left: 0; /* Reset horizontal margins for column layout */
+                margin-right: 0;
+            }
+             .ui-panel input[type="checkbox"] {
+                width: auto; /* Checkbox itself should remain auto-sized */
+                margin-bottom: 5px; 
             }
             #cameraCanvas {
                 width: 95%; 
@@ -208,6 +223,7 @@
             <span>한 장 지우기</span>
         </button>
         <label>|</label>
+        <br>
         <label for="filenameInput">이름:</label>
         <input id="filenameInput" type="text" value="한미">
         <button id="downloadVideoButton">다운로드(영상)</button>
