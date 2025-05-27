@@ -47,7 +47,7 @@
         }
 
         .container {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.5));
             padding: 2rem;
             border-radius: 2rem;
             box-shadow: 
@@ -302,7 +302,8 @@
             }
 
             .planet-section {
-                background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important;
+                /* background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; */
+                background: white;
                 border: 2px solid #cbd5e1;
                 border-radius: 10px;
                 padding: 12px;
@@ -321,14 +322,14 @@
                 max-height: 45mm;
                 width: auto;
                 height: auto;
-                border: 3px solid #e2e8f0;
+                /* border: 3px solid #e2e8f0; */
                 border-radius: 8px;
                 object-fit: contain;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                /* box-shadow: 0 4px 8px rgba(0,0,0,0.1); */
             }
 
             .planet-info h2 {
-                font-size: 16pt !important;
+                font-size: 12pt !important;
                 font-weight: bold;
                 color: #1e293b !important;
                 margin: 0 0 10px 0;
@@ -831,101 +832,116 @@
         let isMoving = false; // 카메라 이동 중
         let isArrived = false; // 목적지 도착 완료
         const clock = new THREE.Clock();
+        const textureLoader = new THREE.TextureLoader(); // ✨ TextureLoader 인스턴스 추가
+
+        // Textures: https://commons.wikimedia.org/wiki/Category:Solar_System_Scope
 
         const CELESTIAL_DATA = {
-            "태양": { 
-                name: "태양", 
-                radius: 15, 
-                color: 0xffcc00, 
-                orbitalRadius: 0, 
-                orbitalSpeed: 0, 
-                rotationSpeed: 0.0002, 
-                emissive: 0xffaa00, 
-                lightIntensity: 2.8, 
-                emissiveIntensity: 2.0 
+            "태양": {
+                name: "태양",
+                textureFile: "sun.jpg", // ✨ 이미지 파일 이름
+                radius: 15,
+                color: 0xffcc00, // 이 색상은 이미지 로드 실패 시 대체 색상으로 사용될 수 있습니다.
+                orbitalRadius: 0,
+                orbitalSpeed: 0,
+                rotationSpeed: 0.0002,
+                emissive: 0xffaa00,
+                lightIntensity: 1.0,
+                emissiveIntensity: 2.0
             },
-            "수성": { 
-                name: "수성", 
-                radius: 1.2, 
-                color: 0x8c7853, 
-                orbitalRadius: 32, 
-                orbitalSpeed: 0.0008, 
-                rotationSpeed: 0.0003 
+            "수성": {
+                name: "수성",
+                textureFile: "mercury.jpg", // ✨ 이미지 파일 이름
+                radius: 1.2,
+                color: 0x8c7853,
+                orbitalRadius: 32,
+                orbitalSpeed: 0.0008,
+                rotationSpeed: 0.0003
             },
-            "금성": { 
-                name: "금성", 
-                radius: 1.9, 
-                color: 0xffc649, 
-                orbitalRadius: 47, 
-                orbitalSpeed: 0.0006, 
-                rotationSpeed: 0.0001 
+            "금성": {
+                name: "금성",
+                textureFile: "venus.jpg", // ✨ 이미지 파일 이름
+                radius: 1.9,
+                color: 0xffc649,
+                orbitalRadius: 47,
+                orbitalSpeed: 0.0006,
+                rotationSpeed: 0.0001
             },
-            "지구": { 
-                name: "지구", 
-                radius: 2, 
-                color: 0x6b93d6, 
-                orbitalRadius: 68, 
-                orbitalSpeed: 0.0005, 
-                rotationSpeed: 0.0003, 
-                hasMoon: true 
+            "지구": {
+                name: "지구",
+                textureFile: "earth.jpg", // ✨ 이미지 파일 이름
+                radius: 2,
+                color: 0x6b93d6,
+                orbitalRadius: 68,
+                orbitalSpeed: 0.0005,
+                rotationSpeed: 0.0003,
+                hasMoon: true
             },
-            "달": { 
-                name: "달", 
-                radius: 0.6, 
-                color: 0xd4d4d4, 
-                parent: "지구", 
-                orbitalRadius: 5, 
-                orbitalSpeed: 0.001, // 대폭 감소!
-                rotationSpeed: 0.0002 
+            "달": {
+                name: "달",
+                textureFile: "moon.jpg", // ✨ 이미지 파일 이름
+                radius: 0.6,
+                color: 0xd4d4d4,
+                parent: "지구",
+                orbitalRadius: 5,
+                orbitalSpeed: 0.001,
+                rotationSpeed: 0.0002
             },
-            "화성": { 
-                name: "화성", 
-                radius: 1.4, 
-                color: 0xcd5c5c, 
-                orbitalRadius: 88, 
-                orbitalSpeed: 0.0004, 
-                rotationSpeed: 0.0003 
+            "화성": {
+                name: "화성",
+                textureFile: "mars.jpg", // ✨ 이미지 파일 이름
+                radius: 1.4,
+                color: 0xcd5c5c,
+                orbitalRadius: 88,
+                orbitalSpeed: 0.0004,
+                rotationSpeed: 0.0003
             },
-            "목성": { 
-                name: "목성", 
-                radius: 9, 
-                color: 0xd8ca9d, 
-                orbitalRadius: 135, 
-                orbitalSpeed: 0.0002, 
-                rotationSpeed: 0.0008 
+            "목성": {
+                name: "목성",
+                textureFile: "jupiter.jpg", // ✨ 이미지 파일 이름
+                radius: 9,
+                color: 0xd8ca9d,
+                orbitalRadius: 135,
+                orbitalSpeed: 0.0002,
+                rotationSpeed: 0.0008
             },
-            "토성": { 
-                name: "토성", 
-                radius: 7.5, 
-                color: 0xfad5a5, 
-                orbitalRadius: 185, 
-                orbitalSpeed: 0.00015, 
-                rotationSpeed: 0.0006, 
-                hasRing: true 
+            "토성": {
+                name: "토성",
+                textureFile: "saturn.jpg", // ✨ 이미지 파일 이름
+                ringTextureFile: "saturn_ring.png", // ✨ 고리 이미지 파일 이름
+                radius: 7.5,
+                color: 0xfad5a5,
+                orbitalRadius: 185,
+                orbitalSpeed: 0.00015,
+                rotationSpeed: 0.0006,
+                hasRing: true
             },
-            "천왕성": { 
-                name: "천왕성", 
-                radius: 4.2, 
-                color: 0x4fd0e7, 
-                orbitalRadius: 235, 
-                orbitalSpeed: 0.0001, 
-                rotationSpeed: 0.0004 
+            "천왕성": {
+                name: "천왕성",
+                textureFile: "uranus.jpg", // ✨ 이미지 파일 이름
+                radius: 4.2,
+                color: 0x4fd0e7,
+                orbitalRadius: 235,
+                orbitalSpeed: 0.0001,
+                rotationSpeed: 0.0004
             },
-            "해왕성": { 
-                name: "해왕성", 
-                radius: 4, 
-                color: 0x4b70dd, 
-                orbitalRadius: 285, 
-                orbitalSpeed: 0.00008, 
-                rotationSpeed: 0.0004 
+            "해왕성": {
+                name: "해왕성",
+                textureFile: "neptune.jpg", // ✨ 이미지 파일 이름
+                radius: 4,
+                color: 0x4b70dd,
+                orbitalRadius: 285,
+                orbitalSpeed: 0.00008,
+                rotationSpeed: 0.0004
             },
-            "명왕성": { 
-                name: "명왕성", 
-                radius: 0.8, 
-                color: 0xa0522d, 
-                orbitalRadius: 335, 
-                orbitalSpeed: 0.00006, 
-                rotationSpeed: 0.0002 
+            "명왕성": {
+                name: "명왕성",
+                textureFile: "pluto.jpg", // ✨ 이미지 파일 이름
+                radius: 0.8,
+                color: 0xa0522d,
+                orbitalRadius: 335,
+                orbitalSpeed: 0.00006,
+                rotationSpeed: 0.0002
             }
         };
 
@@ -946,7 +962,7 @@
             container.appendChild(renderer.domElement);
 
             // 조명 설정 (그림자 없이)
-            const ambientLight = new THREE.AmbientLight(0x404080, 0.3);
+            const ambientLight = new THREE.AmbientLight(0x404080, 0.7);
             scene.add(ambientLight);
 
             const sunLight = new THREE.PointLight(0xffffff, CELESTIAL_DATA["태양"].lightIntensity, 4000);
@@ -1019,7 +1035,7 @@
                         vColor = color;
                         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                         float twinkle = sin(time * 2.0 + position.x * 0.001) * 0.5 + 0.5;
-                        gl_PointSize = size * (twinkle * 0.5 + 0.5) * (300.0 / -mvPosition.z);
+                        gl_PointSize = size * (twinkle * 0.5 + 0.5) * (300.0 / -mvPosition.z) * 10.0;
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
@@ -1168,30 +1184,37 @@
         function createCelestialBodies() {
             for (const key in CELESTIAL_DATA) {
                 const data = CELESTIAL_DATA[key];
-                const geometry = new THREE.SphereGeometry(data.radius, 64, 64);
-                
+                const geometry = new THREE.SphereGeometry(data.radius, 64, 64); // 세그먼트 수 유지 또는 조절
+
+                // ✨ 텍스처 경로 설정
+                const texturePath = `assets/space_chef/textures/${data.textureFile}`;
+                const loadedTexture = textureLoader.load(texturePath);
+                loadedTexture.encoding = THREE.sRGBEncoding; // 색상 공간 설정 (필요에 따라)
+                loadedTexture.flipY = true; // JPG/PNG 텍스처는 일반적으로 false
+
                 let material;
-                if (data.emissive) {
+                if (data.emissive) { // 태양과 같이 스스로 빛나는 천체
                     material = new THREE.MeshStandardMaterial({
-                        map: createAdvancedTexture(data),
-                        emissive: data.emissive,
-                        emissiveMap: createAdvancedTexture(data),
+                        map: loadedTexture,
+                        emissive: data.emissive, // 기존 emissive 색상 유지
+                        emissiveMap: loadedTexture, // 동일 텍스처를 emissiveMap으로 사용
                         emissiveIntensity: data.emissiveIntensity || 1.5,
-                        roughness: 0.9
+                        roughness: 0.9, // 표면 거칠기
+                        metalness: 0.1  // 금속성
                     });
-                } else {
+                } else { // 일반 행성 및 위성
                     material = new THREE.MeshStandardMaterial({
-                        map: createAdvancedTexture(data),
+                        map: loadedTexture,
                         roughness: 0.8,
                         metalness: 0.1,
-                        bumpMap: createAdvancedTexture(data),
-                        bumpScale: 0.05
+                        emissive: 0x11111,
+                        // bumpMap: loadedTexture, // 동일 텍스처를 범프맵으로 사용 가능
+                        // bumpScale: 0.05         // 범프 스케일 조절
                     });
                 }
 
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.name = data.name;
-                // 그림자 설정 제거 (쉐이딩만 사용)
 
                 const orbitGroup = new THREE.Group();
                 orbitGroup.add(mesh);
@@ -1211,31 +1234,54 @@
                 }
 
                 // 토성 고리
-                if (data.hasRing) {
-                    const ringSegments = 256;
-                    const ringGeometry = new THREE.RingGeometry(data.radius * 1.3, data.radius * 2.5, ringSegments);
-                    
-                    const ringUvs = ringGeometry.attributes.uv;
-                    for (let i = 0; i < ringUvs.count; i++) {
-                        const angle = (i % (ringSegments + 1)) / ringSegments * Math.PI * 2;
-                        const radius = Math.floor(i / (ringSegments + 1)) / 1;
-                        ringUvs.setXY(i, radius, angle / (Math.PI * 2));
+                if (data.hasRing && data.ringTextureFile) {
+                    const ringTexturePath = `assets/space_chef/textures/${data.ringTextureFile}`;
+                    const loadedRingTexture = textureLoader.load(ringTexturePath);
+                    loadedRingTexture.encoding = THREE.sRGBEncoding;
+                    loadedRingTexture.flipY = false; // PNG의 경우 일반적으로 false
+
+                    // ✨ 텍스처 래핑 모드 설정
+                    loadedRingTexture.wrapS = THREE.ClampToEdgeWrapping; // U 좌표 (텍스처 가로, 고리 반지름 방향)는 가장자리에서 반복되지 않도록 설정
+                    loadedRingTexture.wrapT = THREE.RepeatWrapping;    // V 좌표 (텍스처 세로, 고리 원주 방향)는 반복되도록 설정
+
+                    const ringSegments = 256 / 2; // 고리의 원주 방향 분할 수
+                    const phiSegments = 10;   // ✨ 고리의 반지름 방향 분할 수 (값을 약간 늘려 UV 매핑 부드럽게)
+                                            // 기본값 1 또는 5보다 조금 더 높은 값을 사용하면 좋습니다.
+
+                    const ringGeometry = new THREE.RingGeometry(
+                        data.radius * 1.3, // innerRadius
+                        data.radius * 2.5, // outerRadius
+                        ringSegments,      // thetaSegments
+                        phiSegments,       // phiSegments (위에서 설정한 값)
+                        0,                 // thetaStart
+                        Math.PI * 2        // thetaLength
+                    );
+
+                    // ✨ UV 좌표 수정 시작
+                    const uvs = ringGeometry.attributes.uv;
+                    // 루프를 통해 각 UV 좌표를 (v, u)로 변경
+                    for (let i = 0; i < uvs.count; i++) {
+                        const u = uvs.getX(i); // 기존 U 값 (원주 방향)
+                        const v = uvs.getY(i); // 기존 V 값 (반지름 방향)
+                        uvs.setXY(i, v, u);    // 새 U = 기존 V, 새 V = 기존 U
                     }
-                    ringGeometry.attributes.uv.needsUpdate = true;
+                    uvs.needsUpdate = true; // UV가 업데이트되었음을 알림
+                    // ✨ UV 좌표 수정 끝
 
                     const ringMaterial = new THREE.MeshStandardMaterial({
-                        map: createAdvancedTexture({name: "토성고리", color: 0xd4af8c}),
+                        map: loadedRingTexture,
                         side: THREE.DoubleSide,
-                        transparent: true,
-                        opacity: 0.8,
+                        transparent: true,    // PNG 텍스처의 알파 채널 사용
+                        // opacity: 1.0,      // 텍스처 자체의 알파값을 사용하려면 opacity는 1.0으로 설정
+                        alphaTest: 0.01,      // 알파 값이 매우 낮은 (거의 투명한) 픽셀을 렌더링에서 제외 (선택 사항)
                         roughness: 0.9,
-                        metalness: 0.1
+                        metalness: 0.1,
+                        // emissive: 0x111111, // 필요하다면 아주 약한 자체 발광 추가 가능
                     });
-                    
+
                     const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-                    ringMesh.rotation.x = Math.PI / 2.1;
-                    // 그림자 설정 제거
-                    mesh.add(ringMesh);
+                    ringMesh.rotation.x = Math.PI / 2.1; // 고리 기울기
+                    mesh.add(ringMesh); // 토성 메시에 고리 메시 추가
                 }
 
                 if (key === "태양") {
@@ -1250,14 +1296,14 @@
             const lineMaterial = new THREE.LineBasicMaterial({ 
                 color: 0xffffff, 
                 transparent: true, 
-                opacity: 0.3 
+                opacity: 0.0 
             });
             
             for (const key in CELESTIAL_DATA) {
                 const data = CELESTIAL_DATA[key];
                 if (data.orbitalRadius > 0) {
                     const points = [];
-                    const segments = 256;
+                    const segments = 256 * 4;
                     for (let i = 0; i <= segments; i++) {
                         const theta = (i / segments) * Math.PI * 2;
                         points.push(new THREE.Vector3(
@@ -1313,24 +1359,45 @@
             // 🎯 단순한 카메라 추적 (도착 후)
             if (currentTarget && celestialObjects[currentTarget] && isArrived && !isMoving) {
                 const targetMesh = celestialObjects[currentTarget].mesh;
-                const targetWorldPosition = new THREE.Vector3();
+                const targetWorldPosition = new THREE.Vector3(); // 행성의 현재 실제 위치
                 targetMesh.getWorldPosition(targetWorldPosition);
 
-                // 매우 단순한 부드러운 추적 - 행성과 함께 공전
+                // 다른 TWEEN이 카메라를 제어하고 있지 않은지 확인 (이미 TWEEN은 완료된 상태여야 함)
                 if (!TWEEN.getAll().length) {
-                    // 상대적 위치 유지하면서 부드럽게 따라가기
-                    const desiredDistance = targetMesh.geometry.parameters.radius * 6 + 15;
-                    const currentDistance = camera.position.distanceTo(targetWorldPosition);
+
+                    // --- 부드러운 위치 추적 ---
+                    const planetRadius = targetMesh.geometry.parameters.radius;
+                    const trackingDesiredDistance = planetRadius * 6 + 15; // 목표 거리
+
+                    // 현재 카메라 위치에서 목표 행성까지의 방향 벡터 계산 (카메라 -> 행성)
+                    // 이상적인 카메라 위치는 (행성 위치 + (행성->카메라 방향 벡터 * 목표거리)) 입니다.
+                    // 그러므로 (카메라 위치 - 행성 위치) 벡터를 사용합니다.
+                    const dirFromPlanetToCam = new THREE.Vector3().subVectors(camera.position, targetWorldPosition);
+                    // 현재 거리 유지 대신, 목표 거리로 조정하므로 방향만 사용
+                    dirFromPlanetToCam.normalize(); 
                     
-                    // 거리가 너무 멀거나 가까우면 조정
-                    if (Math.abs(currentDistance - desiredDistance) > 5) {
-                        const direction = new THREE.Vector3().subVectors(camera.position, targetWorldPosition).normalize();
-                        const desiredPosition = targetWorldPosition.clone().add(direction.multiplyScalar(desiredDistance));
-                        camera.position.lerp(desiredPosition, 0.01); // 매우 부드럽게
-                    }
-                    
-                    // 항상 행성 바라보기 (흔들림 없이)
-                    camera.lookAt(targetWorldPosition);
+                    // 이상적인 카메라 위치 계산: 행성 위치에서 (정규화된 방향 벡터 * 목표 거리) 만큼 떨어진 지점
+                    const idealCameraPosition = new THREE.Vector3().addVectors(
+                        targetWorldPosition,
+                        dirFromPlanetToCam.multiplyScalar(trackingDesiredDistance)
+                    );
+
+                    // 현재 카메라 위치를 이상적인 위치로 부드럽게 보간
+                    // lerpFactor 값을 조절하여 속도 제어 (0.01 ~ 0.1 사이 값 추천)
+                    const positionLerpFactor = 0.1; 
+                    camera.position.lerp(idealCameraPosition, positionLerpFactor);
+
+                    // --- 부드러운 방향 추적 ---
+                    // 현재 (새롭게 보간된) 카메라 위치에서 행성을 바라보는 목표 쿼터니언 계산
+                    const targetLookAtQuaternion = new THREE.Quaternion();
+                    const tempMatrix = new THREE.Matrix4();
+                    tempMatrix.lookAt(camera.position, targetWorldPosition, camera.up);
+                    targetLookAtQuaternion.setFromRotationMatrix(tempMatrix);
+
+                    // 현재 카메라 쿼터니언을 목표 쿼터니언으로 부드럽게 slerp
+                    // slerpFactor 값을 조절하여 회전 속도 제어 (0.01 ~ 0.1 사이 값 추천)
+                    const rotationSlerpFactor = 0.07; 
+                    camera.quaternion.slerp(targetLookAtQuaternion, rotationSlerpFactor);
                 }
             }
 
@@ -1476,73 +1543,99 @@
         function focusCameraOnTarget(targetName) {
             if (!celestialObjects[targetName] || !celestialObjects[targetName].mesh) {
                 console.warn("Target not found:", targetName);
+                isMoving = false;
+                isArrived = true;
                 return;
             }
-            
-            // 새로운 타겟으로 이동 시작
+
             currentTarget = targetName;
             isMoving = true;
-            isArrived = false; // 새로운 여행 시작!
+            isArrived = false;
             const targetMesh = celestialObjects[targetName].mesh;
-            const targetWorldPosition = new THREE.Vector3();
-            targetMesh.getWorldPosition(targetWorldPosition);
-            
-            // 🎬 랜덤한 Fly-by 패턴 선택
+            const initialTargetWorldPosition = new THREE.Vector3();
+            targetMesh.getWorldPosition(initialTargetWorldPosition); // 패턴 생성 시 사용될 초기 행성 위치
+
             const pattern = FLYBY_PATTERNS[Math.floor(Math.random() * FLYBY_PATTERNS.length)];
-            const radius = targetMesh.geometry.parameters.radius;
-            
-            // 현재 카메라 위치에서 시작하는 경로 생성
-            const waypoints = pattern.execute(camera.position.clone(), targetWorldPosition, radius);
-            
+            const planetRadius = targetMesh.geometry.parameters.radius; // 실제 행성 반지름 사용
+            const waypoints = pattern.execute(camera.position.clone(), initialTargetWorldPosition, planetRadius);
+
             console.log(`🎬 ${pattern.name} 연출로 ${targetName} 접근 중...`);
-            
-            // 카메라 이동 사운드 (매우 부드럽게)
+
             if (Tone.context.state === 'running' && cameraMoveSynth) {
-                cameraMoveSynth.triggerAttackRelease("C3", "1s"); // 더 낮은 음, 더 긴 지속시간
+                cameraMoveSynth.triggerAttackRelease("C3", "1s");
             }
-            
-            // 🛸 단순하고 안정적인 카메라 이동
-            let currentWaypoint = 0;
-            
-            function animateToNextWaypoint() {
-                if (currentWaypoint >= waypoints.length - 1) {
-                    isMoving = false;
-                    isArrived = true; // 도착 완료!
-                    console.log(`🎯 ${targetName} 도착 완료! 부드러운 추적 시작`);
-                    return;
+
+            if (waypoints.length > 1) {
+                // ✨ TWEEN 최종 목적지 보정 시작
+                const finalWaypointFromPattern = waypoints[waypoints.length - 1];
+                const trackingDesiredDistance = planetRadius * 6 + 15; // animate() 루프의 추적 로직과 동일한 값
+
+                // 행성(initialTargetWorldPosition)에서 패턴이 제안한 최종 카메라 위치로의 방향 벡터
+                const offsetDirection = new THREE.Vector3().subVectors(finalWaypointFromPattern, initialTargetWorldPosition);
+                offsetDirection.normalize(); // 방향만 사용
+
+                // 추적 로직의 desiredDistance에 맞춰 최종 웨이포인트 위치 보정
+                // initialTargetWorldPosition은 행성의 *초기* 위치 기준이므로, 최종 lookAt은 실제 행성 위치를 따라감
+                const correctedFinalWaypoint = new THREE.Vector3().addVectors(
+                    initialTargetWorldPosition, // 기준점: 행성의 초기 위치
+                    offsetDirection.multiplyScalar(trackingDesiredDistance)
+                );
+                waypoints[waypoints.length - 1] = correctedFinalWaypoint; // 기존 마지막 웨이포인트를 보정된 위치로 교체
+                // ✨ TWEEN 최종 목적지 보정 끝
+
+                const pathPointsX = [];
+                const pathPointsY = [];
+                const pathPointsZ = [];
+                for (let i = 1; i < waypoints.length; i++) {
+                    pathPointsX.push(waypoints[i].x);
+                    pathPointsY.push(waypoints[i].y);
+                    pathPointsZ.push(waypoints[i].z);
                 }
-                
-                isMoving = true;
-                isArrived = false;
-                const startPos = waypoints[currentWaypoint].clone();
-                const endPos = waypoints[currentWaypoint + 1].clone();
-                const duration = 1800 + Math.random() * 400;
-                
-                new TWEEN.Tween(camera.position)
-                    .to({ x: endPos.x, y: endPos.y, z: endPos.z }, duration)
-                    .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onUpdate(() => {
-                        // 이동 중에는 타겟을 간단하게 바라보기
-                        const targetPos = new THREE.Vector3();
-                        celestialObjects[currentTarget].mesh.getWorldPosition(targetPos);
-                        camera.lookAt(targetPos);
-                    })
-                    .onComplete(() => {
-                        currentWaypoint++;
-                        if (currentWaypoint < waypoints.length - 1) {
-                            setTimeout(animateToNextWaypoint, 300);
-                        } else {
-                            // 최종 도착
+
+                if (pathPointsX.length > 0) {
+                    const averageSegmentDuration = 1500 + Math.random() * 300;
+                    const totalDuration = pathPointsX.length * averageSegmentDuration;
+
+                    new TWEEN.Tween(camera.position)
+                        .to({ x: pathPointsX, y: pathPointsY, z: pathPointsZ }, totalDuration)
+                        .interpolation(TWEEN.Interpolation.CatmullRom)
+                        .easing(TWEEN.Easing.Quadratic.InOut)
+                        .onUpdate(() => {
+                            // ... (기존 onUpdate 내용: slerp 이용한 부드러운 lookAt) ...
+                            const planetActualPosition = new THREE.Vector3();
+                            if (celestialObjects[currentTarget] && celestialObjects[currentTarget].mesh) {
+                                celestialObjects[currentTarget].mesh.getWorldPosition(planetActualPosition);
+                                const targetLookAtQuaternion = new THREE.Quaternion();
+                                const tempMatrix = new THREE.Matrix4();
+                                tempMatrix.lookAt(camera.position, planetActualPosition, camera.up);
+                                targetLookAtQuaternion.setFromRotationMatrix(tempMatrix);
+                                const slerpFactor = 0.07;
+                                camera.quaternion.slerp(targetLookAtQuaternion, slerpFactor);
+                            }
+                        })
+                        .onComplete(() => {
                             isMoving = false;
                             isArrived = true;
-                            console.log(`🎯 ${targetName} 최종 도착! 추적 모드 전환`);
-                        }
-                    })
-                    .start();
+                            console.log(`🎯 ${targetName} 도착 완료! 부드러운 추적 시작`);
+
+                            // // 애니메이션 완료 후 정확히 목표물을 바라보도록 최종 설정 (필수)
+                            // if (celestialObjects[currentTarget] && celestialObjects[currentTarget].mesh) {
+                            //     const finalPlanetPos = new THREE.Vector3();
+                            //     celestialObjects[currentTarget].mesh.getWorldPosition(finalPlanetPos);
+                            //     camera.lookAt(finalPlanetPos); // Slerp의 최종 보정 및 정확한 조준
+                            // }
+                        })
+                        .start();
+                } else {
+                    console.log(`ℹ️ ${targetName} 이동 경로 없음. 즉시 도착 처리.`);
+                    isMoving = false;
+                    isArrived = true;
+                }
+            } else {
+                console.warn(`⚠️ ${targetName} 웨이포인트 부족 (${waypoints.length}개). 이동 불가.`);
+                isMoving = false;
+                isArrived = true;
             }
-            
-            // 첫 번째 이동 시작
-            animateToNextWaypoint();
         }
 
         function displayRandomRequest() {
@@ -1603,147 +1696,153 @@
                 return;
             }
 
-            // 인쇄용 데이터 설정
+            // 인쇄용 데이터 설정 (날짜 등)
             document.getElementById('print-planet-name').textContent = lastDisplayedRequest.name;
             document.getElementById('print-request-text').textContent = lastDisplayedRequest.request;
-
             const today = new Date();
             document.getElementById('print-date').value = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
 
-            // 🖨️ 단순한 인쇄용 조명 (ambient만 사용)
+            // 📸 원본 카메라 상태 저장
+            const originalFov = camera.fov;
+            const originalCameraQuaternion = camera.quaternion.clone(); // 현재 카메라 방향 저장
+
+            // 씬 및 재질 임시 변경 (인쇄용)
             const originalBackground = scene.background.clone();
-            const originalAmbientIntensity = scene.children.find(child => child.type === 'AmbientLight')?.intensity || 0.3;
-            
-            // 태양 emissive 조절 (하얀 배경에서 보이도록)
+            const ambientLight = scene.children.find(child => child.type === 'AmbientLight');
+            const originalAmbientIntensity = ambientLight ? ambientLight.intensity : 0.3;
+
             let sunMaterialAdjustment = null;
             if (celestialObjects["태양"] && celestialObjects["태양"].mesh) {
+                // ... (기존 태양 재질 조정 코드) ...
                 const sunMaterial = celestialObjects["태양"].mesh.material;
                 sunMaterialAdjustment = {
                     originalEmissive: sunMaterial.emissive.clone(),
                     originalEmissiveIntensity: sunMaterial.emissiveIntensity
                 };
-                // 태양을 더 어둡게 (하얀 배경에서 구분되도록)
-                sunMaterial.emissive.setHex(0x444400); // 더 어두운 노란색
-                sunMaterial.emissiveIntensity = 0.8; // 강도도 줄이기
+                sunMaterial.emissive.setHex(0x444400);
+                sunMaterial.emissiveIntensity = 0.8;
                 sunMaterial.needsUpdate = true;
             }
-            
-            // 📸 선택된 행성만 보이게 설정
+
             const visibilityChanges = [];
-            const targetPlanet = lastDisplayedRequest.name;
-            
-            // 모든 행성과 궤도선을 일시적으로 숨기기
-            for (const key in celestialObjects) {
-                const obj = celestialObjects[key];
-                if (obj.orbitGroup) {
-                    visibilityChanges.push({
-                        object: obj.orbitGroup,
-                        originalVisible: obj.orbitGroup.visible
-                    });
-                    obj.orbitGroup.visible = false;
+            const targetPlanetNamePrint = lastDisplayedRequest.name;
+            // ... (기존 객체 숨김/표시 로직) ...
+            for (const key in celestialObjects) { // 모든 천체 그룹 숨기기
+                if (celestialObjects[key].orbitGroup) {
+                    visibilityChanges.push({ object: celestialObjects[key].orbitGroup, originalVisible: celestialObjects[key].orbitGroup.visible });
+                    celestialObjects[key].orbitGroup.visible = false;
                 }
             }
-            
-            // 궤도선들도 숨기기
-            for (const key in orbitLines) {
-                const line = orbitLines[key];
-                visibilityChanges.push({
-                    object: line,
-                    originalVisible: line.visible
-                });
-                line.visible = false;
+            for (const key in orbitLines) { // 모든 궤도선 숨기기
+                 visibilityChanges.push({ object: orbitLines[key], originalVisible: orbitLines[key].visible });
+                 orbitLines[key].visible = false;
             }
-            
-            // 별 배경도 숨기기
-            if (starField) {
-                visibilityChanges.push({
-                    object: starField,
-                    originalVisible: starField.visible
-                });
+            if (starField) { // 별 배경 숨기기
+                visibilityChanges.push({ object: starField, originalVisible: starField.visible });
                 starField.visible = false;
             }
-            
-            // 선택된 행성만 보이게 하기
-            if (celestialObjects[targetPlanet]) {
-                celestialObjects[targetPlanet].orbitGroup.visible = true;
-                
-                // 달인 경우 지구도 함께 보이게
-                if (targetPlanet === "달" && celestialObjects["지구"]) {
+            // 타겟 행성만 보이게
+            if (celestialObjects[targetPlanetNamePrint] && celestialObjects[targetPlanetNamePrint].orbitGroup) {
+                celestialObjects[targetPlanetNamePrint].orbitGroup.visible = true;
+                if (targetPlanetNamePrint === "달" && celestialObjects["지구"]?.orbitGroup) {
                     celestialObjects["지구"].orbitGroup.visible = true;
-                }
-                
-                // 지구인 경우 달도 함께 보이게
-                if (targetPlanet === "지구" && celestialObjects["달"]) {
+                } else if (targetPlanetNamePrint === "지구" && celestialObjects["달"]?.orbitGroup) {
                     celestialObjects["달"].orbitGroup.visible = true;
                 }
             }
-            
-            // 배경을 하얀색으로 변경
-            scene.background = new THREE.Color(0xffffff);
-            
-            // ✨ Ambient 조명만 0.8로 설정 (단순하고 깔끔하게)
-            const ambientLight = scene.children.find(child => child.type === 'AmbientLight');
+
+
+            scene.background = new THREE.Color(0xffffff); // 배경 흰색
             if (ambientLight) {
-                ambientLight.intensity = 0.8;
+                ambientLight.intensity = 3; // 인쇄용 조명 밝게 (너무 밝으면 조절)
             }
-            
-            // 재질 조정 (인쇄용 매트 질감)
-            const materialAdjustments = [];
-            for (const key in celestialObjects) {
-                const obj = celestialObjects[key];
-                if (obj.mesh && obj.mesh.material && !obj.data?.emissive) {
-                    const material = obj.mesh.material;
-                    materialAdjustments.push({
-                        mesh: obj.mesh,
-                        originalMetalness: material.metalness,
-                        originalRoughness: material.roughness
-                    });
-                    
-                    material.metalness = 0.02;
-                    material.roughness = 0.95;
-                    material.needsUpdate = true;
+
+            // const materialAdjustments = [];
+            // // ... (기존 재질 조정 코드 - metalness, roughness) ...
+            // for (const key in celestialObjects) {
+            //     const obj = celestialObjects[key];
+            //     if (obj.mesh && obj.mesh.material && !obj.data?.emissive && obj.orbitGroup && obj.orbitGroup.visible) { // 보이는 객체만
+            //         const material = obj.mesh.material;
+            //         materialAdjustments.push({
+            //             mesh: obj.mesh,
+            //             originalMetalness: material.metalness,
+            //             originalRoughness: material.roughness
+            //         });
+            //         material.metalness = 0.01; // 거의 반사 없음
+            //         material.roughness = 0.98; // 매우 거칠게 (매트하게)
+            //         material.needsUpdate = true;
+            //     }
+            // }
+
+
+            // ✨ --- 카메라 FOV 조절하여 행성 확대 ---
+            const planetData = CELESTIAL_DATA[targetPlanetNamePrint];
+            const planetObject = celestialObjects[targetPlanetNamePrint];
+
+            if (planetData && planetObject && planetObject.mesh) {
+                const planetMesh = planetObject.mesh;
+                const planetRadius = planetData.radius;
+                const planetWorldPosition = planetMesh.getWorldPosition(new THREE.Vector3());
+                const distanceToPlanet = camera.position.distanceTo(planetWorldPosition);
+
+                if (distanceToPlanet > 0 && planetRadius > 0) { // 유효한 값일 때만 FOV 조절
+                    const fillFactor = 0.85; // 이미지가 뷰의 수직 높이의 85%를 채우도록 설정
+                                            // (값이 클수록 더 꽉 참, 1.0 이상은 잘릴 수 있음)
+
+                    // 새 FOV 계산 (라디안): newFov = 2 * atan(objectVisualRadius / distance)
+                    // 여기서 objectVisualRadius는 planetRadius가 화면의 fillFactor만큼 보이도록 하는 값
+                    // 즉, tan(newFov/2) = (planetRadius / fillFactor) / distanceToPlanet (잘못된 이해)
+                    // 올바른 공식: tan(newFov/2) = planetRadius / (fillFactor * distanceToPlanet)
+                    // 이 공식은 행성의 실제 반지름이 (거리 * fillFactor) 영역 내에서 보이도록 FOV를 조절합니다.
+                    // 좀 더 직관적으로, 행성의 지름(2*planetRadius)이 화면 높이의 fillFactor를 차지하도록 하려면:
+                    // 화면 높이 H = 2 * distance * tan(FOV/2).
+                    // 2 * planetRadius = fillFactor * H
+                    // 2 * planetRadius = fillFactor * 2 * distance * tan(newFOV/2)
+                    // tan(newFOV/2) = planetRadius / (fillFactor * distanceToPlanet)
+                    const newFovRadians = 2 * Math.atan(planetRadius / (fillFactor * distanceToPlanet));
+                    let newFovDegrees = newFovRadians * (180 / Math.PI);
+
+                    // FOV가 너무 작아지거나 (과도한 줌), 너무 커지는 것을 방지
+                    newFovDegrees = Math.max(5, Math.min(newFovDegrees, originalFov)); // 최소 5도, 최대 원본 FOV
+
+                    camera.fov = newFovDegrees;
+                    camera.updateProjectionMatrix(); // FOV 변경 후 필수 호출
+
+                    // FOV 변경 후, 행성이 중앙에 오도록 카메라 방향 재조정
+                    camera.lookAt(planetWorldPosition);
                 }
             }
-            
-            // 인쇄용 렌더링
+            // ✨ --- FOV 조절 끝 ---
+
             renderer.render(scene, camera);
             const imageDataUrl = renderer.domElement.toDataURL('image/png');
             document.getElementById('print-planet-image').src = imageDataUrl;
 
-            // 🔄 원본 설정 복원
+            // 📸 원본 카메라 및 씬 상태 복원
+            camera.fov = originalFov;
+            camera.quaternion.copy(originalCameraQuaternion); // 저장된 방향으로 복원
+            camera.updateProjectionMatrix();
+
             scene.background = originalBackground;
-            
-            if (ambientLight) {
-                ambientLight.intensity = originalAmbientIntensity;
-            }
-            
-            // 태양 재질 복원
-            if (sunMaterialAdjustment && celestialObjects["태양"]) {
+            if (ambientLight) ambientLight.intensity = originalAmbientIntensity;
+            // ... (기존 태양 재질, 다른 재질, 객체 가시성 복원 코드) ...
+            if (sunMaterialAdjustment && celestialObjects["태양"]?.mesh.material) {
                 const sunMaterial = celestialObjects["태양"].mesh.material;
                 sunMaterial.emissive.copy(sunMaterialAdjustment.originalEmissive);
                 sunMaterial.emissiveIntensity = sunMaterialAdjustment.originalEmissiveIntensity;
                 sunMaterial.needsUpdate = true;
             }
-            
-            // 가시성 복원
-            visibilityChanges.forEach(change => {
-                change.object.visible = change.originalVisible;
-            });
-            
-            // 재질 복원
-            materialAdjustments.forEach(adj => {
-                adj.mesh.material.metalness = adj.originalMetalness;
-                adj.mesh.material.roughness = adj.originalRoughness;
-                adj.mesh.material.needsUpdate = true;
-            });
-            
-            // 화면용 렌더링
-            renderer.render(scene, camera);
+            // materialAdjustments.forEach(adj => {
+            //     adj.mesh.material.metalness = adj.originalMetalness;
+            //     adj.mesh.material.roughness = adj.originalRoughness;
+            //     adj.mesh.material.needsUpdate = true;
+            // });
+            visibilityChanges.forEach(change => { change.object.visible = change.originalVisible; });
 
-            // 인쇄 실행
+
             setTimeout(() => {
                 window.print();
-                showMessage("🖨️ 깔끔한 단일 행성 인쇄 준비 완료! ✨", "success");
+                showMessage("🖨️ 인쇄 준비 완료! ✨", "success");
             }, 300);
         }
 
