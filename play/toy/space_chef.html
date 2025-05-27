@@ -232,7 +232,7 @@
             body {
                 background-color: #ffffff !important;
                 color: #000000 !important;
-                font-family: 'Noto Sans KR', sans-serif !important;
+                font-family: 'Orbit', sans-serif !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -257,11 +257,12 @@
                 text-align: center;
                 margin-bottom: 20px;
                 border-bottom: 3px solid #4f46e5;
+                /* border-bottom: 3px solid #10b981; */
                 padding-bottom: 15px;
             }
 
             .print-header h1 {
-                font-family: 'Press Start 2P', cursive !important;
+                font-family: 'Orbit', sans-serif !important;
                 font-size: 18pt !important;
                 color: #4f46e5 !important;
                 margin: 0 0 8px 0;
@@ -474,7 +475,7 @@
             <h1>🌟 종달새반 우주 셰프 🚀</h1>
             <!--<div class="subtitle">✨ 우주 특급 레시피 주문서 ✨</div>-->
             <div class="chef-name-field">
-                <label>👩‍🍳 셰프 이름:</label>
+                <label>셰프 이름:</label>
                 <input type="text" id="print-header-chef-name">
             </div>
         </div>
@@ -1244,8 +1245,10 @@
                     loadedRingTexture.flipY = false; // PNG의 경우 일반적으로 false
 
                     // ✨ 텍스처 래핑 모드 설정
-                    loadedRingTexture.wrapS = THREE.ClampToEdgeWrapping; // U 좌표 (텍스처 가로, 고리 반지름 방향)는 가장자리에서 반복되지 않도록 설정
+                    loadedRingTexture.wrapS = THREE.RepeatWrapping; // U 좌표 (텍스처 세로, 고리 원주 방향)는 반복되도록 설정
                     loadedRingTexture.wrapT = THREE.RepeatWrapping;    // V 좌표 (텍스처 세로, 고리 원주 방향)는 반복되도록 설정
+                    loadedRingTexture.rotation = 0;                      // 혹시 돌려둔 게 있다면 해제
+                    loadedRingTexture.center.set(0.5, 0.5);
 
                     const ringSegments = 256 / 2; // 고리의 원주 방향 분할 수
                     const phiSegments = 10;   // ✨ 고리의 반지름 방향 분할 수 (값을 약간 늘려 UV 매핑 부드럽게)
@@ -1260,16 +1263,28 @@
                         Math.PI * 2        // thetaLength
                     );
 
-                    // ✨ UV 좌표 수정 시작
-                    const uvs = ringGeometry.attributes.uv;
-                    // 루프를 통해 각 UV 좌표를 (v, u)로 변경
-                    for (let i = 0; i < uvs.count; i++) {
-                        const u = uvs.getX(i); // 기존 U 값 (원주 방향)
-                        const v = uvs.getY(i); // 기존 V 값 (반지름 방향)
-                        uvs.setXY(i, v, u);    // 새 U = 기존 V, 새 V = 기존 U
+                    const posAttr = ringGeometry.attributes.position;
+                    const uvAttr  = ringGeometry.attributes.uv;
+
+                    const innerR  = data.radius * 1.3;
+                    const outerR  = data.radius * 2.5;
+
+                    for (let i = 0; i < uvAttr.count; i++) {
+                        const x = posAttr.getX(i);
+                        const y = posAttr.getY(i);
+
+                        // U : 안쪽-바깥쪽(0-1) 반지름
+                        const r = Math.hypot(x, y);
+                        const u = (r - innerR) / (outerR - innerR);
+
+                        // V : 각도(0-1)
+                        let theta = Math.atan2(y, x);      // -π ↔ π
+                        if (theta < 0) theta += Math.PI*2; // 0 ↔ 2π
+                        const v = theta / (Math.PI * 2);
+
+                        uvAttr.setXY(i, u, v);
                     }
-                    uvs.needsUpdate = true; // UV가 업데이트되었음을 알림
-                    // ✨ UV 좌표 수정 끝
+                    uvAttr.needsUpdate = true;
 
                     const ringMaterial = new THREE.MeshStandardMaterial({
                         map: loadedRingTexture,
@@ -1279,7 +1294,7 @@
                         alphaTest: 0.01,      // 알파 값이 매우 낮은 (거의 투명한) 픽셀을 렌더링에서 제외 (선택 사항)
                         roughness: 0.9,
                         metalness: 0.1,
-                        // emissive: 0x111111, // 필요하다면 아주 약한 자체 발광 추가 가능
+                        emissive: 0x111111, // 필요하다면 아주 약한 자체 발광 추가 가능
                     });
 
                     const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
