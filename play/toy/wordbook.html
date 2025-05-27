@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유치원 단어 기록장</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            min-height: calc(100vh - 4rem);
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .data-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #fc466b, #3f5efb);
+            color: white;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 2rem;
+        }
+
+        .student-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: none;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .student-card:hover::before {
+            left: 100%;
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .student-card.view-mode {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.3);
+        }
+
+        .student-card.view-mode:hover {
+            box-shadow: 0 12px 35px rgba(17, 153, 142, 0.4);
+        }
+
+        .word-count {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #fc466b;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+            z-index: 10;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .recording-area {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(255, 234, 167, 0.3);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        .word-input-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+
+        .word-input {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: 3px solid #fdcb6e;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .word-input:focus {
+            border-color: #e17055;
+            box-shadow: 0 0 0 3px rgba(225, 112, 85, 0.2);
+        }
+
+        .recent-words {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .recent-words h3 {
+            color: #2d3436;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .recent-words-list {
+            font-size: 1.1rem;
+            color: #636e72;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .words-display {
+            background: linear-gradient(135deg, #a8e6cf, #88d8c0);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(168, 230, 207, 0.3);
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 2rem;
+        }
+
+        .words-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .words-header {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #00b894;
+            text-align: center;
+        }
+
+        .words-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .word-item {
+            background: linear-gradient(135deg, #a8e6cf, #88d8c0);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #2d3436;
+            border: 2px solid #74b9ff;
+            transition: all 0.3s ease;
+        }
+
+        .word-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(116, 185, 255, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #636e72;
+            padding: 3rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #fc466b, #3f5efb);
+        }
+
+        .drag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            backdrop-filter: blur(5px);
+        }
+
+        .drag-overlay.show {
+            display: flex;
+        }
+
+        .drag-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .drag-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .drag-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .drag-subtitle {
+            font-size: 1.2rem;
+            color: #636e72;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(253, 203, 110, 0.3);
+        }
+
+        /* 인쇄용 스타일 */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                color: black !important;
+            }
+            
+            .container {
+                background: white !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 1cm !important;
+                margin: 0 !important;
+                min-height: auto !important;
+                max-width: none !important;
+            }
+            
+            .screen:not(.active) {
+                display: none !important;
+            }
+            
+            h1 {
+                color: black !important;
+                background: none !important;
+                -webkit-background-clip: initial !important;
+                -webkit-text-fill-color: initial !important;
+                font-size: 2rem !important;
+                margin-bottom: 1.5rem !important;
+                text-align: center !important;
+                page-break-after: avoid !important;
+            }
+            
+            .btn, .notification, .drag-overlay, .word-input-container, .recent-words, .recording-area > .word-input-container, .recording-area > .recent-words {
+                display: none !important;
+            }
+            
+            .recording-area {
+                background: white !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            #printWordsContainer {
+                display: block !important;
+                background: white !important;
+                box-shadow: none !important;
+                border: 2px solid #000 !important;
+                border-radius: 0 !important;
+                padding: 1rem !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
+            
+            .words-display {
+                background: white !important;
+                box-shadow: none !important;
+                border: 2px solid #000 !important;
+                border-radius: 0 !important;
+                padding: 1rem !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
+            
+            .words-content {
+                background: white !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 1rem !important;
+            }
+            
+            .words-header {
+                color: black !important;
+                font-size: 1.5rem !important;
+                margin-bottom: 1rem !important;
+                border-bottom: 2px solid #000 !important;
+                padding-bottom: 0.5rem !important;
+                page-break-after: avoid !important;
+            }
+            
+            .words-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 0.5rem !important;
+                margin-top: 1rem !important;
+            }
+            
+            .word-item {
+                background: white !important;
+                border: 1px solid #000 !important;
+                border-radius: 0 !important;
+                padding: 0.5rem !important;
+                text-align: center !important;
+                font-size: 1rem !important;
+                color: black !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .empty-state {
+                color: black !important;
+                background: white !important;
+                border: 1px solid #000 !important;
+                border-radius: 0 !important;
+                padding: 2rem !important;
+                font-size: 1.2rem !important;
+            }
+            
+            .print-header {
+                display: block !important;
+                text-align: center !important;
+                margin-bottom: 1rem !important;
+                padding-bottom: 0.5rem !important;
+                border-bottom: 1px solid #000 !important;
+                page-break-after: avoid !important;
+            }
+            
+            .print-date {
+                font-size: 0.9rem !important;
+                color: #666 !important;
+                margin-top: 0.5rem !important;
+            }
+            
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .student-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .data-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .word-input-container {
+                flex-direction: column;
+            }
+            
+            .notification {
+                right: 1rem;
+                left: 1rem;
+                transform: translateY(-100px);
+            }
+            
+            .notification.show {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 메인 화면 -->
+        <div id="mainScreen" class="screen active">
+            <h1>🌟 단어 기록하기 🌟</h1>
+            
+            <div class="data-controls">
+                <button id="saveDataBtn" class="btn btn-warning">
+                    📁 데이터 저장
+                </button>
+                <div class="tip-box">
+                    💡 JSON 파일을 화면에 드래그하여 데이터를 불러올 수 있습니다
+                </div>
+            </div>
+            
+            <div class="student-grid" id="mainStudentGrid">
+                <!-- 학생 카드들이 여기에 동적으로 생성됩니다 -->
+            </div>
+            
+            <button id="viewModeBtn" class="btn btn-success btn-large">
+                👀 내 단어 보기
+            </button>
+        </div>
+
+        <!-- 단어 기록 화면 -->
+        <div id="recordingScreen" class="screen">
+            <h1 id="recordingTitle">📝 단어 기록장</h1>
+            
+            <div class="data-controls">
+                <button id="printRecordingBtn" class="btn btn-primary">
+                    🖨️ 인쇄하기
+                </button>
+            </div>
+            
+            <div class="recording-area">
+                <!-- 인쇄용 헤더 (화면에서는 숨김) -->
+                <div class="print-header" style="display: none;">
+                    <h2 id="printRecordingTitle">단어장</h2>
+                    <div class="print-date" id="printRecordingDate"></div>
+                </div>
+                
+                <div class="word-input-container">
+                    <input type="text" id="wordInput" class="word-input" placeholder="찾은 단어를 입력하세요">
+                    <button id="saveWordBtn" class="btn btn-success">💾 저장하기</button>
+                </div>
+                
+                <div id="recentWords" class="recent-words" style="display: none;">
+                    <h3>🌟 최근 저장한 단어:</h3>
+                    <div id="recentWordsList" class="recent-words-list"></div>
+                </div>
+                
+                <!-- 인쇄용 전체 단어 목록 (화면에서는 숨김, 인쇄시에만 표시) -->
+                <div id="printWordsContainer" class="words-display" style="display: none;">
+                    <div class="words-content">
+                        <div class="words-header" id="printAllWordsHeader">
+                            🌟 찾은 단어들 🌟
+                        </div>
+                        <div class="words-grid" id="printAllWordsGrid">
+                            <!-- 인쇄용 단어들이 여기에 표시됩니다 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="backToMainBtn" class="btn btn-danger btn-large">
+                🔙 뒤로 가기
+            </button>
+        </div>
+
+        <!-- 보기 모드 화면 -->
+        <div id="viewModeScreen" class="screen">
+            <h1>👀 내 단어 보기</h1>
+            
+            <div class="student-grid" id="viewStudentGrid">
+                <!-- 학생 카드들이 여기에 동적으로 생성됩니다 -->
+            </div>
+            
+            <button id="backToMainFromViewBtn" class="btn btn-danger btn-large">
+                🔙 뒤로 가기
+            </button>
+        </div>
+
+        <!-- 단어장 보기 화면 -->
+        <div id="viewWordsScreen" class="screen">
+            <h1 id="viewWordsTitle">📚 단어장</h1>
+            
+            <div class="data-controls">
+                <button id="printWordsBtn" class="btn btn-primary">
+                    🖨️ 인쇄하기
+                </button>
+            </div>
+            
+            <div class="words-display" id="wordsDisplay">
+                <!-- 인쇄용 헤더 (화면에서는 숨김) -->
+                <div class="print-header" style="display: none;">
+                    <h2 id="printTitle">단어장</h2>
+                    <div class="print-date" id="printDate"></div>
+                </div>
+                <!-- 단어들이 여기에 표시됩니다 -->
+            </div>
+            
+            <button id="backToViewModeBtn" class="btn btn-danger btn-large">
+                🔙 뒤로 가기
+            </button>
+        </div>
+    </div>
+
+    <!-- 알림 토스트 -->
+    <div id="notification" class="notification"></div>
+
+    <!-- 드래그 오버레이 -->
+    <div id="dragOverlay" class="drag-overlay">
+        <div class="drag-content">
+            <div class="drag-icon">📁</div>
+            <div class="drag-title">JSON 파일을 여기에 놓아주세요</div>
+            <div class="drag-subtitle">데이터를 불러옵니다</div>
+        </div>
+    </div>
+
+    <script>
+        // 학생 이름 목록
+        const studentNames = [
+            '강태우', '김아임', '김연우', '김지유', '김하온', 
+            '김현비', '노윤후', '민서준', '박서아', '송다온', 
+            '심이서', '원예하', '유연서', '이성윤', '이수찬', 
+            '이여름', '이우준', '전설', '정시아', '정유준', 
+            '정현준', '조유하', '조은우', '최도아', '홍정연'
+        ];
+
+        // 전역 상태
+        let currentScreen = 'main';
+        let selectedStudent = '';
+        let savedWords = {};
+        let isDragOver = false;
+
+        // DOM 요소들
+        const screens = {
+            main: document.getElementById('mainScreen'),
+            recording: document.getElementById('recordingScreen'),
+            viewMode: document.getElementById('viewModeScreen'),
+            viewWords: document.getElementById('viewWordsScreen')
+        };
+
+        // 초기화 함수
+        function init() {
+            loadWordsFromMemory();
+            setupEventListeners();
+            renderMainScreen();
+            setupDragAndDrop();
+        }
+
+        // 메모리에서 데이터 로드 (localStorage 사용)
+        function loadWordsFromMemory() {
+            try {
+                const storedWords = localStorage.getItem('kindergartenWords');
+                if (storedWords) {
+                    savedWords = JSON.parse(storedWords);
+                    showNotification('저장된 데이터를 불러왔습니다.', 'success');
+                }
+            } catch (error) {
+                console.error('로컬 저장소 로드 실패:', error);
+                showNotification('저장된 데이터를 불러오는데 실패했습니다.', 'error');
+            }
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 메인 화면 버튼들
+            document.getElementById('saveDataBtn').addEventListener('click', saveToJsonFile);
+            document.getElementById('viewModeBtn').addEventListener('click', () => switchScreen('viewMode'));
+
+            // 기록 화면 버튼들
+            document.getElementById('saveWordBtn').addEventListener('click', saveWord);
+            document.getElementById('backToMainBtn').addEventListener('click', () => switchScreen('main'));
+            document.getElementById('printRecordingBtn').addEventListener('click', printRecordingWords);
+            document.getElementById('wordInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') saveWord();
+            });
+
+            // 보기 모드 화면 버튼
+            document.getElementById('backToMainFromViewBtn').addEventListener('click', () => switchScreen('main'));
+
+            // 단어장 화면 버튼
+            document.getElementById('backToViewModeBtn').addEventListener('click', () => switchScreen('viewMode'));
+            document.getElementById('printWordsBtn').addEventListener('click', printWords);
+        }
+
+        // 드래그앤드롭 설정
+        function setupDragAndDrop() {
+            const dragOverlay = document.getElementById('dragOverlay');
+
+            document.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!isDragOver) {
+                    isDragOver = true;
+                    dragOverlay.classList.add('show');
+                }
+            });
+
+            document.addEventListener('dragleave', (e) => {
+                if (e.clientX === 0 && e.clientY === 0) {
+                    isDragOver = false;
+                    dragOverlay.classList.remove('show');
+                }
+            });
+
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                isDragOver = false;
+                dragOverlay.classList.remove('show');
+
+                const files = Array.from(e.dataTransfer.files);
+                const jsonFile = files.find(file => file.type === 'application/json' || file.name.endsWith('.json'));
+
+                if (jsonFile) {
+                    loadFromJsonFile(jsonFile);
+                } else {
+                    showNotification('JSON 파일만 업로드 가능합니다.', 'error');
+                }
+            });
+        }
+
+        // 화면 전환
+        function switchScreen(screenName) {
+            // 모든 화면 숨기기
+            Object.values(screens).forEach(screen => {
+                screen.classList.remove('active');
+            });
+
+            // 선택된 화면 표시
+            screens[screenName].classList.add('active');
+            currentScreen = screenName;
+
+            // 화면별 렌더링
+            switch (screenName) {
+                case 'main':
+                    renderMainScreen();
+                    break;
+                case 'recording':
+                    renderRecordingScreen();
+                    break;
+                case 'viewMode':
+                    renderViewModeScreen();
+                    break;
+                case 'viewWords':
+                    renderViewWordsScreen();
+                    break;
+            }
+        }
+
+        // 메인 화면 렌더링
+        function renderMainScreen() {
+            const grid = document.getElementById('mainStudentGrid');
+            grid.innerHTML = '';
+
+            studentNames.forEach(name => {
+                const card = document.createElement('button');
+                card.className = 'student-card';
+                card.textContent = name;
+                card.addEventListener('click', () => {
+                    selectedStudent = name;
+                    switchScreen('recording');
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // 기록 화면 렌더링
+        function renderRecordingScreen() {
+            document.getElementById('recordingTitle').textContent = `📝 ${selectedStudent}의 단어 기록장`;
+            document.getElementById('wordInput').value = '';
+            document.getElementById('wordInput').focus();
+            
+            // 인쇄용 헤더 업데이트
+            document.getElementById('printRecordingTitle').textContent = `${selectedStudent}의 단어장`;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('printRecordingDate').textContent = `인쇄일: ${dateStr}`;
+            
+            updateRecentWords();
+            updatePrintWordsContainer();
+        }
+
+        // 보기 모드 화면 렌더링
+        function renderViewModeScreen() {
+            const grid = document.getElementById('viewStudentGrid');
+            grid.innerHTML = '';
+
+            studentNames.forEach(name => {
+                const card = document.createElement('button');
+                card.className = 'student-card view-mode';
+                card.textContent = name;
+                
+                const wordCount = savedWords[name] ? savedWords[name].length : 0;
+                if (wordCount > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'word-count';
+                    badge.textContent = wordCount;
+                    card.appendChild(badge);
+                }
+
+                card.addEventListener('click', () => {
+                    selectedStudent = name;
+                    switchScreen('viewWords');
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // 단어장 화면 렌더링
+        function renderViewWordsScreen() {
+            document.getElementById('viewWordsTitle').textContent = `📚 ${selectedStudent}의 단어장`;
+            
+            // 인쇄용 헤더 업데이트
+            document.getElementById('printTitle').textContent = `${selectedStudent}의 단어장`;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('printDate').textContent = `인쇄일: ${dateStr}`;
+            
+            const display = document.getElementById('wordsDisplay');
+
+            if (savedWords[selectedStudent] && savedWords[selectedStudent].length > 0) {
+                const words = savedWords[selectedStudent];
+                const wordsHtml = `
+                    <div class="words-content">
+                        <div class="words-header">
+                            🌟 찾은 단어들 (${words.length}개) 🌟
+                        </div>
+                        <div class="words-grid">
+                            ${words.map(word => `<div class="word-item">${word}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // 인쇄용 헤더와 함께 업데이트
+                const printHeader = display.querySelector('.print-header');
+                display.innerHTML = wordsHtml;
+                display.insertBefore(printHeader, display.firstChild);
+            } else {
+                const emptyHtml = `
+                    <div class="words-content">
+                        <div class="empty-state">
+                            😊 아직 저장한 단어가 없어요!
+                        </div>
+                    </div>
+                `;
+                
+                // 인쇄용 헤더와 함께 업데이트
+                const printHeader = display.querySelector('.print-header');
+                display.innerHTML = emptyHtml;
+                display.insertBefore(printHeader, display.firstChild);
+            }
+        }
+
+        // 단어 저장
+        function saveWord() {
+            const wordInput = document.getElementById('wordInput');
+            const word = wordInput.value.trim();
+
+            if (word !== '') {
+                if (!savedWords[selectedStudent]) {
+                    savedWords[selectedStudent] = [];
+                }
+
+                savedWords[selectedStudent].push(word);
+                
+                // localStorage에 저장
+                try {
+                    localStorage.setItem('kindergartenWords', JSON.stringify(savedWords));
+                } catch (error) {
+                    console.error('localStorage 저장 실패:', error);
+                }
+
+                wordInput.value = '';
+                updateRecentWords();
+                updatePrintWordsContainer(); // 인쇄용 컨테이너도 업데이트
+                showNotification(`"${word}" 단어가 저장되었습니다! 🎉`, 'success');
+            }
+        }
+
+        // 최근 단어 업데이트
+        function updateRecentWords() {
+            const recentContainer = document.getElementById('recentWords');
+            const recentList = document.getElementById('recentWordsList');
+
+            if (savedWords[selectedStudent] && savedWords[selectedStudent].length > 0) {
+                const recentWords = savedWords[selectedStudent].slice(-3);
+                recentList.textContent = recentWords.join(', ');
+                recentContainer.style.display = 'block';
+            } else {
+                recentContainer.style.display = 'none';
+            }
+        }
+
+        // 인쇄용 단어 컨테이너 업데이트
+        function updatePrintWordsContainer() {
+            const headerElement = document.getElementById('printAllWordsHeader');
+            const gridElement = document.getElementById('printAllWordsGrid');
+
+            if (savedWords[selectedStudent] && savedWords[selectedStudent].length > 0) {
+                const words = savedWords[selectedStudent];
+                headerElement.textContent = `🌟 찾은 단어들 (${words.length}개) 🌟`;
+                gridElement.innerHTML = words.map(word => `<div class="word-item">${word}</div>`).join('');
+            } else {
+                headerElement.textContent = '🌟 찾은 단어들 🌟';
+                gridElement.innerHTML = '<div class="empty-state">😊 아직 저장한 단어가 없어요!</div>';
+            }
+        }
+
+        // JSON 파일로 저장
+        function saveToJsonFile() {
+            try {
+                const dataStr = JSON.stringify(savedWords, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const filename = `kindergarten-words-${dateStr}.json`;
+                
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showNotification('데이터가 성공적으로 저장되었습니다! 💾', 'success');
+            } catch (error) {
+                console.error('저장 실패:', error);
+                showNotification('데이터 저장에 실패했습니다. ❌', 'error');
+            }
+        }
+
+        // JSON 파일에서 로드
+        function loadFromJsonFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    
+                    if (typeof jsonData === 'object' && jsonData !== null) {
+                        const hasExistingData = Object.keys(savedWords).length > 0;
+                        
+                        if (hasExistingData) {
+                            if (confirm('기존 데이터가 모두 삭제되고 새로운 데이터로 교체됩니다. 계속하시겠습니까?')) {
+                                savedWords = jsonData;
+                                try {
+                                    localStorage.setItem('kindergartenWords', JSON.stringify(savedWords));
+                                } catch (error) {
+                                    console.error('localStorage 저장 실패:', error);
+                                }
+                                showNotification('데이터를 성공적으로 불러왔습니다! 📂', 'success');
+                                // 현재 화면이 보기 모드들이면 다시 렌더링
+                                if (currentScreen === 'viewMode') {
+                                    renderViewModeScreen();
+                                } else if (currentScreen === 'viewWords') {
+                                    renderViewWordsScreen();
+                                }
+                            }
+                        } else {
+                            savedWords = jsonData;
+                            try {
+                                localStorage.setItem('kindergartenWords', JSON.stringify(savedWords));
+                            } catch (error) {
+                                console.error('localStorage 저장 실패:', error);
+                            }
+                            showNotification('데이터를 성공적으로 불러왔습니다! 📂', 'success');
+                            // 현재 화면이 보기 모드들이면 다시 렌더링
+                            if (currentScreen === 'viewMode') {
+                                renderViewModeScreen();
+                            } else if (currentScreen === 'viewWords') {
+                                renderViewWordsScreen();
+                            }
+                        }
+                    } else {
+                        showNotification('올바르지 않은 JSON 파일 형식입니다. ❌', 'error');
+                    }
+                } catch (error) {
+                    console.error('JSON 파싱 실패:', error);
+                    showNotification('JSON 파일을 읽는데 실패했습니다. ❌', 'error');
+                }
+            };
+            
+            reader.onerror = () => {
+                showNotification('파일을 읽는데 실패했습니다. ❌', 'error');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // 기록 화면에서 인쇄 함수
+        function printRecordingWords() {
+            // 인쇄용 헤더 표시
+            const printHeader = document.querySelector('#recordingScreen .print-header');
+            if (printHeader) {
+                printHeader.style.display = 'block';
+            }
+            
+            // 잠시 후 인쇄 실행 (스타일 적용 시간 확보)
+            setTimeout(() => {
+                window.print();
+                
+                // 인쇄 후 헤더 다시 숨김
+                setTimeout(() => {
+                    if (printHeader) {
+                        printHeader.style.display = 'none';
+                    }
+                }, 1000);
+            }, 100);
+        }
+
+        // 인쇄 함수
+        function printWords() {
+            // 인쇄용 헤더 표시
+            const printHeader = document.querySelector('#viewWordsScreen .print-header');
+            if (printHeader) {
+                printHeader.style.display = 'block';
+            }
+            
+            // 잠시 후 인쇄 실행 (스타일 적용 시간 확보)
+            setTimeout(() => {
+                window.print();
+                
+                // 인쇄 후 헤더 다시 숨김
+                setTimeout(() => {
+                    if (printHeader) {
+                        printHeader.style.display = 'none';
+                    }
+                }, 1000);
+            }, 100);
+        }
+
+        // 알림 표시
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 앱 초기화
+        init();
+    </script>
+</body>
+</html>
