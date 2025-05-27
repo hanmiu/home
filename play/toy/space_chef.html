@@ -240,10 +240,10 @@
 
             #print-page {
                 display: block !important;
-                width: 210mm;
-                height: 297mm;
-                margin: 0;
-                padding: 15mm;
+                width: 190mm;
+                height: 277mm;
+                margin: 0 auto;
+                padding: 10mm;
                 box-sizing: border-box;
                 font-size: 11pt;
                 line-height: 1.6;
@@ -271,28 +271,54 @@
                 font-weight: bold;
             }
 
+            .chef-name-field {
+                margin-top: 15px;
+                text-align: center;
+            }
+
+            .chef-name-field label {
+                font-weight: bold;
+                margin-right: 10px;
+                color: #1f2937 !important;
+                font-size: 11pt;
+            }
+
+            .chef-name-field input {
+                padding: 8px 15px;
+                border: 2px solid #d1d5db;
+                border-radius: 8px;
+                background-color: #ffffff !important;
+                color: #1f2937 !important;
+                font-size: 11pt;
+                width: 200px;
+                text-align: center;
+            }
+
             .print-content {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 15mm;
-                margin-bottom: 15mm;
+                margin-bottom: 10mm;
             }
 
             .planet-section {
                 background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important;
                 border: 2px solid #cbd5e1;
                 border-radius: 10px;
-                padding: 15px;
+                padding: 12px;
                 text-align: center;
+                height: 60mm;
             }
 
             .planet-image-container {
-                margin-bottom: 15px;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: center;
             }
 
             #print-planet-image {
-                max-width: 80mm;
-                max-height: 60mm;
+                max-width: 60mm;
+                max-height: 45mm;
                 width: auto;
                 height: auto;
                 border: 3px solid #e2e8f0;
@@ -316,13 +342,14 @@
                 background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
                 border: 2px solid #f59e0b;
                 border-radius: 10px;
-                padding: 20px;
+                padding: 15px;
+                height: 60mm;
             }
 
             .request-section h3 {
                 font-size: 14pt !important;
                 color: #92400e !important;
-                margin: 0 0 15px 0;
+                margin: 0 0 10px 0;
                 text-align: center;
                 font-weight: bold;
             }
@@ -331,11 +358,11 @@
                 background: rgba(255, 255, 255, 0.8) !important;
                 border: 1px solid #d97706;
                 border-radius: 8px;
-                padding: 15px;
+                padding: 12px;
                 color: #1f2937 !important;
                 font-size: 11pt;
                 line-height: 1.6;
-                min-height: 60mm;
+                min-height: 35mm;
             }
 
             .recipe-section {
@@ -343,7 +370,7 @@
                 border: 2px solid #10b981;
                 border-radius: 10px;
                 padding: 20px;
-                margin-top: 15mm;
+                margin-top: 10mm;
             }
 
             .recipe-section h3 {
@@ -357,8 +384,8 @@
             .form-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-bottom: 15px;
+                gap: 15px;
+                margin-bottom: 20px;
             }
 
             .form-group {
@@ -383,45 +410,33 @@
             }
 
             .drawing-area {
-                margin-top: 15px;
+                margin-top: 20px;
             }
 
             .drawing-area h4 {
                 font-weight: bold;
-                margin-bottom: 10px;
+                margin-bottom: 15px;
                 color: #1f2937 !important;
                 text-align: center;
-                font-size: 11pt;
+                font-size: 12pt;
             }
 
             #print-drawing-area {
                 width: 100%;
-                height: 60mm;
+                height: 85mm;
                 border: 3px dashed #10b981;
                 border-radius: 8px;
                 background: rgba(255, 255, 255, 0.9) !important;
                 position: relative;
             }
 
-            #print-drawing-area::before {
-                content: "✨ 여기에 멋진 요리를 그려보세요! ✨";
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #6b7280;
-                font-size: 12pt;
-                text-align: center;
-                font-style: italic;
-            }
-
             .footer-info {
-                margin-top: 10mm;
+                margin-top: 5mm;
                 text-align: center;
                 font-size: 9pt;
                 color: #6b7280 !important;
                 border-top: 1px solid #e5e7eb;
-                padding-top: 10px;
+                padding-top: 8px;
             }
         }
 
@@ -453,7 +468,11 @@
     <div id="print-page">
         <div class="print-header">
             <h1>🌟 종달새반 우주 셰프 🚀</h1>
-            <div class="subtitle">✨ 우주 특급 레시피 주문서 ✨</div>
+            <!--<div class="subtitle">✨ 우주 특급 레시피 주문서 ✨</div>-->
+            <div class="chef-name-field">
+                <label>👩‍🍳 셰프 이름:</label>
+                <input type="text" id="print-header-chef-name">
+            </div>
         </div>
 
         <div class="print-content">
@@ -478,15 +497,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>🍽️ 메뉴 이름:</label>
-                    <input type="text" id="print-menu-name" placeholder="예: 화성 빨간 스파게티">
-                </div>
-                <div class="form-group">
-                    <label>⭐ 특별 재료:</label>
-                    <input type="text" id="print-special-ingredient" placeholder="예: 우주 토마토, 별가루">
-                </div>
-                <div class="form-group">
-                    <label>👩‍🍳 셰프 이름:</label>
-                    <input type="text" id="print-chef-name" placeholder="당신의 이름을 적어주세요">
+                    <input type="text" id="print-menu-name">
                 </div>
                 <div class="form-group">
                     <label>📅 요리 날짜:</label>
