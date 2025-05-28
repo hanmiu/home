@@ -314,30 +314,36 @@
             }
 
             .planet-section {
-                /* background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; */
-                background: white;
+                /* background: white;
                 border: 2px solid #cbd5e1;
                 border-radius: 10px;
                 padding: 12px;
                 text-align: center;
+                height: 60mm; */
+                border: 2px solid #cbd5e1;
+                border-radius: 10px;
+                padding: 12px;
+                text-align: center; /* 내부 요소 정렬에 도움 */
                 height: 60mm;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                align-items: center; /* .planet-image-container를 수평 중앙 정렬합니다. */
+                justify-content: center; /* .planet-image-container를 수직 중앙 정렬 (내용물 높이에 따라) */
             }
 
             .planet-image-container {
                 margin-bottom: 10px;
                 display: flex;
                 justify-content: center;
+                align-items: center;
+                width: 70mm;
+                overflow: hidden;
             }
 
             #print-planet-image {
-                max-width: 60mm;
-                max-height: 45mm;
-                width: auto;
-                height: auto;
-                /* border: 3px solid #e2e8f0; */
-                border-radius: 8px;
-                object-fit: contain;
-                /* box-shadow: 0 4px 8px rgba(0,0,0,0.1); */
+                max-height: 45mm; /* 컨테이너를 꽉 채우도록 높이 설정 */
+                object-fit: cover; /* 이미지가 컨테이너를 채우도록 설정 */
             }
 
             .planet-info h2 {
@@ -465,7 +471,7 @@
         <h1 class="title">🌟 종달새반 우주 셰프 🚀</h1>
         <div id="messageBox" class="message-box"></div>
         <div class="container">
-            <div id="planetName" class="planet-name">🪐 어떤 손님일까요? ✨</div>
+            <div id="planetName" class="planet-name">✨ 어떤 손님일까요? ✨</div>
             <div id="requestText" class="request-text">
                 🎯 버튼을 눌러 우주 손님들의 특별한 주문을 확인하세요! 
                 <br>각 행성마다 고유한 특성이 담긴 신비로운 요리를 요청할 거예요! 🌌✨
@@ -494,7 +500,7 @@
                     <img id="print-planet-image" src="" alt="행성 이미지">
                 </div>
                 <div class="planet-info">
-                    <h2><span id="print-planet-name"></span> 🪐</h2>
+                    <h2>✨ <span id="print-planet-name"></span> ✨</h2>
                 </div>
             </div>
 
@@ -1768,7 +1774,7 @@
             const selectedRequestToDisplay = currentRequestQueue.shift(); // 큐의 앞에서부터 요청을 가져옵니다.
 
             if (selectedRequestToDisplay) {
-                planetNameDisplay.textContent = `${selectedRequestToDisplay.name} 손님 🪐`;
+                planetNameDisplay.textContent = `✨ ${selectedRequestToDisplay.name} 손님 ✨`;
                 requestTextDisplay.textContent = selectedRequestToDisplay.request;
                 lastDisplayedRequest = selectedRequestToDisplay; // 마지막으로 표시된 요청 기록
 
