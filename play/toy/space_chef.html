@@ -611,6 +611,19 @@
 명왕성	⭐ 나는 한때 행성이었지만 지금은 왜소행성이야! 👉 내 요리는 작지만 특별한 매력이 담겨 있으면 좋아! 💎
 명왕성	🌑 나는 태양빛이 조금밖에 닿지 않아! 👉 내 요리에 살짝 어두운 색이나 반짝이는 얼음 느낌을 넣어줘! 🌟
 `;
+        const keyPlanetMap = {
+            '1': "수성",
+            '2': "금성",
+            '3': "지구",
+            '4': "화성",
+            '5': "목성",
+            '6': "토성",
+            '7': "천왕성",
+            '8': "해왕성",
+            '9': "명왕성",
+            '0': "태양",
+            '`': "달"  // 키보드 왼쪽 위에 있는 백틱(₩ 키와 같이 있는 경우가 많음) 문자입니다.
+        };
 
         const planetNameDisplay = document.getElementById('planetName');
         const requestTextDisplay = document.getElementById('requestText');
@@ -1944,6 +1957,56 @@
             }, 300);
         }
 
+        function handleKeyboardPlanetSelection(event) {
+            const planetName = keyPlanetMap[event.key];
+
+            if (planetName) {
+                // 만약 현재 포커스가 INPUT이나 TEXTAREA에 있다면, 단축키 작동을 막습니다.
+                // (예: 인쇄 미리보기의 '셰프 이름' 입력칸 등)
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    return;
+                }
+
+                // 기본 브라우저 동작이나 다른 단축키와의 충돌을 막기 위해 필요하다면 주석 해제
+                // event.preventDefault(); 
+
+                console.log(`키보드 입력 [${event.key}] - "${planetName}"(으)로 이동 요청`);
+
+                // 오디오 컨텍스트 시작 및 포커스 로직
+                const focusOnSelectedPlanet = () => {
+                    if (!audioContext) { // 오디오 컨텍스트가 초기화되지 않았다면 초기화
+                        initAudio();
+                    }
+                    
+                    // UI 업데이트 (현재 선택된 행성으로)
+                    planetNameDisplay.textContent = `${planetName} 손님 🪐`;
+                    // 키보드로 직접 선택했으므로, 요청 텍스트는 안내 메시지로 변경
+                    requestTextDisplay.textContent = `"${planetName}"을(를) 직접 선택하셨습니다. 다른 주문은 "요청사항 확인!" 버튼을 이용해주세요.`;
+                    
+                    // lastDisplayedRequest 업데이트 (인쇄 기능 등이 현재 선택된 행성을 인식하도록)
+                    // 실제 요청 객체의 모든 필드를 채울 필요는 없지만, 이름과 간단한 요청 내용은 있는 것이 좋습니다.
+                    lastDisplayedRequest = { name: planetName, request: `` }; 
+
+                    playSound(planetName); // 해당 행성의 테마 음악 재생
+                    focusCameraOnTarget(planetName); // 카메라 이동
+                    
+                    // 선택적: 사용자에게 선택된 행성을 알리는 메시지 (focusCameraOnTarget 후 도착 메시지와 겹칠 수 있음)
+                    // showMessage(`"${planetName}"(으)로 카메라를 이동합니다.`, "info");
+                };
+
+                if (Tone.context.state !== 'running') {
+                    Tone.start().then(focusOnSelectedPlanet).catch(e => {
+                        console.error("Tone.start() 실패:", e);
+                        // Tone.start() 실패 시에도 UI 업데이트 및 포커스는 시도 (소리 없이)
+                        focusOnSelectedPlanet();
+                    });
+                } else {
+                    focusOnSelectedPlanet();
+                }
+            }
+        }
+
         // 이벤트 리스너 설정
         document.addEventListener('DOMContentLoaded', () => {
             // 기존 originalCelestialRequests 및 prepareRequests() 호출 부분을 아래 내용으로 대체합니다.
@@ -1966,6 +2029,8 @@
             }
 
             initThreeJS(); // 3D 씬 초기화는 그대로 진행
+
+            document.addEventListener('keydown', handleKeyboardPlanetSelection);
 
             getRequestButton.addEventListener('click', async () => {
                 if (Tone.context.state !== 'running') {
