@@ -356,7 +356,7 @@
                 border: 2px solid #f59e0b;
                 border-radius: 10px;
                 padding: 15px;
-                height: 60mm;
+                max-height: 60mm;
             }
 
             .request-section h3 {
@@ -389,7 +389,7 @@
             .recipe-section h3 {
                 font-size: 14pt !important;
                 color: #047857 !important;
-                margin: 0 0 15px 0;
+                margin: 0 0 5px 0;
                 text-align: center;
                 font-weight: bold;
             }
@@ -1574,11 +1574,6 @@
                 isArrived = true;
                 return;
             }
-            // if (window.innerHeight > window.innerWidth) { // Check for portrait aspect ratio
-            //     if (uiContainer) {
-            //         uiContainer.classList.add('ui-slide-down');
-            //     }
-            // }
             if (uiContainer) {
                 uiContainer.classList.add('ui-slide-down');
             }
