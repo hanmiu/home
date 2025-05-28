@@ -83,6 +83,34 @@
             height: 64px; /* Fixed height for consistency */
             object-fit: contain; /* Ensure aspect ratio is maintained */
         }
+        /* Custom modal for confirmation */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 1050; /* Higher than other modals if needed */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .confirm-modal-buttons button {
+            margin: 0 10px;
+        }
+
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -110,11 +138,15 @@
                     <div class="w-full aspect-[4/3] max-w-2xl bg-gray-100 rounded-lg shadow-inner overflow-hidden border-2 border-pink-300">
                         <canvas id="foodCanvas" class="w-full h-full"></canvas>
                     </div>
+                    <div class="w-full max-w-2xl mt-3 text-center">
+                        <h3 class="text-lg font-semibold text-pink-500" style="font-family: 'Gaegu', cursive;">현재 재료</h3>
+                        <p id="currentIngredientsList" class="text-gray-600 min-h-[1.5em]">재료를 추가해주세요!</p>
+                    </div>
                 </div>
 
                 <div class="lg:w-1/3 xl:w-1/4 flex flex-col">
                     <h2 class="text-xl font-semibold text-pink-500 mb-2 text-center lg:text-left" style="font-family: 'Gaegu', cursive;">음식 고르기</h2>
-                    <div id="foodItemsContainer" class="food-items-container bg-pink-50 p-3 rounded-lg shadow-md overflow-y-auto h-64 lg:h-[calc(100%-100px)] grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-2">
+                    <div id="foodItemsContainer" class="food-items-container bg-pink-50 p-3 rounded-lg shadow-md overflow-y-auto h-64 lg:h-[calc(100%-140px)] grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-2">
                         </div>
                 </div>
             </div>
@@ -171,6 +203,17 @@
         <p class="mt-2 text-pink-500">처리 중...</p>
     </div>
 
+    <div id="customConfirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <p id="customConfirmMessage" class="text-lg text-gray-700 mb-6">정말로 초기화하시겠습니까?</p>
+            <div class="confirm-modal-buttons">
+                <button id="customConfirmOkButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md">예</button>
+                <button id="customConfirmCancelButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg shadow-md">아니오</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // --- Global Variables and Configuration ---
         const webcamFeed = document.getElementById('webcamFeed');
@@ -178,6 +221,7 @@
         const foodCanvas = document.getElementById('foodCanvas');
         const ctx = foodCanvas.getContext('2d');
         const foodItemsContainer = document.getElementById('foodItemsContainer');
+        const currentIngredientsList = document.getElementById('currentIngredientsList'); // Added
         
         const webcamStage = document.getElementById('webcamStage');
         const foodStage = document.getElementById('foodStage');
@@ -199,10 +243,18 @@
 
         const loadingIndicator = document.getElementById('loadingIndicator');
 
-        let backgroundImage = null; // To store the captured webcam image
-        let foodOnCanvas = []; // Array to store food items on canvas
+        // Custom Confirm Modal Elements
+        const customConfirmModal = document.getElementById('customConfirmModal');
+        const customConfirmMessage = document.getElementById('customConfirmMessage');
+        const customConfirmOkButton = document.getElementById('customConfirmOkButton');
+        const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
+        let confirmCallback = null;
+
+
+        let backgroundImage = null; 
+        let foodOnCanvas = []; 
         const MAX_FOOD_ITEMS = 30;
-        let selectedFoodItem = null; // Currently dragged or selected item
+        let selectedFoodItem = null; 
         let isDragging = false;
         let dragOffsetX, dragOffsetY;
 
@@ -214,6 +266,29 @@
             'watermelon.png'
         ];
         const foodImageBaseUrl = 'https://www.hanmiu.cc/play/toy/assets/cook/';
+
+        // --- Food Name Mapping (Korean) ---
+        const foodNameMapping = {
+            'apple': '사과',
+            'blueberry': '블루베리', // Simplified from blueberry_1, blueberry_2
+            'cake': '케이크',       // Simplified
+            'candy': '사탕',
+            'cereal': '시리얼',
+            'cherry': '체리',       // Simplified
+            'chocolate': '초콜릿',
+            'cookie': '쿠키',
+            'fried-egg': '계란후라이',
+            'gimbap': '김밥',
+            'hotdog': '핫도그',
+            'jelly': '젤리',
+            'kkakdugi': '깍두기',
+            'orange': '오렌지',
+            'pizza': '피자',
+            'spicy-ramen': '매운라면',
+            'strawberry': '딸기',
+            'watermelon': '수박'
+        };
+
 
         // --- Utility Functions ---
         function showLoading(show) {
@@ -228,6 +303,29 @@
             document.getElementById(modalId).style.display = 'none';
         }
 
+        function showCustomConfirm(message, callback) {
+            customConfirmMessage.textContent = message;
+            confirmCallback = callback;
+            customConfirmModal.style.display = 'flex';
+        }
+
+        customConfirmOkButton.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback(true);
+            }
+            customConfirmModal.style.display = 'none';
+            confirmCallback = null;
+        });
+
+        customConfirmCancelButton.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback(false);
+            }
+            customConfirmModal.style.display = 'none';
+            confirmCallback = null;
+        });
+
+
         function getCurrentDate() {
             const today = new Date();
             const year = today.getFullYear();
@@ -236,23 +334,47 @@
             return `${year}-${month}-${day}`;
         }
 
+        // --- Update Ingredients Display ---
+        function updateIngredientsDisplay() {
+            if (foodOnCanvas.length === 0) {
+                currentIngredientsList.textContent = '재료를 추가해주세요!';
+                return;
+            }
+
+            const ingredientCounts = {};
+            foodOnCanvas.forEach(item => {
+                // Use item.alt which is the base filename without extension (e.g., 'apple', 'blueberry_1')
+                // Normalize alt text for mapping (e.g. remove _1, _2)
+                const baseAltText = item.alt.replace(/_\d+$/, ''); // 'blueberry_1' -> 'blueberry'
+                const koreanName = foodNameMapping[baseAltText] || baseAltText; // Fallback to altText if no mapping
+                ingredientCounts[koreanName] = (ingredientCounts[koreanName] || 0) + 1;
+            });
+
+            const displayText = Object.entries(ingredientCounts)
+                .map(([name, count]) => `${name} ${count}개`)
+                .join(', ');
+            
+            currentIngredientsList.textContent = displayText;
+        }
+
+
         // --- Webcam Logic ---
         async function setupWebcam() {
             try {
+                if (webcamFeed.srcObject) {
+                    webcamFeed.srcObject.getTracks().forEach(track => track.stop());
+                    webcamFeed.srcObject = null; 
+                }
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 webcamFeed.srcObject = stream;
-                webcamFeed.onloadedmetadata = () => {
-                    // Adjust canvas dimensions once video metadata is loaded, if needed for capture
-                };
+                webcamFeed.onloadedmetadata = () => { /* Metadata loaded */ };
             } catch (err) {
                 console.error("Error accessing webcam: ", err);
-                alert("웹캠에 접근할 수 없습니다. 권한을 확인해주세요.");
                 webcamStage.innerHTML = "<p class='text-red-500'>웹캠을 사용할 수 없습니다. 페이지를 새로고침하거나 권한을 확인해주세요.</p>";
             }
         }
 
         captureButton.addEventListener('click', () => {
-            // Set canvas dimensions to match video aspect ratio for capture
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = webcamFeed.videoWidth;
             tempCanvas.height = webcamFeed.videoHeight;
@@ -261,51 +383,65 @@
             
             backgroundImage = new Image();
             backgroundImage.onload = () => {
-                // Now that background is loaded, set main canvas size and draw
-                resizeCanvas(); // Resize main canvas based on its container
-                drawCanvas(); // Initial draw with background
+                resizeCanvas(); 
+                drawCanvas(); 
             };
             backgroundImage.src = tempCanvas.toDataURL('image/png');
 
             webcamStage.style.display = 'none';
             foodStage.style.display = 'block';
             
-            // Stop webcam stream
             if (webcamFeed.srcObject) {
                 webcamFeed.srcObject.getTracks().forEach(track => track.stop());
             }
-            resizeCanvas(); // Ensure canvas is sized correctly for the food stage
+            resizeCanvas(); 
+            updateIngredientsDisplay(); // Initial display when stage changes
         });
         
         resetCanvasButton.addEventListener('click', () => {
-            if (confirm("정말로 현재 작업을 초기화하고 배경부터 다시 찍으시겠습니까?")) {
-                foodOnCanvas = [];
-                backgroundImage = null;
-                selectedFoodItem = null;
-                isDragging = false;
-                ctx.clearRect(0, 0, foodCanvas.width, foodCanvas.height);
-                
-                foodStage.style.display = 'none';
-                webcamStage.style.display = 'flex';
-                setupWebcam(); // Restart webcam
-            }
+            showCustomConfirm("정말로 현재 작업을 초기화하고 배경부터 다시 찍으시겠습니까?", (confirmed) => {
+                if (confirmed) {
+                    foodOnCanvas = [];
+                    backgroundImage = null;
+                    selectedFoodItem = null;
+                    isDragging = false;
+                    
+                    if (foodCanvas.parentElement) {
+                         foodCanvas.width = foodCanvas.parentElement.clientWidth;
+                         foodCanvas.height = foodCanvas.parentElement.clientHeight;
+                    }
+                    ctx.clearRect(0, 0, foodCanvas.width, foodCanvas.height);
+                    drawCanvas(); 
+                    
+                    foodStage.style.display = 'none';
+                    webcamStage.style.display = 'flex';
+                    
+                    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                        setupWebcam(); 
+                    }
+                    updateIngredientsDisplay(); // Update after reset
+                }
+            });
         });
 
 
         // --- Food Item Population ---
         function populateFoodItems() {
+            foodItemsContainer.innerHTML = ''; 
             foodImageFiles.forEach(fileName => {
                 const button = document.createElement('button');
                 button.className = 'food-item-button p-1 bg-white rounded-md shadow hover:shadow-lg transform hover:scale-105 transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-pink-400';
                 const img = document.createElement('img');
                 const fullUrl = foodImageBaseUrl + fileName;
                 img.src = fullUrl;
-                img.alt = fileName.split('.')[0];
-                img.draggable = false; // Prevent browser default drag
-                img.className = "w-16 h-16 object-contain mx-auto"; // Tailwind classes for image styling
+                // Store the filename without extension as alt for mapping
+                const altText = fileName.split('.')[0]; 
+                img.alt = altText; 
+                img.draggable = false; 
+                img.className = "w-16 h-16 object-contain mx-auto"; 
 
                 button.appendChild(img);
-                button.addEventListener('click', () => addFoodToCanvas(fullUrl, img.alt));
+                button.addEventListener('click', () => addFoodToCanvas(fullUrl, altText));
                 foodItemsContainer.appendChild(button);
             });
         }
@@ -314,30 +450,35 @@
         function resizeCanvas() {
             const container = foodCanvas.parentElement;
             if (container) {
-                foodCanvas.width = container.clientWidth;
-                foodCanvas.height = container.clientHeight;
-                drawCanvas(); // Redraw after resize
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                if (foodCanvas.width !== newWidth || foodCanvas.height !== newHeight) {
+                    foodCanvas.width = newWidth;
+                    foodCanvas.height = newHeight;
+                }
+                drawCanvas(); 
             }
         }
 
         window.addEventListener('resize', resizeCanvas);
 
-        function addFoodToCanvas(imgSrc, altText) {
+        function addFoodToCanvas(imgSrc, altText) { // altText is filename without extension
             if (foodOnCanvas.length >= MAX_FOOD_ITEMS) {
-                foodOnCanvas.shift(); // Remove the oldest item
+                foodOnCanvas.shift(); 
             }
 
             const img = new Image();
+            img.crossOrigin = "Anonymous"; 
             img.src = imgSrc;
             img.onload = () => {
-                const scaleVariation = 0.8 + Math.random() * 0.4; // 80% to 120%
-                const itemWidth = img.width * 0.2 * scaleVariation; // Adjust base size as needed
+                const scaleVariation = 0.8 + Math.random() * 0.4; 
+                const itemWidth = img.width * 0.2 * scaleVariation; 
                 const itemHeight = img.height * 0.2 * scaleVariation;
 
                 const foodItem = {
                     id: Date.now() + Math.random(),
                     img: img,
-                    alt: altText, // Store alt text (filename without extension)
+                    alt: altText, // Store the base altText (e.g., 'apple', 'blueberry_1')
                     x: foodCanvas.width / 2 - itemWidth / 2 + (Math.random() - 0.5) * 50,
                     y: foodCanvas.height / 2 - itemHeight / 2 + (Math.random() - 0.5) * 50,
                     width: itemWidth,
@@ -346,33 +487,59 @@
                     targetY: foodCanvas.height / 2 - itemHeight / 2,
                     scale: 1,
                     targetScale: 1,
-                    angle: (Math.random() - 0.5) * Math.PI / 4, // Initial random rotation (-22.5 to 22.5 deg)
+                    angle: (Math.random() - 0.5) * Math.PI / 4, 
                     targetAngle: (Math.random() - 0.5) * Math.PI / 4,
-                    vx: (Math.random() - 0.5) * 1, // Small initial velocity
+                    vx: (Math.random() - 0.5) * 1, 
                     vy: (Math.random() - 0.5) * 1,
-                    radius: Math.max(itemWidth, itemHeight) / 2 // For simple collision
+                    radius: Math.max(itemWidth, itemHeight) / 2 
                 };
                 foodOnCanvas.push(foodItem);
-                selectedFoodItem = foodItem; // Auto-select the new item
+                selectedFoodItem = foodItem; 
+                updateIngredientsDisplay(); // Update after adding
+            };
+            img.onerror = () => {
+                console.error(`Error loading image: ${imgSrc}. Using placeholder.`);
+                const placeholderSize = 50; 
+                 const foodItem = {
+                    id: Date.now() + Math.random(),
+                    img: null, 
+                    alt: altText, // Still store original altText for mapping attempt
+                    x: foodCanvas.width / 2 - placeholderSize / 2 + (Math.random() - 0.5) * 50,
+                    y: foodCanvas.height / 2 - placeholderSize / 2 + (Math.random() - 0.5) * 50,
+                    width: placeholderSize,
+                    height: placeholderSize,
+                    targetX: foodCanvas.width / 2 - placeholderSize / 2,
+                    targetY: foodCanvas.height / 2 - placeholderSize / 2,
+                    scale: 1,
+                    targetScale: 1,
+                    angle: (Math.random() - 0.5) * Math.PI / 4,
+                    targetAngle: (Math.random() - 0.5) * Math.PI / 4,
+                    vx: (Math.random() - 0.5) * 1,
+                    vy: (Math.random() - 0.5) * 1,
+                    radius: placeholderSize / 2,
+                    isPlaceholder: true 
+                };
+                foodOnCanvas.push(foodItem);
+                selectedFoodItem = foodItem;
+                updateIngredientsDisplay(); // Update after adding placeholder
             };
         }
         
         function drawCanvas() {
+            if (!ctx) return; 
             ctx.clearRect(0, 0, foodCanvas.width, foodCanvas.height);
 
-            // Draw background image if it exists
             if (backgroundImage) {
-                // Fit background image to canvas while maintaining aspect ratio (cover)
                 const canvasAspect = foodCanvas.width / foodCanvas.height;
                 const bgAspect = backgroundImage.width / backgroundImage.height;
                 let drawWidth, drawHeight, offsetX, offsetY;
 
-                if (canvasAspect > bgAspect) { // Canvas is wider than bg image
+                if (canvasAspect > bgAspect) { 
                     drawWidth = foodCanvas.width;
                     drawHeight = foodCanvas.width / bgAspect;
                     offsetX = 0;
                     offsetY = (foodCanvas.height - drawHeight) / 2;
-                } else { // Canvas is taller or same aspect as bg image
+                } else { 
                     drawHeight = foodCanvas.height;
                     drawWidth = foodCanvas.height * bgAspect;
                     offsetY = 0;
@@ -380,27 +547,33 @@
                 }
                 ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
             } else {
-                // Fallback if no background image (e.g., plain color)
-                ctx.fillStyle = '#f0f0f0'; // Light gray
+                ctx.fillStyle = '#f0f0f0'; 
                 ctx.fillRect(0, 0, foodCanvas.width, foodCanvas.height);
             }
 
-
-            // Draw food items
             foodOnCanvas.forEach(item => {
                 ctx.save();
-                // Translate to the center of the image for rotation and scaling
                 ctx.translate(item.x + (item.width * item.scale) / 2, item.y + (item.height * item.scale) / 2);
                 ctx.rotate(item.angle);
                 ctx.scale(item.scale, item.scale);
                 
-                // Draw image centered at the new origin
-                ctx.drawImage(item.img, -item.width / 2, -item.height / 2, item.width, item.height);
+                if (item.isPlaceholder || !item.img) { 
+                    ctx.fillStyle = "#cccccc";
+                    ctx.fillRect(-item.width / 2, -item.height / 2, item.width, item.height);
+                    ctx.fillStyle = "#555555";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    const baseAltText = item.alt.replace(/_\d+$/, '');
+                    const displayName = foodNameMapping[baseAltText] || baseAltText;
+                    ctx.font = `${Math.max(10, item.width * 0.2)}px Gaegu`; 
+                    ctx.fillText(displayName.split(' ')[0], 0, 0);
+                } else {
+                    ctx.drawImage(item.img, -item.width / 2, -item.height / 2, item.width, item.height);
+                }
                 
-                // Visual cue for selected item
                 if (item === selectedFoodItem) {
-                    ctx.strokeStyle = 'rgba(236, 72, 153, 0.7)'; // Pink outline
-                    ctx.lineWidth = 3 / item.scale; // Adjust line width based on scale
+                    ctx.strokeStyle = 'rgba(236, 72, 153, 0.7)'; 
+                    ctx.lineWidth = Math.max(1, 3 / item.scale); 
                     ctx.strokeRect(-item.width / 2, -item.height / 2, item.width, item.height);
                 }
                 ctx.restore();
@@ -408,28 +581,24 @@
         }
 
         function updateFoodItems() {
-            const damping = 0.95; // Slows down movement over time
-            const repulsionStrength = 0.5; // How strongly items push each other
-            const boundaryPadding = 5; // Padding from canvas edges
+            const damping = 0.95; 
+            const repulsionStrength = 0.5; 
+            let itemsRemoved = false;
 
             foodOnCanvas.forEach((item, index) => {
-                // Smooth movement towards target (for dragging)
-                if (item !== selectedFoodItem || !isDragging) { // Don't apply if currently dragging this item
+                if (item !== selectedFoodItem || !isDragging) { 
                     item.x += (item.targetX - item.x) * 0.1;
                     item.y += (item.targetY - item.y) * 0.1;
                 }
 
-                // Smooth scaling and rotation
                 item.scale += (item.targetScale - item.scale) * 0.1;
                 item.angle += (item.targetAngle - item.angle) * 0.1;
                 
-                // Apply velocity
                 item.x += item.vx;
                 item.y += item.vy;
                 item.vx *= damping;
                 item.vy *= damping;
 
-                // Collision with other items (simple repulsion)
                 for (let i = index + 1; i < foodOnCanvas.length; i++) {
                     const otherItem = foodOnCanvas[i];
                     const dx = (otherItem.x + otherItem.width * otherItem.scale / 2) - (item.x + item.width * item.scale / 2);
@@ -439,16 +608,15 @@
 
                     if (distance < minDistance && distance > 0) {
                         const overlap = minDistance - distance;
-                        const angle = Math.atan2(dy, dx);
-                        const moveX = Math.cos(angle) * overlap * repulsionStrength;
-                        const moveY = Math.sin(angle) * overlap * repulsionStrength;
+                        const angleVal = Math.atan2(dy, dx);
+                        const moveX = Math.cos(angleVal) * overlap * repulsionStrength;
+                        const moveY = Math.sin(angleVal) * overlap * repulsionStrength;
 
                         item.vx -= moveX;
                         item.vy -= moveY;
                         otherItem.vx += moveX;
                         otherItem.vy += moveY;
                         
-                        // Update target positions to reflect repulsion
                         item.targetX -= moveX;
                         item.targetY -= moveY;
                         otherItem.targetX += moveX;
@@ -456,8 +624,6 @@
                     }
                 }
                 
-                // Keep items within rough canvas bounds (target positions)
-                // Item's actual position can go slightly out due to velocity before being removed
                 const itemCurrentWidth = item.width * item.scale;
                 const itemCurrentHeight = item.height * item.scale;
 
@@ -467,13 +633,20 @@
                 if (item.targetY > foodCanvas.height - itemCurrentHeight * 0.2) item.targetY = foodCanvas.height - itemCurrentHeight * 0.2;
             });
 
-            // Remove items that are completely off-screen
+            const originalLength = foodOnCanvas.length;
             foodOnCanvas = foodOnCanvas.filter(item => {
                 const itemCurrentWidth = item.width * item.scale;
                 const itemCurrentHeight = item.height * item.scale;
                 return !(item.x > foodCanvas.width || item.x + itemCurrentWidth < 0 ||
                          item.y > foodCanvas.height || item.y + itemCurrentHeight < 0);
             });
+            if (originalLength !== foodOnCanvas.length) {
+                itemsRemoved = true;
+            }
+
+            if (itemsRemoved) {
+                updateIngredientsDisplay(); // Update if items were removed by going off-screen
+            }
         }
 
 
@@ -483,7 +656,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // --- Mouse/Touch Interaction for Canvas ---
         function getMousePos(canvas, evt) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -498,43 +670,32 @@
 
         foodCanvas.addEventListener('mousedown', (e) => handleInteractionStart(e));
         foodCanvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Important for touch to prevent scrolling, etc.
+            e.preventDefault(); 
             handleInteractionStart(e);
         }, { passive: false });
 
 
         function handleInteractionStart(e) {
             const pos = getMousePos(foodCanvas, e);
-            // Iterate in reverse to select top-most item
             for (let i = foodOnCanvas.length - 1; i >= 0; i--) {
                 const item = foodOnCanvas[i];
                 const itemCenterX = item.x + (item.width * item.scale) / 2;
                 const itemCenterY = item.y + (item.height * item.scale) / 2;
-
-                // Check click relative to item's rotated and scaled bounding box (simplified check)
-                // For accurate check with rotation, need more complex point-in-polygon test or transform mouse coords
-                // Simple bounding box check for now:
                 const dx = pos.x - itemCenterX;
                 const dy = pos.y - itemCenterY;
                 
-                // Rotate mouse point inversely around item center
                 const rotatedX = dx * Math.cos(-item.angle) - dy * Math.sin(-item.angle);
                 const rotatedY = dx * Math.sin(-item.angle) + dy * Math.cos(-item.angle);
 
                 if (Math.abs(rotatedX) < (item.width * item.scale) / 2 && Math.abs(rotatedY) < (item.height * item.scale) / 2) {
                     selectedFoodItem = item;
                     isDragging = true;
-                    // Calculate offset from item's actual top-left (not center)
                     dragOffsetX = pos.x - item.x;
                     dragOffsetY = pos.y - item.y;
-                    
-                    // Bring selected item to top of rendering order (optional, can be complex with physics)
-                    // foodOnCanvas.splice(i, 1);
-                    // foodOnCanvas.push(item);
                     break; 
                 }
             }
-            if (!isDragging) selectedFoodItem = null; // Deselect if clicked on empty space
+            if (!isDragging) selectedFoodItem = null; 
         }
 
 
@@ -549,45 +710,34 @@
             const pos = getMousePos(foodCanvas, e);
             selectedFoodItem.targetX = pos.x - dragOffsetX;
             selectedFoodItem.targetY = pos.y - dragOffsetY;
-            // Instantly update x,y for direct drag feel, physics will catch up for collisions
             selectedFoodItem.x = selectedFoodItem.targetX;
             selectedFoodItem.y = selectedFoodItem.targetY;
         }
 
         foodCanvas.addEventListener('mouseup', () => handleInteractionEnd());
         foodCanvas.addEventListener('touchend', () => handleInteractionEnd());
-        foodCanvas.addEventListener('mouseleave', () => handleInteractionEnd()); // Also end drag if mouse leaves canvas
+        foodCanvas.addEventListener('mouseleave', () => handleInteractionEnd()); 
 
         function handleInteractionEnd() {
-            if (isDragging) {
-                 // Apply some velocity if mouse moved fast before release (optional)
-                // selectedFoodItem.vx = (selectedFoodItem.x - (selectedFoodItem.targetX - dragOffsetX)) * 0.1;
-                // selectedFoodItem.vy = (selectedFoodItem.y - (selectedFoodItem.targetY - dragOffsetY)) * 0.1;
-            }
             isDragging = false;
-            // Don't deselect on mouseup, keep item selected for keyboard controls
         }
 
 
-        // --- Keyboard Interaction ---
         document.addEventListener('keydown', (e) => {
             if (!selectedFoodItem || foodStage.style.display === 'none') return;
 
-            // Prevent page scroll if arrow keys are used when canvas/modal is active
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                  if (document.activeElement === foodCanvas || 
                     canvasDownloadModal.style.display === 'flex' || 
                     recipeModal.style.display === 'flex') {
-                    // Allow default if input fields are focused
                     if (!(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
                          e.preventDefault();
                     }
                 }
             }
 
-
             const scaleStep = 0.1;
-            const angleStep = Math.PI / 18; // 10 degrees
+            const angleStep = Math.PI / 18; 
 
             switch (e.key) {
                 case 'ArrowUp':
@@ -602,43 +752,37 @@
                 case 'ArrowRight':
                     selectedFoodItem.targetAngle += angleStep;
                     break;
-                case 'Delete': // Bonus: Delete selected item
+                case 'Delete': 
                 case 'Backspace':
                     if (selectedFoodItem) {
                         foodOnCanvas = foodOnCanvas.filter(item => item.id !== selectedFoodItem.id);
                         selectedFoodItem = null;
+                        updateIngredientsDisplay(); // Update after deleting
                     }
                     break;
             }
         });
 
-        // --- SVG Download Logic ---
         function generateSVG(canvasImageBase64, dishName, chefName, date, generatedImageBase64 = null, recipeText = null) {
             const svgWidthMM = 210;
             const svgHeightMM = 297;
-            // For viewBox, using common pixel/point mapping for A4, e.g., 595x842 or multiples
-            const viewBoxWidth = 595; // A4 width in points
-            const viewBoxHeight = 842; // A4 height in points
+            const viewBoxWidth = 595; 
+            const viewBoxHeight = 842; 
 
             let svgContent = `<svg width="${svgWidthMM}mm" height="${svgHeightMM}mm" viewBox="0 0 ${viewBoxWidth} ${viewBoxHeight}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="font-family: 'Gaegu', cursive, sans-serif;">`;
 
-            // Background
-            svgContent += `<rect x="0" y="0" width="${viewBoxWidth}" height="${viewBoxHeight}" fill="${generatedImageBase64 ? '#FFF0F5' : '#FFF8DC'}" />`; // Pink for recipe, Cream for normal
-
-            // Title
-            svgContent += `<text x="${viewBoxWidth / 2}" y="40" font-size="24" text-anchor="middle" fill="${generatedImageBase64 ? '#007bff' : '#dc3545'}">${dishName}</text>`;
+            svgContent += `<rect x="0" y="0" width="${viewBoxWidth}" height="${viewBoxHeight}" fill="${generatedImageBase64 ? '#FFF0F5' : '#FFF8DC'}" />`; 
+            svgContent += `<text x="${viewBoxWidth / 2}" y="40" font-size="24" text-anchor="middle" fill="${generatedImageBase64 ? '#007bff' : '#dc3545'}">${dishName || ''}</text>`; 
             
             const commonTextStyle = `font-size="12" fill="#333"`;
             let textYPosition = 70;
 
-            if (generatedImageBase64) { // Recipe Layout
-                // User Canvas Image (smaller)
-                svgContent += `<image x="30" y="${textYPosition}" width="250" height="187.5" xlink:href="${canvasImageBase64}" />`; // 4:3 aspect ratio
-                // Generated Image (smaller)
+            if (generatedImageBase64) { 
+                svgContent += `<image x="30" y="${textYPosition}" width="250" height="187.5" xlink:href="${canvasImageBase64}" />`; 
                 svgContent += `<image x="315" y="${textYPosition}" width="250" height="187.5" xlink:href="${generatedImageBase64}" />`;
-                textYPosition += 187.5 + 20; // After images + padding
+                textYPosition += 187.5 + 20; 
 
-                svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>만드신 분: ${chefName}</text>`;
+                svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>만드신 분: ${chefName || ''}</text>`; 
                 textYPosition += 20;
                 svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>날짜: ${date}</text>`;
                 textYPosition += 30;
@@ -649,15 +793,11 @@
                     const recipeLines = recipeText.split('\n');
                     recipeLines.forEach(line => {
                         if (line.trim() !== "") {
-                             // Basic text wrapping (very simple)
                             const words = line.split(' ');
                             let currentLine = '';
                             for (const word of words) {
                                 const testLine = currentLine + (currentLine ? ' ' : '') + word;
-                                // Create a temporary text element to measure width (not perfectly accurate without DOM)
-                                // This is a simplification. For perfect wrapping, SVG <foreignObject> or complex calculations needed.
-                                // For now, assume lines are reasonably short or pre-formatted by Gemini.
-                                if (testLine.length > 70 && currentLine) { // Approximate line length
+                                if (testLine.length > 70 && currentLine) { 
                                     svgContent += `<text x="40" y="${textYPosition}" ${commonTextStyle}>${currentLine}</text>`;
                                     textYPosition += 15;
                                     currentLine = word;
@@ -673,22 +813,17 @@
                     });
                 }
 
-            } else { // Normal Canvas Download Layout
-                // User Canvas Image (larger)
-                svgContent += `<image x="50" y="${textYPosition}" width="495" height="371.25" xlink:href="${canvasImageBase64}" />`; // 4:3 aspect ratio
-                textYPosition += 371.25 + 30; // After image + padding
+            } else { 
+                svgContent += `<image x="50" y="${textYPosition}" width="495" height="371.25" xlink:href="${canvasImageBase64}" />`; 
+                textYPosition += 371.25 + 30; 
 
-                svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>만드신 분: ${chefName}</text>`;
+                svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>만드신 분: ${chefName || ''}</text>`; 
                 textYPosition += 20;
                 svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>날짜: ${date}</text>`;
             }
 
-            // Simple border/frame
             svgContent += `<rect x="10" y="10" width="${viewBoxWidth - 20}" height="${viewBoxHeight - 20}" fill="none" stroke="${generatedImageBase64 ? '#007bff' : '#dc3545'}" stroke-width="2" rx="10" ry="10"/>`;
-            
-            // "Made with" text
             svgContent += `<text x="${viewBoxWidth - 30}" y="${viewBoxHeight - 20}" font-size="8" text-anchor="end" fill="#777">찰흙 그릇 자판기</text>`;
-
             svgContent += `</svg>`;
             return svgContent;
         }
@@ -712,49 +847,53 @@
         });
 
         confirmCanvasDownloadButton.addEventListener('click', () => {
-            const dishName = canvasDishNameInput.value || "나의 멋진 요리";
-            const chefName = canvasChefNameInput.value || "익명의 셰프";
+            const dishName = canvasDishNameInput.value; 
+            const chefName = canvasChefNameInput.value; 
             const date = getCurrentDate();
             
-            // Temporarily deselect item for clean capture
             const previouslySelected = selectedFoodItem;
             selectedFoodItem = null;
-            drawCanvas(); // Redraw without selection outline
+            drawCanvas(); 
             const canvasImageBase64 = foodCanvas.toDataURL('image/png');
-            selectedFoodItem = previouslySelected; // Restore selection
-            drawCanvas(); // Redraw with selection outline if it was there
+            selectedFoodItem = previouslySelected; 
+            drawCanvas(); 
 
             const svgString = generateSVG(canvasImageBase64, dishName, chefName, date);
-            downloadSVG(svgString, `${dishName.replace(/\s+/g, '_')}_${date}.svg`);
+            downloadSVG(svgString, `${dishName.replace(/\s+/g, '_') || '나의작품'}_${date}.svg`); 
             closeModal('canvasDownloadModal');
         });
 
-        // --- Gemini API Logic ---
-        // Store the generated image and recipe to pass to SVG generation
         let currentGeneratedRecipe = {
             name: "",
-            imageUrl: "", // Base64
+            imageUrl: "", 
             recipeText: ""
         };
 
         getRecipeButton.addEventListener('click', async () => {
             if (foodOnCanvas.length === 0) {
-                alert("음식을 먼저 캔버스에 올려주세요!");
+                showCustomConfirm("음식을 먼저 캔버스에 올려주세요! 이 메시지 창을 닫으려면 '예' 또는 '아니오'를 누르세요.", (confirmed) => {
+                    // This callback is just to close the confirm modal, action doesn't matter here
+                    closeModal('customConfirmModal');
+                });
                 return;
             }
 
-            const ingredients = foodOnCanvas.map(item => item.alt.replace(/_\d$/, '')); // Remove _1, _2 suffixes
-            const uniqueIngredients = [...new Set(ingredients)]; // Get unique ingredient names
+            const ingredientsForAPI = foodOnCanvas.map(item => {
+                 const baseAltText = item.alt.replace(/_\d+$/, '');
+                 return foodNameMapping[baseAltText] || baseAltText; // Send Korean names to API
+            });
+            const uniqueIngredientsForAPI = [...new Set(ingredientsForAPI)]; 
+
 
             recipeOutput.innerHTML = "<p>레시피를 생성 중입니다... 잠시만 기다려주세요!</p>";
             recipeChefNameInput.value = '';
             confirmRecipeDownloadButton.style.display = 'none';
-            recipeModalInputs.style.display = 'none'; // Hide chef name input until recipe is loaded
+            recipeModalInputs.style.display = 'none'; 
             openModal('recipeModal');
             showLoading(true);
 
             try {
-                const prompt = `너는 유치원생들을 위한 요리 레시피를 만들어주는 상상력이 풍부한 AI 셰프야. 다음 재료들을 사용해서 아주 재미있고 창의적인 음식 이름, 그 음식의 이미지(너가 직접 생성해야 해!), 그리고 아이들이 부모님과 함께 쉽게 따라 할 수 있는 3~5단계의 간단한 레시피를 만들어줘: [${uniqueIngredients.join(', ')}]. 
+                const prompt = `너는 유치원생들을 위한 요리 레시피를 만들어주는 상상력이 풍부한 AI 셰프야. 다음 재료들을 사용해서 아주 재미있고 창의적인 음식 이름, 그 음식의 이미지(너가 직접 생성해야 해!), 그리고 아이들이 부모님과 함께 쉽게 따라 할 수 있는 3~5단계의 간단한 레시피를 만들어줘: [${uniqueIngredientsForAPI.join(', ')}]. 
                 음식 이름은 예를 들어 '무지개 구름빵'이나 '반짝반짝 용가리 사과 보트'처럼 아주 신나고 귀여운 이름으로 지어줘. 
                 레시피 각 단계는 한 문장 정도로 짧고 명확하게 설명해줘.
                 최종 결과는 다음 JSON 형식으로만 답변해줘. 다른 설명은 절대 추가하지 마.
@@ -768,10 +907,9 @@
                   ]
                 }`;
                 
-                // 1. Generate recipe text and image prompt with Gemini Flash
                 let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payloadText = { contents: chatHistory };
-                const apiKey = ""; // Provided by Canvas environment
+                const apiKey = ""; 
                 const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                 
                 const responseText = await fetch(apiUrlText, {
@@ -789,7 +927,6 @@
                 let recipeData;
                 if (resultText.candidates && resultText.candidates[0].content && resultText.candidates[0].content.parts && resultText.candidates[0].content.parts[0].text) {
                     const rawJson = resultText.candidates[0].content.parts[0].text.trim();
-                    // Attempt to clean the JSON string if it's wrapped in markdown
                     const cleanedJson = rawJson.replace(/^```json\s*|```$/g, '');
                     try {
                         recipeData = JSON.parse(cleanedJson);
@@ -797,13 +934,14 @@
                          console.error("JSON 파싱 오류:", parseError, "원본 텍스트:", cleanedJson);
                          throw new Error("레시피 정보를 가져오는 데 실패했습니다 (JSON 파싱 오류).");
                     }
-
                 } else {
-                    throw new Error("레시피 정보를 가져오는 데 실패했습니다.");
+                    throw new Error("레시피 정보를 가져오는 데 실패했습니다 (Gemini text 응답 구조 오류).");
                 }
 
-                // 2. Generate image with Imagen
-                const payloadImage = { instances: [{ prompt: recipeData.dishImagePrompt }], parameters: { "sampleCount": 1 } };
+                const payloadImage = { 
+                    instances: { prompt: recipeData.dishImagePrompt }, 
+                    parameters: { "sampleCount": 1 } 
+                };
                 const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
                 
                 const responseImage = await fetch(apiUrlImage, {
@@ -813,14 +951,18 @@
                 });
 
                 if (!responseImage.ok) {
+                    const errorStatus = responseImage.status;
                     const errorBody = await responseImage.text();
-                    throw new Error(`Imagen API 에러: ${responseImage.status} ${errorBody}`);
+                    console.error(`Imagen API Error Response Body: ${errorBody}`);
+                    throw new Error(`Imagen API 에러: ${errorStatus} ${errorBody}`);
                 }
                 const resultImage = await responseImage.json();
                 
-                let generatedImageUrl = "https://placehold.co/300x200/E2E8F0/4A5568?text=이미지+생성+실패"; // Fallback
+                let generatedImageUrl = "https://placehold.co/300x200/E2E8F0/4A5568?text=이미지+생성+실패"; 
                 if (resultImage.predictions && resultImage.predictions.length > 0 && resultImage.predictions[0].bytesBase64Encoded) {
                     generatedImageUrl = `data:image/png;base64,${resultImage.predictions[0].bytesBase64Encoded}`;
+                } else {
+                    console.warn("Imagen API did not return a valid image. Payload:", resultImage);
                 }
 
                 currentGeneratedRecipe = {
@@ -829,7 +971,6 @@
                     recipeText: recipeData.recipe.join('\n')
                 };
                 
-                // Display recipe
                 recipeOutput.innerHTML = `
                     <h4 class="text-lg font-semibold text-blue-700" style="font-family: 'Gaegu', cursive;">${recipeData.dishName}</h4>
                     <img src="${generatedImageUrl}" alt="${recipeData.dishName}" class="mx-auto my-3 rounded-lg shadow-md max-w-xs w-full object-contain">
@@ -838,19 +979,19 @@
                         ${recipeData.recipe.map(step => `<li>${step}</li>`).join('')}
                     </ol>
                 `;
-                recipeModalInputs.style.display = 'block'; // Show chef name input
+                recipeModalInputs.style.display = 'block'; 
                 confirmRecipeDownloadButton.style.display = 'block';
 
             } catch (error) {
                 console.error("레시피 생성 중 오류:", error);
-                recipeOutput.innerHTML = `<p class="text-red-500">죄송합니다, 레시피를 가져오는 중 오류가 발생했습니다. ${error.message}</p>`;
+                recipeOutput.innerHTML = `<p class="text-red-500">죄송합니다, 레시피를 가져오는 중 오류가 발생했습니다. <br>세부 정보: ${error.message}</p>`;
             } finally {
                 showLoading(false);
             }
         });
         
         confirmRecipeDownloadButton.addEventListener('click', () => {
-            const chefName = recipeChefNameInput.value || "익명의 셰프";
+            const chefName = recipeChefNameInput.value; 
             const date = getCurrentDate();
 
             const previouslySelected = selectedFoodItem;
@@ -868,12 +1009,11 @@
                 currentGeneratedRecipe.imageUrl,
                 currentGeneratedRecipe.recipeText
             );
-            downloadSVG(svgString, `${currentGeneratedRecipe.name.replace(/\s+/g, '_')}_${date}.svg`);
+            downloadSVG(svgString, `${currentGeneratedRecipe.name.replace(/\s+/g, '_') || 'Gemini레시피'}_${date}.svg`);
             closeModal('recipeModal');
         });
 
 
-        // --- Initialization ---
         function init() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 setupWebcam();
@@ -881,8 +1021,9 @@
                  webcamStage.innerHTML = "<p class='text-red-500'>죄송합니다, 브라우저가 웹캠을 지원하지 않습니다.</p>";
             }
             populateFoodItems();
-            resizeCanvas(); // Initial canvas sizing
-            gameLoop(); // Start the animation loop
+            resizeCanvas(); 
+            gameLoop(); 
+            updateIngredientsDisplay(); // Initial call to set "재료를 추가해주세요!"
         }
 
         init();
