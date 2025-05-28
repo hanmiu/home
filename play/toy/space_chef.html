@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>우주 셰프 - 3D 태양계</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!--<script src="https://cdn.tailwindcss.com"></script>-->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbit&display=swap" rel="stylesheet">
@@ -57,13 +57,21 @@
                 0 0 0 1px rgba(255, 255, 255, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
             width: 90%;
-            max-width: 550px;
+            /* max-width: 550px; */
             backdrop-filter: blur(20px);
             border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.7s ease-in-out;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .container.ui-slide-down {
+            transform: translateY(85vh); /* Adjust this value as needed */
+            opacity: 0;
         }
 
         .request-text {
-            min-height: 120px;
+            min-height: 60px;
             margin-top: 1.5rem;
             padding: 1.5rem;
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.8));
@@ -603,6 +611,7 @@
         const getRequestButton = document.getElementById('getRequestButton');
         const printButton = document.getElementById('printButton');
         const messageBox = document.getElementById('messageBox');
+        const uiContainer = document.querySelector('.container');
 
         let originalCelestialRequests = [];
         let currentShuffledRequests = [];
@@ -1565,10 +1574,18 @@
                 isArrived = true;
                 return;
             }
-
+            // if (window.innerHeight > window.innerWidth) { // Check for portrait aspect ratio
+            //     if (uiContainer) {
+            //         uiContainer.classList.add('ui-slide-down');
+            //     }
+            // }
+            if (uiContainer) {
+                uiContainer.classList.add('ui-slide-down');
+            }
             currentTarget = targetName;
             isMoving = true;
             isArrived = false;
+
             const targetMesh = celestialObjects[targetName].mesh;
             const initialTargetWorldPosition = new THREE.Vector3();
             targetMesh.getWorldPosition(initialTargetWorldPosition); // 패턴 생성 시 사용될 초기 행성 위치
@@ -1635,24 +1652,26 @@
                             isMoving = false;
                             isArrived = true;
                             console.log(`🎯 ${targetName} 도착 완료! 부드러운 추적 시작`);
-
-                            // // 애니메이션 완료 후 정확히 목표물을 바라보도록 최종 설정 (필수)
-                            // if (celestialObjects[currentTarget] && celestialObjects[currentTarget].mesh) {
-                            //     const finalPlanetPos = new THREE.Vector3();
-                            //     celestialObjects[currentTarget].mesh.getWorldPosition(finalPlanetPos);
-                            //     camera.lookAt(finalPlanetPos); // Slerp의 최종 보정 및 정확한 조준
-                            // }
+                            if (uiContainer) {
+                                uiContainer.classList.remove('ui-slide-down');
+                            }
                         })
                         .start();
                 } else {
                     console.log(`ℹ️ ${targetName} 이동 경로 없음. 즉시 도착 처리.`);
                     isMoving = false;
                     isArrived = true;
+                    if (uiContainer) {
+                        uiContainer.classList.remove('ui-slide-down');
+                    }
                 }
             } else {
                 console.warn(`⚠️ ${targetName} 웨이포인트 부족 (${waypoints.length}개). 이동 불가.`);
                 isMoving = false;
                 isArrived = true;
+                if (uiContainer) {
+                    uiContainer.classList.remove('ui-slide-down');
+                }
             }
         }
 
