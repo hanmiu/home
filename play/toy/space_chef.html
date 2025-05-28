@@ -613,8 +613,8 @@
         const messageBox = document.getElementById('messageBox');
         const uiContainer = document.querySelector('.container');
 
-        let originalCelestialRequests = [];
-        let currentShuffledRequests = [];
+        let masterRequestsByPlanet = {};   // ✨ NEW: 행성별로 요청을 그룹화하여 저장 (원본 데이터 역할)
+        let currentRequestQueue = [];      // ✨ NEW: 현재 표시할 요청들의 순서가 담긴 큐 (기존 currentShuffledRequests 대체)
         let lastDisplayedRequest = null;
 
         // 🎵 행성별 테마 멜로디 시스템
@@ -783,10 +783,86 @@
             }
         }
 
-        function prepareRequests() {
-            if (originalCelestialRequests.length === 0) return;
-            currentShuffledRequests = [...originalCelestialRequests];
-            shuffleArray(currentShuffledRequests);
+        function initializeAndGroupRequests(data) {
+            const lines = data.trim().split('\n');
+            const allRequests = [];
+            lines.forEach(line => {
+                const parts = line.split('\t');
+                if (parts.length === 2) {
+                    allRequests.push({ name: parts[0].trim(), request: parts[1].trim() });
+                }
+            });
+
+            if (allRequests.length === 0) {
+                console.error("TSV 데이터에서 요청을 파싱하지 못했습니다.");
+                return false; // 초기화 실패
+            }
+
+            masterRequestsByPlanet = {}; // 초기화
+            allRequests.forEach(req => {
+                if (!masterRequestsByPlanet[req.name]) {
+                    masterRequestsByPlanet[req.name] = [];
+                }
+                masterRequestsByPlanet[req.name].push(req);
+            });
+
+            // 각 행성별 요청 목록 내부를 섞어줍니다 (다양성 증진).
+            for (const planetName in masterRequestsByPlanet) {
+                shuffleArray(masterRequestsByPlanet[planetName]);
+            }
+            console.log("행성별 요청 그룹화 및 초기 셔플 완료:", masterRequestsByPlanet);
+            return true; // 초기화 성공
+        }
+
+        function generateRequestSequence() {
+            currentRequestQueue = []; // 현재 큐를 비웁니다.
+
+            // 이번 시퀀스 생성에 사용할 행성별 요청 목록의 복사본을 만듭니다.
+            const availableRequestsByPlanet = {};
+            let totalRequestsToQueue = 0;
+            for (const planetName in masterRequestsByPlanet) {
+                if (masterRequestsByPlanet[planetName].length > 0) {
+                    availableRequestsByPlanet[planetName] = [...masterRequestsByPlanet[planetName]];
+                    // 각 행성별 요청 목록을 다시 섞어주면, 매번 generateRequestSequence가 호출될 때마다
+                    // 같은 행성이라도 다른 요청이 먼저 나올 확률이 생깁니다. (선택 사항)
+                    // shuffleArray(availableRequestsByPlanet[planetName]); 
+                    totalRequestsToQueue += availableRequestsByPlanet[planetName].length;
+                }
+            }
+
+            if (totalRequestsToQueue === 0) {
+                console.log("masterRequestsByPlanet에 더 이상 처리할 요청이 없습니다.");
+                return; // 처리할 요청이 없음
+            }
+            
+            let safetyBreak = 0; // 무한 루프 방지용
+            const maxIterations = totalRequestsToQueue * 2; // 충분히 큰 값
+
+            // 모든 요청이 큐에 추가될 때까지 반복
+            while (currentRequestQueue.length < totalRequestsToQueue && safetyBreak < maxIterations) {
+                safetyBreak++;
+                // 아직 요청이 남아있는 행성들의 목록을 가져옵니다.
+                let activePlanetNames = Object.keys(availableRequestsByPlanet)
+                                            .filter(name => availableRequestsByPlanet[name] && availableRequestsByPlanet[name].length > 0);
+
+                if (activePlanetNames.length === 0) {
+                    break; // 더 이상 처리할 행성이 없으면 종료
+                }
+
+                shuffleArray(activePlanetNames); // ✨ 핵심: 이번 라운드에 처리할 행성 순서를 섞습니다.
+
+                for (const planetName of activePlanetNames) {
+                    if (availableRequestsByPlanet[planetName] && availableRequestsByPlanet[planetName].length > 0) {
+                        const request = availableRequestsByPlanet[planetName].shift(); // 해당 행성의 다음 요청을 가져옴
+                        currentRequestQueue.push(request);
+                    }
+                }
+            }
+            
+            if (safetyBreak >= maxIterations && currentRequestQueue.length < totalRequestsToQueue) {
+            console.error("요청 시퀀스 생성 중 문제 발생 가능성 (무한 루프 방지 발동). 현재 큐:", currentRequestQueue.length, "총 요청:", totalRequestsToQueue);
+            }
+            console.log("새로운 요청 시퀀스 생성 완료. 큐 크기:", currentRequestQueue.length);
         }
 
         function playSound(planetName) {
@@ -1673,53 +1749,40 @@
         }
 
         function displayRandomRequest() {
-            if (originalCelestialRequests.length === 0) {
-                requestTextDisplay.textContent = "🚨 요청사항 데이터가 없어요. 😥";
-                planetNameDisplay.textContent = "❌ 오류";
-                showMessage("요청사항을 불러올 수 없습니다.", "error");
-                lastDisplayedRequest = null;
-                return;
-            }
-            
-            if (currentShuffledRequests.length === 0) {
-                showMessage("🎉 모든 손님의 요청을 다 확인했어요! 다시 섞어볼게요! 🛸✨", "info");
-                prepareRequests();
-                if (currentShuffledRequests.length === 0) {
-                    requestTextDisplay.textContent = "🤷‍♀️ 요청사항이 정말 하나도 없네요. 😭";
-                    lastDisplayedRequest = null;
+            if (currentRequestQueue.length === 0) {
+                console.log("현재 요청 큐가 비어있습니다. 새로운 시퀀스를 생성합니다...");
+                generateRequestSequence(); // ✨ 큐가 비었으면, 모든 원본 요청을 사용해 새로운 시퀀스를 생성합니다.
+
+                // 시퀀스 재생성 후에도 큐가 비어있다면, 원본 데이터(masterRequestsByPlanet)에 요청이 전혀 없는 것입니다.
+                if (currentRequestQueue.length === 0) {
+                    requestTextDisplay.textContent = "🚨 표시할 우주 손님의 요청이 데이터에 존재하지 않습니다. 😥";
+                    planetNameDisplay.textContent = "✨ 휴식 시간 ✨";
+                    showMessage("표시할 요청 데이터가 없습니다.", "error");
+                    lastDisplayedRequest = null; 
                     return;
                 }
+                // 선택 사항: 사용자에게 다시 셔플되었음을 알리는 메시지
+                showMessage("✨ 새로운 손님 목록을 준비했어요! 모든 요청을 다시 섞었습니다. 🚀", "info");
             }
 
-            let selectedRequestToDisplay;
-            if (currentShuffledRequests.length > 1 && lastDisplayedRequest) {
-                let tempRequests = currentShuffledRequests.filter(req => req.name !== lastDisplayedRequest.name);
-                if (tempRequests.length > 0) {
-                    let originalIndex = currentShuffledRequests.indexOf(tempRequests[0]);
-                    selectedRequestToDisplay = currentShuffledRequests.splice(originalIndex, 1)[0];
-                } else {
-                    selectedRequestToDisplay = currentShuffledRequests.pop();
-                }
-            } else {
-                selectedRequestToDisplay = currentShuffledRequests.pop();
-            }
-
-            if (!selectedRequestToDisplay && originalCelestialRequests.length > 0) {
-                if (currentShuffledRequests.length === 0) prepareRequests();
-                selectedRequestToDisplay = currentShuffledRequests.length > 0 ? currentShuffledRequests.pop() : originalCelestialRequests[0];
-            }
+            const selectedRequestToDisplay = currentRequestQueue.shift(); // 큐의 앞에서부터 요청을 가져옵니다.
 
             if (selectedRequestToDisplay) {
                 planetNameDisplay.textContent = `${selectedRequestToDisplay.name} 손님 🪐`;
                 requestTextDisplay.textContent = selectedRequestToDisplay.request;
-                lastDisplayedRequest = selectedRequestToDisplay;
+                lastDisplayedRequest = selectedRequestToDisplay; // 마지막으로 표시된 요청 기록
 
                 playSound(selectedRequestToDisplay.name);
                 focusCameraOnTarget(selectedRequestToDisplay.name);
+                // 아래 showMessage는 focusCameraOnTarget에서 도착 완료 시 처리하는 것과 중복될 수 있으므로,
+                // 필요에 따라 조정하거나, 여기서는 일반적인 "다음 요청" 안내용으로 변경할 수 있습니다.
                 showMessage(`✨ ${selectedRequestToDisplay.name} 손님의 특별한 요청입니다! 🎯`, 'success');
             } else {
-                requestTextDisplay.textContent = "🔄 다음 요청을 가져오는데 실패했어요. 🛸";
-                planetNameDisplay.textContent = "😅 이런!";
+                // 이 경우는 currentRequestQueue.length === 0 체크에서 이미 처리되었어야 하며,
+                // selectedRequestToDisplay가 정상적으로 할당되지 않은 예외적인 상황입니다.
+                console.error("displayRandomRequest: 요청 가져오기 실패. selectedRequestToDisplay가 정의되지 않았습니다. 로직을 확인해주세요.");
+                requestTextDisplay.textContent = "🛸 이런! 알 수 없는 오류로 다음 요청을 가져오는데 실패했어요.";
+                planetNameDisplay.textContent = "🤔 시스템 점검 중";
                 lastDisplayedRequest = null;
             }
         }
@@ -1821,23 +1884,18 @@
 
                 if (distanceToPlanet > 0 && planetRadius > 0) { // 유효한 값일 때만 FOV 조절
                     const fillFactor = 0.85; // 이미지가 뷰의 수직 높이의 85%를 채우도록 설정
-                                            // (값이 클수록 더 꽉 참, 1.0 이상은 잘릴 수 있음)
-
-                    // 새 FOV 계산 (라디안): newFov = 2 * atan(objectVisualRadius / distance)
-                    // 여기서 objectVisualRadius는 planetRadius가 화면의 fillFactor만큼 보이도록 하는 값
-                    // 즉, tan(newFov/2) = (planetRadius / fillFactor) / distanceToPlanet (잘못된 이해)
-                    // 올바른 공식: tan(newFov/2) = planetRadius / (fillFactor * distanceToPlanet)
-                    // 이 공식은 행성의 실제 반지름이 (거리 * fillFactor) 영역 내에서 보이도록 FOV를 조절합니다.
-                    // 좀 더 직관적으로, 행성의 지름(2*planetRadius)이 화면 높이의 fillFactor를 차지하도록 하려면:
-                    // 화면 높이 H = 2 * distance * tan(FOV/2).
-                    // 2 * planetRadius = fillFactor * H
-                    // 2 * planetRadius = fillFactor * 2 * distance * tan(newFOV/2)
-                    // tan(newFOV/2) = planetRadius / (fillFactor * distanceToPlanet)
                     const newFovRadians = 2 * Math.atan(planetRadius / (fillFactor * distanceToPlanet));
                     let newFovDegrees = newFovRadians * (180 / Math.PI);
 
                     // FOV가 너무 작아지거나 (과도한 줌), 너무 커지는 것을 방지
                     newFovDegrees = Math.max(5, Math.min(newFovDegrees, originalFov)); // 최소 5도, 최대 원본 FOV
+
+                    // MODIFICATION START: 토성인 경우 고리 반지름 사용
+                    if (targetPlanetNamePrint === "토성") {
+                        // 토성 고리의 바깥쪽 반지름을 사용 (createCelestialBodies에서 정의한 값과 동일하게)
+                        // RingGeometry outerRadius: data.radius * 2.5
+                        newFovDegrees *= 1.7;
+                    }
 
                     camera.fov = newFovDegrees;
                     camera.updateProjectionMatrix(); // FOV 변경 후 필수 호출
@@ -1882,15 +1940,26 @@
 
         // 이벤트 리스너 설정
         document.addEventListener('DOMContentLoaded', () => {
-            originalCelestialRequests = parseTSVData(tsvData);
-            if (originalCelestialRequests.length > 0) {
-                prepareRequests();
+            // 기존 originalCelestialRequests 및 prepareRequests() 호출 부분을 아래 내용으로 대체합니다.
+            if (initializeAndGroupRequests(tsvData)) { // ✨ TSV 데이터 파싱 및 그룹화
+                generateRequestSequence(); // ✨ 초기 요청 시퀀스 생성
+                if (currentRequestQueue.length === 0 && Object.keys(masterRequestsByPlanet).length > 0 ) { 
+                    // 그룹화는 성공했으나 큐 생성이 안된 경우 (로직 오류 가능성)
+                    requestTextDisplay.textContent = "🚨 요청사항은 있으나, 표시할 순서 생성에 실패했어요. 😥";
+                    showMessage("데이터 처리 중 오류 발생!", "error");
+                } else if (currentRequestQueue.length === 0) {
+                    // 아예 요청이 없는 경우 (tsvData가 비어있거나 문제 있을 때)
+                    requestTextDisplay.textContent = "🚨 표시할 우주 손님의 요청이 없어요. 😥";
+                    planetNameDisplay.textContent = "✨ 휴식 시간 ✨";
+                    // showMessage("요청 데이터가 없습니다.", "info"); // displayRandomRequest에서 이미 처리 가능
+                }
             } else {
-                requestTextDisplay.textContent = "🚨 요청사항을 불러오는데 문제가 발생했어요. 😥";
-                showMessage("데이터 로딩 실패!", "error");
+                // initializeAndGroupRequests 자체가 실패한 경우 (TSV 파싱 실패 등)
+                requestTextDisplay.textContent = "🚨 요청사항 데이터를 불러오는데 심각한 문제가 발생했어요. 😥";
+                showMessage("초기 데이터 로딩 실패!", "error");
             }
 
-            initThreeJS();
+            initThreeJS(); // 3D 씬 초기화는 그대로 진행
 
             getRequestButton.addEventListener('click', async () => {
                 if (Tone.context.state !== 'running') {
