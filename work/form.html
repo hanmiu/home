@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>한미 이미지 인쇄 양식</title>
+    <script src="https://unpkg.com/pica@latest/dist/pica.min.js"></script>
+    <style>
+        /* Styles remain largely the same as your previous version */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2#title {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 2em;
+            line-height: 1.3;
+        }
+
+        [contenteditable="true"] {
+            border: 1px dashed #bdc3c7;
+            padding: 10px;
+            min-height: 30px;
+            line-height: 1.6;
+            background-color: #fdfdfd;
+            border-radius: 4px;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid #3498db;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        [contenteditable="true"]:empty::before {
+            content: attr(data-placeholder);
+            color: #95a5a6;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+        }
+
+        .controls label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .controls input[type="date"],
+        .controls input[type="number"],
+        .controls button {
+            padding: 10px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+        }
+        .controls input[type="number"] {
+            width: 60px;
+        }
+        .controls input[type="date"]:focus,
+        .controls input[type="number"]:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+            outline: none;
+        }
+
+        .controls button, .action-buttons button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+        }
+        .controls button:hover, .action-buttons button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+         .controls button#pasteButton {
+            background-color: #2ecc71;
+        }
+        .controls button#pasteButton:hover {
+            background-color: #27ae60;
+        }
+
+
+        #imageContainer {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 6px;
+            min-height: 150px;
+            align-items: start;
+            background-color: #f8f9fa;
+        }
+
+        .image-item {
+            position: relative;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .image-item img {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            background-color: #f0f0f0;
+        }
+        
+        .image-item .remove-image-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(231, 76, 60, 0.85);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            line-height: 28px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease, background-color 0.2s ease;
+            font-weight: bold;
+        }
+        .image-item:hover .remove-image-btn {
+            opacity: 1;
+        }
+        .remove-image-btn:hover {
+            background-color: rgba(192, 57, 43, 1);
+        }
+
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .action-buttons button {
+             padding: 12px 20px;
+             font-size: 1.05em;
+        }
+        .action-buttons button#printButton {
+            background-color: #e67e22;
+        }
+        .action-buttons button#printButton:hover {
+            background-color: #d35400;
+        }
+        .action-buttons button#newDocumentButton {
+            background-color: #95a5a6;
+        }
+        .action-buttons button#newDocumentButton:hover {
+            background-color: #7f8c8d;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #fff !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .container { display: none !important; }
+            #print-view { display: block !important; margin: 0; padding: 0; }
+            @page { size: A4; margin: 15mm; }
+            #print-view h2 { font-size: 18pt; color: black !important; border-bottom: 1px solid black; padding-bottom: 5mm; margin-bottom: 10mm; }
+            #print-view .print-date-display { text-align: right; font-size: 10pt; color: black !important; margin-bottom: 3mm; }
+            #print-view .print-name-field { text-align: right; font-size: 10pt; color: black !important; margin-bottom: 8mm; }
+            #print-view .print-image-container { display: grid !important; gap: 5mm !important; margin-bottom: 10mm; }
+            #print-view .print-image-container img { width: 100% !important; height: auto !important; object-fit: contain !important; border: none !important; page-break-inside: avoid !important; }
+            #print-view p.print-body-text { font-size: 10pt; color: black !important; line-height: 1.5; }
+        }
+
+        #print-view { display: none; }
+        #imageContainer_drag_instruction { display: flex; justify-content: center; align-items: center; color: #7f8c8d; font-size: 1.1em; text-align: center; height: 150px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="title" contenteditable="true" data-placeholder="제목을 입력하세요"></h2>
+        <div class="controls">
+            <label for="dateInput">날짜:</label>
+            <input type="date" id="dateInput">
+            <button id="pasteButton" title="클립보드에서 이미지 붙여넣기">📥 붙여넣기</button>
+            <label for="columnCountInput">이미지 열 개수:</label>
+            <input type="number" id="columnCountInput" min="1" max="10" value="2">
+        </div>
+        <div id="imageContainer">
+            <div id="imageContainer_drag_instruction">여기에 이미지를 드래그＆드롭하거나, 「붙여넣기」 버튼을 사용해 주세요.</div>
+        </div>
+        <p id="bodyText" contenteditable="true" data-placeholder="부연 설명, 대화 내용 등을 입력하세요"></p>
+        <div class="action-buttons">
+            <button id="printButton">🖨️ 인쇄</button>
+            <button id="copyButton">⚡️ 문서 복사</button>
+            <button id="newDocumentButton">✨ 새로 작성</button>
+        </div>
+    </div>
+    <div id="print-view"></div>
+    <script>
+        const picaInstance = pica();
+
+        const titleEl = document.getElementById('title');
+        const dateInput = document.getElementById('dateInput');
+        const pasteButton = document.getElementById('pasteButton');
+        const columnCountInput = document.getElementById('columnCountInput');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageContainerDragInstruction = document.getElementById('imageContainer_drag_instruction');
+        const bodyTextEl = document.getElementById('bodyText');
+        const printButton = document.getElementById('printButton');
+        const copyButton = document.getElementById('copyButton');
+        const newDocumentButton = document.getElementById('newDocumentButton');
+        const printViewContainer = document.getElementById('print-view'); 
+
+        let images = []; 
+
+        function initialize() {
+            const today = new Date();
+            dateInput.valueAsDate = today;
+            loadSettings();
+            updateImageGridColumns(); 
+            renderImages(); 
+            attachEventListeners();
+            checkImageContainerInstruction();
+        }
+
+        function checkImageContainerInstruction() {
+            imageContainerDragInstruction.style.display = imageContainer.querySelector('.image-item') ? 'none' : 'flex';
+        }
+
+        function attachEventListeners() {
+            titleEl.addEventListener('input', saveSettings);
+            dateInput.addEventListener('input', saveSettings);
+            columnCountInput.addEventListener('change', () => {
+                saveSettings();
+                updateImageGridColumns(); 
+            });
+            bodyTextEl.addEventListener('input', saveSettings);
+            document.body.addEventListener('dragover', handleDragOver);
+            document.body.addEventListener('dragleave', handleDragLeave);
+            document.body.addEventListener('drop', handleDrop);
+            pasteButton.addEventListener('click', handlePaste);
+            document.addEventListener('paste', handleGlobalPaste); 
+            imageContainer.addEventListener('click', handleImageContainerClick); 
+            printButton.addEventListener('click', handlePrint);
+            copyButton.addEventListener('click', handleCopy); // Will be the new HTML copy function
+            newDocumentButton.addEventListener('click', handleNewDocument);
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('a4ImagePrinterSettings', JSON.stringify({
+                title: titleEl.innerHTML,
+                date: dateInput.value,
+                columnCount: columnCountInput.value,
+                bodyText: bodyTextEl.innerHTML,
+            }));
+        }
+
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('a4ImagePrinterSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                titleEl.innerHTML = settings.title || '';
+                dateInput.value = (settings.date && settings.date.match(/^\d{4}-\d{2}-\d{2}$/)) ? settings.date : new Date().toISOString().slice(0,10);
+                columnCountInput.value = settings.columnCount || '2';
+                bodyTextEl.innerHTML = settings.bodyText || '';
+            }
+        }
+        
+        function handleDragOver(event) { event.preventDefault(); event.stopPropagation(); document.body.style.opacity = '0.8'; }
+        function handleDragLeave(event) { event.preventDefault(); event.stopPropagation(); document.body.style.opacity = '1'; }
+        async function handleDrop(event) {
+            event.preventDefault(); event.stopPropagation();
+            document.body.style.opacity = '1';
+            if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+                await processFiles(event.dataTransfer.files);
+                event.dataTransfer.clearData();
+            }
+        }
+        async function handlePaste() {
+            try {
+                if (!navigator.clipboard || !navigator.clipboard.read) { alert('이 브라우저에서는 클립보드 직접 읽기를 지원하지 않습니다. Ctrl+V를 사용해주세요.'); return; }
+                const items = await navigator.clipboard.read();
+                for (const item of items) {
+                    for (const type of item.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await item.getType(type);
+                            await processFiles([new File([blob], `pasted_image.${type.split('/')[1]}`, { type })]);
+                        }
+                    }
+                }
+            } catch (err) { console.error('클립보드 읽기 오류:', err); }
+        }
+        async function handleGlobalPaste(event) {
+            const items = (event.clipboardData || window.clipboardData).items;
+            let filesToProcess = [];
+            for (let i = 0; i < items.length; i++) { if (items[i].type.indexOf('image') !== -1) filesToProcess.push(items[i].getAsFile()); }
+            if (filesToProcess.length > 0) { event.preventDefault(); await processFiles(filesToProcess); }
+        }
+        async function processFiles(files) {
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                try {
+                    const dataUrl = await readFileAsDataURL(file);
+                    const img = await loadImage(dataUrl);
+                    let targetWidth = img.width, targetHeight = img.height;
+                    const MAX_HEIGHT = 1024;
+                    if (img.height > MAX_HEIGHT) {
+                        const scale = MAX_HEIGHT / img.height;
+                        targetWidth = Math.round(img.width * scale); targetHeight = MAX_HEIGHT;
+                    }
+                    const offScreenCanvas = document.createElement('canvas');
+                    offScreenCanvas.width = targetWidth; offScreenCanvas.height = targetHeight;
+                    const fromCanvas = document.createElement('canvas');
+                    fromCanvas.width = img.width; fromCanvas.height = img.height;
+                    fromCanvas.getContext('2d').drawImage(img, 0, 0);
+                    await picaInstance.resize(fromCanvas, offScreenCanvas);
+                    const resizedDataUrl = offScreenCanvas.toDataURL(file.type, 0.9); 
+                    images.push({
+                        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        dataUrl: resizedDataUrl,
+                        // Store dimensions of this initially processed image
+                        originalWidth: targetWidth, 
+                        originalHeight: targetHeight 
+                    });
+                } catch (error) { console.error("파일 처리 중 오류:", error); alert(`이미지 처리 중 오류: ${file.name}`); }
+            }
+            renderImages(); checkImageContainerInstruction();
+        }
+        function readFileAsDataURL(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); }
+        function loadImage(src) { return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; }); }
+        
+        function renderImages() { 
+            imageContainer.innerHTML = ''; // Clear previous images first
+             if (images.length === 0) {
+                imageContainer.appendChild(imageContainerDragInstruction);
+                checkImageContainerInstruction(); return;
+            }
+            images.forEach(imgData => {
+                const itemDiv = document.createElement('div'); itemDiv.className = 'image-item'; itemDiv.dataset.id = imgData.id;
+                const imgEl = document.createElement('img'); imgEl.src = imgData.dataUrl; imgEl.alt = "업로드된 이미지";
+                const removeBtn = document.createElement('button'); removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = '이미지 삭제';
+                itemDiv.appendChild(imgEl); itemDiv.appendChild(removeBtn);
+                imageContainer.appendChild(itemDiv);
+            });
+            checkImageContainerInstruction();
+        }
+        function updateImageGridColumns() { 
+            const columns = columnCountInput.value || 2;
+            imageContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+        }
+        function handleImageContainerClick(event) { 
+            if (event.target.classList.contains('remove-image-btn')) {
+                const itemDiv = event.target.closest('.image-item');
+                if (itemDiv) {
+                    images = images.filter(img => img.id !== itemDiv.dataset.id);
+                    renderImages(); 
+                }
+            }
+        }
+        function handleNewDocument() {
+            if (confirm("현재 추가된 이미지와 부연 설명이 모두 지워집니다. 새로 작성하시겠습니까? (제목, 날짜, 열 개수 설정은 유지됩니다.)")) {
+                images = []; renderImages(); bodyTextEl.innerHTML = '';
+                checkImageContainerInstruction();
+            }
+        }
+
+        function createPrintableViewElement() {
+            const view = document.createElement('div');
+            view.className = 'print-content-wrapper';
+            if (titleEl.innerText.trim()) {
+                const titlePrint = document.createElement('h2'); titlePrint.innerText = titleEl.innerText.trim(); view.appendChild(titlePrint);
+            }
+            const dateObj = new Date(dateInput.value || Date.now());
+            const datePrint = document.createElement('div'); datePrint.className = 'print-date-display';
+            datePrint.textContent = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`; view.appendChild(datePrint);
+            const namePrint = document.createElement('div'); namePrint.className = 'print-name-field';
+            namePrint.innerHTML = `<span style="margin-right: 70px;">이름:</span>`; view.appendChild(namePrint);
+            if (images.length > 0) {
+                const imgContainerPrint = document.createElement('div'); imgContainerPrint.className = 'print-image-container';
+                const numPrintColumns = images.length === 1 ? 1 : parseInt(columnCountInput.value);
+                imgContainerPrint.style.gridTemplateColumns = `repeat(${numPrintColumns}, 1fr)`;
+                images.forEach(imgData => {
+                    const imgPrintEl = document.createElement('img'); imgPrintEl.src = imgData.dataUrl; imgPrintEl.alt = "인쇄용 이미지";
+                    imgContainerPrint.appendChild(imgPrintEl);
+                });
+                view.appendChild(imgContainerPrint);
+            }
+            if (bodyTextEl.innerText.trim()) {
+                const bodyPrint = document.createElement('p'); bodyPrint.className = 'print-body-text'; 
+                bodyPrint.innerText = bodyTextEl.innerText.trim(); view.appendChild(bodyPrint);
+            }
+            return view;
+        }
+
+        function handlePrint() {
+            printViewContainer.innerHTML = ''; 
+            const printElement = createPrintableViewElement();
+            printViewContainer.appendChild(printElement);
+            window.print();
+        }
+
+        async function handleCopy() {
+            const tempCopyContainer = document.createElement('div');
+            const tableWidthPx = 680; // <--- 이 변수를 함수 시작 부분으로 옮기거나 여기에 선언합니다.
+
+            // Optional: Add a leading zero-width space for clipboard stability
+            const initialBlankSpace = document.createElement('span');
+            initialBlankSpace.textContent = '\u200B';
+            tempCopyContainer.appendChild(initialBlankSpace);
+
+            // 1. Title
+            if (titleEl.innerText.trim()) {
+                const titleCopy = document.createElement('h2');
+                titleCopy.innerText = titleEl.innerText.trim();
+                titleCopy.style.fontSize = '18pt'; 
+                titleCopy.style.color = 'black';
+                titleCopy.style.borderBottom = '1px solid black';
+                titleCopy.style.paddingBottom = '5mm';
+                titleCopy.style.marginBottom = '10mm';
+                tempCopyContainer.appendChild(titleCopy);
+            }
+
+            // 2. Date
+            // ... (날짜 코드 생략) ...
+            const dateObj = new Date(dateInput.value || Date.now());
+            const dateCopy = document.createElement('div');
+            dateCopy.textContent = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`;
+            dateCopy.style.textAlign = 'right'; 
+            dateCopy.style.fontSize = '10pt'; 
+            dateCopy.style.color = 'black';
+            dateCopy.style.marginBottom = '3mm';
+            tempCopyContainer.appendChild(dateCopy);
+
+            // 3. Name field
+            // ... (이름 필드 코드 생략) ...
+            const nameCopy = document.createElement('div');
+            nameCopy.innerHTML = `<span style="margin-right: 70px;">이름:</span>`;
+            nameCopy.style.textAlign = 'right'; 
+            nameCopy.style.fontSize = '10pt'; 
+            nameCopy.style.color = 'black';
+            nameCopy.style.marginBottom = '8mm';
+            tempCopyContainer.appendChild(nameCopy);
+
+
+            // 4. Images (Resized to 400px on the larger side, in an HTML Table)
+            if (images.length > 0) {
+                const imageTable = document.createElement('table');
+                // const tableWidthPx = 680; // <--- 여기 있던 선언을 위로 옮겼습니다.
+                imageTable.style.width = `${tableWidthPx}px`; // 이제 여기서 tableWidthPx 접근 가능
+                imageTable.style.borderCollapse = 'collapse';
+                imageTable.style.tableLayout = 'fixed'; 
+                imageTable.style.margin = '10px auto'; 
+
+                // ... (이미지 테이블 생성 로직은 동일하게 유지) ...
+                const numTableColumns = images.length === 1 ? 1 : parseInt(columnCountInput.value);
+                let currentTableRow = null;
+
+                for (let i = 0; i < images.length; i++) {
+                    const imgData = images[i];
+
+                    if (i % numTableColumns === 0) {
+                        currentTableRow = imageTable.insertRow();
+                    }
+
+                    const cell = currentTableRow.insertCell();
+                    cell.style.border = '1px solid #eeeeee';
+                    cell.style.padding = '5px';
+                    cell.style.textAlign = 'center';
+                    cell.style.verticalAlign = 'middle';
+
+                    try {
+                        const currentImage = await loadImage(imgData.dataUrl);
+                        let currentWidth = imgData.originalWidth; 
+                        let currentHeight = imgData.originalHeight;
+
+                        let targetWidth, targetHeight;
+                        const MAX_DIM_COPY = 400;
+
+                        if (currentWidth > currentHeight) {
+                            targetWidth = MAX_DIM_COPY;
+                            targetHeight = Math.round(currentHeight * (MAX_DIM_COPY / currentWidth));
+                        } else {
+                            targetHeight = MAX_DIM_COPY;
+                            targetWidth = Math.round(currentWidth * (MAX_DIM_COPY / currentHeight));
+                        }
+                        targetWidth = Math.max(1, targetWidth);
+                        targetHeight = Math.max(1, targetHeight);
+
+                        const offScreenCanvas = document.createElement('canvas');
+                        offScreenCanvas.width = targetWidth;
+                        offScreenCanvas.height = targetHeight;
+
+                        const fromCanvas = document.createElement('canvas');
+                        fromCanvas.width = currentWidth;
+                        fromCanvas.height = currentHeight;
+                        fromCanvas.getContext('2d').drawImage(currentImage, 0, 0, currentWidth, currentHeight);
+                        
+                        await picaInstance.resize(fromCanvas, offScreenCanvas);
+                        
+                        const isJpeg = imgData.dataUrl.startsWith('data:image/jpeg');
+                        const resizedDataUrlForCopy = offScreenCanvas.toDataURL(
+                            isJpeg ? 'image/jpeg' : 'image/png',
+                            isJpeg ? 0.9 : undefined
+                        );
+
+                        const imgElementForCopy = document.createElement('img');
+                        imgElementForCopy.src = resizedDataUrlForCopy;
+                        imgElementForCopy.style.width = targetWidth + 'px';
+                        imgElementForCopy.style.height = targetHeight + 'px';
+                        imgElementForCopy.style.maxWidth = '100%'; 
+                        imgElementForCopy.style.maxHeight = '100%';
+                        imgElementForCopy.style.display = 'block';
+                        imgElementForCopy.style.margin = '0 auto'; 
+                        
+                        cell.appendChild(imgElementForCopy);
+
+                    } catch (error) {
+                        console.error("Error processing image for copy:", imgData.id, error);
+                        cell.innerHTML = '이미지 오류';
+                    }
+                }
+
+                if (currentTableRow && currentTableRow.cells.length < numTableColumns) {
+                    for (let j = currentTableRow.cells.length; j < numTableColumns; j++) {
+                        const emptyCell = currentTableRow.insertCell();
+                        emptyCell.style.border = '1px solid #eeeeee';
+                        emptyCell.style.padding = '5px';
+                        emptyCell.innerHTML = '&nbsp;';
+                    }
+                }
+                
+                if (imageTable.rows.length > 0) {
+                    tempCopyContainer.appendChild(imageTable);
+                }
+            }
+
+            // 5. Body text
+            // ... (본문 코드 생략) ...
+            if (bodyTextEl.innerHTML.trim()) {
+                const bodyCopy = document.createElement('div'); 
+                bodyCopy.innerHTML = bodyTextEl.innerHTML;
+                bodyCopy.style.fontSize = '10pt'; 
+                bodyCopy.style.color = 'black';
+                bodyCopy.style.lineHeight = '1.5';
+                bodyCopy.style.marginTop = '10mm';
+                tempCopyContainer.appendChild(bodyCopy);
+            }
+            
+            if (tempCopyContainer.children.length <= 1 && !images.length && !titleEl.innerText.trim() && !bodyTextEl.innerHTML.trim()) {
+                alert('복사할 내용이 없습니다.');
+                return;
+            }
+
+            document.body.appendChild(tempCopyContainer);
+            tempCopyContainer.style.position = 'absolute';
+            tempCopyContainer.style.left = '-9999px';
+            // 이제 여기서 tableWidthPx 접근 가능
+            tempCopyContainer.style.width = `${tableWidthPx + 10}px`; 
+            tempCopyContainer.style.backgroundColor = 'white';
+            tempCopyContainer.style.padding = '1px';
+
+            // ... (try...catch...finally 블록은 동일하게 유지) ...
+            try {
+                const range = document.createRange();
+                range.selectNodeContents(tempCopyContainer);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('문서 내용 (HTML)이 클립보드에 복사되었습니다.');
+                } else {
+                    alert('HTML 복사에 실패했습니다.');
+                }
+            } catch (err) {
+                console.error('HTML 복사 오류:', err);
+                alert('HTML 복사 중 오류가 발생했습니다.');
+            } finally {
+                window.getSelection().removeAllRanges();
+                if (document.body.contains(tempCopyContainer)) {
+                    document.body.removeChild(tempCopyContainer);
+                }
+            }
+        }
+
+        initialize();
+    </script>
+</body>
+</html>
