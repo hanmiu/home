@@ -110,7 +110,82 @@
         .confirm-modal-buttons button {
             margin: 0 10px;
         }
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
 
+        /* Improved Print-specific styles for A4 portrait */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            @page {
+                size: A4 portrait;
+                margin: 15mm;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            body * {
+                visibility: hidden;
+            }
+            
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100vh;
+                margin: 0;
+                padding: 0;
+                display: block !important;
+            }
+            
+            #printArea svg {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 180mm !important; /* A4 width minus margins */
+                max-height: 267mm !important; /* A4 height minus margins */
+                display: block;
+                margin: 0 auto;
+            }
+            
+            /* Hide everything else during print */
+            #appContainer {
+                display: none !important;
+            }
+        }
+        
+        #printArea {
+            display: none; /* Hidden by default, only shown for printing */
+        }
+
+        /* API key drop indicator */
+        .api-drop-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(59, 130, 246, 0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -146,17 +221,20 @@
 
                 <div class="lg:w-1/3 xl:w-1/4 flex flex-col">
                     <h2 class="text-xl font-semibold text-pink-500 mb-2 text-center lg:text-left" style="font-family: 'Gaegu', cursive;">음식 고르기</h2>
-                    <div id="foodItemsContainer" class="food-items-container bg-pink-50 p-3 rounded-lg shadow-md overflow-y-auto h-64 lg:h-[calc(100%-140px)] grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-2">
+                    <div id="foodItemsContainer" class="food-items-container bg-pink-50 p-3 rounded-lg shadow-md overflow-y-auto h-64 lg:h-[calc(100%-140px)] grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-2">
                         </div>
                 </div>
             </div>
 
             <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 flex-wrap">
-                <button id="downloadCanvasButton" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
-                    내 작품 다운로드
+                <button id="printCanvasButton" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
+                    작품 인쇄
                 </button>
-                <button id="getRecipeButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
-                    레시피 보기 (Gemini)
+                <button id="downloadCanvasButton" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
+                    작품 다운로드
+                </button>
+                <button id="getRecipeButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-150 ease-in-out hidden">
+                    레시피 생성
                 </button>
                  <button id="resetCanvasButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-red-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
                     다시 시작
@@ -165,17 +243,17 @@
         </div>
     </div>
 
-    <div id="canvasDownloadModal" class="modal">
+    <div id="canvasInfoModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close-button" onclick="closeModal('canvasDownloadModal')">&times;</span>
-            <h3 class="text-xl font-semibold mb-4 text-pink-600" style="font-family: 'Gaegu', cursive;">내 작품 정보 입력</h3>
+            <span class="modal-close-button" onclick="closeModal('canvasInfoModal')">&times;</span>
+            <h3 id="canvasInfoModalTitle" class="text-xl font-semibold mb-4 text-pink-600" style="font-family: 'Gaegu', cursive;">내 작품 정보 입력</h3>
             <label for="canvasDishName" class="block text-sm font-medium text-gray-700">요리 이름:</label>
             <input type="text" id="canvasDishName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
             
             <label for="canvasChefName" class="block text-sm font-medium text-gray-700 mt-4">셰프 이름:</label>
             <input type="text" id="canvasChefName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
             
-            <button id="confirmCanvasDownloadButton" class="mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
+            <button id="confirmCanvasActionButton" class="mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition duration-150 ease-in-out">
                 SVG 다운로드
             </button>
         </div>
@@ -184,7 +262,7 @@
     <div id="recipeModal" class="modal">
         <div class="modal-content max-h-[90vh] overflow-y-auto">
             <span class="modal-close-button" onclick="closeModal('recipeModal')">&times;</span>
-            <h3 class="text-xl font-semibold mb-4 text-blue-600" style="font-family: 'Gaegu', cursive;">Gemini 셰프의 추천 레시피!</h3>
+            <h3 class="text-xl font-semibold mb-4 text-blue-600" style="font-family: 'Gaegu', cursive;">AI 셰프의 추천 레시피!</h3>
             <div id="recipeOutput" class="space-y-3 text-sm text-gray-700">
                 <p>레시피를 생성 중입니다... 잠시만 기다려주세요!</p>
             </div>
@@ -192,9 +270,14 @@
                  <label for="recipeChefName" class="block text-sm font-medium text-gray-700 mt-4">셰프 이름:</label>
                  <input type="text" id="recipeChefName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
-            <button id="confirmRecipeDownloadButton" class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-150 ease-in-out hidden">
-                레시피 SVG 다운로드
-            </button>
+            <div class="mt-6 flex gap-4">
+                <button id="printRecipeButton" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 transition duration-150 ease-in-out hidden">
+                    레시피 인쇄
+                </button>
+                <button id="confirmRecipeDownloadButton" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-150 ease-in-out hidden">
+                    레시피 SVG 다운로드
+                </button>
+            </div>
         </div>
     </div>
     
@@ -212,7 +295,12 @@
             </div>
         </div>
     </div>
-
+    
+    <div id="printArea"></div>
+    
+    <div id="apiDropIndicator" class="api-drop-indicator">
+        API 키 파일을 드롭하세요
+    </div>
 
     <script>
         // --- Global Variables and Configuration ---
@@ -221,27 +309,37 @@
         const foodCanvas = document.getElementById('foodCanvas');
         const ctx = foodCanvas.getContext('2d');
         const foodItemsContainer = document.getElementById('foodItemsContainer');
-        const currentIngredientsList = document.getElementById('currentIngredientsList'); // Added
+        const currentIngredientsList = document.getElementById('currentIngredientsList'); 
         
         const webcamStage = document.getElementById('webcamStage');
         const foodStage = document.getElementById('foodStage');
         const resetCanvasButton = document.getElementById('resetCanvasButton');
 
+        const printCanvasButton = document.getElementById('printCanvasButton');
         const downloadCanvasButton = document.getElementById('downloadCanvasButton');
         const getRecipeButton = document.getElementById('getRecipeButton');
 
-        const canvasDownloadModal = document.getElementById('canvasDownloadModal');
-        const confirmCanvasDownloadButton = document.getElementById('confirmCanvasDownloadButton');
+        const canvasInfoModal = document.getElementById('canvasInfoModal');
+        const canvasInfoModalTitle = document.getElementById('canvasInfoModalTitle');
+        const confirmCanvasActionButton = document.getElementById('confirmCanvasActionButton');
         const canvasDishNameInput = document.getElementById('canvasDishName');
         const canvasChefNameInput = document.getElementById('canvasChefName');
+        let currentCanvasAction = 'download'; // 'download' or 'print'
 
         const recipeModal = document.getElementById('recipeModal');
         const recipeOutput = document.getElementById('recipeOutput');
         const recipeChefNameInput = document.getElementById('recipeChefName');
+        const printRecipeButton = document.getElementById('printRecipeButton');
         const confirmRecipeDownloadButton = document.getElementById('confirmRecipeDownloadButton');
         const recipeModalInputs = document.getElementById('recipeModalInputs');
 
         const loadingIndicator = document.getElementById('loadingIndicator');
+        const printArea = document.getElementById('printArea');
+
+        // API Key Handling - Hidden mode
+        const apiDropIndicator = document.getElementById('apiDropIndicator');
+        let userApiKey = ""; // Store user-provided API key
+        let dragCounter = 0; // To handle drag enter/leave properly
 
         // Custom Confirm Modal Elements
         const customConfirmModal = document.getElementById('customConfirmModal');
@@ -250,10 +348,9 @@
         const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
         let confirmCallback = null;
 
-
         let backgroundImage = null; 
         let foodOnCanvas = []; 
-        const MAX_FOOD_ITEMS = 30;
+        const MAX_FOOD_ITEMS = 10; // Reduced for easier testing, was 30
         let selectedFoodItem = null; 
         let isDragging = false;
         let dragOffsetX, dragOffsetY;
@@ -267,28 +364,61 @@
         ];
         const foodImageBaseUrl = 'https://www.hanmiu.cc/play/toy/assets/cook/';
 
-        // --- Food Name Mapping (Korean) ---
         const foodNameMapping = {
-            'apple': '사과',
-            'blueberry': '블루베리', // Simplified from blueberry_1, blueberry_2
-            'cake': '케이크',       // Simplified
-            'candy': '사탕',
-            'cereal': '시리얼',
-            'cherry': '체리',       // Simplified
-            'chocolate': '초콜릿',
-            'cookie': '쿠키',
-            'fried-egg': '계란후라이',
-            'gimbap': '김밥',
-            'hotdog': '핫도그',
-            'jelly': '젤리',
-            'kkakdugi': '깍두기',
-            'orange': '오렌지',
-            'pizza': '피자',
-            'spicy-ramen': '매운라면',
-            'strawberry': '딸기',
-            'watermelon': '수박'
+            'apple': '사과', 'blueberry': '블루베리', 'cake': '케이크', 'candy': '사탕',
+            'cereal': '시리얼', 'cherry': '체리', 'chocolate': '초콜릿', 'cookie': '쿠키',
+            'fried-egg': '계란후라이', 'gimbap': '김밥', 'hotdog': '핫도그', 'jelly': '젤리',
+            'kkakdugi': '깍두기', 'orange': '오렌지', 'pizza': '피자', 
+            'spicy-ramen': '매운라면', 'strawberry': '딸기', 'watermelon': '수박'
         };
 
+        // --- API Key Drag and Drop (Hidden Mode) ---
+        window.addEventListener('dragenter', (event) => {
+            event.preventDefault();
+            dragCounter++;
+            if (dragCounter === 1) {
+                apiDropIndicator.style.display = 'block';
+            }
+        });
+
+        window.addEventListener('dragleave', (event) => {
+            event.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) {
+                apiDropIndicator.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('dragover', (event) => {
+            event.preventDefault();
+        });
+
+        window.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragCounter = 0;
+            apiDropIndicator.style.display = 'none';
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                // Check if it's a text file (basic check)
+                if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.key')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const content = e.target.result.trim();
+                        if (content && content.length > 20) { // Basic validation for API key length
+                            userApiKey = content;
+                            getRecipeButton.style.display = 'inline-block'; // Show recipe button
+                            console.log('API key loaded successfully');
+                        }
+                    };
+                    reader.onerror = () => {
+                        console.error('Failed to read API key file');
+                    };
+                    reader.readAsText(file);
+                }
+            }
+        });
 
         // --- Utility Functions ---
         function showLoading(show) {
@@ -325,7 +455,6 @@
             confirmCallback = null;
         });
 
-
         function getCurrentDate() {
             const today = new Date();
             const year = today.getFullYear();
@@ -334,29 +463,37 @@
             return `${year}-${month}-${day}`;
         }
 
-        // --- Update Ingredients Display ---
         function updateIngredientsDisplay() {
             if (foodOnCanvas.length === 0) {
-                currentIngredientsList.textContent = '재료를 추가해주세요!';
+                currentIngredientsList.innerHTML = '재료를 추가해주세요!';
                 return;
             }
 
             const ingredientCounts = {};
             foodOnCanvas.forEach(item => {
-                // Use item.alt which is the base filename without extension (e.g., 'apple', 'blueberry_1')
-                // Normalize alt text for mapping (e.g. remove _1, _2)
-                const baseAltText = item.alt.replace(/_\d+$/, ''); // 'blueberry_1' -> 'blueberry'
-                const koreanName = foodNameMapping[baseAltText] || baseAltText; // Fallback to altText if no mapping
+                const baseAltText = item.alt.replace(/_\d+$/, ''); 
+                const koreanName = foodNameMapping[baseAltText] || baseAltText; 
                 ingredientCounts[koreanName] = (ingredientCounts[koreanName] || 0) + 1;
             });
 
-            const displayText = Object.entries(ingredientCounts)
-                .map(([name, count]) => `${name} ${count}개`)
-                .join(', ');
+            let displayText = "";
+            Object.entries(ingredientCounts).forEach(([name, count], index, arr) => {
+                let highlightedName = name;
+                if (selectedFoodItem) {
+                    const selectedBaseAlt = selectedFoodItem.alt.replace(/_\d+$/, '');
+                    const selectedKoreanName = foodNameMapping[selectedBaseAlt] || selectedBaseAlt;
+                    if (name === selectedKoreanName) {
+                        highlightedName = `<span class="highlight">${name}</span>`;
+                    }
+                }
+                displayText += `${highlightedName} ${count}개`;
+                if (index < arr.length - 1) {
+                    displayText += ', ';
+                }
+            });
             
-            currentIngredientsList.textContent = displayText;
+            currentIngredientsList.innerHTML = displayText;
         }
-
 
         // --- Webcam Logic ---
         async function setupWebcam() {
@@ -367,7 +504,6 @@
                 }
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 webcamFeed.srcObject = stream;
-                webcamFeed.onloadedmetadata = () => { /* Metadata loaded */ };
             } catch (err) {
                 console.error("Error accessing webcam: ", err);
                 webcamStage.innerHTML = "<p class='text-red-500'>웹캠을 사용할 수 없습니다. 페이지를 새로고침하거나 권한을 확인해주세요.</p>";
@@ -395,7 +531,7 @@
                 webcamFeed.srcObject.getTracks().forEach(track => track.stop());
             }
             resizeCanvas(); 
-            updateIngredientsDisplay(); // Initial display when stage changes
+            updateIngredientsDisplay(); 
         });
         
         resetCanvasButton.addEventListener('click', () => {
@@ -419,11 +555,10 @@
                     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                         setupWebcam(); 
                     }
-                    updateIngredientsDisplay(); // Update after reset
+                    updateIngredientsDisplay(); 
                 }
             });
         });
-
 
         // --- Food Item Population ---
         function populateFoodItems() {
@@ -434,7 +569,6 @@
                 const img = document.createElement('img');
                 const fullUrl = foodImageBaseUrl + fileName;
                 img.src = fullUrl;
-                // Store the filename without extension as alt for mapping
                 const altText = fileName.split('.')[0]; 
                 img.alt = altText; 
                 img.draggable = false; 
@@ -462,7 +596,7 @@
 
         window.addEventListener('resize', resizeCanvas);
 
-        function addFoodToCanvas(imgSrc, altText) { // altText is filename without extension
+        function addFoodToCanvas(imgSrc, altText) { 
             if (foodOnCanvas.length >= MAX_FOOD_ITEMS) {
                 foodOnCanvas.shift(); 
             }
@@ -478,7 +612,7 @@
                 const foodItem = {
                     id: Date.now() + Math.random(),
                     img: img,
-                    alt: altText, // Store the base altText (e.g., 'apple', 'blueberry_1')
+                    alt: altText, 
                     x: foodCanvas.width / 2 - itemWidth / 2 + (Math.random() - 0.5) * 50,
                     y: foodCanvas.height / 2 - itemHeight / 2 + (Math.random() - 0.5) * 50,
                     width: itemWidth,
@@ -491,11 +625,11 @@
                     targetAngle: (Math.random() - 0.5) * Math.PI / 4,
                     vx: (Math.random() - 0.5) * 1, 
                     vy: (Math.random() - 0.5) * 1,
-                    radius: Math.max(itemWidth, itemHeight) / 2 
+                    radius: Math.max(itemWidth, itemHeight) * 0.4
                 };
                 foodOnCanvas.push(foodItem);
                 selectedFoodItem = foodItem; 
-                updateIngredientsDisplay(); // Update after adding
+                updateIngredientsDisplay(); 
             };
             img.onerror = () => {
                 console.error(`Error loading image: ${imgSrc}. Using placeholder.`);
@@ -503,7 +637,7 @@
                  const foodItem = {
                     id: Date.now() + Math.random(),
                     img: null, 
-                    alt: altText, // Still store original altText for mapping attempt
+                    alt: altText, 
                     x: foodCanvas.width / 2 - placeholderSize / 2 + (Math.random() - 0.5) * 50,
                     y: foodCanvas.height / 2 - placeholderSize / 2 + (Math.random() - 0.5) * 50,
                     width: placeholderSize,
@@ -521,7 +655,7 @@
                 };
                 foodOnCanvas.push(foodItem);
                 selectedFoodItem = foodItem;
-                updateIngredientsDisplay(); // Update after adding placeholder
+                updateIngredientsDisplay(); 
             };
         }
         
@@ -645,10 +779,9 @@
             }
 
             if (itemsRemoved) {
-                updateIngredientsDisplay(); // Update if items were removed by going off-screen
+                updateIngredientsDisplay(); 
             }
         }
-
 
         function gameLoop() {
             updateFoodItems();
@@ -674,9 +807,9 @@
             handleInteractionStart(e);
         }, { passive: false });
 
-
         function handleInteractionStart(e) {
             const pos = getMousePos(foodCanvas, e);
+            let itemFound = false;
             for (let i = foodOnCanvas.length - 1; i >= 0; i--) {
                 const item = foodOnCanvas[i];
                 const itemCenterX = item.x + (item.width * item.scale) / 2;
@@ -692,12 +825,15 @@
                     isDragging = true;
                     dragOffsetX = pos.x - item.x;
                     dragOffsetY = pos.y - item.y;
+                    itemFound = true;
                     break; 
                 }
             }
-            if (!isDragging) selectedFoodItem = null; 
+            if (!itemFound) {
+                selectedFoodItem = null; 
+            }
+            updateIngredientsDisplay();
         }
-
 
         foodCanvas.addEventListener('mousemove', (e) => handleInteractionMove(e));
         foodCanvas.addEventListener('touchmove', (e) => {
@@ -722,13 +858,12 @@
             isDragging = false;
         }
 
-
         document.addEventListener('keydown', (e) => {
             if (!selectedFoodItem || foodStage.style.display === 'none') return;
 
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                  if (document.activeElement === foodCanvas || 
-                    canvasDownloadModal.style.display === 'flex' || 
+                    canvasInfoModal.style.display === 'flex' || 
                     recipeModal.style.display === 'flex') {
                     if (!(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
                          e.preventDefault();
@@ -741,10 +876,18 @@
 
             switch (e.key) {
                 case 'ArrowUp':
-                    selectedFoodItem.targetScale = Math.min(2, selectedFoodItem.targetScale + scaleStep);
+                    const newScaleUp = Math.min(2, selectedFoodItem.targetScale + scaleStep);
+                    const scaleChangeUp = selectedFoodItem.targetScale - newScaleUp;
+                    selectedFoodItem.targetX += (selectedFoodItem.width * scaleChangeUp) / 2;
+                    selectedFoodItem.targetY += (selectedFoodItem.height * scaleChangeUp) / 2;
+                    selectedFoodItem.targetScale = newScaleUp;
                     break;
                 case 'ArrowDown':
-                    selectedFoodItem.targetScale = Math.max(0.25, selectedFoodItem.targetScale - scaleStep);
+                    const newScaleDown = Math.max(0.25, selectedFoodItem.targetScale - scaleStep);
+                    const scaleChangeDown = selectedFoodItem.targetScale - newScaleDown;
+                    selectedFoodItem.targetX += (selectedFoodItem.width * scaleChangeDown) / 2;
+                    selectedFoodItem.targetY += (selectedFoodItem.height * scaleChangeDown) / 2;
+                    selectedFoodItem.targetScale = newScaleDown;
                     break;
                 case 'ArrowLeft':
                     selectedFoodItem.targetAngle -= angleStep;
@@ -757,7 +900,7 @@
                     if (selectedFoodItem) {
                         foodOnCanvas = foodOnCanvas.filter(item => item.id !== selectedFoodItem.id);
                         selectedFoodItem = null;
-                        updateIngredientsDisplay(); // Update after deleting
+                        updateIngredientsDisplay(); 
                     }
                     break;
             }
@@ -770,8 +913,8 @@
             const viewBoxHeight = 842; 
 
             let svgContent = `<svg width="${svgWidthMM}mm" height="${svgHeightMM}mm" viewBox="0 0 ${viewBoxWidth} ${viewBoxHeight}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="font-family: 'Gaegu', cursive, sans-serif;">`;
+            svgContent += `<rect x="0" y="0" width="${viewBoxWidth}" height="${viewBoxHeight}" fill="#FFFFFF" />`;
 
-            svgContent += `<rect x="0" y="0" width="${viewBoxWidth}" height="${viewBoxHeight}" fill="${generatedImageBase64 ? '#FFF0F5' : '#FFF8DC'}" />`; 
             svgContent += `<text x="${viewBoxWidth / 2}" y="40" font-size="24" text-anchor="middle" fill="${generatedImageBase64 ? '#007bff' : '#dc3545'}">${dishName || ''}</text>`; 
             
             const commonTextStyle = `font-size="12" fill="#333"`;
@@ -782,7 +925,7 @@
                 svgContent += `<image x="315" y="${textYPosition}" width="250" height="187.5" xlink:href="${generatedImageBase64}" />`;
                 textYPosition += 187.5 + 20; 
 
-                svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>만드신 분: ${chefName || ''}</text>`; 
+                svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>만든 사람: ${chefName || ''}</text>`;
                 textYPosition += 20;
                 svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>날짜: ${date}</text>`;
                 textYPosition += 30;
@@ -817,7 +960,7 @@
                 svgContent += `<image x="50" y="${textYPosition}" width="495" height="371.25" xlink:href="${canvasImageBase64}" />`; 
                 textYPosition += 371.25 + 30; 
 
-                svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>만드신 분: ${chefName || ''}</text>`; 
+                svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>만든 사람: ${chefName || ''}</text>`;
                 textYPosition += 20;
                 svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>날짜: ${date}</text>`;
             }
@@ -840,13 +983,39 @@
             URL.revokeObjectURL(url);
         }
 
-        downloadCanvasButton.addEventListener('click', () => {
+        function printSVG(svgString) {
+            printArea.innerHTML = svgString;
+            
+            // Force reflow before printing
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    printArea.innerHTML = ''; // Clear after printing
+                }, 100);
+            }, 100);
+        }
+
+        // Combined handler for canvas download and print modal
+        function openCanvasInfoModal(action) {
+            currentCanvasAction = action;
             canvasDishNameInput.value = '';
             canvasChefNameInput.value = '';
-            openModal('canvasDownloadModal');
-        });
+            if (action === 'print') {
+                canvasInfoModalTitle.textContent = '작품 인쇄 정보 입력';
+                confirmCanvasActionButton.textContent = '인쇄하기';
+                confirmCanvasActionButton.className = confirmCanvasActionButton.className.replace('bg-green-500 hover:bg-green-600', 'bg-purple-500 hover:bg-purple-600');
+            } else { // download
+                canvasInfoModalTitle.textContent = '내 작품 정보 입력';
+                confirmCanvasActionButton.textContent = 'SVG 다운로드';
+                confirmCanvasActionButton.className = confirmCanvasActionButton.className.replace('bg-purple-500 hover:bg-purple-600', 'bg-green-500 hover:bg-green-600');
+            }
+            openModal('canvasInfoModal');
+        }
+        
+        downloadCanvasButton.addEventListener('click', () => openCanvasInfoModal('download'));
+        printCanvasButton.addEventListener('click', () => openCanvasInfoModal('print'));
 
-        confirmCanvasDownloadButton.addEventListener('click', () => {
+        confirmCanvasActionButton.addEventListener('click', () => {
             const dishName = canvasDishNameInput.value; 
             const chefName = canvasChefNameInput.value; 
             const date = getCurrentDate();
@@ -859,8 +1028,13 @@
             drawCanvas(); 
 
             const svgString = generateSVG(canvasImageBase64, dishName, chefName, date);
-            downloadSVG(svgString, `${dishName.replace(/\s+/g, '_') || '나의작품'}_${date}.svg`); 
-            closeModal('canvasDownloadModal');
+            
+            if (currentCanvasAction === 'print') {
+                printSVG(svgString);
+            } else { // download
+                downloadSVG(svgString, `${dishName.replace(/\s+/g, '_') || '나의작품'}_${date}.svg`); 
+            }
+            closeModal('canvasInfoModal');
         });
 
         let currentGeneratedRecipe = {
@@ -870,9 +1044,14 @@
         };
 
         getRecipeButton.addEventListener('click', async () => {
+            if (!userApiKey) {
+                showCustomConfirm("레시피 생성 기능을 사용하려면 API 키가 필요합니다.", (confirmed) => { 
+                    closeModal('customConfirmModal'); 
+                });
+                return;
+            }
             if (foodOnCanvas.length === 0) {
-                showCustomConfirm("음식을 먼저 캔버스에 올려주세요! 이 메시지 창을 닫으려면 '예' 또는 '아니오'를 누르세요.", (confirmed) => {
-                    // This callback is just to close the confirm modal, action doesn't matter here
+                showCustomConfirm("음식을 먼저 캔버스에 올려주세요!", (confirmed) => {
                     closeModal('customConfirmModal');
                 });
                 return;
@@ -880,37 +1059,38 @@
 
             const ingredientsForAPI = foodOnCanvas.map(item => {
                  const baseAltText = item.alt.replace(/_\d+$/, '');
-                 return foodNameMapping[baseAltText] || baseAltText; // Send Korean names to API
+                 return foodNameMapping[baseAltText] || baseAltText; 
             });
             const uniqueIngredientsForAPI = [...new Set(ingredientsForAPI)]; 
-
 
             recipeOutput.innerHTML = "<p>레시피를 생성 중입니다... 잠시만 기다려주세요!</p>";
             recipeChefNameInput.value = '';
             confirmRecipeDownloadButton.style.display = 'none';
+            printRecipeButton.style.display = 'none';
             recipeModalInputs.style.display = 'none'; 
             openModal('recipeModal');
             showLoading(true);
 
             try {
                 const prompt = `너는 유치원생들을 위한 요리 레시피를 만들어주는 상상력이 풍부한 AI 셰프야. 다음 재료들을 사용해서 아주 재미있고 창의적인 음식 이름, 그 음식의 이미지(너가 직접 생성해야 해!), 그리고 아이들이 부모님과 함께 쉽게 따라 할 수 있는 3~5단계의 간단한 레시피를 만들어줘: [${uniqueIngredientsForAPI.join(', ')}]. 
-                음식 이름은 예를 들어 '무지개 구름빵'이나 '반짝반짝 용가리 사과 보트'처럼 아주 신나고 귀여운 이름으로 지어줘. 
+                음식 이름은 예를 들어 '무지개 구름빵'이나 '반짝반짝 사과 보트'처럼 아주 신나고 귀여운 이름으로 지어줘. 
                 레시피 각 단계는 한 문장 정도로 짧고 명확하게 설명해줘.
+                dishImagePrompt에는 반드시 'photorealistic', 'food photography', 'soft natural light', 'pastel background', 'shallow depth of field' 같은 키워드를 포함해서 귀엽지만 실제 음식 사진처럼 사실적인 이미지를 유도해. (예: 'A photorealistic, cute plate of rainbow cloud bread on a pastel pink table, soft natural daylight, shallow depth of field, food photography')
                 최종 결과는 다음 JSON 형식으로만 답변해줘. 다른 설명은 절대 추가하지 마.
                 {
                   "dishName": "생성된 음식 이름",
-                  "dishImagePrompt": "생성된 음식 이름에 어울리는, 동화 같고 아기자기한 스타일의 음식 이미지 생성용 프롬프트 (예: 'A whimsical, colorful fruit salad shaped like a smiling caterpillar on a bright green leaf, children's book illustration style')",
+                  "dishImagePrompt": "생성된 음식 이름에 어울리는, 귀엽고 따뜻한 분위기의 사실적인 고해상도 음식 사진(food photography) 스타일의 이미지 생성용 프롬프트",
                   "recipe": [
-                    "1단계 설명",
-                    "2단계 설명",
-                    "3단계 설명"
+                    "단계 설명",
+                    "단계 설명",
+                    "단계 설명"
                   ]
                 }`;
                 
                 let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payloadText = { contents: chatHistory };
-                const apiKey = ""; 
-                const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const apiKeyToUse = userApiKey || ""; 
+                const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyToUse}`;
                 
                 const responseText = await fetch(apiUrlText, {
                     method: 'POST',
@@ -942,7 +1122,7 @@
                     instances: { prompt: recipeData.dishImagePrompt }, 
                     parameters: { "sampleCount": 1 } 
                 };
-                const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+                const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKeyToUse}`;
                 
                 const responseImage = await fetch(apiUrlImage, {
                     method: 'POST',
@@ -980,7 +1160,8 @@
                     </ol>
                 `;
                 recipeModalInputs.style.display = 'block'; 
-                confirmRecipeDownloadButton.style.display = 'block';
+                confirmRecipeDownloadButton.style.display = 'inline-block';
+                printRecipeButton.style.display = 'inline-block';
 
             } catch (error) {
                 console.error("레시피 생성 중 오류:", error);
@@ -1013,6 +1194,26 @@
             closeModal('recipeModal');
         });
 
+        printRecipeButton.addEventListener('click', () => {
+            const chefName = recipeChefNameInput.value;
+            const date = getCurrentDate();
+            const previouslySelected = selectedFoodItem;
+            selectedFoodItem = null;
+            drawCanvas();
+            const canvasImageBase64 = foodCanvas.toDataURL('image/png');
+            selectedFoodItem = previouslySelected;
+            drawCanvas();
+
+            const svgString = generateSVG(
+                canvasImageBase64,
+                currentGeneratedRecipe.name,
+                chefName,
+                date,
+                currentGeneratedRecipe.imageUrl,
+                currentGeneratedRecipe.recipeText
+            );
+            printSVG(svgString);
+        });
 
         function init() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -1023,7 +1224,8 @@
             populateFoodItems();
             resizeCanvas(); 
             gameLoop(); 
-            updateIngredientsDisplay(); // Initial call to set "재료를 추가해주세요!"
+            updateIngredientsDisplay(); 
+            getRecipeButton.style.display = 'none'; // Initially hide recipe button
         }
 
         init();
