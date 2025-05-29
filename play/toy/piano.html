@@ -6,6 +6,7 @@
     <title>한미 어린이 피아노</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -58,91 +59,6 @@
             font-weight: 700;
             margin: 0;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .header p {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin: 10px 0 0 0;
-        }
-
-        /* 곡 정보 패널 */
-        .song-info {
-            width: 100%;
-            max-width: 800px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 200px;
-            gap: 15px;
-            align-items: end;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .input-group label {
-            color: white;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .input-group input {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .auto-date {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            text-align: center;
-            padding: 10px;
-        }
-
-        /* 옥타브 컨트롤 */
-        .octave-controls {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .octave-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .octave-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .octave-display {
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            min-width: 80px;
-            text-align: center;
         }
 
         /* 콤팩트 건반 */
@@ -299,16 +215,17 @@
         .note-icon {
             width: 60px;
             height: 60px;
-            object-fit: contain; /* img 태그가 컨테이너에 맞게 조정 */
+            object-fit: contain;
         }
 
         .rest-icon {
             width: 40px;
             height: 40px;
+            object-fit: contain;
             opacity: 0.6;
         }
 
-        /* 재생 컨트롤 (가장 밑) */
+        /* 재생 컨트롤 */
         .playback-area {
             width: 100%;
             max-width: 800px;
@@ -478,11 +395,6 @@
                 font-size: 2rem;
             }
 
-            .song-info {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
             .piano-keys {
                 gap: 6px;
             }
@@ -546,51 +458,80 @@
 
         /* 인쇄 스타일 */
         @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+
             body {
                 background: white !important;
                 color: black !important;
+                margin: 0;
+                padding: 0;
             }
 
             .app-container {
                 background: white !important;
             }
 
-            .main-content > *:not(.score-area) {
+            .main-content > *:not(.print-page) {
                 display: none !important;
             }
 
-            .score-area {
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
+            .print-page {
+                display: block !important;
+                page-break-after: always;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
             }
 
-            .score-header {
-                display: none !important;
+            .print-page:last-child {
+                page-break-after: auto;
             }
 
-            .score-grid {
-                background: white !important;
-                border: 1px solid #000 !important;
-                grid-template-columns: repeat(8, 1fr) !important;
-                gap: 5px !important;
-                padding: 15px !important;
-                page-break-inside: avoid;
+            .print-header {
+                margin-bottom: 20px;
+                font-size: 14pt;
             }
 
-            .note-slot {
-                width: 15mm !important;
-                height: 15mm !important;
-                border: 1px solid #ccc !important;
+            .print-header span {
+                margin-right: 30px;
             }
 
-            .note-icon {
-                width: 12mm !important;
-                height: 12mm !important;
+            .print-score-row {
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+                gap: 8px;
+                margin-bottom: 8px;
             }
 
-            .dropzone {
-                display: none !important;
+            .print-memo-space {
+                height: 45px;
+                border-bottom: 1px solid #ccc;
+                margin-bottom: 20px;
+            }
+
+            .print-note-slot {
+                width: 80px;
+                height: 80px;
+                border: 1px solid #999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+            }
+
+            .print-note-icon {
+                width: 60px;
+                height: 60px;
+            }
+
+            .print-page-number {
+                text-align: center;
+                margin-top: 20px;
+                font-size: 12pt;
             }
         }
     </style>
@@ -601,27 +542,6 @@
             <!-- 헤더 -->
             <div class="header">
                 <h1>🎹 한미 어린이 피아노</h1>
-                <!--<p>키보드, 클릭, MIDI로 나만의 악보를 만들어보세요!</p>-->
-            </div>
-
-            <!-- 곡 정보 -->
-            <div class="glass-panel song-info">
-                <div class="input-group">
-                    <label for="songTitle">곡 제목</label>
-                    <input type="text" id="songTitle" placeholder="🎵 내 첫 번째 곡">
-                </div>
-                <div class="input-group">
-                    <label for="composer">작곡가</label>
-                    <input type="text" id="composer" placeholder="이름을 입력하세요">
-                </div>
-                <div class="auto-date" id="currentDate"></div>
-            </div>
-
-            <!-- 옥타브 컨트롤 -->
-            <div class="glass-panel octave-controls">
-                <button class="octave-btn" id="octaveDown">◀ 낮게</button>
-                <div class="octave-display" id="octaveDisplay">C4 옥타브</div>
-                <button class="octave-btn" id="octaveUp">높게 ▶</button>
             </div>
 
             <!-- 콤팩트 피아노 건반 -->
@@ -659,6 +579,7 @@
                         <button class="control-btn" id="saveBtn">💾 저장</button>
                         <button class="control-btn" id="loadBtn">📂 불러오기</button>
                         <button class="control-btn" id="printBtn">🖨 인쇄</button>
+                        <button class="control-btn" id="downloadBtn">⬇ 다운로드</button>
                     </div>
                 </div>
                 <div class="score-grid" id="scoreGrid"></div>
@@ -669,11 +590,10 @@
                 </div>
             </div>
 
-            <!-- 재생 컨트롤 (가장 밑) -->
+            <!-- 재생 컨트롤 -->
             <div class="glass-panel playback-area">
                 <div class="playback-controls">
-                    <button class="control-btn primary" id="playBtn">▶ 재생</button>
-                    <button class="control-btn" id="pauseBtn">⏸ 일시정지</button>
+                    <button class="control-btn primary" id="playPauseBtn">▶ 재생</button>
                     <button class="control-btn" id="stopBtn">⏹ 정지</button>
                 </div>
                 <div class="bpm-control">
@@ -703,7 +623,7 @@
 
     <script>
         // 전역 변수
-        let currentOctave = 4;
+        const FIXED_OCTAVE = 5; // C5 고정
         let currentBPM = 120;
         let currentPage = 0;
         let isPlaying = false;
@@ -714,10 +634,9 @@
 
         // 데이터 구조
         let musicData = {
-            title: '',
-            composer: '',
             date: '',
-            notes: [], // {type: 'note'|'rest', note?: noteObject, octave?: number}
+            createdAt: '',
+            notes: [], // {type: 'note'|'rest', note?: noteObject}
             bpm: 120
         };
 
@@ -725,15 +644,15 @@
         let redoStack = [];
         let savedScores = []; // localStorage 대신 메모리에 저장
 
-        // 음표 정의 (현재 SVG 아이콘 사용, 추후 do.svg 등으로 교체 예정)
+        // 음표 정의
         const noteDefinitions = [
-            { name: '도', key: 'C', keyboardKey: 'a', midiNote: 0, svgName: 'do', svgPath: 'assets/piano/symbols/do.svg' },
-            { name: '레', key: 'D', keyboardKey: 's', midiNote: 2, svgName: 're', svgPath: 'assets/piano/symbols/re.svg' },
-            { name: '미', key: 'E', keyboardKey: 'd', midiNote: 4, svgName: 'mi', svgPath: 'assets/piano/symbols/mi.svg' },
-            { name: '파', key: 'F', keyboardKey: 'f', midiNote: 5, svgName: 'fa', svgPath: 'assets/piano/symbols/fa.svg' },
-            { name: '솔', key: 'G', keyboardKey: 'g', midiNote: 7, svgName: 'sol', svgPath: 'assets/piano/symbols/sol.svg' },
-            { name: '라', key: 'A', keyboardKey: 'h', midiNote: 9, svgName: 'la', svgPath: 'assets/piano/symbols/la.svg' },
-            { name: '시', key: 'B', keyboardKey: 'j', midiNote: 11, svgName: 'ti', svgPath: 'assets/piano/symbols/ti.svg' }
+            { name: '도', key: 'C', keyboardKey: 'a', midiNote: 0, svgName: 'do', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/do.svg' },
+            { name: '레', key: 'D', keyboardKey: 's', midiNote: 2, svgName: 're', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/re.svg' },
+            { name: '미', key: 'E', keyboardKey: 'd', midiNote: 4, svgName: 'mi', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/mi.svg' },
+            { name: '파', key: 'F', keyboardKey: 'f', midiNote: 5, svgName: 'fa', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/fa.svg' },
+            { name: '솔', key: 'G', keyboardKey: 'g', midiNote: 7, svgName: 'sol', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/sol.svg' },
+            { name: '라', key: 'A', keyboardKey: 'h', midiNote: 9, svgName: 'la', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/la.svg' },
+            { name: '시', key: 'B', keyboardKey: 'j', midiNote: 11, svgName: 'ti', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/ti.svg' }
         ];
 
         // Tone.js 신스 초기화
@@ -749,19 +668,24 @@
 
         async function initializeApp() {
             setupEventListeners();
-            generateEmojiTitle();
-            updateCurrentDate();
+            initializeMusicData();
             setupPianoKeys();
             updateScoreGrid();
             updatePageInfo();
             initializeMIDI();
         }
 
-        function setupEventListeners() {
-            // 옥타브 컨트롤
-            document.getElementById('octaveDown').addEventListener('click', () => changeOctave(-1));
-            document.getElementById('octaveUp').addEventListener('click', () => changeOctave(1));
+        function initializeMusicData() {
+            const now = new Date();
+            musicData.date = now.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            musicData.createdAt = now.toISOString();
+        }
 
+        function setupEventListeners() {
             // BPM 컨트롤
             const bpmSlider = document.getElementById('bpmSlider');
             const bpmValue = document.getElementById('bpmValue');
@@ -772,8 +696,7 @@
             });
 
             // 재생 컨트롤
-            document.getElementById('playBtn').addEventListener('click', playMusic);
-            document.getElementById('pauseBtn').addEventListener('click', pauseMusic);
+            document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
             document.getElementById('stopBtn').addEventListener('click', stopMusic);
             
             // 편집 컨트롤
@@ -791,6 +714,7 @@
             document.getElementById('saveBtn').addEventListener('click', saveScore);
             document.getElementById('loadBtn').addEventListener('click', () => document.getElementById('fileInput').click());
             document.getElementById('printBtn').addEventListener('click', printScore);
+            document.getElementById('downloadBtn').addEventListener('click', downloadScore);
 
             // 갤러리
             document.getElementById('closeGalleryBtn').addEventListener('click', closeGallery);
@@ -803,14 +727,6 @@
 
             // 드래그앤드롭
             setupDragAndDrop();
-
-            // 곡 정보 입력
-            document.getElementById('songTitle').addEventListener('input', (e) => {
-                musicData.title = e.target.value;
-            });
-            document.getElementById('composer').addEventListener('input', (e) => {
-                musicData.composer = e.target.value;
-            });
         }
 
         function setupPianoKeys() {
@@ -823,34 +739,6 @@
             });
         }
 
-        function generateEmojiTitle() {
-            const emojis = ['🎵', '🎶', '🎼', '🎹', '🎤', '🌟', '✨', '🌈', '🦋', '🌸'];
-            const randomEmoji1 = emojis[Math.floor(Math.random() * emojis.length)];
-            const randomEmoji2 = emojis[Math.floor(Math.random() * emojis.length)];
-            const title = `${randomEmoji1} 내 첫 번째 곡 ${randomEmoji2}`;
-            document.getElementById('songTitle').value = title;
-            musicData.title = title;
-        }
-
-        function updateCurrentDate() {
-            const today = new Date();
-            const dateString = today.toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            document.getElementById('currentDate').textContent = dateString;
-            musicData.date = dateString;
-        }
-
-        function changeOctave(direction) {
-            const newOctave = currentOctave + direction;
-            if (newOctave >= 3 && newOctave <= 6) {
-                currentOctave = newOctave;
-                document.getElementById('octaveDisplay').textContent = `C${currentOctave} 옥타브`;
-            }
-        }
-
         async function ensureAudioContext() {
             if (!audioContextStarted && Tone.context.state !== 'running') {
                 await Tone.start();
@@ -861,7 +749,7 @@
         async function playNote(noteData) {
             await ensureAudioContext();
             
-            const midiNote = 60 + (currentOctave - 4) * 12 + noteData.midiNote;
+            const midiNote = 60 + (FIXED_OCTAVE - 4) * 12 + noteData.midiNote;
             const frequency = Tone.Frequency(midiNote, "midi").toFrequency();
             
             synth.triggerAttackRelease(frequency, "8n");
@@ -883,16 +771,15 @@
 
         function saveState() {
             undoStack.push(JSON.parse(JSON.stringify(musicData.notes)));
-            redoStack = []; // 새 액션 시 redo 스택 클리어
-            if (undoStack.length > 50) undoStack.shift(); // 메모리 관리
+            redoStack = [];
+            if (undoStack.length > 50) undoStack.shift();
         }
 
         function addNoteToScore(noteData) {
             saveState();
             musicData.notes.push({
                 type: 'note',
-                note: noteData,
-                octave: currentOctave
+                note: noteData
             });
             updateScoreGrid();
             updatePageInfo();
@@ -942,14 +829,14 @@
                         icon.alt = noteItem.note.name;
                         slot.appendChild(icon);
                     } else {
-                        const restIcon = document.createElement('div');
+                        const restIcon = document.createElement('img');
                         restIcon.className = 'rest-icon';
-                        restIcon.innerHTML = `<svg viewBox="0 0 100 100"><rect width="90" height="90" x="5" y="5" fill="#999" rx="8" ry="8"/></svg>`;
+                        restIcon.src = 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg';
+                        restIcon.alt = '쉼표';
                         slot.appendChild(restIcon);
                     }
                 }
 
-                // 재생 중 하이라이트
                 if (isPlaying && noteIndex === playbackPosition) {
                     slot.classList.add('playing');
                 }
@@ -977,22 +864,38 @@
             }
         }
 
+        async function togglePlayPause() {
+            if (isPlaying) {
+                pauseMusic();
+            } else {
+                playMusic();
+            }
+        }
+
         async function playMusic() {
             if (musicData.notes.length === 0) return;
             
             await ensureAudioContext();
             
-            if (isPaused) {
-                isPaused = false;
-            } else {
-                // 현재 페이지의 첫 번째 음표에서 시작
+            if (!isPaused) {
                 playbackPosition = currentPage * 16;
             }
             
             isPlaying = true;
-            document.getElementById('playBtn').innerHTML = '⏸ 재생 중';
+            isPaused = false;
+            document.getElementById('playPauseBtn').innerHTML = '⏸ 일시정지';
             
             playNextNote();
+        }
+
+        function pauseMusic() {
+            if (isPlaying) {
+                isPlaying = false;
+                isPaused = true;
+                if (playbackTimer) clearTimeout(playbackTimer);
+                document.getElementById('playPauseBtn').innerHTML = '▶ 재생';
+                updateScoreGrid();
+            }
         }
 
         function playNextNote() {
@@ -1003,7 +906,6 @@
 
             const noteItem = musicData.notes[playbackPosition];
             
-            // 현재 재생 위치에 맞게 페이지 업데이트
             const targetPage = Math.floor(playbackPosition / 16);
             if (targetPage !== currentPage) {
                 currentPage = targetPage;
@@ -1013,32 +915,22 @@
             updateScoreGrid();
 
             if (noteItem.type === 'note') {
-                const midiNote = 60 + (noteItem.octave - 4) * 12 + noteItem.note.midiNote;
+                const midiNote = 60 + (FIXED_OCTAVE - 4) * 12 + noteItem.note.midiNote;
                 const frequency = Tone.Frequency(midiNote, "midi").toFrequency();
                 synth.triggerAttackRelease(frequency, "8n");
             }
 
             playbackPosition++;
             
-            const noteDuration = (60 / currentBPM) * 1000; // 4분음표 기준
+            const noteDuration = (60 / currentBPM) * 1000;
             playbackTimer = setTimeout(playNextNote, noteDuration);
-        }
-
-        function pauseMusic() {
-            if (isPlaying) {
-                isPlaying = false;
-                isPaused = true;
-                if (playbackTimer) clearTimeout(playbackTimer);
-                document.getElementById('playBtn').innerHTML = '▶ 재생';
-                updateScoreGrid();
-            }
         }
 
         function stopMusic() {
             isPlaying = false;
             isPaused = false;
             if (playbackTimer) clearTimeout(playbackTimer);
-            document.getElementById('playBtn').innerHTML = '▶ 재생';
+            document.getElementById('playPauseBtn').innerHTML = '▶ 재생';
             updateScoreGrid();
         }
 
@@ -1063,7 +955,6 @@
         function handleKeyboardInput(e) {
             if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
             
-            // 모바일에서는 키보드 입력 무시
             if ('ontouchstart' in window) return;
 
             const key = e.key.toLowerCase();
@@ -1102,42 +993,35 @@
         function handleMIDIMessage(message) {
             const [command, note, velocity] = message.data;
             
-            if (command === 144 && velocity > 0) { // Note on
+            if (command === 144 && velocity > 0) {
                 const noteIndex = (note - 60) % 12;
-                const octave = Math.floor((note - 60) / 12) + 4;
-                
                 const noteData = noteDefinitions.find(n => n.midiNote === noteIndex);
-                if (noteData && octave >= 3 && octave <= 6) {
-                    currentOctave = octave;
-                    document.getElementById('octaveDisplay').textContent = `C${currentOctave} 옥타브`;
+                if (noteData) {
                     playNote(noteData);
                 }
             }
         }
 
         function saveScore() {
-            // 현재 입력값 반영
-            musicData.title = document.getElementById('songTitle').value;
-            musicData.composer = document.getElementById('composer').value;
-            
-            // 갤러리에 추가
             const scoreData = {
                 ...musicData,
                 id: Date.now(),
-                createdAt: new Date().toISOString()
+                savedAt: new Date().toISOString()
             };
             
             savedScores.unshift(scoreData);
-            if (savedScores.length > 20) savedScores.pop(); // 최대 20개 유지
+            if (savedScores.length > 20) savedScores.pop();
             
-            // JSON 다운로드
+            const now = new Date();
+            const filename = `악보_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.json`;
+            
             const blob = new Blob([JSON.stringify(scoreData, null, 2)], {
                 type: 'application/json'
             });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${musicData.title || '내 곡'}.json`;
+            a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
             
@@ -1166,9 +1050,6 @@
             currentBPM = musicData.bpm || 120;
             currentPage = 0;
             
-            // UI 업데이트
-            document.getElementById('songTitle').value = musicData.title || '';
-            document.getElementById('composer').value = musicData.composer || '';
             document.getElementById('bpmSlider').value = currentBPM;
             document.getElementById('bpmValue').textContent = currentBPM;
             
@@ -1203,7 +1084,6 @@
                 const preview = document.createElement('div');
                 preview.className = 'score-preview';
                 
-                // 첫 3개 음표 미리보기
                 const previewNotes = score.notes.slice(0, 3).filter(n => n.type === 'note');
                 previewNotes.forEach(noteItem => {
                     if (noteItem.note) {
@@ -1215,19 +1095,13 @@
                     }
                 });
                 
-                const title = document.createElement('h3');
-                title.textContent = score.title || '제목 없음';
-                title.style.margin = '0 0 5px 0';
-                title.style.fontSize = '1rem';
-                
                 const info = document.createElement('p');
-                info.textContent = `${score.composer || '작자 미상'} • ${new Date(score.createdAt).toLocaleDateString('ko-KR')}`;
-                info.style.margin = '0';
-                info.style.fontSize = '0.8rem';
+                info.textContent = `${score.date} • ${new Date(score.savedAt).toLocaleTimeString('ko-KR')}`;
+                info.style.margin = '10px 0 0 0';
+                info.style.fontSize = '0.9rem';
                 info.style.color = '#666';
                 
                 card.appendChild(preview);
-                card.appendChild(title);
                 card.appendChild(info);
                 
                 card.addEventListener('click', () => {
@@ -1289,26 +1163,245 @@
         }
 
         function printScore() {
-            // 인쇄 전 제목과 작곡가 정보 업데이트
-            musicData.title = document.getElementById('songTitle').value;
-            musicData.composer = document.getElementById('composer').value;
+            const totalPages = Math.ceil(musicData.notes.length / 32); // 페이지당 32개 (4줄 x 8개)
             
+            // 인쇄용 페이지 생성
+            const printPages = [];
+            for (let page = 0; page < totalPages; page++) {
+                const printPage = document.createElement('div');
+                printPage.className = 'print-page';
+                
+                // 헤더
+                const header = document.createElement('div');
+                header.className = 'print-header';
+                header.innerHTML = `
+                    <span>곡 제목: __________________</span>
+                    <span>작곡가: __________________</span>
+                    <span>날짜: ${musicData.date}</span>
+                `;
+                printPage.appendChild(header);
+                
+                // 4줄 생성
+                for (let row = 0; row < 4; row++) {
+                    // 음표 줄
+                    const scoreRow = document.createElement('div');
+                    scoreRow.className = 'print-score-row';
+                    
+                    for (let col = 0; col < 8; col++) {
+                        const noteIndex = page * 32 + row * 8 + col;
+                        const noteSlot = document.createElement('div');
+                        noteSlot.className = 'print-note-slot';
+                        
+                        if (noteIndex < musicData.notes.length) {
+                            const noteItem = musicData.notes[noteIndex];
+                            if (noteItem.type === 'note') {
+                                const icon = document.createElement('img');
+                                icon.className = 'print-note-icon';
+                                icon.src = noteItem.note.svgPath;
+                                noteSlot.appendChild(icon);
+                            } else {
+                                const restIcon = document.createElement('img');
+                                restIcon.className = 'print-note-icon';
+                                restIcon.src = 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg';
+                                noteSlot.appendChild(restIcon);
+                            }
+                        }
+                        
+                        scoreRow.appendChild(noteSlot);
+                    }
+                    printPage.appendChild(scoreRow);
+                    
+                    // 메모 공간
+                    const memoSpace = document.createElement('div');
+                    memoSpace.className = 'print-memo-space';
+                    printPage.appendChild(memoSpace);
+                }
+                
+                // 페이지 번호
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'print-page-number';
+                pageNumber.textContent = `${page + 1} / ${totalPages}`;
+                printPage.appendChild(pageNumber);
+                
+                printPages.push(printPage);
+            }
+            
+            // DOM에 임시로 추가
+            const mainContent = document.querySelector('.main-content');
+            printPages.forEach(page => mainContent.appendChild(page));
+            
+            // 인쇄
             window.print();
+            
+            // 인쇄 후 제거
+            setTimeout(() => {
+                printPages.forEach(page => page.remove());
+            }, 100);
+        }
+
+        async function downloadScore() {
+            const totalPages = Math.ceil(musicData.notes.length / 32);
+            
+            if (totalPages === 0) {
+                alert('다운로드할 악보가 없습니다.');
+                return;
+            }
+            
+            const svgs = [];
+            
+            for (let page = 0; page < totalPages; page++) {
+                const svg = createPageSVG(page, totalPages);
+                svgs.push(svg);
+            }
+            
+            const now = new Date();
+            const baseFilename = `악보_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            if (svgs.length === 1) {
+                // 단일 페이지
+                const blob = new Blob([svgs[0]], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${baseFilename}.svg`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                // 여러 페이지 - ZIP으로 압축
+                const zip = new JSZip();
+                svgs.forEach((svg, index) => {
+                    zip.file(`${baseFilename}_page${index + 1}.svg`, svg);
+                });
+                
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${baseFilename}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function createPageSVG(pageIndex, totalPages) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "1189");  // A4 landscape in mm at 96dpi
+            svg.setAttribute("height", "841");
+            svg.setAttribute("viewBox", "0 0 1189 841");
+            svg.setAttribute("xmlns", svgNS);
+            
+            // 배경
+            const bg = document.createElementNS(svgNS, "rect");
+            bg.setAttribute("width", "1189");
+            bg.setAttribute("height", "841");
+            bg.setAttribute("fill", "white");
+            svg.appendChild(bg);
+            
+            // 헤더
+            const headerText = document.createElementNS(svgNS, "text");
+            headerText.setAttribute("x", "60");
+            headerText.setAttribute("y", "60");
+            headerText.setAttribute("font-family", "Noto Sans KR, sans-serif");
+            headerText.setAttribute("font-size", "16");
+            headerText.setAttribute("fill", "black");
+            
+            const title = document.createElementNS(svgNS, "tspan");
+            title.textContent = "곡 제목: __________________";
+            headerText.appendChild(title);
+            
+            const composer = document.createElementNS(svgNS, "tspan");
+            composer.setAttribute("x", "350");
+            composer.textContent = "작곡가: __________________";
+            headerText.appendChild(composer);
+            
+            const date = document.createElementNS(svgNS, "tspan");
+            date.setAttribute("x", "640");
+            date.textContent = `날짜: ${musicData.date}`;
+            headerText.appendChild(date);
+            
+            svg.appendChild(headerText);
+            
+            // 음표와 메모 공간
+            let y = 100;
+            for (let row = 0; row < 4; row++) {
+                // 음표 줄
+                for (let col = 0; col < 8; col++) {
+                    const noteIndex = pageIndex * 32 + row * 8 + col;
+                    const x = 60 + col * 140;
+                    
+                    // 음표 슬롯
+                    const rect = document.createElementNS(svgNS, "rect");
+                    rect.setAttribute("x", x);
+                    rect.setAttribute("y", y);
+                    rect.setAttribute("width", "80");
+                    rect.setAttribute("height", "80");
+                    rect.setAttribute("fill", "none");
+                    rect.setAttribute("stroke", "#999");
+                    rect.setAttribute("stroke-width", "1");
+                    rect.setAttribute("rx", "8");
+                    svg.appendChild(rect);
+                    
+                    // 음표 이미지 (인라인 SVG로 변환 필요)
+                    if (noteIndex < musicData.notes.length) {
+                        const noteItem = musicData.notes[noteIndex];
+                        if (noteItem.type === 'note' || noteItem.type === 'rest') {
+                            const noteText = document.createElementNS(svgNS, "text");
+                            noteText.setAttribute("x", x + 40);
+                            noteText.setAttribute("y", y + 50);
+                            noteText.setAttribute("text-anchor", "middle");
+                            noteText.setAttribute("font-family", "Noto Sans KR, sans-serif");
+                            noteText.setAttribute("font-size", "24");
+                            noteText.setAttribute("fill", "#333");
+                            noteText.textContent = noteItem.type === 'note' ? noteItem.note.name : '쉼';
+                            svg.appendChild(noteText);
+                        }
+                    }
+                }
+                y += 90;
+                
+                // 메모 공간
+                const memoLine = document.createElementNS(svgNS, "line");
+                memoLine.setAttribute("x1", "60");
+                memoLine.setAttribute("y1", y + 80);
+                memoLine.setAttribute("x2", "1130");
+                memoLine.setAttribute("y2", y + 80);
+                memoLine.setAttribute("stroke", "#ccc");
+                memoLine.setAttribute("stroke-width", "1");
+                svg.appendChild(memoLine);
+                
+                y += 110;
+            }
+            
+            // 페이지 번호
+            const pageNum = document.createElementNS(svgNS, "text");
+            pageNum.setAttribute("x", "595");
+            pageNum.setAttribute("y", "800");
+            pageNum.setAttribute("text-anchor", "middle");
+            pageNum.setAttribute("font-family", "Noto Sans KR, sans-serif");
+            pageNum.setAttribute("font-size", "14");
+            pageNum.setAttribute("fill", "black");
+            pageNum.textContent = `${pageIndex + 1} / ${totalPages}`;
+            svg.appendChild(pageNum);
+            
+            return svg.outerHTML;
         }
 
         function clearScore() {
             if (confirm('모든 내용을 삭제하고 새로 시작하시겠습니까?')) {
                 saveState();
+                const now = new Date();
                 musicData = {
-                    title: '',
-                    composer: '',
-                    date: musicData.date,
+                    date: now.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }),
+                    createdAt: now.toISOString(),
                     notes: [],
                     bpm: 120
                 };
                 currentPage = 0;
-                generateEmojiTitle();
-                document.getElementById('composer').value = '';
                 updateScoreGrid();
                 updatePageInfo();
             }
