@@ -1075,7 +1075,8 @@
                 const prompt = `너는 유치원생들을 위한 요리 레시피를 만들어주는 상상력이 풍부한 AI 셰프야. 다음 재료들을 사용해서 아주 재미있고 창의적인 음식 이름, 그 음식의 이미지(너가 직접 생성해야 해!), 그리고 아이들이 부모님과 함께 쉽게 따라 할 수 있는 3~5단계의 간단한 레시피를 만들어줘: [${uniqueIngredientsForAPI.join(', ')}]. 
                 음식 이름은 예를 들어 '무지개 구름빵'이나 '반짝반짝 사과 보트'처럼 아주 신나고 귀여운 이름으로 지어줘. 
                 레시피 각 단계는 한 문장 정도로 짧고 명확하게 설명해줘.
-                dishImagePrompt에는 반드시 'photorealistic', 'food photography', 'soft natural light', 'pastel background', 'shallow depth of field' 같은 키워드를 포함해서 귀엽지만 실제 음식 사진처럼 사실적인 이미지를 유도해. (예: 'A photorealistic, cute plate of rainbow cloud bread on a pastel pink table, soft natural daylight, shallow depth of field, food photography')
+                음식은 항상 아름다운 그릇에 담겨 있어야 해.
+                dishImagePrompt에는 반드시 'photorealistic', 'food photography', 'beautiful/stylish dish', 'soft natural light', 'pastel background', 'shallow depth of field' 같은 키워드를 포함해서 귀엽지만 실제 음식 사진처럼 사실적인 이미지를 유도해. (예: 'A photorealistic, cute plate of rainbow cloud bread on a pastel pink table, soft natural daylight, shallow depth of field, food photography')
                 최종 결과는 다음 JSON 형식으로만 답변해줘. 다른 설명은 절대 추가하지 마.
                 {
                   "dishName": "생성된 음식 이름",
