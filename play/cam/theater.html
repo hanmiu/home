@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한미 극장</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            background-color: #222;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            padding: 10px;
+            background-color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+            position: relative;
+        }
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        header label {
+            margin-right: 5px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        button, select, input {
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #555;
+            color: #eee;
+            border: 1px solid #777;
+            border-radius: 3px;
+        }
+        button:hover:not(:disabled), select:hover, input:hover {
+            background-color: #666;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        input[type="text"] {
+            width: 300px;
+            font-family: monospace;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+        #container {
+            flex-grow: 1;
+            position: relative;
+            min-height: 0;
+            background-color: #000;
+        }
+        #webgl {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+        #webgl.blend-multiply {
+            mix-blend-mode: multiply;
+        }
+        #background-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 100%;
+            width: auto;
+            z-index: 1;
+            display: none;
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+            overflow: visible;
+        }
+        #overlay polygon {
+            fill: none;
+            stroke: rgba(255, 0, 0, 0.7);
+            stroke-width: 2;
+            vector-effect: non-scaling-stroke;
+        }
+        #overlay circle {
+            fill: rgba(255, 0, 0, 0.8);
+            stroke: rgba(255, 255, 255, 0.9);
+            stroke-width: 1;
+            cursor: grab;
+            pointer-events: all;
+            vector-effect: non-scaling-stroke;
+        }
+        #overlay circle:active {
+            cursor: grabbing;
+            fill: rgba(255, 100, 100, 0.9);
+        }
+        #webcam-video {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #drop-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
+            pointer-events: none;
+        }
+        #drop-zone.active {
+            display: flex;
+        }
+        #time-display {
+            margin: 0 10px;
+            font-family: monospace;
+            min-width: 100px;
+        }
+        /* Fullscreen specific styles */
+        body:fullscreen header {
+            display: none;
+        }
+        body:-webkit-full-screen header {
+            display: none;
+        }
+        body:-moz-full-screen header {
+            display: none;
+        }
+        body:-ms-fullscreen header {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-row">
+        <button id="mode-toggle">모드: Calibration</button>
+        <label for="flip-x">
+            <input type="checkbox" id="flip-x">
+            좌우 반전
+        </label>
+        <label for="flip-y">
+            <input type="checkbox" id="flip-y">
+            상하 반전
+        </label>
+        <span>
+            <label for="resolution-select">해상도:</label>
+            <select id="resolution-select"></select>
+        </span>
+        <span id="aspect-ratio-control" class="hidden">
+            <label for="aspect-ratio-w">화면 비율:</label>
+            <input type="number" id="aspect-ratio-w" min="1" step="1" value="16" style="width: 45px; text-align: right;">
+            <span style="margin: 0 2px;">:</span>
+            <input type="number" id="aspect-ratio-h" min="1" step="1" value="9" style="width: 45px; text-align: right;">
+        </span>
+        <button id="fullscreen">전체 화면</button>
+    </div>
+    <div class="header-row">
+        <label for="webcam-filter">웹캠 필터:</label>
+        <input type="text" id="webcam-filter" value="brightness(1.1) contrast(1.1) saturate(1)">
+    </div>
+    <div id="video-controls" class="header-row hidden">
+        <button id="load-recent-video" disabled style="display:none;">최근 영상</button>
+        <button id="toggle-video">영상 켜기/끄기</button>
+        <button id="play-pause">재생</button>
+        <input type="range" id="video-seek" min="0" max="100" value="0" step="0.1">
+        <span id="time-display">0:00 / 0:00</span>
+        <label for="video-loop">
+            <input type="checkbox" id="video-loop" checked>
+            반복
+        </label>
+        <label for="video-filter" style="margin-left: 20px;">영상 필터:</label>
+        <input type="text" id="video-filter" value="brightness(1) contrast(1) saturate(1)">
+    </div>
+</header>
+
+<div id="container">
+    <video id="background-video" loop></video>
+    <canvas id="webgl"></canvas>
+    <svg id="overlay">
+        <polygon id="outline-polygon" points=""></polygon>
+    </svg>
+    <video id="webcam-video" playsinline autoplay muted></video>
+    <div id="drop-zone">비디오 파일을 여기에 드롭하세요</div>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.163.0/build/three.module.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    // --- Constants & Variables ---
+    const GRID_SIZE = 10;
+    const INITIAL_PADDING = 0.05;
+    const CONTROL_POINT_RADIUS = 8;
+
+    let scene, camera, renderer;
+    let videoElement, videoTexture, videoDimensions = { width: 640, height: 480 };
+    let planeGeometry, planeMaterial, planeMesh;
+    let backgroundPlaneGeometry, backgroundPlaneMaterial, backgroundPlaneMesh;
+    let svgOverlay, svgPolygon, svgCircles = [];
+    let container;
+
+    let currentResolution = { width: 0, height: 0 };
+    let availableResolutions = [
+        { width: 640, height: 480 },
+        { width: 1280, height: 720 },
+        { width: 1920, height: 1080 },
+    ];
+    let currentStream = null;
+    let currentVideoTrack = null;
+
+    let isDragging = false;
+    let draggedControlPointIndex = -1;
+    let mode = 'calibration';
+    let targetAspectRatio = 16 / 9;
+    let sourcePointsUV = [
+        new THREE.Vector2(INITIAL_PADDING, 1 - INITIAL_PADDING),
+        new THREE.Vector2(1 - INITIAL_PADDING, 1 - INITIAL_PADDING),
+        new THREE.Vector2(1 - INITIAL_PADDING, INITIAL_PADDING),
+        new THREE.Vector2(INITIAL_PADDING, INITIAL_PADDING)
+    ];
+    let isFlippedX = false;
+    let isFlippedY = false;
+
+    // Background video variables
+    let backgroundVideoElement;
+    let videoFileURL = null;
+    let isVideoVisible = false;
+
+    // --- DOM Elements ---
+    const modeToggleButton = document.getElementById('mode-toggle');
+    const flipXCheckbox = document.getElementById('flip-x');
+    const flipYCheckbox = document.getElementById('flip-y');
+    const resolutionSelect = document.getElementById('resolution-select');
+    const aspectRatioControl = document.getElementById('aspect-ratio-control');
+    const aspectRatioWInput = document.getElementById('aspect-ratio-w');
+    const aspectRatioHInput = document.getElementById('aspect-ratio-h');
+    const fullscreenButton = document.getElementById('fullscreen');
+    const canvasElement = document.getElementById('webgl');
+    const webcamFilterInput = document.getElementById('webcam-filter');
+    const videoFilterInput = document.getElementById('video-filter');
+    const videoControls = document.getElementById('video-controls');
+    const loadRecentVideoButton = document.getElementById('load-recent-video');
+    const toggleVideoButton = document.getElementById('toggle-video');
+    const playPauseButton = document.getElementById('play-pause');
+    const videoSeekSlider = document.getElementById('video-seek');
+    const timeDisplay = document.getElementById('time-display');
+    const videoLoopCheckbox = document.getElementById('video-loop');
+    const dropZone = document.getElementById('drop-zone');
+    
+    container = document.getElementById('container');
+    videoElement = document.getElementById('webcam-video');
+    backgroundVideoElement = document.getElementById('background-video');
+    svgOverlay = document.getElementById('overlay');
+    svgPolygon = document.getElementById('outline-polygon');
+
+    // --- LocalStorage Keys ---
+    const STORAGE_KEYS = {
+        calibration: 'webcam-unwarp-calibration-points',
+        videoSettings: 'webcam-unwarp-video-settings',
+        webcamFilter: 'webcam-unwarp-webcam-filter',
+        videoFilter: 'webcam-unwarp-video-filter'
+    };
+
+    // --- Utility Functions ---
+    function gcd(a, b) {
+        if (!b) {
+            return a;
+        }
+        return gcd(b, a % b);
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // --- LocalStorage Functions ---
+    function saveCalibrationPoints() {
+        const points = sourcePointsUV.map(p => ({ x: p.x, y: p.y }));
+        localStorage.setItem(STORAGE_KEYS.calibration, JSON.stringify(points));
+    }
+
+    function loadCalibrationPoints() {
+        const saved = localStorage.getItem(STORAGE_KEYS.calibration);
+        if (saved) {
+            try {
+                const points = JSON.parse(saved);
+                if (Array.isArray(points) && points.length === 4) {
+                    sourcePointsUV = points.map(p => new THREE.Vector2(p.x, p.y));
+                    console.log('Loaded calibration points from localStorage');
+                }
+            } catch (e) {
+                console.error('Failed to load calibration points:', e);
+            }
+        }
+    }
+
+    function saveVideoSettings() {
+        const settings = {
+            url: videoFileURL,
+            currentTime: backgroundVideoElement.currentTime,
+            loop: backgroundVideoElement.loop,
+            isVisible: isVideoVisible
+        };
+        localStorage.setItem(STORAGE_KEYS.videoSettings, JSON.stringify(settings));
+    }
+
+    function loadVideoSettings() {
+        const saved = localStorage.getItem(STORAGE_KEYS.videoSettings);
+        if (saved) {
+            try {
+                const settings = JSON.parse(saved);
+                if (settings.url) {
+                    // Check if URL is still valid
+                    fetch(settings.url, { method: 'HEAD' })
+                        .then(() => {
+                            videoFileURL = settings.url;
+                            loadRecentVideoButton.disabled = false;
+                            return settings;
+                        })
+                        .catch(() => {
+                            // URL is no longer valid
+                            localStorage.removeItem(STORAGE_KEYS.videoSettings);
+                            loadRecentVideoButton.disabled = true;
+                        });
+                }
+            } catch (e) {
+                console.error('Failed to load video settings:', e);
+            }
+        }
+    }
+
+    function saveFilters() {
+        localStorage.setItem(STORAGE_KEYS.webcamFilter, webcamFilterInput.value);
+        localStorage.setItem(STORAGE_KEYS.videoFilter, videoFilterInput.value);
+    }
+
+    function loadFilters() {
+        const webcamFilter = localStorage.getItem(STORAGE_KEYS.webcamFilter);
+        const videoFilter = localStorage.getItem(STORAGE_KEYS.videoFilter);
+        
+        if (webcamFilter) {
+            webcamFilterInput.value = webcamFilter;
+            canvasElement.style.filter = webcamFilter;
+        }
+        
+        if (videoFilter) {
+            videoFilterInput.value = videoFilter;
+            backgroundVideoElement.style.filter = videoFilter;
+        }
+    }
+
+    // --- Initialization ---
+    function init() {
+        // Scene
+        scene = new THREE.Scene();
+
+        // Camera (Orthographic)
+        camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+        camera.position.z = 1;
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(container.clientWidth, container.clientHeight);
+
+        // Video Texture (placeholder initially)
+        videoTexture = new THREE.VideoTexture(videoElement);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat;
+        window.videoTexture = videoTexture;
+
+        // Foreground Plane Geometry (10x10 grid)
+        planeGeometry = new THREE.PlaneGeometry(1, 1, GRID_SIZE, GRID_SIZE);
+        planeMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.DoubleSide });
+        planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        scene.add(planeMesh);
+
+        // Background Plane (Dimmed Full Video)
+        backgroundPlaneGeometry = new THREE.PlaneGeometry(1, 1);
+        backgroundPlaneMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            opacity: 0.4,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+        backgroundPlaneMesh = new THREE.Mesh(backgroundPlaneGeometry, backgroundPlaneMaterial);
+        backgroundPlaneMesh.position.z = -0.01;
+        backgroundPlaneMesh.visible = false;
+        scene.add(backgroundPlaneMesh);
+
+        // SVG Overlay Setup
+        setupSVGControls();
+
+        // Load saved data
+        loadCalibrationPoints();
+        loadVideoSettings();
+        loadFilters();
+
+        // UI Event Listeners
+        setupEventListeners();
+
+        // Start Webcam
+        populateResolutionSelect();
+        setupWebcam();
+
+        // Start Animation Loop
+        animate();
+
+        // Handle Window Resize
+        window.addEventListener('resize', onWindowResize);
+    }
+
+    function setupEventListeners() {
+        // Mode and display controls
+        modeToggleButton.addEventListener('click', toggleMode);
+        flipXCheckbox.addEventListener('input', toggleFlipX);
+        flipYCheckbox.addEventListener('input', toggleFlipY);
+        resolutionSelect.addEventListener('input', changeResolution);
+        aspectRatioWInput.addEventListener('input', updateAspectRatio);
+        aspectRatioHInput.addEventListener('input', updateAspectRatio);
+        fullscreenButton.addEventListener('click', toggleFullscreen);
+
+        // Filter controls
+        webcamFilterInput.addEventListener('input', () => {
+            canvasElement.style.filter = webcamFilterInput.value;
+            saveFilters();
+        });
+        
+        videoFilterInput.addEventListener('input', () => {
+            backgroundVideoElement.style.filter = videoFilterInput.value;
+            saveFilters();
+        });
+
+        // Video controls
+        loadRecentVideoButton.addEventListener('click', loadRecentVideo);
+        toggleVideoButton.addEventListener('click', toggleVideo);
+        playPauseButton.addEventListener('click', togglePlayPause);
+        videoSeekSlider.addEventListener('input', seekVideo);
+        videoLoopCheckbox.addEventListener('change', () => {
+            backgroundVideoElement.loop = videoLoopCheckbox.checked;
+            saveVideoSettings();
+        });
+
+        // Video element events
+        backgroundVideoElement.addEventListener('loadedmetadata', updateVideoControls);
+        backgroundVideoElement.addEventListener('timeupdate', updateTimeDisplay);
+        backgroundVideoElement.addEventListener('ended', () => {
+            if (!backgroundVideoElement.loop) {
+                playPauseButton.textContent = '재생';
+            }
+        });
+
+        // Drag and drop
+        setupDragAndDrop();
+
+        // Document events
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    }
+
+    function setupDragAndDrop() {
+        let dragCounter = 0;
+
+        container.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            if (mode === 'unwarped') {
+                dropZone.classList.add('active');
+            }
+        });
+
+        container.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) {
+                dropZone.classList.remove('active');
+            }
+        });
+
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            dropZone.classList.remove('active');
+
+            if (mode !== 'unwarped') return;
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('video/')) {
+                    loadVideoFile(file);
+                }
+            }
+        });
+    }
+
+    function loadVideoFile(file) {
+        if (videoFileURL) {
+            URL.revokeObjectURL(videoFileURL);
+        }
+
+        videoFileURL = URL.createObjectURL(file);
+        backgroundVideoElement.src = videoFileURL;
+        backgroundVideoElement.load();
+        
+        isVideoVisible = true;
+        backgroundVideoElement.style.display = 'block';
+        canvasElement.classList.add('blend-multiply');
+        
+        saveVideoSettings();
+    }
+
+    function loadRecentVideo() {
+        const saved = localStorage.getItem(STORAGE_KEYS.videoSettings);
+        if (saved) {
+            try {
+                const settings = JSON.parse(saved);
+                if (settings.url) {
+                    backgroundVideoElement.src = settings.url;
+                    backgroundVideoElement.currentTime = settings.currentTime || 0;
+                    backgroundVideoElement.loop = settings.loop !== false;
+                    videoLoopCheckbox.checked = backgroundVideoElement.loop;
+                    isVideoVisible = settings.isVisible !== false;
+                    
+                    if (isVideoVisible) {
+                        backgroundVideoElement.style.display = 'block';
+                        canvasElement.classList.add('blend-multiply');
+                    }
+                    
+                    backgroundVideoElement.load();
+                }
+            } catch (e) {
+                console.error('Failed to load recent video:', e);
+            }
+        }
+    }
+
+    function toggleVideo() {
+        isVideoVisible = !isVideoVisible;
+        if (isVideoVisible) {
+            backgroundVideoElement.style.display = 'block';
+            canvasElement.classList.add('blend-multiply');
+        } else {
+            backgroundVideoElement.style.display = 'none';
+            canvasElement.classList.remove('blend-multiply');
+        }
+        saveVideoSettings();
+    }
+
+    function togglePlayPause() {
+        if (backgroundVideoElement.paused) {
+            backgroundVideoElement.play();
+            playPauseButton.textContent = '일시정지';
+        } else {
+            backgroundVideoElement.pause();
+            playPauseButton.textContent = '재생';
+        }
+    }
+
+    function seekVideo() {
+        const seekTime = (videoSeekSlider.value / 100) * backgroundVideoElement.duration;
+        backgroundVideoElement.currentTime = seekTime;
+    }
+
+    function updateVideoControls() {
+        videoSeekSlider.max = 100;
+        updateTimeDisplay();
+    }
+
+    function updateTimeDisplay() {
+        const current = backgroundVideoElement.currentTime;
+        const duration = backgroundVideoElement.duration;
+        
+        if (!isNaN(duration)) {
+            const percent = (current / duration) * 100;
+            videoSeekSlider.value = percent;
+            timeDisplay.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+        }
+    }
+
+    // --- Webcam & Resolution ---
+    async function setupWebcam() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const selectedResolution = availableResolutions[resolutionSelect.selectedIndex];
+        const constraints = {
+            video: {
+                width: { ideal: selectedResolution.width },
+                height: { ideal: selectedResolution.height },
+            }
+        };
+
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            videoElement.srcObject = currentStream;
+            videoElement.onloadedmetadata = () => {
+                videoDimensions.width = videoElement.videoWidth;
+                videoDimensions.height = videoElement.videoHeight;
+                console.log(`Webcam started: ${videoDimensions.width}x${videoDimensions.height}`);
+
+                currentResolution.width = videoDimensions.width;
+                currentResolution.height = videoDimensions.height;
+                updateResolutionSelectValue(currentResolution.width, currentResolution.height);
+
+                targetAspectRatio = videoDimensions.width / videoDimensions.height;
+                const common = gcd(videoDimensions.width, videoDimensions.height);
+                aspectRatioWInput.value = videoDimensions.width / common;
+                aspectRatioHInput.value = videoDimensions.height / common;
+
+                updateBackgroundPlaneSize();
+                applyCurrentModeGeometry();
+                if (backgroundPlaneMesh) {
+                    backgroundPlaneMesh.visible = (mode === 'calibration');
+                }
+                onWindowResize();
+            };
+
+            const tracks = currentStream.getVideoTracks();
+            if (tracks.length > 0) {
+                currentVideoTrack = tracks[0];
+            }
+
+        } catch (err) {
+            console.error("Error accessing webcam:", err);
+            alert("웹캠에 접근할 수 없습니다. 권한을 확인하거나 다른 카메라를 선택해주세요.");
+        }
+    }
+
+    function populateResolutionSelect() {
+        resolutionSelect.innerHTML = '';
+        availableResolutions.forEach((res, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${res.width}x${res.height}`;
+            resolutionSelect.appendChild(option);
+        });
+        updateResolutionSelectValue(1920, 1080);
+    }
+
+    function updateResolutionSelectValue(width, height) {
+        for (let i = 0; i < resolutionSelect.options.length; i++) {
+            const res = availableResolutions[i];
+            if (res.width === width && res.height === height) {
+                resolutionSelect.selectedIndex = i;
+                return;
+            }
+        }
+    }
+
+    function changeResolution() {
+        console.log(`Changing resolution to: ${availableResolutions[resolutionSelect.selectedIndex].width}x${availableResolutions[resolutionSelect.selectedIndex].height}`);
+        setupWebcam();
+    }
+
+    // --- Control Points & Calibration ---
+    function setupSVGControls() {
+        svgCircles.forEach(circle => circle.remove());
+        svgCircles = [];
+
+        for (let i = 0; i < 4; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', CONTROL_POINT_RADIUS);
+            circle.setAttribute('data-index', i);
+            circle.addEventListener('pointerdown', onPointerDown);
+            svgOverlay.appendChild(circle);
+            svgCircles.push(circle);
+        }
+        updateSVGOverlay();
+    }
+
+    function updateSVGOverlay() {
+        if (!container || svgCircles.length !== 4 || !camera) return;
+
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        const points = [];
+        const flippedUV = getFlippedSourcePoints();
+
+        for (let i = 0; i < 4; i++) {
+            const screenPos = uvToScreen(flippedUV[i]);
+            if (screenPos && isFinite(screenPos.x) && isFinite(screenPos.y)) {
+                const clampedX = Math.max(CONTROL_POINT_RADIUS, Math.min(rect.width - CONTROL_POINT_RADIUS, screenPos.x));
+                const clampedY = Math.max(CONTROL_POINT_RADIUS, Math.min(rect.height - CONTROL_POINT_RADIUS, screenPos.y));
+
+                svgCircles[i].setAttribute('cx', clampedX);
+                svgCircles[i].setAttribute('cy', clampedY);
+                points.push(`${clampedX},${clampedY}`);
+            } else {
+                svgCircles[i].setAttribute('cx', 0);
+                svgCircles[i].setAttribute('cy', 0);
+                points.push(`0,0`);
+            }
+        }
+        svgPolygon.setAttribute('points', points.join(' '));
+    }
+
+    function onPointerDown(event) {
+        if (mode !== 'calibration') return;
+        isDragging = true;
+        draggedControlPointIndex = parseInt(event.target.getAttribute('data-index'));
+        event.target.style.cursor = 'grabbing';
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointerleave', onPointerUp);
+    }
+
+    function onPointerMove(event) {
+        if (!isDragging || draggedControlPointIndex < 0) return;
+        event.preventDefault();
+
+        const newUV = screenToUV(event.clientX, event.clientY);
+
+        if (newUV) {
+            let targetU = newUV.x;
+            let targetV = newUV.y;
+            
+            if (isFlippedX) targetU = 1.0 - targetU;
+            if (isFlippedY) targetV = 1.0 - targetV;
+
+            sourcePointsUV[draggedControlPointIndex].set(
+                Math.max(0, Math.min(1, targetU)),
+                Math.max(0, Math.min(1, targetV))
+            );
+
+            updateGeometryCalibration();
+            updateSVGOverlay();
+            saveCalibrationPoints();
+        }
+    }
+
+    function onPointerUp(event) {
+        if (!isDragging) return;
+        
+        if (event.target && event.target.style && event.target.style.cursor === 'grabbing') {
+            event.target.style.cursor = 'grab';
+        } else if (draggedControlPointIndex >= 0 && svgCircles[draggedControlPointIndex]) {
+            svgCircles[draggedControlPointIndex].style.cursor = 'grab';
+        }
+
+        isDragging = false;
+        draggedControlPointIndex = -1;
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointerleave', onPointerUp);
+    }
+
+    // --- Coordinate Conversion ---
+    function screenToUV(screenX, screenY) {
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
+
+        const displayBounds = getVideoDisplayBounds();
+        
+        const containerX = screenX - rect.left;
+        const containerY = screenY - rect.top;
+        
+        const relX = containerX - displayBounds.x;
+        const relY = containerY - displayBounds.y;
+        
+        let u = relX / displayBounds.width;
+        let v = 1.0 - (relY / displayBounds.height);
+        
+        u = Math.max(0, Math.min(1, u));
+        v = Math.max(0, Math.min(1, v));
+
+        return new THREE.Vector2(u, v);
+    }
+
+    function uvToScreen(uv) {
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
+        
+        const displayBounds = getVideoDisplayBounds();
+        
+        const containerX = displayBounds.x + (uv.x * displayBounds.width);
+        const containerY = displayBounds.y + ((1.0 - uv.y) * displayBounds.height);
+
+        return { x: containerX, y: containerY };
+    }
+    
+    function getVideoDisplayBounds() {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const containerAspect = width / height;
+        const videoAspect = videoDimensions.width / videoDimensions.height;
+        
+        let displayWidth, displayHeight, offsetX, offsetY;
+        
+        if (containerAspect > videoAspect) {
+            displayHeight = height;
+            displayWidth = displayHeight * videoAspect;
+            offsetX = (width - displayWidth) / 2;
+            offsetY = 0;
+        } else {
+            displayWidth = width;
+            displayHeight = displayWidth / videoAspect;
+            offsetX = 0;
+            offsetY = (height - displayHeight) / 2;
+        }
+        
+        return {
+            x: offsetX,
+            y: offsetY,
+            width: displayWidth,
+            height: displayHeight
+        };
+    }
+
+    // --- Geometry Update ---
+    function updateGeometryCalibration() {
+        if (!planeGeometry || !container || !camera) return;
+
+        const positionAttribute = planeGeometry.attributes.position;
+        const uvAttribute = planeGeometry.attributes.uv;
+        const segmentsX = GRID_SIZE;
+        const segmentsY = GRID_SIZE;
+
+        const displayBounds = getVideoDisplayBounds();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        if (width === 0 || height === 0) return;
+
+        const flippedUVs = getFlippedSourcePoints();
+        
+        const worldCorners = flippedUVs.map(uv => {
+            const screenPos = uvToScreen(uv);
+            if (!screenPos) return new THREE.Vector2(0, 0);
+            
+            const ndcX = (screenPos.x / width) * 2 - 1;
+            const ndcY = -(screenPos.y / height) * 2 + 1;
+            
+            const viewWidth = camera.right - camera.left;
+            const viewHeight = camera.top - camera.bottom;
+            const worldX = ndcX * (viewWidth / 2);
+            const worldY = ndcY * (viewHeight / 2);
+            
+            return new THREE.Vector2(worldX, worldY);
+        });
+
+        for (let j = 0; j <= segmentsY; j++) {
+            const vFrac = j / segmentsY;
+            const posLeft = worldCorners[3].clone().lerp(worldCorners[0], vFrac);
+            const posRight = worldCorners[2].clone().lerp(worldCorners[1], vFrac);
+            
+            const uvLeft = sourcePointsUV[3].clone().lerp(sourcePointsUV[0], vFrac);
+            const uvRight = sourcePointsUV[2].clone().lerp(sourcePointsUV[1], vFrac);
+
+            for (let i = 0; i <= segmentsX; i++) {
+                const hFrac = i / segmentsX;
+                const index = j * (segmentsX + 1) + i;
+                
+                const finalPos = posLeft.clone().lerp(posRight, hFrac);
+                const finalUV = uvLeft.clone().lerp(uvRight, hFrac);
+                
+                let u = finalUV.x;
+                let v = finalUV.y;
+                if (isFlippedX) u = 1.0 - u;
+                if (isFlippedY) v = 1.0 - v;
+                
+                positionAttribute.setXYZ(index, finalPos.x, finalPos.y, 0);
+                uvAttribute.setXY(index, u, v);
+            }
+        }
+
+        positionAttribute.needsUpdate = true;
+        uvAttribute.needsUpdate = true;
+    }
+
+    function updateGeometryUnwarped() {
+        if (!planeGeometry || !camera) return;
+
+        const positionAttribute = planeGeometry.attributes.position;
+        const uvAttribute = planeGeometry.attributes.uv;
+        const segmentsX = GRID_SIZE;
+        const segmentsY = GRID_SIZE;
+
+        const viewWidth = camera.right - camera.left;
+        const viewHeight = camera.top - camera.bottom;
+        if (viewWidth <= 0 || viewHeight <= 0) return;
+
+        let targetWidth = viewWidth;
+        let targetHeight = viewHeight;
+
+        if (viewWidth / viewHeight > targetAspectRatio) {
+            targetWidth = targetHeight * targetAspectRatio;
+        } else {
+            targetHeight = targetWidth / targetAspectRatio;
+        }
+
+        const halfWidth = targetWidth / 2;
+        const halfHeight = targetHeight / 2;
+
+        const srcPoints = [
+            sourcePointsUV[0].clone(),
+            sourcePointsUV[1].clone(),
+            sourcePointsUV[2].clone(),
+            sourcePointsUV[3].clone()
+        ];
+
+        for (let j = 0; j <= segmentsY; j++) {
+            const v = j / segmentsY;
+            
+            for (let i = 0; i <= segmentsX; i++) {
+                const u = i / segmentsX;
+                const index = j * (segmentsX + 1) + i;
+                
+                const x = -halfWidth + u * targetWidth;
+                const y = -halfHeight + v * targetHeight;
+                positionAttribute.setXYZ(index, x, y, 0);
+                
+                const unwarpedUV = perspectiveTransform(u, v, srcPoints);
+                
+                let texU = unwarpedUV.x;
+                let texV = unwarpedUV.y;
+                if (isFlippedX) texU = 1.0 - texU;
+                if (isFlippedY) texV = 1.0 - texV;
+                
+                uvAttribute.setXY(index, texU, texV);
+            }
+        }
+
+        positionAttribute.needsUpdate = true;
+        uvAttribute.needsUpdate = true;
+
+        planeMesh.scale.x = isFlippedX ? -1 : 1;
+        planeMesh.scale.y = isFlippedY ? -1 : 1;
+    }
+
+    function perspectiveTransform(u, v, srcQuad) {
+        const dstQuad = [
+            new THREE.Vector2(0, 1),
+            new THREE.Vector2(1, 1),
+            new THREE.Vector2(1, 0),
+            new THREE.Vector2(0, 0)
+        ];
+        
+        const H = computeHomography(dstQuad, srcQuad);
+        
+        const denominator = H[6] * u + H[7] * v + H[8];
+        if (Math.abs(denominator) < 1e-10) {
+            return new THREE.Vector2(0.5, 0.5);
+        }
+        
+        const newU = (H[0] * u + H[1] * v + H[2]) / denominator;
+        const newV = (H[3] * u + H[4] * v + H[5]) / denominator;
+        
+        return new THREE.Vector2(
+            Math.max(0, Math.min(1, newU)),
+            Math.max(0, Math.min(1, newV))
+        );
+    }
+
+    function computeHomography(srcPoints, dstPoints) {
+        const A = [];
+        
+        for (let i = 0; i < 4; i++) {
+            const s = srcPoints[i];
+            const d = dstPoints[i];
+            
+            A.push([
+                s.x, s.y, 1, 0, 0, 0, -d.x * s.x, -d.x * s.y, -d.x
+            ]);
+            
+            A.push([
+                0, 0, 0, s.x, s.y, 1, -d.y * s.x, -d.y * s.y, -d.y
+            ]);
+        }
+        
+        const H = solveHomographyEquation(A);
+        
+        if (Math.abs(H[8]) > 1e-10) {
+            for (let i = 0; i < 8; i++) {
+                H[i] /= H[8];
+            }
+            H[8] = 1.0;
+        }
+        
+        return H;
+    }
+
+    function solveHomographyEquation(A) {
+        const M = A.map(row => [...row]);
+        const n = M.length;
+        
+        for (let i = 0; i < n - 1; i++) {
+            let maxRow = i;
+            let maxVal = Math.abs(M[i][i]);
+            
+            for (let j = i + 1; j < n; j++) {
+                const absVal = Math.abs(M[j][i]);
+                if (absVal > maxVal) {
+                    maxVal = absVal;
+                    maxRow = j;
+                }
+            }
+            
+            if (maxRow !== i) {
+                [M[i], M[maxRow]] = [M[maxRow], M[i]];
+            }
+            
+            for (let j = i + 1; j < n; j++) {
+                const factor = M[j][i] / M[i][i];
+                for (let k = i; k < M[i].length; k++) {
+                    M[j][k] -= factor * M[i][k];
+                }
+            }
+        }
+        
+        const H = Array(9).fill(0);
+        H[8] = 1.0;
+        
+        for (let i = n - 1; i >= 0; i--) {
+            let sum = 0;
+            for (let j = i + 1; j < 9; j++) {
+                if (j < M[i].length) {
+                    sum += M[i][j] * H[j];
+                }
+            }
+            
+            if (i < 8) {
+                H[i] = (0 - sum) / M[i][i];
+            }
+        }
+        
+        return H;
+    }
+
+    function updateBackgroundPlaneSize() {
+        if (!backgroundPlaneMesh || !camera || camera.right - camera.left <= 0) {
+            return;
+        }
+
+        const displayBounds = getVideoDisplayBounds();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        const viewWidth = camera.right - camera.left;
+        const viewHeight = camera.top - camera.bottom;
+        
+        const scaleX = (displayBounds.width / width) * viewWidth;
+        const scaleY = (displayBounds.height / height) * viewHeight;
+        
+        const posX = ((displayBounds.x / width) * viewWidth) - (viewWidth / 2) + (scaleX / 2);
+        const posY = -((displayBounds.y / height) * viewHeight) + (viewHeight / 2) - (scaleY / 2);
+        
+        backgroundPlaneMesh.scale.set(scaleX, scaleY, 1);
+        backgroundPlaneMesh.position.set(posX, posY, -0.01);
+    }
+
+    // --- UI Logic ---
+    function toggleMode() {
+        mode = (mode === 'calibration') ? 'unwarped' : 'calibration';
+        modeToggleButton.textContent = `모드: ${mode === 'calibration' ? 'Calibration' : 'Unwarped'}`;
+
+        if (mode === 'calibration') {
+            aspectRatioControl.classList.add('hidden');
+            svgOverlay.classList.remove('hidden');
+            videoControls.classList.add('hidden');
+            if (backgroundPlaneMesh) backgroundPlaneMesh.visible = true;
+            updateSVGOverlay();
+            planeMesh.scale.x = 1;
+            planeMesh.scale.y = 1;
+            
+            // Remove blend mode in calibration mode
+            canvasElement.classList.remove('blend-multiply');
+            backgroundVideoElement.style.display = 'none';
+        } else { // mode === 'unwarped'
+            aspectRatioControl.classList.remove('hidden');
+            svgOverlay.classList.add('hidden');
+            videoControls.classList.remove('hidden');
+            if (backgroundPlaneMesh) backgroundPlaneMesh.visible = false;
+            
+            // Apply blend mode if video is visible
+            if (isVideoVisible && videoFileURL) {
+                canvasElement.classList.add('blend-multiply');
+                backgroundVideoElement.style.display = 'block';
+            }
+        }
+        applyCurrentModeGeometry();
+        updateBackgroundPlaneSize();
+    }
+
+    function getFlippedSourcePoints() {
+        return sourcePointsUV.map(uv => {
+            let u = uv.x;
+            let v = uv.y;
+            if (isFlippedX) u = 1.0 - u;
+            if (isFlippedY) v = 1.0 - v;
+            return new THREE.Vector2(u, v);
+        });
+    }
+
+    function toggleFlipX() {
+        isFlippedX = !isFlippedX;
+        videoTexture.repeat.x = isFlippedX ? -1 : 1;
+        videoTexture.offset.x = isFlippedX ? 1 : 0;
+        videoTexture.needsUpdate = true;
+        
+        if (mode === 'calibration') {
+            updateGeometryCalibration();
+            updateSVGOverlay();
+        } else {
+            updateGeometryUnwarped();
+        }
+    }
+
+    function toggleFlipY() {
+        isFlippedY = !isFlippedY;
+        videoTexture.repeat.y = isFlippedY ? -1 : 1;
+        videoTexture.offset.y = isFlippedY ? 1 : 0;
+        videoTexture.needsUpdate = true;
+        
+        if (mode === 'calibration') {
+            updateGeometryCalibration();
+            updateSVGOverlay();
+        } else {
+            updateGeometryUnwarped();
+        }
+    }
+
+    function updateAspectRatio() {
+        const aspectW = parseInt(aspectRatioWInput.value, 10);
+        const aspectH = parseInt(aspectRatioHInput.value, 10);
+
+        if (!isNaN(aspectW) && aspectW > 0 && !isNaN(aspectH) && aspectH > 0) {
+            targetAspectRatio = aspectW / aspectH;
+            console.log(`Target Aspect Ratio set to: ${aspectW}:${aspectH} (${targetAspectRatio.toFixed(3)})`);
+            if (mode === 'unwarped') {
+                updateGeometryUnwarped();
+            }
+            onWindowResize();
+        } else {
+            console.warn("Invalid aspect ratio input. Both values must be positive numbers.");
+        }
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+            const el = document.body;
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+        }
+    }
+
+    function handleFullscreenChange() {
+        setTimeout(onWindowResize, 100);
+    }
+
+    function applyCurrentModeGeometry() {
+        if (mode === 'calibration') {
+            updateGeometryCalibration();
+        } else {
+            updateGeometryUnwarped();
+        }
+    }
+
+    // --- Rendering & Resizing ---
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+            videoTexture.needsUpdate = true;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        if (!renderer || !camera || !container) return;
+
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        if (width === 0 || height === 0) return;
+
+        renderer.setSize(width, height);
+
+        const displayAspect = width / height;
+        let viewHeight = 1.0;
+        let viewWidth = displayAspect * viewHeight;
+
+        camera.left = -viewWidth / 2;
+        camera.right = viewWidth / 2;
+        camera.top = viewHeight / 2;
+        camera.bottom = -viewHeight / 2;
+        camera.updateProjectionMatrix();
+
+        updateBackgroundPlaneSize();
+        applyCurrentModeGeometry();
+        updateSVGOverlay();
+    }
+
+    // --- Start Application ---
+    init();
+
+</script>
+
+</body>
+</html>
