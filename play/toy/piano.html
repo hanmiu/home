@@ -652,8 +652,12 @@
             { name: '파', key: 'F', keyboardKey: 'f', midiNote: 5, svgName: 'fa', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/fa.svg' },
             { name: '솔', key: 'G', keyboardKey: 'g', midiNote: 7, svgName: 'sol', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/sol.svg' },
             { name: '라', key: 'A', keyboardKey: 'h', midiNote: 9, svgName: 'la', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/la.svg' },
-            { name: '시', key: 'B', keyboardKey: 'j', midiNote: 11, svgName: 'ti', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/ti.svg' }
+            { name: '시', key: 'B', keyboardKey: 'j', midiNote: 11, svgName: 'ti', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/ti.svg' },
+            { name: '도', key: 'C2', keyboardKey: 'k', midiNote: 12, svgName: 'do', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/do+.svg', isHighC: true }
         ];
+
+        // SVG 캐시
+        const svgCache = new Map();
 
         // Tone.js 신스 초기화
         const synth = new Tone.Synth({
@@ -669,10 +673,51 @@
         async function initializeApp() {
             setupEventListeners();
             initializeMusicData();
+            loadSavedScores();
             setupPianoKeys();
             updateScoreGrid();
             updatePageInfo();
             initializeMIDI();
+            preloadSVGs();
+        }
+
+        function loadSavedScores() {
+            try {
+                const saved = localStorage.getItem('hanmiPianoScores');
+                if (saved) {
+                    savedScores = JSON.parse(saved);
+                }
+            } catch (error) {
+                console.error('Failed to load saved scores:', error);
+                savedScores = [];
+            }
+        }
+
+        function saveSavedScores() {
+            try {
+                localStorage.setItem('hanmiPianoScores', JSON.stringify(savedScores));
+            } catch (error) {
+                console.error('Failed to save scores to localStorage:', error);
+            }
+        }
+
+        async function preloadSVGs() {
+            const svgUrls = [
+                ...noteDefinitions.map(n => n.svgPath),
+                'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg'
+            ];
+            
+            const uniqueUrls = [...new Set(svgUrls)];
+            
+            for (const url of uniqueUrls) {
+                try {
+                    const response = await fetch(url);
+                    const svgText = await response.text();
+                    svgCache.set(url, svgText);
+                } catch (error) {
+                    console.error(`Failed to load SVG: ${url}`, error);
+                }
+            }
         }
 
         function initializeMusicData() {
@@ -732,8 +777,9 @@
         function setupPianoKeys() {
             const pianoKeys = document.querySelectorAll('.piano-key');
             pianoKeys.forEach((keyElement, index) => {
-                const noteData = noteDefinitions[index];
-                if (noteData) {
+                // 8개의 키에 대해 처리 (마지막은 높은 도)
+                if (index < noteDefinitions.length) {
+                    const noteData = noteDefinitions[index];
                     keyElement.addEventListener('click', () => playNote(noteData));
                 }
             });
@@ -755,13 +801,14 @@
             synth.triggerAttackRelease(frequency, "8n");
             
             // 시각적 피드백
-            highlightKey(noteData.key);
+            highlightKey(noteData);
             
             // 악보에 추가
             addNoteToScore(noteData);
         }
 
-        function highlightKey(key) {
+        function highlightKey(noteData) {
+            const key = noteData.isHighC ? 'C2' : noteData.key;
             const keyElement = document.querySelector(`[data-note="${key}"]`);
             if (keyElement) {
                 keyElement.classList.add('playing');
@@ -1077,9 +1124,10 @@
                 return;
             }
             
-            savedScores.forEach(score => {
+            savedScores.forEach((score, index) => {
                 const card = document.createElement('div');
                 card.className = 'score-card';
+                card.style.position = 'relative';
                 
                 const preview = document.createElement('div');
                 preview.className = 'score-preview';
@@ -1096,11 +1144,26 @@
                 });
                 
                 const info = document.createElement('p');
-                info.textContent = `${score.date} • ${new Date(score.savedAt).toLocaleTimeString('ko-KR')}`;
+                const savedDate = score.savedAt ? new Date(score.savedAt) : new Date(score.createdAt);
+                info.textContent = `${score.date} • ${savedDate.toLocaleTimeString('ko-KR')}`;
                 info.style.margin = '10px 0 0 0';
                 info.style.fontSize = '0.9rem';
                 info.style.color = '#666';
                 
+                // 삭제 버튼
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '✕';
+                deleteBtn.style.cssText = 'position: absolute; top: 5px; right: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px;';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('이 악보를 삭제하시겠습니까?')) {
+                        savedScores.splice(index, 1);
+                        saveSavedScores();
+                        updateGalleryGrid();
+                    }
+                };
+                
+                card.appendChild(deleteBtn);
                 card.appendChild(preview);
                 card.appendChild(info);
                 
@@ -1247,6 +1310,11 @@
                 return;
             }
             
+            // SVG 캐시 확인 및 필요시 다시 로드
+            if (svgCache.size === 0) {
+                await preloadSVGs();
+            }
+            
             const svgs = [];
             
             for (let page = 0; page < totalPages; page++) {
@@ -1342,19 +1410,44 @@
                     rect.setAttribute("rx", "8");
                     svg.appendChild(rect);
                     
-                    // 음표 이미지 (인라인 SVG로 변환 필요)
+                    // 음표 이미지
                     if (noteIndex < musicData.notes.length) {
                         const noteItem = musicData.notes[noteIndex];
-                        if (noteItem.type === 'note' || noteItem.type === 'rest') {
-                            const noteText = document.createElementNS(svgNS, "text");
-                            noteText.setAttribute("x", x + 40);
-                            noteText.setAttribute("y", y + 50);
-                            noteText.setAttribute("text-anchor", "middle");
-                            noteText.setAttribute("font-family", "Noto Sans KR, sans-serif");
-                            noteText.setAttribute("font-size", "24");
-                            noteText.setAttribute("fill", "#333");
-                            noteText.textContent = noteItem.type === 'note' ? noteItem.note.name : '쉼';
-                            svg.appendChild(noteText);
+                        let svgUrl = null;
+                        
+                        if (noteItem.type === 'note') {
+                            svgUrl = noteItem.note.svgPath;
+                        } else if (noteItem.type === 'rest') {
+                            svgUrl = 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg';
+                        }
+                        
+                        if (svgUrl && svgCache.has(svgUrl)) {
+                            const svgContent = svgCache.get(svgUrl);
+                            const g = document.createElementNS(svgNS, "g");
+                            g.setAttribute("transform", `translate(${x + 10}, ${y + 10})`);
+                            
+                            // SVG 내용을 파싱하여 삽입
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = svgContent;
+                            const originalSvg = tempDiv.querySelector('svg');
+                            
+                            if (originalSvg) {
+                                // viewBox 속성 가져오기
+                                const viewBox = originalSvg.getAttribute('viewBox');
+                                if (viewBox) {
+                                    const [, , width, height] = viewBox.split(' ').map(Number);
+                                    const scale = Math.min(60 / width, 60 / height);
+                                    g.setAttribute("transform", `translate(${x + 10}, ${y + 10}) scale(${scale})`);
+                                }
+                                
+                                // SVG 내부 요소들 복사
+                                Array.from(originalSvg.children).forEach(child => {
+                                    const clonedChild = child.cloneNode(true);
+                                    g.appendChild(clonedChild);
+                                });
+                            }
+                            
+                            svg.appendChild(g);
                         }
                     }
                 }
