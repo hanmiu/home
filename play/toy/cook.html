@@ -906,7 +906,20 @@
             }
         });
 
-        function generateSVG(canvasImageBase64, dishName, chefName, date, generatedImageBase64 = null, recipeText = null) {
+        function getIngredientsString() {
+            const ingredientCounts = {};
+            foodOnCanvas.forEach(item => {
+                const baseAltText = item.alt.replace(/_\d+$/, '');
+                const koreanName = foodNameMapping[baseAltText] || baseAltText;
+                ingredientCounts[koreanName] = (ingredientCounts[koreanName] || 0) + 1;
+            });
+            
+            return Object.entries(ingredientCounts)
+                .map(([name, count]) => `${name} ${count}개`)
+                .join(', ');
+        }
+
+        function generateSVG(canvasImageBase64, dishName, chefName, date, generatedImageBase64 = null, recipeText = null, ingredients = null) {
             const svgWidthMM = 210;
             const svgHeightMM = 297;
             const viewBoxWidth = 595; 
@@ -929,6 +942,14 @@
                 textYPosition += 20;
                 svgContent += `<text x="30" y="${textYPosition}" ${commonTextStyle}>날짜: ${date}</text>`;
                 textYPosition += 30;
+
+                // 재료 추가
+                if (ingredients && ingredients.length > 0) {
+                    svgContent += `<text x="30" y="${textYPosition}" font-size="14" fill="#333" font-weight="bold">재료:</text>`;
+                    textYPosition += 20;
+                    svgContent += `<text x="40" y="${textYPosition}" ${commonTextStyle}>${ingredients}</text>`;
+                    textYPosition += 30;
+                }
 
                 svgContent += `<text x="30" y="${textYPosition}" font-size="14" fill="#333" font-weight="bold">레시피:</text>`;
                 textYPosition += 20;
@@ -955,6 +976,11 @@
                         }
                     });
                 }
+                // 레시피 내용 후에 추가
+                textYPosition += 30;
+                svgContent += `<text x="30" y="${textYPosition}" font-size="14" fill="#333" font-weight="bold">상상 더하기:</text>`;
+                textYPosition += 20;
+                svgContent += `<text x="40" y="${textYPosition}" ${commonTextStyle}>새로운 아이디어를 그림으로 표현해 주세요</text>`;
 
             } else { 
                 svgContent += `<image x="50" y="${textYPosition}" width="495" height="371.25" xlink:href="${canvasImageBase64}" />`; 
@@ -962,6 +988,13 @@
 
                 svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>만든 사람: ${chefName || ''}</text>`;
                 textYPosition += 20;
+
+                // 재료 추가
+                if (ingredients && ingredients.length > 0) {
+                    svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>재료: ${ingredients}</text>`;
+                    textYPosition += 20;
+                }
+
                 svgContent += `<text x="50" y="${textYPosition}" ${commonTextStyle}>날짜: ${date}</text>`;
             }
 
@@ -1027,7 +1060,8 @@
             selectedFoodItem = previouslySelected; 
             drawCanvas(); 
 
-            const svgString = generateSVG(canvasImageBase64, dishName, chefName, date);
+            const ingredients = getIngredientsString();
+            const svgString = generateSVG(canvasImageBase64, dishName, chefName, date, null, null, ingredients);
             
             if (currentCanvasAction === 'print') {
                 printSVG(svgString);
@@ -1183,13 +1217,15 @@
             selectedFoodItem = previouslySelected;
             drawCanvas();
 
+            const ingredients = getIngredientsString();
             const svgString = generateSVG(
                 canvasImageBase64,
                 currentGeneratedRecipe.name,
                 chefName,
                 date,
                 currentGeneratedRecipe.imageUrl,
-                currentGeneratedRecipe.recipeText
+                currentGeneratedRecipe.recipeText,
+                ingredients
             );
             downloadSVG(svgString, `${currentGeneratedRecipe.name.replace(/\s+/g, '_') || 'Gemini레시피'}_${date}.svg`);
             closeModal('recipeModal');
@@ -1205,13 +1241,15 @@
             selectedFoodItem = previouslySelected;
             drawCanvas();
 
+            const ingredients = getIngredientsString();
             const svgString = generateSVG(
                 canvasImageBase64,
                 currentGeneratedRecipe.name,
                 chefName,
                 date,
                 currentGeneratedRecipe.imageUrl,
-                currentGeneratedRecipe.recipeText
+                currentGeneratedRecipe.recipeText,
+                ingredients
             );
             printSVG(svgString);
         });
