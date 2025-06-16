@@ -78,9 +78,6 @@
             height: 100%;
             z-index: 2;
         }
-        #webgl.blend-multiply {
-            mix-blend-mode: multiply;
-        }
         #background-video {
             position: absolute;
             top: 50%;
@@ -90,6 +87,17 @@
             width: auto;
             z-index: 1;
             display: none;
+        }
+        #background-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 100%;
+            width: auto;
+            z-index: 1;
+            display: none;
+            object-fit: contain;
         }
         #overlay {
             position: absolute;
@@ -155,6 +163,12 @@
             font-family: monospace;
             min-width: 100px;
         }
+        #media-type-display {
+            margin: 0 10px;
+            font-family: monospace;
+            color: #aaa;
+            font-size: 12px;
+        }
         /* Fullscreen specific styles */
         body:fullscreen header {
             display: none;
@@ -198,17 +212,43 @@
     <div class="header-row">
         <label for="webcam-filter">웹캠 필터:</label>
         <input type="text" id="webcam-filter" value="brightness(1.1) contrast(1.1) saturate(1)">
+        <span id="blend-mode-control" class="hidden">
+            <label for="blend-mode-select">블렌드 모드:</label>
+            <select id="blend-mode-select">
+                <option value="normal">Normal</option>
+                <option value="multiply" selected>Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+                <option value="plus-darker">Plus Darker</option>
+                <option value="plus-lighter">Plus Lighter</option>
+            </select>
+        </span>
     </div>
     <div id="video-controls" class="header-row hidden">
         <button id="load-recent-video" disabled style="display:none;">최근 영상</button>
         <button id="toggle-video">영상 켜기/끄기</button>
-        <button id="play-pause">재생</button>
-        <input type="range" id="video-seek" min="0" max="100" value="0" step="0.1">
-        <span id="time-display">0:00 / 0:00</span>
-        <label for="video-loop">
-            <input type="checkbox" id="video-loop" checked>
-            반복
-        </label>
+        <span id="media-type-display"></span>
+        <span id="video-only-controls">
+            <button id="play-pause">재생</button>
+            <input type="range" id="video-seek" min="0" max="100" value="0" step="0.1">
+            <span id="time-display">0:00 / 0:00</span>
+            <label for="video-loop">
+                <input type="checkbox" id="video-loop" checked>
+                반복
+            </label>
+        </span>
         <label for="video-filter" style="margin-left: 20px;">영상 필터:</label>
         <input type="text" id="video-filter" value="brightness(1) contrast(1) saturate(1)">
     </div>
@@ -216,12 +256,13 @@
 
 <div id="container">
     <video id="background-video" loop></video>
+    <img id="background-image" />
     <canvas id="webgl"></canvas>
     <svg id="overlay">
         <polygon id="outline-polygon" points=""></polygon>
     </svg>
     <video id="webcam-video" playsinline autoplay muted></video>
-    <div id="drop-zone">비디오 파일을 여기에 드롭하세요</div>
+    <div id="drop-zone">비디오/이미지 파일을 여기에 드롭하세요</div>
 </div>
 
 <script type="importmap">
@@ -269,10 +310,13 @@
     let isFlippedX = false;
     let isFlippedY = false;
 
-    // Background video variables
+    // Background media variables
     let backgroundVideoElement;
-    let videoFileURL = null;
-    let isVideoVisible = false;
+    let backgroundImageElement;
+    let mediaFileURL = null;
+    let isMediaVisible = false;
+    let currentMediaType = null; // 'video' or 'image'
+    let currentBlendMode = 'multiply';
 
     // --- DOM Elements ---
     const modeToggleButton = document.getElementById('mode-toggle');
@@ -286,6 +330,8 @@
     const canvasElement = document.getElementById('webgl');
     const webcamFilterInput = document.getElementById('webcam-filter');
     const videoFilterInput = document.getElementById('video-filter');
+    const blendModeControl = document.getElementById('blend-mode-control');
+    const blendModeSelect = document.getElementById('blend-mode-select');
     const videoControls = document.getElementById('video-controls');
     const loadRecentVideoButton = document.getElementById('load-recent-video');
     const toggleVideoButton = document.getElementById('toggle-video');
@@ -293,11 +339,14 @@
     const videoSeekSlider = document.getElementById('video-seek');
     const timeDisplay = document.getElementById('time-display');
     const videoLoopCheckbox = document.getElementById('video-loop');
+    const videoOnlyControls = document.getElementById('video-only-controls');
+    const mediaTypeDisplay = document.getElementById('media-type-display');
     const dropZone = document.getElementById('drop-zone');
     
     container = document.getElementById('container');
     videoElement = document.getElementById('webcam-video');
     backgroundVideoElement = document.getElementById('background-video');
+    backgroundImageElement = document.getElementById('background-image');
     svgOverlay = document.getElementById('overlay');
     svgPolygon = document.getElementById('outline-polygon');
 
@@ -306,7 +355,8 @@
         calibration: 'webcam-unwarp-calibration-points',
         videoSettings: 'webcam-unwarp-video-settings',
         webcamFilter: 'webcam-unwarp-webcam-filter',
-        videoFilter: 'webcam-unwarp-video-filter'
+        videoFilter: 'webcam-unwarp-video-filter',
+        blendMode: 'webcam-unwarp-blend-mode'
     };
 
     // --- Utility Functions ---
@@ -321,6 +371,45 @@
         const minutes = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateMediaTypeDisplay() {
+        if (currentMediaType === 'video') {
+            mediaTypeDisplay.textContent = '[비디오]';
+        } else if (currentMediaType === 'image') {
+            mediaTypeDisplay.textContent = '[이미지]';
+        } else {
+            mediaTypeDisplay.textContent = '';
+        }
+    }
+
+    function updateVideoOnlyControls() {
+        if (currentMediaType === 'video') {
+            videoOnlyControls.classList.remove('hidden');
+        } else {
+            videoOnlyControls.classList.add('hidden');
+        }
+    }
+
+    function applyBlendMode() {
+        if (isMediaVisible && currentMediaType) {
+            canvasElement.style.mixBlendMode = currentBlendMode;
+        } else {
+            canvasElement.style.mixBlendMode = 'normal';
+        }
+    }
+
+    function updateBackgroundImageSize() {
+        if (!backgroundImageElement || currentMediaType !== 'image') return;
+        
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // 이미지를 webgl canvas 크기에 맞춰서 높이 기준으로 조정
+        backgroundImageElement.style.height = '100%';
+        backgroundImageElement.style.width = 'auto';
+        backgroundImageElement.style.objectFit = 'contain';
+        backgroundImageElement.style.objectPosition = 'center';
     }
 
     // --- LocalStorage Functions ---
@@ -344,17 +433,18 @@
         }
     }
 
-    function saveVideoSettings() {
+    function saveMediaSettings() {
         const settings = {
-            url: videoFileURL,
+            url: mediaFileURL,
             currentTime: backgroundVideoElement.currentTime,
             loop: backgroundVideoElement.loop,
-            isVisible: isVideoVisible
+            isVisible: isMediaVisible,
+            mediaType: currentMediaType
         };
         localStorage.setItem(STORAGE_KEYS.videoSettings, JSON.stringify(settings));
     }
 
-    function loadVideoSettings() {
+    function loadMediaSettings() {
         const saved = localStorage.getItem(STORAGE_KEYS.videoSettings);
         if (saved) {
             try {
@@ -363,7 +453,7 @@
                     // Check if URL is still valid
                     fetch(settings.url, { method: 'HEAD' })
                         .then(() => {
-                            videoFileURL = settings.url;
+                            mediaFileURL = settings.url;
                             loadRecentVideoButton.disabled = false;
                             return settings;
                         })
@@ -374,7 +464,7 @@
                         });
                 }
             } catch (e) {
-                console.error('Failed to load video settings:', e);
+                console.error('Failed to load media settings:', e);
             }
         }
     }
@@ -382,11 +472,13 @@
     function saveFilters() {
         localStorage.setItem(STORAGE_KEYS.webcamFilter, webcamFilterInput.value);
         localStorage.setItem(STORAGE_KEYS.videoFilter, videoFilterInput.value);
+        localStorage.setItem(STORAGE_KEYS.blendMode, currentBlendMode);
     }
 
     function loadFilters() {
         const webcamFilter = localStorage.getItem(STORAGE_KEYS.webcamFilter);
         const videoFilter = localStorage.getItem(STORAGE_KEYS.videoFilter);
+        const blendMode = localStorage.getItem(STORAGE_KEYS.blendMode);
         
         if (webcamFilter) {
             webcamFilterInput.value = webcamFilter;
@@ -396,6 +488,13 @@
         if (videoFilter) {
             videoFilterInput.value = videoFilter;
             backgroundVideoElement.style.filter = videoFilter;
+            backgroundImageElement.style.filter = videoFilter;
+        }
+        
+        if (blendMode) {
+            currentBlendMode = blendMode;
+            blendModeSelect.value = blendMode;
+            applyBlendMode();
         }
     }
 
@@ -445,7 +544,7 @@
 
         // Load saved data
         loadCalibrationPoints();
-        loadVideoSettings();
+        loadMediaSettings();
         loadFilters();
 
         // UI Event Listeners
@@ -472,7 +571,7 @@
         aspectRatioHInput.addEventListener('input', updateAspectRatio);
         fullscreenButton.addEventListener('click', toggleFullscreen);
 
-        // Filter controls
+        // Filter and blend mode controls
         webcamFilterInput.addEventListener('input', () => {
             canvasElement.style.filter = webcamFilterInput.value;
             saveFilters();
@@ -480,17 +579,24 @@
         
         videoFilterInput.addEventListener('input', () => {
             backgroundVideoElement.style.filter = videoFilterInput.value;
+            backgroundImageElement.style.filter = videoFilterInput.value;
+            saveFilters();
+        });
+
+        blendModeSelect.addEventListener('change', () => {
+            currentBlendMode = blendModeSelect.value;
+            applyBlendMode();
             saveFilters();
         });
 
         // Video controls
-        loadRecentVideoButton.addEventListener('click', loadRecentVideo);
-        toggleVideoButton.addEventListener('click', toggleVideo);
+        loadRecentVideoButton.addEventListener('click', loadRecentMedia);
+        toggleVideoButton.addEventListener('click', toggleMedia);
         playPauseButton.addEventListener('click', togglePlayPause);
         videoSeekSlider.addEventListener('input', seekVideo);
         videoLoopCheckbox.addEventListener('change', () => {
             backgroundVideoElement.loop = videoLoopCheckbox.checked;
-            saveVideoSettings();
+            saveMediaSettings();
         });
 
         // Video element events
@@ -545,67 +651,160 @@
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
+                const fileName = file.name.toLowerCase();
+                
                 if (file.type.startsWith('video/')) {
                     loadVideoFile(file);
+                } else if (isImageFile(file, fileName)) {
+                    loadImageFile(file);
                 }
             }
         });
+
+        // Helper function to check if file is an image (including SVG)
+        function isImageFile(file, fileName) {
+            // Check MIME type first
+            if (file.type.startsWith('image/')) {
+                return true;
+            }
+            
+            // Check for SVG with different MIME types
+            if (file.type === 'image/svg+xml' || 
+                file.type === 'text/xml' || 
+                file.type === 'application/xml') {
+                return fileName.endsWith('.svg');
+            }
+            
+            // Check file extension for common image formats including SVG
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+            return imageExtensions.some(ext => fileName.endsWith(ext));
+        }
     }
 
     function loadVideoFile(file) {
-        if (videoFileURL) {
-            URL.revokeObjectURL(videoFileURL);
+        if (mediaFileURL) {
+            URL.revokeObjectURL(mediaFileURL);
         }
 
-        videoFileURL = URL.createObjectURL(file);
-        backgroundVideoElement.src = videoFileURL;
+        mediaFileURL = URL.createObjectURL(file);
+        currentMediaType = 'video';
+        
+        backgroundVideoElement.src = mediaFileURL;
         backgroundVideoElement.load();
         
-        isVideoVisible = true;
-        backgroundVideoElement.style.display = 'block';
-        canvasElement.classList.add('blend-multiply');
+        // Hide image element
+        backgroundImageElement.style.display = 'none';
         
-        saveVideoSettings();
+        isMediaVisible = true;
+        backgroundVideoElement.style.display = 'block';
+        applyBlendMode();
+        
+        // Auto play video
+        backgroundVideoElement.addEventListener('loadeddata', () => {
+            try {
+                backgroundVideoElement.play().catch(e => {
+                    console.log('Auto play failed, user interaction required:', e);
+                });
+            } catch (e) {
+                console.log('Auto play failed:', e);
+            }
+        }, { once: true });
+        
+        updateMediaTypeDisplay();
+        updateVideoOnlyControls();
+        saveMediaSettings();
     }
 
-    function loadRecentVideo() {
+    function loadImageFile(file) {
+        if (mediaFileURL) {
+            URL.revokeObjectURL(mediaFileURL);
+        }
+
+        mediaFileURL = URL.createObjectURL(file);
+        currentMediaType = 'image';
+        
+        backgroundImageElement.src = mediaFileURL;
+        
+        // Hide video element
+        backgroundVideoElement.style.display = 'none';
+        backgroundVideoElement.pause();
+        
+        isMediaVisible = true;
+        backgroundImageElement.style.display = 'block';
+        applyBlendMode();
+        updateBackgroundImageSize();
+        
+        updateMediaTypeDisplay();
+        updateVideoOnlyControls();
+        saveMediaSettings();
+    }
+
+    function loadRecentMedia() {
         const saved = localStorage.getItem(STORAGE_KEYS.videoSettings);
         if (saved) {
             try {
                 const settings = JSON.parse(saved);
                 if (settings.url) {
-                    backgroundVideoElement.src = settings.url;
-                    backgroundVideoElement.currentTime = settings.currentTime || 0;
-                    backgroundVideoElement.loop = settings.loop !== false;
-                    videoLoopCheckbox.checked = backgroundVideoElement.loop;
-                    isVideoVisible = settings.isVisible !== false;
-                    
-                    if (isVideoVisible) {
-                        backgroundVideoElement.style.display = 'block';
-                        canvasElement.classList.add('blend-multiply');
+                    if (settings.mediaType === 'image') {
+                        // Load as image
+                        currentMediaType = 'image';
+                        backgroundImageElement.src = settings.url;
+                        backgroundVideoElement.style.display = 'none';
+                        isMediaVisible = settings.isVisible !== false;
+                        
+                        if (isMediaVisible) {
+                            backgroundImageElement.style.display = 'block';
+                            applyBlendMode();
+                            updateBackgroundImageSize();
+                        }
+                    } else {
+                        // Load as video (default)
+                        currentMediaType = 'video';
+                        backgroundVideoElement.src = settings.url;
+                        backgroundVideoElement.currentTime = settings.currentTime || 0;
+                        backgroundVideoElement.loop = settings.loop !== false;
+                        videoLoopCheckbox.checked = backgroundVideoElement.loop;
+                        backgroundImageElement.style.display = 'none';
+                        isMediaVisible = settings.isVisible !== false;
+                        
+                        if (isMediaVisible) {
+                            backgroundVideoElement.style.display = 'block';
+                            applyBlendMode();
+                        }
+                        
+                        backgroundVideoElement.load();
                     }
                     
-                    backgroundVideoElement.load();
+                    updateMediaTypeDisplay();
+                    updateVideoOnlyControls();
                 }
             } catch (e) {
-                console.error('Failed to load recent video:', e);
+                console.error('Failed to load recent media:', e);
             }
         }
     }
 
-    function toggleVideo() {
-        isVideoVisible = !isVideoVisible;
-        if (isVideoVisible) {
-            backgroundVideoElement.style.display = 'block';
-            canvasElement.classList.add('blend-multiply');
+    function toggleMedia() {
+        isMediaVisible = !isMediaVisible;
+        if (isMediaVisible) {
+            if (currentMediaType === 'video') {
+                backgroundVideoElement.style.display = 'block';
+            } else if (currentMediaType === 'image') {
+                backgroundImageElement.style.display = 'block';
+                updateBackgroundImageSize();
+            }
+            applyBlendMode();
         } else {
             backgroundVideoElement.style.display = 'none';
-            canvasElement.classList.remove('blend-multiply');
+            backgroundImageElement.style.display = 'none';
+            canvasElement.style.mixBlendMode = 'normal';
         }
-        saveVideoSettings();
+        saveMediaSettings();
     }
 
     function togglePlayPause() {
+        if (currentMediaType !== 'video') return;
+        
         if (backgroundVideoElement.paused) {
             backgroundVideoElement.play();
             playPauseButton.textContent = '일시정지';
@@ -616,16 +815,22 @@
     }
 
     function seekVideo() {
+        if (currentMediaType !== 'video') return;
+        
         const seekTime = (videoSeekSlider.value / 100) * backgroundVideoElement.duration;
         backgroundVideoElement.currentTime = seekTime;
     }
 
     function updateVideoControls() {
+        if (currentMediaType !== 'video') return;
+        
         videoSeekSlider.max = 100;
         updateTimeDisplay();
     }
 
     function updateTimeDisplay() {
+        if (currentMediaType !== 'video') return;
+        
         const current = backgroundVideoElement.currentTime;
         const duration = backgroundVideoElement.duration;
         
@@ -1118,6 +1323,7 @@
 
         if (mode === 'calibration') {
             aspectRatioControl.classList.add('hidden');
+            blendModeControl.classList.add('hidden');
             svgOverlay.classList.remove('hidden');
             videoControls.classList.add('hidden');
             if (backgroundPlaneMesh) backgroundPlaneMesh.visible = true;
@@ -1126,19 +1332,29 @@
             planeMesh.scale.y = 1;
             
             // Remove blend mode in calibration mode
-            canvasElement.classList.remove('blend-multiply');
+            canvasElement.style.mixBlendMode = 'normal';
             backgroundVideoElement.style.display = 'none';
+            backgroundImageElement.style.display = 'none';
         } else { // mode === 'unwarped'
             aspectRatioControl.classList.remove('hidden');
+            blendModeControl.classList.remove('hidden');
             svgOverlay.classList.add('hidden');
             videoControls.classList.remove('hidden');
             if (backgroundPlaneMesh) backgroundPlaneMesh.visible = false;
             
-            // Apply blend mode if video is visible
-            if (isVideoVisible && videoFileURL) {
-                canvasElement.classList.add('blend-multiply');
-                backgroundVideoElement.style.display = 'block';
+            // Apply blend mode if media is visible
+            if (isMediaVisible && currentMediaType) {
+                if (currentMediaType === 'video') {
+                    backgroundVideoElement.style.display = 'block';
+                } else if (currentMediaType === 'image') {
+                    backgroundImageElement.style.display = 'block';
+                    updateBackgroundImageSize();
+                }
+                applyBlendMode();
             }
+            
+            updateMediaTypeDisplay();
+            updateVideoOnlyControls();
         }
         applyCurrentModeGeometry();
         updateBackgroundPlaneSize();
@@ -1215,6 +1431,7 @@
 
     function handleFullscreenChange() {
         setTimeout(onWindowResize, 100);
+        setTimeout(updateBackgroundImageSize, 100);
     }
 
     function applyCurrentModeGeometry() {
@@ -1256,6 +1473,7 @@
         camera.updateProjectionMatrix();
 
         updateBackgroundPlaneSize();
+        updateBackgroundImageSize();
         applyCurrentModeGeometry();
         updateSVGOverlay();
     }
