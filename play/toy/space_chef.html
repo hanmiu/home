@@ -542,75 +542,23 @@
 
     <script>
         // TSV 데이터
-        const tsvData = `
-태양	🌟 나는 내 안에서 빛과 열을 스스로 만들고 있어! 👉 내 요리에 '스스로 반짝이는' 느낌을 담아줘! ✨
-태양	⚡ 나는 수소 가스를 꽉 눌러서 엄청난 에너지를 만들어 내! 👉 내 요리에 '폭발적인 에너지'를 담아줘! 💥
-태양	🌊 나는 표면이 부글부글 끓는 물처럼 움직여! 👉 내 요리에 '울퉁불퉁하고 살아있는' 느낌을 넣어줘! 🔥
-태양	🔥 나는 아주아주 뜨거워서 모든 걸 녹여버릴 수 있어! 👉 내 요리를 아주 뜨겁게 만들어줘! 🌶️
-태양	✨ 나는 플레어라는 불꽃이 튀기도 해! 👉 내 요리에 '불꽃이 튀는 것처럼 특별한 장식'을 넣어줘! 🎆
-태양	⚫ 나는 표면에 흑점이라는 검은 점도 있어! 👉 내 요리에도 '특별한 점'을 넣어줘! 🫐
-수성	🌡️ 나는 태양 가까이에 있어서 너무너무 뜨거워졌다 식었다 해! 👉 내 요리는 뜨거운 느낌과 차가운 느낌이 섞여 있어야 해! 🧊🔥
-수성	🪨 나는 돌멩이처럼 단단해! 👉 내 요리는 딱딱한 부분이 있어야 해! 💎
-수성	🌅 나는 밤이 엄청 길고 낮도 엄청 길어! 👉 내 요리는 하루가 길~게 느껴지는 특별한 요리였으면 해! 🌙☀️
-수성	💨 나는 작지만 빠르게 움직여! 👉 내 요리는 작고 빠르게 먹을 수 있는 요리로 만들어줘! ⚡
-수성	🌪️ 나는 공기 대신 돌먼지만 가득해! 👉 내 요리는 공기 대신 바삭바삭한 식감을 넣어줘! 🥨
-수성	🕳️ 나는 달처럼 움푹 파인 구멍이 많아! 👉 내 요리에 구멍이 쏙쏙 있는 모양을 만들어줘! 🧀
-금성	☁️ 나는 두꺼운 구름으로 덮여 있어서 아주아주 더워! 👉 내 요리는 찜찜할 만큼 뜨거운 느낌을 담아줘! 🥵
-금성	💨 나는 독특한 냄새가 나는 가스를 품고 있어! 👉 내 요리는 냄새가 강한 특별한 소스를 넣어줘! 🧄
-금성	🔄 나는 거꾸로 천천히 돌아가! 👉 내 요리는 느릿느릿 특별한 순서로 먹는 요리로 만들어줘! 🐌
-금성	✨ 나는 반짝이는 구름으로 감싸져 있어! 👉 내 요리는 반짝반짝 장식으로 꾸며줘! 💫
-금성	☀️ 나는 태양빛을 가장 많이 받는 행성이야! 👉 내 요리는 햇빛처럼 노란 재료를 써줘! 🌻
-금성	😍 내 겉은 아름답지만 안은 무척 뜨거워! 👉 내 요리는 겉은 예쁘고 안은 뜨거운 걸로 만들어줘! 🎁
-지구	💧 나는 물이 가득한 행성이야! 👉 내 요리에 촉촉한 느낌을 꼭 넣어줘! 🌊
-지구	💙 나는 푸른색과 초록색이 아름다워! 👉 내 요리를 푸른색, 초록색으로 예쁘게 꾸며줘! 🌿
-지구	🌱 나는 모든 생명들이 살아가는 집이야! 👉 내 요리에 생명력 넘치는 재료를 담아줘! 🥬
-지구	☁️ 나는 구름도 있고 비도 내리지! 👉 내 요리에 말랑말랑한 구름 같은 것도 넣어줘! ☔
-지구	🌗 나는 낮과 밤이 바뀌는 걸 보여줄 수 있어! 👉 내 요리에 검은색과 흰색이 함께 있어야 해! 🖤🤍
-지구	🌙 나는 달과 함께 지내고 있어! 👉 내 요리 옆에 작은 동그란 달 모양 장식도 부탁해! 🥟
-화성	🔴 나는 붉은 먼지로 덮여 있어서 온몸이 빨개! 👉 내 요리는 빨간 재료로 만들어줘! 🍅
-화성	💨 나는 바람이 세게 불어서 먼지가 휘몰아쳐! 👉 내 요리에 휘몰아치는 모양 장식을 넣어줘! 🌪️
-화성	🧊 나는 얼음도 있고, 옛날엔 물도 흘렀대! 👉 내 요리에는 얼음 느낌과 물방울 장식이 있었으면 해! 💧
-화성	🌋 나는 작은 화산과 골짜기가 많아! 👉 내 요리에 울퉁불퉁한 지형처럼 생긴 부분을 넣어줘! ⛰️
-화성	😤 나는 외롭지만 도전하고 싶어! 👉 내 요리는 용감한 요리처럼 특별했으면 좋겠어! 🦸
-화성	🤖 나는 로봇들이 자주 놀러와! 👉 내 요리에 기계처럼 신기한 장치 모양을 넣어줘! ⚙️
-목성	👑 나는 엄청 커서 행성들 중 왕이야! 👉 내 요리는 크고 멋진 왕의 요리처럼 만들어줘! 🏰
-목성	🦓 나는 몸에 줄무늬가 많아! 👉 내 요리에 줄무늬 무늬를 넣어줘! 🌈
-목성	👁️ 나는 눈으로 보이는 큰 점(폭풍)이 있어! 👉 내 요리에 회오리처럼 보이는 장식을 넣어줘! 🌀
-목성	💫 나는 아주 빠르게 돌아! 👉 내 요리는 빙글빙글 도는 모양이면 좋아! 🌪️
-목성	☁️ 나는 가스로 이루어져 있어서 몸이 말랑말랑해! 👉 내 요리는 푹신푹신한 느낌이 있어야 해! 🍰
-목성	🌙 나는 달이 무려 90개도 넘게 있어! 👉 내 요리 옆에 작은 구슬처럼 생긴 장식이 잔뜩 있었으면 해! 🫧
-토성	💍 나는 커다란 반지(고리)를 가지고 있어! 👉 내 요리에 동그란 고리 장식을 넣어줘! ⭕
-토성	❄️ 나는 고리가 얼음과 먼지로 만들어졌어! 👉 내 고리 장식은 하얗고 반짝이는 재료로 해줘! ✨
-토성	🌟 나는 빛을 받으면 더 예뻐져! 👉 내 요리에 빛나는 부분이 있었으면 해! 💎
-토성	🪶 나는 부드럽고 가벼운 가스로 되어 있어! 👉 내 요리는 가볍고 말랑한 식감이면 좋겠어! 🍮
-토성	🐌 나는 고요하고 느릿느릿 돌아! 👉 내 요리는 천천히 먹고 싶은 요리로 만들어줘! 🫖
-토성	👸 나는 점잖고 우아해! 👉 내 요리는 예쁘고 조용한 느낌을 담아줘! 🌸
-천왕성	🤸 나는 옆으로 누워서 돌아가는 이상한 행성이야! 👉 내 요리는 옆으로 누운 모양이었으면 해! 🛌
-천왕성	🧊 나는 파란 얼음처럼 차가워! 👉 내 요리는 시원하고 차가운 느낌이 있어야 해! ❄️
-천왕성	👻 나는 희미한 고리를 가지고 있어! 👉 내 요리에 연하고 투명한 링 장식을 해줘! 💫
-천왕성	😊 나는 조용하고 수줍은 성격이야! 👉 내 요리는 작고 부드러운 맛이면 좋겠어! 🥰
-천왕성	🌑 나는 멀리 있어서 태양빛이 잘 안 와! 👉 내 요리는 살짝 어두운 색도 들어가면 좋아! 🌚
-해왕성	🔮 나는 아주 멀리 있어서 신비로운 행성이야! 👉 내 요리는 신비로운 파란색으로 꾸며줘! 💙
-해왕성	🌪️ 나는 엄청난 바람이 불어서 요동쳐! 👉 내 요리는 소용돌이 모양이 들어가면 좋아! 🌀
-해왕성	🌊 나는 깊은 바다 같아 보여! 👉 내 요리에 물방울이나 파도 모양이 있었으면 해! 🌊
-해왕성	💙 나는 어두운 파란색을 띠고 있어! 👉 내 요리는 진한 파란색을 써줘! 🫐
-해왕성	❄️ 나는 차가운 가스들로 만들어졌어! 👉 내 요리는 시원하고 부드러운 재료면 좋아! 🧊
-해왕성	😌 나는 조용히 돌고 있지만, 속은 격렬해! 👉 내 요리는 겉은 부드럽지만 속은 강렬한 맛이 숨어있었으면 해! 🌶️
-달	🌙 나는 밤하늘에 떠 있어서 조용하고 평화로워! 👉 내 요리는 고요하고 부드러운 맛이었으면 해! 😴
-달	🕳️ 나는 크고 작은 구멍(크레이터)이 많아! 👉 내 요리에 오목하게 파인 부분이나 작은 동그라미 장식을 넣어줘! ⚪
-달	🌗 나는 낮과 밤이 길게 이어져! 👉 내 요리는 어두운 부분과 밝은 부분이 함께 있었으면 좋겠어! 🖤🤍
-달	✨ 나는 햇빛을 받아서 빛나! 👉 내 요리는 빛나는 하얀색이나 은색 재료가 있으면 좋아! 🥛
-달	🌍 나는 지구와 함께 돌고 있어! 👉 내 요리 옆에 작은 지구 장식 하나 넣어줘도 재밌을 것 같아! 🌍
-달	🌒 나는 모습이 매일 조금씩 변해! 👉 내 요리는 모양이 변하는 느낌이 나면 좋아! (예: 반쪽, 동그라미) 🥟
-달	🚀 나는 옛날에 우주인이 다녀갔어! 👉 내 요리에 깃발 모양이나 발자국처럼 생긴 장식을 넣어줘! 👨‍🚀
-명왕성	🧊 나는 태양계에서 아주 멀리 있어서 아주 차가워! 👉 내 요리는 얼음처럼 차갑고 시원한 맛이 나야 해! ❄️
-명왕성	🐣 나는 아주 작고 귀여워! 👉 내 요리는 작고 아기자기한 크기면 좋아! 🥰
-명왕성	🪨 나는 겉은 얼음이지만 안에는 바위가 있어! 👉 내 요리는 겉은 차갑고 안은 단단한 느낌이 나면 좋겠어! 🧊🪨
-명왕성	🐌 나는 한 바퀴 도는 데 오~래 걸려! 👉 내 요리는 천천히 먹고 싶은 요리로 만들어줘! ⏰
-명왕성	👫 나는 친구인 위성 '카론'이랑 붙어 있어! 👉 내 요리 옆에 작은 짝꿍 장식 하나 더 있으면 좋아! 👯
-명왕성	⭐ 나는 한때 행성이었지만 지금은 왜소행성이야! 👉 내 요리는 작지만 특별한 매력이 담겨 있으면 좋아! 💎
-명왕성	🌑 나는 태양빛이 조금밖에 닿지 않아! 👉 내 요리에 살짝 어두운 색이나 반짝이는 얼음 느낌을 넣어줘! 🌟
-`;
+        const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1QT5RRJcWlOe4MByZv753GpmYSX51r61QH4ETOyhAJ7Q/export?format=tsv&gid=0';
+
+        async function fetchTSVFromSpreadsheet() {
+            const response = await fetch(SPREADSHEET_URL);
+            const tsvText = await response.text();
+            return tsvText;
+        }
+
+        function showLoadingState() {
+            requestTextDisplay.textContent = "🚀 우주 손님들의 요청을 불러오는 중...";
+            planetNameDisplay.textContent = "✨ 로딩 중 ✨";
+            getRequestButton.disabled = true;
+        }
+
+        function hideLoadingState() {
+            getRequestButton.disabled = false;
+        }
         const keyPlanetMap = {
             '1': "수성",
             '2': "금성",
@@ -783,15 +731,20 @@
             setTimeout(() => { messageBox.classList.remove('show'); }, 4000);
         }
 
-        function parseTSVData(data) {
-            const lines = data.trim().split('\n');
+        function parseTSVData(tsvText) {
+            const lines = tsvText.trim().split('\n').filter(line => line.trim() !== '');
             const requests = [];
+            
             lines.forEach(line => {
-                const parts = line.split('\t');
-                if (parts.length === 2) {
-                    requests.push({ name: parts[0].trim(), request: parts[1].trim() });
+                const parts = line.split('\t').map(part => part.trim());
+                if (parts.length === 2 && parts[0] && parts[1]) {
+                    requests.push({ 
+                        name: parts[0], 
+                        request: parts[1] 
+                    });
                 }
             });
+            
             return requests;
         }
 
@@ -803,14 +756,7 @@
         }
 
         function initializeAndGroupRequests(data) {
-            const lines = data.trim().split('\n');
-            const allRequests = [];
-            lines.forEach(line => {
-                const parts = line.split('\t');
-                if (parts.length === 2) {
-                    allRequests.push({ name: parts[0].trim(), request: parts[1].trim() });
-                }
-            });
+            const allRequests = parseTSVData(data);
 
             if (allRequests.length === 0) {
                 console.error("TSV 데이터에서 요청을 파싱하지 못했습니다.");
@@ -2008,27 +1954,40 @@
         }
 
         // 이벤트 리스너 설정
-        document.addEventListener('DOMContentLoaded', () => {
-            // 기존 originalCelestialRequests 및 prepareRequests() 호출 부분을 아래 내용으로 대체합니다.
-            if (initializeAndGroupRequests(tsvData)) { // ✨ TSV 데이터 파싱 및 그룹화
-                generateRequestSequence(); // ✨ 초기 요청 시퀀스 생성
-                if (currentRequestQueue.length === 0 && Object.keys(masterRequestsByPlanet).length > 0 ) { 
-                    // 그룹화는 성공했으나 큐 생성이 안된 경우 (로직 오류 가능성)
-                    requestTextDisplay.textContent = "🚨 요청사항은 있으나, 표시할 순서 생성에 실패했어요. 😥";
-                    showMessage("데이터 처리 중 오류 발생!", "error");
-                } else if (currentRequestQueue.length === 0) {
-                    // 아예 요청이 없는 경우 (tsvData가 비어있거나 문제 있을 때)
-                    requestTextDisplay.textContent = "🚨 표시할 우주 손님의 요청이 없어요. 😥";
-                    planetNameDisplay.textContent = "✨ 휴식 시간 ✨";
-                    // showMessage("요청 데이터가 없습니다.", "info"); // displayRandomRequest에서 이미 처리 가능
+        document.addEventListener('DOMContentLoaded', async () => {
+            showLoadingState();
+            
+            try {
+                const tsvData = await fetchTSVFromSpreadsheet();
+                console.log('스프레드시트 데이터 로드 완료:');
+                
+                if (initializeAndGroupRequests(tsvData)) {
+                    generateRequestSequence();
+                    hideLoadingState();
+                    
+                    if (currentRequestQueue.length === 0 && Object.keys(masterRequestsByPlanet).length > 0) {
+                        requestTextDisplay.textContent = "🚨 요청사항은 있으나, 표시할 순서 생성에 실패했어요. 😥";
+                        showMessage("데이터 처리 중 오류 발생!", "error");
+                    } else if (currentRequestQueue.length === 0) {
+                        requestTextDisplay.textContent = "🚨 표시할 우주 손님의 요청이 없어요. 😥";
+                        planetNameDisplay.textContent = "✨ 휴식 시간 ✨";
+                    } else {
+                        requestTextDisplay.textContent = "🎯 버튼을 눌러 우주 손님들의 특별한 주문을 확인하세요! \n각 행성마다 고유한 특성이 담긴 신비로운 요리를 요청할 거예요! 🌌✨";
+                        planetNameDisplay.textContent = "✨ 어떤 손님일까요? ✨";
+                    }
+                } else {
+                    throw new Error("데이터 파싱 실패");
                 }
-            } else {
-                // initializeAndGroupRequests 자체가 실패한 경우 (TSV 파싱 실패 등)
-                requestTextDisplay.textContent = "🚨 요청사항 데이터를 불러오는데 심각한 문제가 발생했어요. 😥";
-                showMessage("초기 데이터 로딩 실패!", "error");
+                
+            } catch (error) {
+                console.error('스프레드시트 데이터 로딩 실패:', error);
+                hideLoadingState();
+                requestTextDisplay.textContent = "🚨 우주 손님 데이터를 불러오는데 실패했어요. 😥\n네트워크 연결을 확인해주세요.";
+                planetNameDisplay.textContent = "✨ 네트워크 오류 ✨";
+                showMessage("데이터 로딩 실패! 네트워크를 확인해주세요.", "error");
             }
 
-            initThreeJS(); // 3D 씬 초기화는 그대로 진행
+            initThreeJS();
 
             document.addEventListener('keydown', handleKeyboardPlanetSelection);
 
