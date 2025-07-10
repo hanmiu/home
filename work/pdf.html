@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 병합 + 압축</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #222;
+        }
+
+        .drop-zone {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .drop-zone:hover {
+            border-color: #999;
+            background-color: #f0f0f0;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+
+        .drop-zone-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .pdf-list {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .pdf-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            cursor: move;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-item:hover {
+            background: #f0f0f0;
+        }
+
+        .pdf-item.dragging {
+            opacity: 0.5;
+        }
+
+        .pdf-thumbnail {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .pdf-info {
+            flex: 1;
+        }
+
+        .pdf-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .pdf-size {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .pdf-remove {
+            padding: 8px 16px;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .pdf-remove:hover {
+            background: #ff3838;
+        }
+
+        .compression-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            margin-right: 15px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .compression-settings {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .compression-settings.active {
+            display: block;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            width: 60px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .merge-button {
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: none;
+        }
+
+        .merge-button:hover {
+            background: #45a049;
+        }
+
+        .merge-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF 병합 + 압축 (용량 줄이기)</h1>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-text">
+                PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요
+            </div>
+            <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
+        </div>
+
+        <div class="pdf-list" id="pdfList"></div>
+
+        <div class="compression-toggle" id="compressionToggle" style="display: none;">
+            <label class="toggle-switch">
+                <input type="checkbox" id="enableCompression">
+                <span class="toggle-slider"></span>
+            </label>
+            <label class="toggle-label" for="enableCompression">이미지 압축 사용</label>
+        </div>
+
+        <div class="compression-settings" id="compressionSettings">
+            <div class="setting-group">
+                <label class="setting-label">이미지 품질 (%)</label>
+                <div class="slider-container">
+                    <input type="range" class="slider" id="qualitySlider" min="0" max="100" value="80">
+                    <input type="number" class="slider-value" id="qualityValue" min="0" max="100" value="80">
+                </div>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">이미지 해상도 (DPI)</label>
+                <div class="slider-container">
+                    <input type="range" class="slider" id="resolutionSlider" min="72" max="300" value="150" step="6">
+                    <input type="number" class="slider-value" id="resolutionValue" min="72" max="300" value="150">
+                </div>
+            </div>
+            <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 14px; color: #666;">
+                <div id="compressionInfo">압축 설정: 품질 80%, 해상도 150 DPI</div>
+                <div style="margin-top: 5px; font-size: 12px;">※ 품질 100% + 해상도 300 DPI = 원본 유지</div>
+            </div>
+        </div>
+
+        <button class="merge-button" id="mergeButton">PDF 병합하기</button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">처리 중...</div>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pica/9.0.1/pica.min.js"></script>
+    <script>
+        // Set worker source for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Global variables
+        let pdfFiles = [];
+        const pica = window.pica();
+
+        // DOM elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const pdfList = document.getElementById('pdfList');
+        const compressionToggle = document.getElementById('compressionToggle');
+        const enableCompression = document.getElementById('enableCompression');
+        const compressionSettings = document.getElementById('compressionSettings');
+        const mergeButton = document.getElementById('mergeButton');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const resolutionSlider = document.getElementById('resolutionSlider');
+        const resolutionValue = document.getElementById('resolutionValue');
+
+        // Event listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        mergeButton.addEventListener('click', mergePDFs);
+        enableCompression.addEventListener('change', toggleCompression);
+
+        // Slider sync
+        qualitySlider.addEventListener('input', (e) => {
+            qualityValue.value = e.target.value;
+            updateCompressionInfo();
+        });
+        qualityValue.addEventListener('input', (e) => {
+            qualitySlider.value = e.target.value;
+            updateCompressionInfo();
+        });
+        resolutionSlider.addEventListener('input', (e) => {
+            resolutionValue.value = e.target.value;
+            updateCompressionInfo();
+        });
+        resolutionValue.addEventListener('input', (e) => {
+            resolutionSlider.value = e.target.value;
+            updateCompressionInfo();
+        });
+
+        function updateCompressionInfo() {
+            const compressionInfo = document.getElementById('compressionInfo');
+            if (!compressionInfo) return;
+            
+            const quality = qualityValue.value;
+            const dpi = resolutionValue.value;
+            
+            if (quality == 100 && dpi == 300) {
+                compressionInfo.textContent = '압축 설정: 원본 유지 (압축 없음)';
+                compressionInfo.style.color = '#4CAF50';
+            } else {
+                compressionInfo.textContent = `압축 설정: 품질 ${quality}%, 해상도 ${dpi} DPI`;
+                compressionInfo.style.color = '#666';
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf');
+            processFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+
+        async function processFiles(files) {
+            for (const file of files) {
+                const thumbnail = await generateThumbnail(file);
+                pdfFiles.push({
+                    file: file,
+                    thumbnail: thumbnail,
+                    name: file.name,
+                    size: formatFileSize(file.size)
+                });
+            }
+            updateUI();
+        }
+
+        async function generateThumbnail(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                const page = await pdf.getPage(1);
+                
+                const viewport = page.getViewport({ scale: 0.5 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                return canvas.toDataURL();
+            } catch (error) {
+                console.error('Error generating thumbnail:', error);
+                return null;
+            }
+        }
+
+        function toggleCompression() {
+            if (enableCompression.checked) {
+                compressionSettings.classList.add('active');
+                mergeButton.textContent = 'PDF 압축 및 병합하기';
+            } else {
+                compressionSettings.classList.remove('active');
+                mergeButton.textContent = 'PDF 병합하기';
+            }
+        }
+
+        function updateUI() {
+            if (pdfFiles.length > 0) {
+                pdfList.style.display = 'block';
+                compressionToggle.style.display = 'flex';
+                mergeButton.style.display = 'block';
+                renderPDFList();
+            } else {
+                pdfList.style.display = 'none';
+                compressionToggle.style.display = 'none';
+                compressionSettings.classList.remove('active');
+                mergeButton.style.display = 'none';
+                enableCompression.checked = false;
+            }
+        }
+
+        function renderPDFList() {
+            pdfList.innerHTML = '';
+            pdfFiles.forEach((pdf, index) => {
+                const item = document.createElement('div');
+                item.className = 'pdf-item';
+                item.draggable = true;
+                item.dataset.index = index;
+                
+                item.innerHTML = `
+                    ${pdf.thumbnail ? `<img src="${pdf.thumbnail}" class="pdf-thumbnail" alt="${pdf.name}">` : '<div class="pdf-thumbnail"></div>'}
+                    <div class="pdf-info">
+                        <div class="pdf-name">${pdf.name}</div>
+                        <div class="pdf-size">${pdf.size}</div>
+                    </div>
+                    <button class="pdf-remove" onclick="removePDF(${index})">삭제</button>
+                `;
+                
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleItemDragOver);
+                item.addEventListener('drop', handleItemDrop);
+                item.addEventListener('dragend', handleDragEnd);
+                
+                pdfList.appendChild(item);
+            });
+        }
+
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.currentTarget;
+            e.currentTarget.classList.add('dragging');
+        }
+
+        function handleItemDragOver(e) {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(pdfList, e.clientY);
+            if (afterElement == null) {
+                pdfList.appendChild(draggedElement);
+            } else {
+                pdfList.insertBefore(draggedElement, afterElement);
+            }
+        }
+
+        function handleItemDrop(e) {
+            e.preventDefault();
+            updatePDFOrder();
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.pdf-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updatePDFOrder() {
+            const items = Array.from(pdfList.children);
+            const newOrder = items.map(item => parseInt(item.dataset.index));
+            const reorderedFiles = newOrder.map(index => pdfFiles[index]);
+            pdfFiles = reorderedFiles;
+            renderPDFList();
+        }
+
+        function removePDF(index) {
+            pdfFiles.splice(index, 1);
+            updateUI();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function mergePDFs() {
+            mergeButton.disabled = true;
+            progressContainer.style.display = 'block';
+            
+            const useCompression = enableCompression.checked;
+            updateProgress(0, useCompression ? 'PDF 압축 및 병합 시작...' : 'PDF 병합 시작...');
+
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                const quality = parseInt(qualityValue.value) / 100;
+                const targetDPI = parseInt(resolutionValue.value);
+                const needsCompression = useCompression && (quality < 1 || targetDPI < 300);
+
+                for (let i = 0; i < pdfFiles.length; i++) {
+                    const progressMsg = needsCompression 
+                        ? `PDF ${i + 1}/${pdfFiles.length} 압축 및 처리 중...`
+                        : `PDF ${i + 1}/${pdfFiles.length} 처리 중...`;
+                    updateProgress((i / pdfFiles.length) * 100, progressMsg);
+                    
+                    const arrayBuffer = await pdfFiles[i].file.arrayBuffer();
+                    
+                    if (needsCompression) {
+                        // 압축이 필요한 경우 각 페이지를 이미지로 렌더링 후 재구성
+                        const compressedPages = await compressPDFPages(arrayBuffer, quality, targetDPI);
+                        for (const pageData of compressedPages) {
+                            const page = mergedPdf.addPage([
+                                pageData.width * 72 / targetDPI, 
+                                pageData.height * 72 / targetDPI
+                            ]);
+                            const pdfImage = await mergedPdf.embedJpg(pageData.imageData);
+                            page.drawImage(pdfImage, {
+                                x: 0,
+                                y: 0,
+                                width: page.getWidth(),
+                                height: page.getHeight(),
+                            });
+                        }
+                    } else {
+                        // 압축이 필요없는 경우 원본 페이지 복사
+                        const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                        pages.forEach(page => mergedPdf.addPage(page));
+                    }
+                }
+
+                updateProgress(90, '최종 PDF 생성 중...');
+                
+                const mergedPdfBytes = await mergedPdf.save();
+                const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'merged.pdf';
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                
+                updateProgress(100, '완료!');
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    mergeButton.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error merging PDFs:', error);
+                alert('PDF 병합 중 오류가 발생했습니다.');
+                progressContainer.style.display = 'none';
+                mergeButton.disabled = false;
+            }
+        }
+
+        async function compressPDFPages(arrayBuffer, quality, targetDPI) {
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const numPages = pdf.numPages;
+            const compressedPages = [];
+            
+            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.0 });
+                
+                // 원본 aspect ratio 유지하면서 DPI 기반 크기 계산
+                const originalWidth = viewport.width;
+                const originalHeight = viewport.height;
+                const aspectRatio = originalWidth / originalHeight;
+                
+                // DPI 기반 스케일 계산 (기본 PDF는 72 DPI)
+                const scale = targetDPI / 72;
+                const targetWidth = Math.floor(originalWidth * scale);
+                const targetHeight = Math.floor(originalHeight * scale);
+                
+                // 캔버스 생성 및 렌더링
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                
+                // 스케일된 뷰포트로 렌더링
+                const scaledViewport = page.getViewport({ scale: scale });
+                await page.render({
+                    canvasContext: context,
+                    viewport: scaledViewport
+                }).promise;
+                
+                // pica를 사용한 고품질 압축 (이미 적절한 크기로 렌더링되었으므로 추가 리사이징 불필요)
+                
+                // JPEG로 압축
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+                const base64Data = jpegDataUrl.split(',')[1];
+                const binaryData = atob(base64Data);
+                const uint8Array = new Uint8Array(binaryData.length);
+                
+                for (let i = 0; i < binaryData.length; i++) {
+                    uint8Array[i] = binaryData.charCodeAt(i);
+                }
+                
+                compressedPages.push({
+                    imageData: uint8Array,
+                    width: targetWidth,
+                    height: targetHeight,
+                    aspectRatio: aspectRatio
+                });
+            }
+            
+            return compressedPages;
+        }
+
+        function updateProgress(percent, text) {
+            progressFill.style.width = percent + '%';
+            progressText.textContent = text;
+        }
+    </script>
+</body>
+</html>
