@@ -271,6 +271,9 @@
                  <input type="text" id="recipeChefName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
             <div class="mt-6 flex gap-4">
+                <button id="readRecipeButton" class="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-opacity-75 transition duration-150 ease-in-out hidden">
+                    레시피 읽기
+                </button>
                 <button id="printRecipeButton" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 transition duration-150 ease-in-out hidden">
                     레시피 인쇄
                 </button>
@@ -331,6 +334,7 @@
         const recipeChefNameInput = document.getElementById('recipeChefName');
         const printRecipeButton = document.getElementById('printRecipeButton');
         const confirmRecipeDownloadButton = document.getElementById('confirmRecipeDownloadButton');
+        const readRecipeButton = document.getElementById('readRecipeButton');
         const recipeModalInputs = document.getElementById('recipeModalInputs');
 
         const loadingIndicator = document.getElementById('loadingIndicator');
@@ -393,29 +397,181 @@
             event.preventDefault();
         });
 
-        window.addEventListener('drop', (event) => {
+        function extractKeyFromImage(imageFile, secretKey) {
+            const MAGIC_NUMBER = 0b10100101; // 165
+
+            function bitArrayToNumber(bits) {
+                return bits.reduce((acc, bit) => (acc << 1) | bit, 0);
+            }
+
+            function xorCipher(text, key) {
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    const keyChar = key.charCodeAt(i % key.length);
+                    const textChar = text.charCodeAt(i);
+                    result += String.fromCharCode(textChar ^ keyChar);
+                }
+                return result;
+            }
+
+            // 메인 로직 시작 (Promise를 반환하여 비동기 처리)
+            return new Promise((resolve, reject) => {
+                if (!imageFile || !imageFile.type.startsWith('image/')) {
+                    return reject(new Error('유효한 이미지 파일이 아닙니다.'));
+                }
+
+                const reader = new FileReader();
+                reader.readAsDataURL(imageFile);
+
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+
+                    img.onload = () => {
+                        try {
+                            const tempCanvas = document.createElement('canvas');
+                            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                            tempCanvas.width = img.width;
+                            tempCanvas.height = img.height;
+                            tempCtx.drawImage(img, 0, 0);
+                            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                            const data = imageData.data;
+
+                            const bits = [];
+                            const HEADER_BITS = 8 + 32; // Magic number (8) + 길이 정보 (32)
+
+                            // 헤더를 먼저 읽기 위해 필요한 만큼의 비트만 추출
+                            for (let i = 0; i < data.length && bits.length < HEADER_BITS; i++) {
+                                if ((i + 1) % 4 === 0) continue; // Alpha 채널은 건너뜀
+                                bits.push(data[i] & 1);
+                            }
+
+                            if (bits.length < HEADER_BITS) {
+                                return reject(new Error('이미지가 너무 작아 데이터를 읽을 수 없습니다.'));
+                            }
+
+                            // 매직 넘버를 확인하여 유효한 파일인지 검사
+                            const magicNumberFromFile = bitArrayToNumber(bits.slice(0, 8));
+                            if (magicNumberFromFile !== MAGIC_NUMBER) {
+                                return reject(new Error('유효한 데이터가 포함된 이미지가 아닙니다.'));
+                            }
+
+                            // 숨겨진 문자열의 길이를 확인
+                            const charCount = bitArrayToNumber(bits.slice(8, 40));
+                            if (charCount <= 0 || charCount > 10000) { // 비정상적인 길이 값 예외 처리
+                                return reject(new Error('데이터 길이가 유효하지 않습니다.'));
+                            }
+
+                            const totalBitsToRead = HEADER_BITS + charCount * 16;
+                            
+                            const allBits = [];
+                            for (let i = 0; i < data.length && allBits.length < totalBitsToRead; i++) {
+                                if ((i + 1) % 4 === 0) continue;
+                                allBits.push(data[i] & 1);
+                            }
+
+                            if (allBits.length < totalBitsToRead) {
+                                return reject(new Error('데이터가 손상되었거나 완전하지 않습니다.'));
+                            }
+                            
+                            // 실제 데이터 비트를 추출하고 문자열로 변환
+                            const dataBits = allBits.slice(40, totalBitsToRead);
+                            let encryptedString = '';
+                            for (let i = 0; i < charCount; i++) {
+                                const charBits = dataBits.slice(i * 16, (i + 1) * 16);
+                                encryptedString += String.fromCharCode(bitArrayToNumber(charBits));
+                            }
+                            
+                            // XOR 암호화를 풀어서 원본 문자열을 얻음
+                            const decodedString = xorCipher(encryptedString, secretKey);
+                            resolve(decodedString);
+
+                        } catch (err) {
+                            reject(new Error('이미지 처리 중 오류가 발생했습니다.'));
+                        }
+                    };
+
+                    img.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+                };
+
+                reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+            });
+        }
+
+
+        async function loadApiKeyFromLocalImage() {
+            try {
+                const response = await fetch('/assets/hanmi.png');
+                if (!response.ok) {
+                    // 파일이 없으면 조용히 종료 (콘솔에만 로그)
+                    console.log("파일을 찾을 수 없습니다. 자동 로드를 건너뜁니다.");
+                    return;
+                }
+
+                // 2. 불러온 이미지를 Blob 형태로 변환합니다.
+                const imageBlob = await response.blob();
+                
+                // 3. 사용자에게 비밀 키를 입력받습니다.
+                const secretKey = prompt("비밀 키를 입력하세요:");
+
+                if (secretKey) {
+                    // 4. 키를 입력했다면, 이미지에서 API 키를 추출합니다.
+                    const decodedKey = await extractKeyFromImage(imageBlob, secretKey);
+
+                    if (decodedKey && decodedKey.length > 20) {
+                        userApiKey = decodedKey; // API 키를 전역 변수에 저장
+                        getRecipeButton.style.display = 'inline-block'; // 레시피 생성 버튼 활성화
+                        console.log('API 키를 성공적으로 불러왔습니다.');
+                        alert('연결되었습니다! AI 셰프의 레시피 기능을 사용할 수 있습니다. 👩‍🍳');
+                    } else {
+                        alert('키를 추출하지 못했습니다. 비밀 키를 확인해주세요.');
+                    }
+                } else {
+                    // 비밀 키 입력을 취소한 경우
+                    console.log('비밀 키 입력이 취소되었습니다.');
+                }
+
+            } catch (error) {
+                console.error("처리 중 오류 발생:", error);
+            }
+        }
+
+        window.addEventListener('drop', async (event) => { // async 추가
             event.preventDefault();
             dragCounter = 0;
             apiDropIndicator.style.display = 'none';
-            
+
             const files = event.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
-                // Check if it's a text file (basic check)
-                if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.key')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const content = e.target.result.trim();
-                        if (content && content.length > 20) { // Basic validation for API key length
-                            userApiKey = content;
-                            getRecipeButton.style.display = 'inline-block'; // Show recipe button
-                            console.log('API key loaded successfully');
+
+                // 1. 드롭된 파일이 PNG 이미지인지 확인합니다.
+                if (file.type === 'image/png') {
+                    // 2. 이미지 암호화에 사용된 비밀 키를 사용자에게 입력받습니다.
+                    const secretKey = prompt("이미지의 비밀 키를 입력하세요:");
+
+                    if (secretKey) {
+                        try {
+                            showLoading(true); // 로딩 인디케이터 표시
+
+                            // 3. 복사해온 함수를 사용해 이미지에서 API 키를 비동기적으로 복호화합니다.
+                            const decodedKey = await extractKeyFromImage(file, secretKey);
+
+                            if (decodedKey && decodedKey.length > 20) {
+                                userApiKey = decodedKey; // 전역 변수에 API 키 저장
+                                getRecipeButton.style.display = 'inline-block'; // 레시피 생성 버튼 표시
+                                alert('API 키가 이미지에서 성공적으로 로드되었습니다! ✨');
+                            } else {
+                                alert('API 키를 찾지 못했거나 너무 짧습니다.');
+                            }
+                        } catch (error) {
+                            // 오류 발생 시 사용자에게 알림
+                            console.error("API 키 복호화 오류:", error);
+                            alert(`오류: ${error.message}`);
+                        } finally {
+                            showLoading(false); // 로딩 인디케이터 숨김
                         }
-                    };
-                    reader.onerror = () => {
-                        console.error('Failed to read API key file');
-                    };
-                    reader.readAsText(file);
+                    }
                 }
             }
         });
@@ -493,6 +649,44 @@
             });
             
             currentIngredientsList.innerHTML = displayText;
+        }
+
+        /**
+         * 현재 생성된 레시피를 한국어로 읽어주는 함수
+         */
+        function speakRecipe() {
+            // SpeechSynthesis API를 지원하지 않으면 함수 종료
+            if (!window.speechSynthesis) {
+                alert("죄송하지만, 사용하시는 브라우저는 음성 합성을 지원하지 않습니다.");
+                return;
+            }
+
+            // 이미 읽고 있다면 중지, 아니라면 읽기 시작 (토글 방식)
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                return;
+            }
+
+            // 읽을 텍스트 준비: 제목 + "만드는 방법." + 각 단계
+            const title = currentGeneratedRecipe.name;
+            const steps = currentGeneratedRecipe.recipeText.replace(/\n/g, ' '); // 줄바꿈을 공백으로 변경하여 부드럽게 연결
+            const textToSpeak = `${title}. 만드는 방법. ${steps}`;
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+
+            // 한국어 목소리 찾기
+            const koreanVoice = speechSynthesis.getVoices().find(voice => voice.lang === 'ko-KR');
+            if (koreanVoice) {
+                utterance.voice = koreanVoice;
+            } else {
+                console.warn("한국어 목소리를 찾을 수 없습니다. 기본 목소리로 재생합니다.");
+            }
+            
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.75; // 재생 속도
+            utterance.pitch = 1; // 음높이
+
+            speechSynthesis.speak(utterance);
         }
 
         // --- Webcam Logic ---
@@ -1197,6 +1391,7 @@
                 recipeModalInputs.style.display = 'block'; 
                 confirmRecipeDownloadButton.style.display = 'inline-block';
                 printRecipeButton.style.display = 'inline-block';
+                readRecipeButton.style.display = 'inline-block';
 
             } catch (error) {
                 console.error("레시피 생성 중 오류:", error);
@@ -1254,6 +1449,8 @@
             printSVG(svgString);
         });
 
+        readRecipeButton.addEventListener('click', speakRecipe);
+
         function init() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 setupWebcam();
@@ -1265,6 +1462,8 @@
             gameLoop(); 
             updateIngredientsDisplay(); 
             getRecipeButton.style.display = 'none'; // Initially hide recipe button
+
+            loadApiKeyFromLocalImage();
         }
 
         init();
