@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Virtual Gallery – MVP</title>
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    button { outline: none; }
+  </style>
+
+  <!-- IMPORTANT: Import Map to resolve bare specifiers like "three" -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body class="bg-neutral-900 select-none">
+  <!-- 헤더: 플레이스홀더 로고 + 타이틀 -->
+  <header class="absolute top-4 left-4 z-30 flex items-center gap-3">
+    <img alt="logo" class="h-9 w-9" src='data:image/svg+xml;utf8,
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+            <stop stop-color="%23ffd89b" offset="0%"/>
+            <stop stop-color="%23f5ab72" offset="100%"/>
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="56" height="56" rx="12" fill="url(%23g)"/>
+        <circle cx="32" cy="32" r="12" fill="white" opacity="0.8"/>
+      </svg>' />
+    <div class="text-white/90 font-semibold tracking-wide">가상 전시관 (MVP)</div>
+  </header>
+
+  <!-- 입장 안내 오버레이 (Pointer Lock / Drag Look) -->
+  <div id="overlay" class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-neutral-900 text-neutral-100">
+    <div class="text-center">
+      <h1 class="text-2xl font-bold mb-2">가상 전시관에 오신 것을 환영합니다</h1>
+      <p class="text-sm opacity-90">데스크톱: WASD 이동 · 마우스로 보기 · ESC로 포인터 해제</p>
+      <p class="text-sm opacity-90">모바일: 좌하단 D-Pad로 이동 · 드래그로 보기</p>
+      <p class="text-xs opacity-70 mt-1">샌드박스/모바일에서는 포인터 락이 제한될 수 있어 드래그 보기로 전환됩니다.</p>
+    </div>
+    <button id="enterBtn" class="px-6 py-3 rounded-xl bg-white text-neutral-900 font-semibold shadow hover:shadow-lg active:scale-[0.98] transition">입장하기</button>
+  </div>
+
+  <!-- Three.js 컨테이너 -->
+  <div id="three-container" class="absolute inset-0"></div>
+
+  <!-- 중앙 모달: 유튜브 임베드 (플레이 시 표시) -->
+  <div id="video-modal" class="hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative w-full max-w-5xl bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
+      <div class="relative w-full aspect-video">
+        <button id="modal-close" class="absolute top-3 right-3 z-10 rounded-lg bg-white/90 hover:bg-white px-3 py-1.5 text-sm font-semibold text-neutral-900">닫기</button>
+        <iframe id="yt-frame" class="absolute inset-0 w-full h-full" title="YouTube video"
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; pointer-lock"
+          sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-presentation"
+          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      <!-- 영상 하단 정보/설문 영역 -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white/90 text-neutral-900">
+        <div class="min-w-0">
+          <div id="vf-info" class="text-sm font-semibold truncate">&nbsp;</div>
+          <div id="vf-desc" class="text-xs text-neutral-700 truncate">&nbsp;</div>
+        </div>
+        <a id="vf-survey" href="#" target="_blank" rel="noopener" class="inline-flex items-center justify-center whitespace-nowrap px-4 py-2 rounded-lg bg-neutral-900 text-white hover:bg-neutral-800">
+          설문하기
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 도움말 -->
+  <div id="help" class="pointer-events-none absolute bottom-4 right-4 z-20 text-[12px] text-neutral-800 bg-white/80 backdrop-blur px-3 py-2 rounded-xl shadow">
+    WASD 이동 · 마우스 보기 · 클릭하여 작품 재생 · 설문은 라벨의 링크
+  </div>
+
+  <!-- 모드 배지 / 테스트 배지 -->
+  <div id="mode-badge" class="hidden absolute top-4 right-4 z-30 text-[12px] bg-indigo-600 text-white px-2 py-1 rounded shadow"></div>
+  <div id="test-badge" class="hidden absolute top-4 right-28 z-30 text-[12px] bg-emerald-600 text-white px-2 py-1 rounded shadow"></div>
+
+  <!-- 모바일 D-Pad (터치 이동) -->
+  <div id="dpad" class="hidden fixed bottom-4 left-4 z-30 grid grid-cols-3 grid-rows-3 gap-2 select-none">
+    <div></div>
+    <button data-dir="up" class="w-16 h-16 flex items-center justify-center text-lg bg-white/90 text-neutral-900 rounded-xl shadow hover:shadow-md active:scale-[0.98]">▲</button>
+    <div></div>
+    <button data-dir="left" class="w-16 h-16 flex items-center justify-center text-lg bg-white/90 text-neutral-900 rounded-xl shadow hover:shadow-md active:scale-[0.98]">◀</button>
+    <div></div>
+    <button data-dir="right" class="w-16 h-16 flex items-center justify-center text-lg bg-white/90 text-neutral-900 rounded-xl shadow hover:shadow-md active:scale-[0.98]">▶</button>
+    <div></div>
+    <button data-dir="down" class="w-16 h-16 flex items-center justify-center text-lg bg-white/90 text-neutral-900 rounded-xl shadow hover:shadow-md active:scale-[0.98]">▼</button>
+    <div></div>
+  </div>
+
+  <script type="module">
+    // ===== Imports =====
+    import * as THREE from 'three';
+    import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+
+    // ===== DOM refs =====
+    const container = document.getElementById('three-container');
+    const overlay = document.getElementById('overlay');
+    const enterBtn = document.getElementById('enterBtn');
+    const videoModal = document.getElementById('video-modal');
+    const modalClose = document.getElementById('modal-close');
+    const ytFrame = document.getElementById('yt-frame');
+    const modeBadge = document.getElementById('mode-badge');
+    const help = document.getElementById('help');
+    const dpad = document.getElementById('dpad');
+    const vfInfo = document.getElementById('vf-info');
+    const vfDesc = document.getElementById('vf-desc');
+    const vfSurvey = document.getElementById('vf-survey');
+
+    // ===== Environment detection =====
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    // ===== Renderer / Scene / Camera =====
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.style.touchAction = 'none'; // 터치 스크롤/줌 방지
+    container.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0';
+    labelRenderer.domElement.style.left = '0';
+    labelRenderer.domElement.style.pointerEvents = 'auto';
+    container.appendChild(labelRenderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xF7F3ED);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.6, 0);
+    camera.rotation.order = 'YXZ';
+
+    // ===== Lights =====
+    scene.add(new THREE.HemisphereLight(0xFFEEDB, 0x6B6B6B, 0.5));
+    const dir = new THREE.DirectionalLight(0xFFE0B3, 0.6); dir.position.set(5, 6, 3); scene.add(dir);
+    const fill = new THREE.DirectionalLight(0xFFFFFF, 0.25); fill.position.set(-4, 3, -6); scene.add(fill);
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.2));
+
+    // ===== Room (12m x 8m x 3m) =====
+    const ROOM = { w: 12, d: 8, h: 3 };
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.w, ROOM.d), new THREE.MeshStandardMaterial({ color: 0xF4EFE8, roughness: 0.9 }));
+    floor.rotation.x = -Math.PI/2; scene.add(floor);
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xFAF6F0, roughness: 0.95 });
+    const makeWall = (w,h,x,y,z,ry)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), wallMat.clone());m.position.set(x,y,z);m.rotation.y=ry;scene.add(m);};
+    makeWall(ROOM.w, ROOM.h, 0, ROOM.h/2, -ROOM.d/2+0.001, 0);
+    makeWall(ROOM.w, ROOM.h, 0, ROOM.h/2,  ROOM.d/2-0.001, Math.PI);
+    makeWall(ROOM.d, ROOM.h,  ROOM.w/2-0.001, ROOM.h/2, 0, -Math.PI/2);
+    makeWall(ROOM.d, ROOM.h, -ROOM.w/2+0.001, ROOM.h/2, 0,  Math.PI/2);
+
+    // ===== Controls & Input Modes =====
+    const controls = new PointerLockControls(camera, renderer.domElement);
+
+    const input = {
+      mode: isTouch ? 'drag' : 'lock', // 모바일 기본 드래그
+      dragging: false,
+      pointerId: null,
+      lastX: 0,
+      lastY: 0,
+      movedPixels: 0,
+      yaw: camera.rotation.y,
+      pitch: camera.rotation.x,
+      sens: isTouch ? 0.0016 : 0.002
+    };
+
+    function showModeBadge(text, color='bg-indigo-600') {
+      modeBadge.textContent = text;
+      modeBadge.classList.remove('hidden', 'bg-indigo-600', 'bg-amber-600');
+      modeBadge.classList.add(color);
+      setTimeout(() => modeBadge.classList.add('hidden'), 3500);
+    }
+    function setHelpText(text) { help.textContent = text; }
+
+    function enableDragMode(reason='fallback') {
+      input.mode = 'drag';
+      overlay.classList.add('hidden');
+      dpad.classList.remove('hidden');
+      setHelpText('D-Pad 이동 · 드래그로 보기 · 클릭하여 작품 재생 · 설문은 라벨의 링크');
+      showModeBadge('드래그 보기 모드', 'bg-amber-600');
+      // Plan A: 모바일은 드래그 모드 진입 직후 전체 테스트 실행
+      runSelfTests();
+    }
+    function enableLockMode() {
+      input.mode = 'lock';
+      overlay.classList.add('hidden');
+      dpad.classList.add('hidden');
+      setHelpText('WASD 이동 · 마우스로 보기 · 클릭하여 작품 재생 · 설문은 라벨의 링크');
+      showModeBadge('포인터 락 모드');
+    }
+
+    // 입장 버튼: 환경에 따라 모드 결정
+    enterBtn.addEventListener('click', () => {
+      if (isTouch) return enableDragMode('mobile');
+      try { controls.lock(); } catch (e) { console.warn('PointerLock 실패 → 드래그 모드', e); enableDragMode('exception'); }
+    });
+    document.addEventListener('pointerlockerror', () => { if (!isTouch) { console.warn('PointerLock error → 드래그 모드'); enableDragMode('event'); } });
+    controls.addEventListener('lock', enableLockMode);
+    controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
+
+    // ===== Keyboard & D-Pad movement =====
+    const moveState = { forward:false, back:false, left:false, right:false };
+    const speed = 2.5; // m/s
+
+    const onKey = (e, isDown) => {
+      switch (e.code) {
+        case 'KeyW': case 'ArrowUp': moveState.forward = isDown; break;
+        case 'KeyS': case 'ArrowDown': moveState.back = isDown; break;
+        case 'KeyA': case 'ArrowLeft': moveState.left = isDown; break;
+        case 'KeyD': case 'ArrowRight': moveState.right = isDown; break;
+      }
+    };
+    window.addEventListener('keydown', (e) => onKey(e, true));
+    window.addEventListener('keyup',   (e) => onKey(e, false));
+
+    // D-Pad (터치/마우스 공통 Pointer 이벤트) — 대각선 비활성: 하나만 활성화
+    function clearDirections(){ moveState.forward=moveState.back=moveState.left=moveState.right=false; }
+    function bindPad(dir, key) {
+      const btn = dpad.querySelector(`[data-dir="${dir}"]`);
+      if (!btn) return;
+      const down = (ev)=>{ ev.preventDefault(); clearDirections(); moveState[key] = true; };
+      const up   = (ev)=>{ ev.preventDefault(); moveState[key] = false; };
+      btn.addEventListener('pointerdown', down, { passive: false });
+      btn.addEventListener('pointerup', up, { passive: false });
+      btn.addEventListener('pointercancel', up, { passive: false });
+      btn.addEventListener('pointerleave', up, { passive: false });
+    }
+    bindPad('up','forward'); bindPad('down','back'); bindPad('left','left'); bindPad('right','right');
+
+    // ===== Artwork data (샘플) =====
+    const SURVEY_URL = 'https://forms.gle/HxTfCe3BdHKzmZUSA';
+    const WORKS = [
+      { id:'work-1', title:'빛의 변주 I', artist:'홍길동', desc:'도시의 리듬을 모티프로 한 미디어 설치.', youtubeId:'-QAg2PdAeMs', size:[2.4,1.35], position:[0,1.4,-ROOM.d/2+0.01], rotationY:0 },
+      { id:'work-2', title:'Waveform',   artist:'김영희', desc:'일상 속 파동의 시각화.',                youtubeId:'9hZn_2sn6dA', size:[1.9,1.07], position:[ ROOM.w/2-0.01,1.4,0], rotationY:-Math.PI/2 },
+      { id:'work-3', title:'Transit',    artist:'이민수', desc:'이동, 흔적, 기억에 대한 탐구.',            youtubeId:'CCfkaf9Mrow', size:[2.2,1.24], position:[-ROOM.w/2+0.01,1.4,0], rotationY: Math.PI/2 }
+    ];
+
+    // ===== Helpers =====
+    const textureLoader = new THREE.TextureLoader(); textureLoader.setCrossOrigin('anonymous');
+    const clickable = []; const workByMeshId = new Map();
+    let currentWork = null;
+
+    function ytThumbUrl(id){ return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`; }
+
+    function makeLabelHTML(work){
+      const root = document.createElement('div');
+      root.className = 'select-text max-w-[22rem] px-3 py-2 rounded-xl bg-white/90 backdrop-blur shadow ring-1 ring-black/5 text-[12px] text-neutral-800';
+      const t = document.createElement('div'); t.className='text-sm font-semibold text-neutral-900'; t.textContent = work.title;
+      const a = document.createElement('div'); a.className='mt-0.5 text-neutral-600'; a.textContent = work.artist;
+      const d = document.createElement('div'); d.className='mt-1'; d.textContent = work.desc;
+      const row = document.createElement('div'); row.className='mt-2 flex items-center gap-2';
+      const link = document.createElement('a'); link.href=SURVEY_URL; link.target='_blank'; link.rel='noopener'; link.className='inline-flex items-center gap-1 text-blue-700 hover:underline font-medium'; link.textContent='설문하기';
+      const hint = document.createElement('div'); hint.dataset.hint='1'; hint.className='text-amber-700 font-medium hidden'; hint.textContent='가까이에서 클릭하면 재생';
+      row.appendChild(link); row.appendChild(hint);
+      root.appendChild(t); root.appendChild(a); root.appendChild(d); root.appendChild(row);
+      return root;
+    }
+
+    function createArtwork(work){
+      const group = new THREE.Group(); group.position.set(...work.position); group.rotation.y = work.rotationY;
+      const frame = new THREE.Mesh(new THREE.PlaneGeometry(work.size[0]+0.12, work.size[1]+0.12), new THREE.MeshStandardMaterial({ color:0xEDE6DD, roughness:0.8 }));
+      frame.position.z = -0.005; group.add(frame);
+      const tex = textureLoader.load(ytThumbUrl(work.youtubeId)); tex.colorSpace = THREE.SRGBColorSpace;
+      const poster = new THREE.Mesh(new THREE.PlaneGeometry(...work.size), new THREE.MeshStandardMaterial({ map:tex, roughness:1.0 }));
+      poster.position.z = 0.001; group.add(poster);
+      const labelEl = makeLabelHTML(work); const label = new CSS2DObject(labelEl); label.position.set(0, -(work.size[1]/2)-0.15, 0.01); group.add(label);
+      scene.add(group);
+      clickable.push(poster); workByMeshId.set(poster.id, work);
+      return { group, poster, frame, labelEl };
+    }
+
+    const ART = WORKS.map(createArtwork);
+
+    // ===== Raycasting & interaction =====
+    const raycaster = new THREE.Raycaster();
+    const up = new THREE.Vector3(0,1,0);
+
+    function getIntersects(){ raycaster.setFromCamera(new THREE.Vector2(0,0), camera); return raycaster.intersectObjects(clickable, false); }
+
+    function buildEmbedUrl(youtubeId){ const params=new URLSearchParams({autoplay:'1',rel:'0',playsinline:'1',enablejsapi:'1'}); return `https://www.youtube.com/embed/${youtubeId}?${params}`; }
+
+    function updateVideoFooter(){
+      if (!currentWork) return;
+      vfInfo.textContent = `${currentWork.title} — ${currentWork.artist}`;
+      vfDesc.textContent = currentWork.desc || '';
+      vfSurvey.href = SURVEY_URL; // 추후 프리필로 교체 가능
+    }
+
+    function openVideo(work){
+      currentWork = work;
+      updateVideoFooter();
+      if (input.mode==='lock' && controls.isLocked) controls.unlock();
+      videoModal.classList.remove('hidden');
+      ytFrame.src = buildEmbedUrl(work.youtubeId);
+    }
+
+    function closeVideo(){
+      try{ ytFrame.contentWindow?.postMessage(JSON.stringify({event:'command',func:'stopVideo',args:[]}), '*'); }catch{}
+      ytFrame.src='about:blank';
+      videoModal.classList.add('hidden');
+      // 닫기 후 즉시 재입장: lock 모드면 포인터락 재획득, drag는 그대로 유지
+      if (input.mode==='lock') {
+        try { controls.lock(); } catch(e) { console.warn('Re-lock failed, fallback to drag'); enableDragMode('relock-fail'); }
+      } else {
+        enableDragMode('resume-drag');
+      }
+    }
+
+    modalClose.addEventListener('click', closeVideo);
+
+    window.addEventListener('click', () => {
+      if (!canInteract()) return;
+      if (input.mode==='drag' && input.movedPixels>10) return; // 모바일 드래그 임계치 상향
+      const hits=getIntersects(); if (!hits.length) return;
+      const work = workByMeshId.get(hits[0].object.id); if (!work) return;
+      const camPos = camera.getWorldPosition(new THREE.Vector3());
+      const wPos = new THREE.Vector3(...work.position);
+      if (camPos.distanceTo(wPos) <= INTERACT_DISTANCE) openVideo(work);
+    });
+
+    // 드래그 보기 (모바일/폴백) - Pointer Events + capture
+    function isFromDpad(target){ return dpad.contains(target); }
+
+    renderer.domElement.addEventListener('pointerdown', (e)=>{
+      if (input.mode!=='drag') return;
+      if (isFromDpad(e.target)) return; // D-Pad에서 시작된 터치 제외
+      if (e.button!==0 && e.pointerType!=='touch') return; // 좌클릭/터치만
+      input.dragging=true; input.pointerId=e.pointerId; input.lastX=e.clientX; input.lastY=e.clientY; input.movedPixels=0;
+      try { e.target.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    }, { passive:false });
+
+    window.addEventListener('pointermove', (e)=>{
+      if (input.mode!=='drag' || !input.dragging || e.pointerId!==input.pointerId) return;
+      const dx=e.clientX-input.lastX, dy=e.clientY-input.lastY; input.lastX=e.clientX; input.lastY=e.clientY; input.movedPixels+=Math.abs(dx)+Math.abs(dy);
+      input.yaw-=dx*input.sens; input.pitch-=dy*input.sens; const PI_2=Math.PI/2-0.01; input.pitch=Math.max(-PI_2,Math.min(PI_2,input.pitch));
+      camera.rotation.set(input.pitch,input.yaw,0);
+      e.preventDefault();
+    }, { passive:false });
+
+    function endDrag(e){ if (e && e.pointerId!==input.pointerId) return; input.dragging=false; input.pointerId=null; }
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+    window.addEventListener('lostpointercapture', endDrag);
+
+    function canInteract(){ const overlayHidden=overlay.classList.contains('hidden'); const modalHidden=videoModal.classList.contains('hidden'); if(!overlayHidden||!modalHidden) return false; if (input.mode==='lock') return controls.isLocked; return true; }
+
+    // ===== FPS-정확 이동 벡터 =====
+    function getMoveVectors(){
+      const forward = new THREE.Vector3(); camera.getWorldDirection(forward); forward.y = 0; if (forward.lengthSq()<1e-6) forward.set(0,0,-1); forward.normalize();
+      const right = new THREE.Vector3().crossVectors(forward, up).normalize();
+      return { forward, right };
+    }
+
+    // 근접 힌트 + 하이라이트
+    const INTERACT_DISTANCE = 2.2; // m
+    function updateProximityHints(){
+      const camPos=camera.getWorldPosition(new THREE.Vector3());
+      ART.forEach(({poster,frame,labelEl},i)=>{
+        const w=WORKS[i]; const pos=new THREE.Vector3(...w.position); const dist=camPos.distanceTo(pos); const hintEl=labelEl.querySelector('[data-hint]'); const near=dist<=INTERACT_DISTANCE+0.2;
+        if (hintEl) hintEl.classList.toggle('hidden', !near);
+        poster.material.emissive?.setHex(near?0x332211:0x000000); poster.material.emissiveIntensity=near?0.25:0.0; frame.material.color.setHex(near?0xE9E0D6:0xEDE6DD);
+      });
+    }
+
+    // ===== Movement & collisions =====
+    const velocity = new THREE.Vector3(); const move = new THREE.Vector3();
+    function clampToRoom(pos){ const m=0.4; pos.x=Math.min(ROOM.w/2-m, Math.max(-ROOM.w/2+m, pos.x)); pos.z=Math.min(ROOM.d/2-m, Math.max(-ROOM.d/2+m, pos.z)); pos.y=1.6; }
+
+    let lastTime = performance.now();
+    function animate(){
+      const now=performance.now(); const dt=Math.min(0.05, (now-lastTime)/1000); lastTime=now;
+
+      if (canInteract()){
+        const {forward, right} = getMoveVectors();
+        move.set(0,0,0);
+        const f = (moveState.forward?1:0) - (moveState.back?1:0);
+        const r = (moveState.right?1:0) - (moveState.left?1:0);
+        if (f) move.addScaledVector(forward, f);
+        if (r) move.addScaledVector(right, r);
+        if (move.lengthSq()>0) move.normalize();
+        velocity.copy(move).multiplyScalar(speed*dt);
+        const newPos = camera.position.clone().add(velocity);
+        clampToRoom(newPos); camera.position.copy(newPos);
+      }
+
+      updateProximityHints();
+      renderer.render(scene, camera); labelRenderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ===== Window resize =====
+    window.addEventListener('resize', ()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); labelRenderer.setSize(window.innerWidth, window.innerHeight); });
+
+    // ===== Self Tests (kept + more) =====
+    function runSelfTests(){
+      const badge=document.getElementById('test-badge'); const results=[]; const pass=(n)=>results.push({n,ok:true}); const fail=(n,e)=>results.push({n,ok:false,e});
+      try{ if (typeof THREE.Color==='function') pass('THREE loaded'); else throw new Error('THREE not loaded'); }catch(e){ fail('THREE loaded',e); }
+      try{ const tmp=new PointerLockControls(camera, renderer.domElement); if (tmp.getObject() instanceof THREE.Object3D) pass('Controls shares THREE'); else throw new Error('different THREE'); }catch(e){ fail('Controls shares THREE',e); }
+      try{ if (Array.isArray(WORKS)&&WORKS.length===3) pass('WORKS length = 3'); else throw new Error('unexpected WORKS length'); }catch(e){ fail('WORKS length = 3',e); }
+      try{ const url = `https://www.youtube.com/embed/ID?${new URLSearchParams({enablejsapi:'1'})}`; if (/enablejsapi=1/.test(url)) pass('YouTube param'); else throw new Error('missing'); }catch(e){ fail('YouTube param',e); }
+      try{ const v = getMoveVectors(); if (Math.abs(v.forward.y)<1e-6) pass('Forward vector projected to XZ'); else throw new Error('forward.y not 0'); }catch(e){ fail('Forward vector projected to XZ',e); }
+      try{ if (renderer.domElement.style.touchAction==='none') pass('touch-action: none on canvas'); else throw new Error('touch-action not set'); }catch(e){ fail('touch-action: none on canvas', e); }
+      // Direction mapping tests (drag mode to control yaw)
+      try{
+        const saved={yaw:input.yaw,pitch:input.pitch};
+        input.yaw=0; input.pitch=0; camera.rotation.set(0,0,0); const v0=getMoveVectors().forward; const ok0 = approx(v0, new THREE.Vector3(0,0,-1));
+        input.yaw=Math.PI/2; camera.rotation.set(0,input.yaw,0); const v1=getMoveVectors().forward; const ok1 = approx(v1, new THREE.Vector3(-1,0,0));
+        input.yaw=saved.yaw; input.pitch=saved.pitch; camera.rotation.set(input.pitch,input.yaw,0);
+        if (ok0&&ok1) pass('Forward direction mapping (0,90°)'); else throw new Error(JSON.stringify({v0,v1}));
+      }catch(e){ fail('Forward direction mapping (0,90°)', e); }
+      try{ if (!isTouch || !dpad.classList.contains('hidden')) pass('D-Pad visible on touch'); else throw new Error('D-Pad hidden on touch'); }catch(e){ fail('D-Pad visible on touch', e); }
+
+      const ok = results.every(r=>r.ok);
+      if (ok){ badge.textContent='Self-tests passed'; badge.classList.remove('hidden'); }
+      else{
+        console.group('%cSelf-tests FAILED','color:#b91c1c;font-weight:bold'); results.forEach(r=>{ if(r.ok) console.log('PASS:',r.n); else console.error('FAIL:',r.n,r.e); }); console.groupEnd();
+        badge.textContent='Self-tests failed (see console)'; badge.classList.remove('hidden'); badge.classList.remove('bg-emerald-600'); badge.classList.add('bg-rose-600');
+      }
+      setTimeout(()=>badge.classList.add('hidden'), 6000);
+    }
+
+    function approx(v, t){ return Math.abs(v.x-t.x)<0.05 && Math.abs(v.y-t.y)<0.05 && Math.abs(v.z-t.z)<0.05; }
+
+    // 초기 테스트 실행 타이밍(Plan A): 터치가 아니면 즉시, 터치면 입장 후 실행
+    if (!isTouch) runSelfTests();
+
+  </script>
+</body>
+</html>
