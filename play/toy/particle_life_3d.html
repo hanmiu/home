@@ -1,0 +1,1974 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>ParticleLife 3D — WebGPU (Relation-Grid UI)</title>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+                background: #0b0f14;
+                color: #d7e2ef;
+                font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Helvetica, Arial;
+            }
+
+            #wrap {
+                position: fixed;
+                inset: 0;
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+            }
+
+            canvas {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+
+            .hud {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                padding: 10px 12px;
+                background: rgba(8,12,18,.6);
+                backdrop-filter: blur(6px);
+                border: 1px solid rgba(255,255,255,.08);
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,.25);
+                max-width: 420px;
+            }
+
+            .hud h1 {
+                margin: 0 0 8px;
+                font-size: 14px;
+                font-weight: 600;
+                letter-spacing: .2px;
+                color: #b9d0f0;
+            }
+
+            .row {
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                gap: 8px;
+                align-items: center;
+                margin: 6px 0;
+            }
+
+            .row label {
+                color: #9eb6d4;
+                font-size: 12px;
+            }
+
+            .row input[type="range"] {
+                width: 220px;
+            }
+
+            .btns {
+                display: flex;
+                gap: 8px;
+                margin-top: 6px;
+                flex-wrap: wrap;
+            }
+
+            button {
+                background: #152232;
+                color: #d7e2ef;
+                border: 1px solid rgba(255,255,255,.1);
+                padding: 6px 10px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background: #1b2b40;
+            }
+
+            a.small {
+                color: #9eb6d4;
+                text-decoration: none;
+                font-size: 12px;
+            }
+
+            details {
+                margin-top: 8px;
+            }
+
+            details summary {
+                cursor: pointer;
+                color: #b9d0f0;
+            }
+
+            .muted {
+                color: #8aa1bd;
+                font-size: 12px;
+            }
+
+            .pill {
+                background: #132031;
+                border: 1px solid rgba(255,255,255,.1);
+                border-radius: 999px;
+                padding: 2px 8px;
+                font-size: 11px;
+                color: #9eb6d4;
+            }
+
+            /* === Relation grid UI (from PARTICLE LIFE, adapted) === */
+            .relation {
+                display: grid;
+                gap: 2px;
+                user-select: none;
+                --cell: 32px;
+                grid-auto-rows: var(--cell);
+            }
+
+            .relation .rel {
+                width: var(--cell);
+                height: var(--cell);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(255,255,255,.06);
+                background: #000;
+            }
+
+            .relation .rel.val:hover {
+                box-shadow: 0 0 0 1px rgba(255,255,255,.9) inset;
+            }
+
+            .relation .rel.color {
+                border-radius: 999px;
+                border: 1px solid rgba(255,255,255,.25);
+                cursor: pointer;
+            }
+
+            .relation .rel.val {
+                cursor: crosshair;
+            }
+
+            /* 드래그 중에는 JS에서 ns-resize로 변경 */
+            /* 숨김 컬러 피커 */
+            #colorPicker {
+                visibility: hidden;
+                position: absolute;
+                left: 0;
+                top: 0;
+                background: transparent;
+                border: none;
+                width: 1px;
+                height: 1px;
+                outline: none;
+            }
+
+            /* value pick band */
+            #band {
+                display: flex;
+                gap: 4px;
+                margin-top: 6px;
+            }
+
+            #force-l {
+                width: 75px;
+                height: 20px;
+                cursor: crosshair;
+                background-image: linear-gradient(90deg, hsl(120,100%,50%), hsl(120,100%,10%));
+            }
+
+            #force-m {
+                width: 24px;
+                height: 20px;
+                cursor: crosshair;
+                background: #000;
+            }
+
+            #force-r {
+                width: 75px;
+                height: 20px;
+                cursor: crosshair;
+                background-image: linear-gradient(90deg, hsl(0,100%,10%), hsl(0,100%,50%));
+            }
+        </style>
+    </head>
+    <body>
+        <div id="wrap">
+            <canvas id="gfx"></canvas>
+            <div class="hud">
+                <h1>ParticleLife 3D — WebGPU</h1>
+                <details id="ctrls" open>
+                    <summary>Simulation Controls</summary>
+                    <div class="row">
+                        <label>Particles</label>
+                        <input id="count" type="range" min="64" max="16384" step="1" value="1024">
+                        <span id="countVal">1024</span>
+                    </div>
+                    <div class="row">
+                        <label>Species</label>
+                        <input id="species" type="range" min="2" max="16" step="1" value="4">
+                        <span id="speciesVal">4</span>
+                    </div>
+                    <div class="row">
+                        <label>Radius</label>
+                        <input id="radius" type="range" min="0.04" max="0.25" step="0.01" value="0.12">
+                        <span id="radiusVal">0.12</span>
+                    </div>
+                    <div class="row">
+                        <label>Strength</label>
+                        <input id="strength" type="range" min="0.1" max="4.0" step="0.1" value="1.5">
+                        <span id="strengthVal">1.5</span>
+                    </div>
+                    <div class="row">
+                        <label>Friction</label>
+                        <input id="friction" type="range" min="0.0" max="2.0" step="0.05" value="0.35">
+                        <span id="frictionVal">0.35</span>
+                    </div>
+                    <div class="row">
+                        <label>dt</label>
+                        <input id="dtcap" type="range" min="0" max="0.5" step="0.001" value="0.033">
+                        <span id="dtcapVal">0.033</span>
+                    </div>
+                    <div class="row">
+                        <label>worldExtent</label>
+                        <input id="world" type="range" min="0.5" max="3.0" step="0.1" value="1.0">
+                        <span id="worldVal">1.0</span>
+                    </div>
+                    <div class="row">
+                        <label>Repulsion</label>
+                        <input id="repulsion" type="range" min="-10" max="10" step="0.1" value="0.0">
+                        <span id="repulsionVal">0.0</span>
+                    </div>
+                    <div class="btns">
+                        <button id="toggle">⏸︎ Pause</button>
+                        <button id="reset">↺ Reset</button>
+                        <button id="selftest">✓ Self &nbsp;Test</button>
+                        <a class="small" id="perf"></a>
+                    </div>
+                </details>
+                <details open>
+                    <summary>Species Interaction Matrix</summary>
+                    <div class="row" style="grid-template-columns:auto auto auto 1fr auto; gap:8px">
+                        <label>Preset</label>
+                        <select id="preset"></select>
+                        <button id="applyPreset">Apply</button>
+                        <!--<span class="muted">[-2.0, +2.0] (부호=유인/반발, 크기=세기)</span>-->
+                        <label style="justify-self:end">
+                            <input type="checkbox" id="sym">Symmetric
+          
+                        </label>
+                    </div>
+                    <!-- 컬러 피커(숨김) -->
+                    <input type="color" id="colorPicker" value="#ffffff">
+                    <!-- 격자 UI가 여기에 그려집니다 -->
+                    <div id="matrixHost"></div>
+                    <!-- 빠른 편집 컨트롤 -->
+                    <div class="row" style="grid-template-columns:auto auto auto 1fr; gap:8px">
+                        <label>
+                            <input type="checkbox" id="applyBrush">Brush
+                        </label>
+                        <input id="currVal" type="number" value="0" min="-2" max="2" step="0.01" style="width:70px">
+                        <select id="step">
+                            <option value="0.1">0.1</option>
+                            <option value="0.01" selected>0.01</option>
+                            <option value="0.001">0.001</option>
+                        </select>
+                        <div id="band">
+                            <div id="force-l" class="force"></div>
+                            <div id="force-m" class="force"></div>
+                            <div id="force-r" class="force"></div>
+                        </div>
+                    </div>
+                    <div class="btns">
+                        <button id="savePreset">Save current…</button>
+                        <button id="deletePreset">Delete saved…</button>
+                        <button id="randMatrix">Randomize</button>
+                        <button id="randColors">Random Colors</button>
+                        <button id="reSeed">Re‑distribute</button>
+                    </div>
+                </details>
+            </div>
+        </div>
+        <script>
+            (async () => {
+                if (!('gpu'in navigator)) {
+                    alert('WebGPU를 지원하는 최신 Chrome이 필요합니다. chrome://flags 에서 WebGPU를 활성화해야 할 수 있습니다.');
+                    return;
+                }
+
+                // === DOM & UI ===
+                const canvas = document.getElementById('gfx');
+                const elCount = document.getElementById('count');
+                const elCountVal = document.getElementById('countVal');
+                const elSpecies = document.getElementById('species');
+                const elSpeciesVal = document.getElementById('speciesVal');
+                const elRadius = document.getElementById('radius');
+                const elRadiusVal = document.getElementById('radiusVal');
+                const elStrength = document.getElementById('strength');
+                const elStrengthVal = document.getElementById('strengthVal');
+                const elFriction = document.getElementById('friction');
+                const elFrictionVal = document.getElementById('frictionVal');
+                const elToggle = document.getElementById('toggle');
+                const elReset = document.getElementById('reset');
+                const elSelf = document.getElementById('selftest');
+                const elPerf = document.getElementById('perf');
+                const elPreset = document.getElementById('preset');
+                const elApplyPreset = document.getElementById('applyPreset');
+                const elSavePreset = document.getElementById('savePreset');
+                const elDeletePreset = document.getElementById('deletePreset');
+                const elSym = document.getElementById('sym');
+                const matrixHost = document.getElementById('matrixHost');
+                // 팔레트 프리뷰/패널은 제거: 아래 두 값은 null
+                const palPrev = null
+                  , palHost = null
+                  , elRandPal = null;
+                const elDtCap = document.getElementById('dtcap');
+                const elDtCapVal = document.getElementById('dtcapVal');
+                const elWorld = document.getElementById('world');
+                const elWorldVal = document.getElementById('worldVal');
+                const elRepulsion = document.getElementById('repulsion');
+                const elRepulsionVal = document.getElementById('repulsionVal');
+
+                const elRandColors = document.getElementById('randColors');
+                const elReSeed = document.getElementById('reSeed');
+
+                function syncLabels() {
+                    elCountVal.textContent = elCount.value;
+                    elSpeciesVal.textContent = elSpecies.value;
+                    elRadiusVal.textContent = (+elRadius.value).toFixed(2);
+                    elStrengthVal.textContent = (+elStrength.value).toFixed(1);
+                    elFrictionVal.textContent = (+elFriction.value).toFixed(2);
+                    elDtCapVal.textContent = (+elDtCap.value).toFixed(3);
+                    elWorldVal.textContent = (+elWorld.value).toFixed(2);
+                    elRepulsionVal.textContent = (+elRepulsion.value).toFixed(1);
+                }
+                syncLabels();
+                [elCount, elSpecies, elRadius, elStrength, elFriction].forEach(i => i.addEventListener('input', syncLabels));
+                [elCount, elSpecies].forEach(i => i.addEventListener('change', () => rebuild()));
+
+                // === WebGPU init ===
+                const adapter = await navigator.gpu.requestAdapter({
+                    powerPreference: 'high-performance'
+                });
+                const device = await adapter.requestDevice({});
+                const context = canvas.getContext('webgpu');
+                const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+                const depthFormat = 'depth24plus';
+                context.configure({
+                    device,
+                    format: canvasFormat,
+                    alphaMode: 'premultiplied'
+                });
+                device.lost.then(info => console.error('GPU device lost:', info.message));
+
+                // Resize handling
+                let depthTex = null;
+                function resize() {
+                    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+                    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+                    const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+
+                    if (canvas.width !== w || canvas.height !== h) {
+                        canvas.width = w;
+                        canvas.height = h;
+
+                        // ★ 프레젠테이션 스왑체인 재설정 (크기 변경 시마다)
+                        context.configure({
+                            device,
+                            format: canvasFormat,
+                            alphaMode: 'premultiplied',
+                        });
+
+                        // 깊이 텍스처도 다시 생성
+                        depthTex?.destroy?.();
+                        depthTex = device.createTexture({
+                            size: {
+                                width: w,
+                                height: h
+                            },
+                            format: depthFormat,
+                            usage: GPUTextureUsage.RENDER_ATTACHMENT
+                        });
+                    }
+                }
+                new ResizeObserver(resize).observe(canvas);
+                resize();
+
+                // === Camera (orbit) ===
+                const cam = {
+                    yaw: 0.8,
+                    pitch: 0.9,
+                    dist: 3.0,
+                    target: [0, 0, 0]
+                };
+                let dragging = false
+                  , lastX = 0
+                  , lastY = 0;
+                canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+                canvas.addEventListener('mousedown', e => {
+                    dragging = true;
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                }
+                );
+                window.addEventListener('mouseup', () => dragging = false);
+                window.addEventListener('mousemove', e => {
+                    if (!dragging)
+                        return;
+                    const dx = (e.clientX - lastX) / 200
+                      , dy = (e.clientY - lastY) / 200;
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    cam.yaw += dx;
+                    cam.pitch = Math.max(0.05, Math.min(Math.PI - 0.05, cam.pitch + dy));
+                }
+                );
+                canvas.addEventListener('wheel', e => {
+                    cam.dist = Math.max(0.7, Math.min(8.0, cam.dist * Math.pow(1.0015, e.deltaY)));
+                }
+                );
+
+                function mat4Mul(A, B) {
+                    const out = new Float32Array(16);
+                    for (let c = 0; c < 4; c++) {
+                        for (let r = 0; r < 4; r++) {
+                            out[r + c * 4] = A[r + 0 * 4] * B[0 + c * 4] + A[r + 1 * 4] * B[1 + c * 4] + A[r + 2 * 4] * B[2 + c * 4] + A[r + 3 * 4] * B[3 + c * 4];
+                        }
+                    }
+                    return out;
+                }
+                function mat4Perspective(fovy, aspect, near, far) {
+                    const f = 1 / Math.tan(fovy / 2)
+                      , nf = 1 / (near - far);
+                    return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, (2 * far * near) * nf, 0]);
+                }
+                function mat4LookAt(eye, center, up) {
+                    const [ex,ey,ez] = eye
+                      , [cx,cy,cz] = center;
+                    let[ux,uy,uz] = up;
+                    let zx = ex - cx
+                      , zy = ey - cy
+                      , zz = ez - cz;
+                    let zl = Math.hypot(zx, zy, zz);
+                    zx /= zl;
+                    zy /= zl;
+                    zz /= zl;
+                    let xx = uy * zz - uz * zy
+                      , xy = uz * zx - ux * zz
+                      , xz = ux * zy - uy * zx;
+                    let xl = Math.hypot(xx, xy, xz);
+                    xx /= xl;
+                    xy /= xl;
+                    xz /= xl;
+                    let yx = zy * xz - zz * xy
+                      , yy = zz * xx - zx * xz
+                      , yz = zx * xy - zy * xx;
+                    return new Float32Array([xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0, -(xx * ex + xy * ey + xz * ez), -(yx * ex + yy * ey + yz * ez), -(zx * ex + zy * ey + zz * ez), 1]);
+                }
+
+                // Camera uniform: viewProj, right, up, size, worldExtent
+                const CAMERA_BYTES = 96;
+                const cameraUBO = device.createBuffer({
+                    size: CAMERA_BYTES,
+                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+                });
+                let worldExtent = 1.0;
+                // half-size of the cubic box
+                let particleSize = 0.015;
+                // world units
+                function updateCameraUBO() {
+                    const aspect = Math.max(1, canvas.width) / Math.max(1, canvas.height);
+                    const proj = mat4Perspective(55 * Math.PI / 180, aspect, 0.01, 100);
+                    const ex = cam.target[0] + cam.dist * Math.sin(cam.pitch) * Math.cos(cam.yaw);
+                    const ey = cam.target[1] + cam.dist * Math.cos(cam.pitch);
+                    const ez = cam.target[2] + cam.dist * Math.sin(cam.pitch) * Math.sin(cam.yaw);
+                    const eye = new Float32Array([ex, ey, ez]);
+                    const view = mat4LookAt(eye, cam.target, [0, 1, 0]);
+                    // const viewProj = mat4Mul(view, proj);
+                    const viewProj = mat4Mul(proj, view);
+
+                    // billboard basis
+                    let fx = cam.target[0] - ex
+                      , fy = cam.target[1] - ey
+                      , fz = cam.target[2] - ez;
+                    let fl = Math.hypot(fx, fy, fz);
+                    fx /= fl;
+                    fy /= fl;
+                    fz /= fl;
+                    let ax = 0
+                      , ay = 1
+                      , az = 0;
+                    // world up
+                    let rx = fy * az - fz * ay
+                      , ry = fz * ax - fx * az
+                      , rz = fx * ay - fy * ax;
+                    let rl = Math.hypot(rx, ry, rz);
+                    if (rl < 1e-5) {
+                        ax = 1;
+                        ay = 0;
+                        az = 0;
+                        rx = fy * az - fz * ay;
+                        ry = fz * ax - fx * az;
+                        rz = fx * ay - fy * ax;
+                        rl = Math.hypot(rx, ry, rz);
+                    }
+                    rx /= rl;
+                    ry /= rl;
+                    rz /= rl;
+                    let ux = ry * fz - rz * fy
+                      , uy = rz * fx - rx * fz
+                      , uz = rx * fy - ry * fx;
+                    let ul = Math.hypot(ux, uy, uz);
+                    ux /= ul;
+                    uy /= ul;
+                    uz /= ul;
+
+                    const f32 = new Float32Array(24);
+                    f32.set(viewProj, 0);
+                    // 0..15
+                    f32.set([rx, ry, rz], 16);
+                    // right
+                    f32[19] = particleSize;
+                    // size
+                    f32.set([ux, uy, uz], 20);
+                    // up
+                    f32[23] = worldExtent;
+                    // worldExtent
+                    device.queue.writeBuffer(cameraUBO, 0, f32.buffer);
+                }
+
+                // === Simulation data ===
+                const MAX_SPECIES = 16;
+                let simParams = {
+                    num: 1024,
+                    species: 4,
+                    radius: 0.12,
+                    strength: 1.5,
+                    friction: 0.35,
+                    seed: 1337,
+                    dt: 0.0,
+                    periodic: 1,
+                    maxSpeed: 3.0,
+                    gridDim: 16,
+                    gridCount: 4096,
+                    cellSize: 0.12,
+                    invCell: 1 / 0.12,
+                    coreFrac: 0.25,
+                    coreK: 2.0,
+                };
+
+                const SIM_BYTES = 80;
+                const simUBO = device.createBuffer({
+                    size: SIM_BYTES,
+                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+                });
+                const simUBOData = new ArrayBuffer(SIM_BYTES);
+                const simView = new DataView(simUBOData);
+                function recomputeGrid() {
+                    const box = worldExtent * 2;
+                    const cell = Math.max(0.04, Math.min(simParams.radius, box));
+                    const dim = Math.max(4, Math.min(64, Math.floor(box / cell)));
+                    simParams.cellSize = box / dim;
+                    simParams.invCell = 1.0 / simParams.cellSize;
+                    simParams.gridDim = dim;
+                    simParams.gridCount = dim * dim * dim;
+                }
+                function writeSimUBO(dt) {
+                    recomputeGrid();
+                    const box = worldExtent * 2;
+                    simView.setUint32(0, simParams.num >>> 0, true);
+                    simView.setUint32(4, simParams.species >>> 0, true);
+                    simView.setUint32(8, simParams.periodic >>> 0, true);
+                    simView.setUint32(12, simParams.seed >>> 0, true);
+                    simView.setFloat32(16, worldExtent, true);
+                    simView.setFloat32(20, simParams.radius, true);
+                    simView.setFloat32(24, simParams.strength, true);
+                    simView.setFloat32(28, simParams.friction, true);
+                    simView.setFloat32(32, dt, true);
+                    simView.setFloat32(36, box, true);
+                    simView.setFloat32(40, 1.0 / Math.max(1e-6, simParams.radius), true);
+                    simView.setFloat32(44, simParams.maxSpeed, true);
+                    simView.setUint32(48, simParams.gridDim >>> 0, true);
+                    simView.setUint32(52, simParams.gridCount >>> 0, true);
+                    simView.setUint32(56, 0, true);
+                    simView.setUint32(60, 0, true);
+                    simView.setFloat32(64, simParams.cellSize, true);
+                    simView.setFloat32(68, simParams.invCell, true);
+                    simView.setFloat32(72, simParams.coreFrac, true);
+                    simView.setFloat32(76, simParams.coreK, true);
+                    device.queue.writeBuffer(simUBO, 0, simUBOData);
+                }
+
+                // Particle buffers (ping-pong) and types
+                let particleA = null
+                  , particleB = null
+                  , typeBuf = null;
+                // Grid buffers
+                let gridHead = null
+                  , gridNext = null;
+                // Species matrix & palette
+                let matBuf = null;
+                let matArray = new Float32Array(MAX_SPECIES * MAX_SPECIES);
+                let palBuf = null;
+                let palArray = new Float32Array(MAX_SPECIES * 4);
+
+                function createParticleBuffers(n) {
+                    const stride = 32
+                      , bytes = Math.max(32, n * stride);
+                    particleA = device.createBuffer({
+                        size: bytes,
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+                    });
+                    particleB = device.createBuffer({
+                        size: bytes,
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+                    });
+                    typeBuf = device.createBuffer({
+                        size: Math.max(4, n * 4),
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+                    });
+                }
+
+                // === Grid buffers over-alloc once ===
+                const GRID_MAX_DIM = 64;
+                const GRID_MAX_COUNT = GRID_MAX_DIM * GRID_MAX_DIM * GRID_MAX_DIM;
+                let gridNextCapacity = 0;
+                function createGridBuffersOnce() {
+                    if (gridHead)
+                        return;
+                    gridHead = device.createBuffer({
+                        size: GRID_MAX_COUNT * 4,
+                        usage: GPUBufferUsage.STORAGE
+                    });
+                }
+                function ensureGridNextCapacity() {
+                    const need = Math.max(4, simParams.num * 4);
+                    if (!gridNext || need > gridNextCapacity) {
+                        gridNext = device.createBuffer({
+                            size: need,
+                            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+                        });
+                        gridNextCapacity = need;
+                    }
+                }
+                function createMatrixBuffer() {
+                    const bytes = MAX_SPECIES * MAX_SPECIES * 4;
+                    matBuf = device.createBuffer({
+                        size: bytes,
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+                    });
+                }
+                function uploadMatrix() {
+                    device.queue.writeBuffer(matBuf, 0, matArray);
+                }
+                function createPaletteBuffer() {
+                    palBuf = device.createBuffer({
+                        size: MAX_SPECIES * 4 * 4,
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+                    });
+                }
+
+                // --- Palette helpers (UI는 relation-grid에서 색을 바꿈) ---
+                function f2h(x) {
+                    const v = Math.max(0, Math.min(255, Math.round(x * 255)));
+                    return v.toString(16).padStart(2, '0');
+                }
+                function rgbfToHex(r, g, b) {
+                    return '#' + f2h(r) + f2h(g) + f2h(b);
+                }
+                function h2f(h) {
+                    return parseInt(h, 16) / 255;
+                }
+                function hexToRgbf(hex) {
+                    return [h2f(hex.slice(1, 3)), h2f(hex.slice(3, 5)), h2f(hex.slice(5, 7))];
+                }
+
+                function uploadPalette() {
+                    device.queue.writeBuffer(palBuf, 0, palArray);
+                    // 팔레트 패널이 없어도 안전
+                    if (typeof drawPalettePreview === 'function' && palPrev) {
+                        drawPalettePreview();
+                    }
+                }
+                const DEFAULT_PALETTE_HEX = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#a66cff', '#f72585', '#ff9f1c', '#2ec4b6', '#e71d36', '#9b5de5', '#00bbf9', '#80ed99', '#f64739', '#4dff78', '#96ffd4', '#383a5f'];
+                function setPaletteFromHex(hexList) {
+                    for (let i = 0; i < MAX_SPECIES; i++) {
+                        const hex = hexList[i % hexList.length];
+                        const r = parseInt(hex.slice(1, 3), 16) / 255
+                          , g = parseInt(hex.slice(3, 5), 16) / 255
+                          , b = parseInt(hex.slice(5, 7), 16) / 255;
+                        palArray[i * 4 + 0] = r;
+                        palArray[i * 4 + 1] = g;
+                        palArray[i * 4 + 2] = b;
+                        palArray[i * 4 + 3] = 1;
+                    }
+                    uploadPalette();
+                }
+                function randomizePalette() {
+                    for (let i = 0; i < MAX_SPECIES; i++) {
+                        const h = Math.random()
+                          , s = 0.65 + Math.random() * 0.35
+                          , v = 0.75 + Math.random() * 0.25;
+                        const k = (n) => (n + h * 6) % 6;
+                        const f = (n) => v - v * s * Math.max(0, Math.min(k(n), 4 - k(n), 1));
+                        palArray[i * 4 + 0] = f(5);
+                        palArray[i * 4 + 1] = f(3);
+                        palArray[i * 4 + 2] = f(1);
+                        palArray[i * 4 + 3] = 1;
+                    }
+                    uploadPalette();
+                    buildMatrixUI();
+                    // 색 원 갱신
+                }
+
+                function seededRandom(seed) {
+                    let s = seed >>> 0;
+                    return () => {
+                        s = (s * 1664525 + 1013904223) >>> 0;
+                        return (s & 0xffffffff) / 0x100000000;
+                    }
+                    ;
+                }
+
+                function initParticles(n, species) {
+                    const rand = Math.random;
+                    const arr = new Float32Array(n * 8);
+                    for (let i = 0; i < n; i++) {
+                        const r = 0.9 * worldExtent;
+                        const x = (rand() * 2 - 1) * r
+                          , y = (rand() * 2 - 1) * r
+                          , z = (rand() * 2 - 1) * r;
+                        const vx = (rand() * 2 - 1) * 0.01
+                          , vy = (rand() * 2 - 1) * 0.01
+                          , vz = (rand() * 2 - 1) * 0.01;
+                        arr.set([x, y, z, 0, vx, vy, vz, 0], i * 8);
+                    }
+                    const kinds = new Uint32Array(n);
+                    for (let i = 0; i < n; i++)
+                        kinds[i] = (i % species) >>> 0;
+                    device.queue.writeBuffer(particleA, 0, arr);
+                    device.queue.writeBuffer(particleB, 0, arr);
+                    device.queue.writeBuffer(typeBuf, 0, kinds);
+                }
+
+                // === Presets ===
+                function makeRingPreset(S) {
+                    const M = new Float32Array(MAX_SPECIES * MAX_SPECIES);
+                    for (let i = 0; i < S; i++)
+                        for (let j = 0; j < S; j++) {
+                            let v = 0.0;
+                            if (i === j)
+                                v = +0.8;
+                            else if (j === (i + 1) % S)
+                                v = +1.2;
+                            else if (j === (i + S - 1) % S)
+                                v = -1.0;
+                            else
+                                v = -0.3;
+                            M[i * MAX_SPECIES + j] = v;
+                        }
+                    return M;
+                }
+                function makePredPreyPreset(S) {
+                    const M = new Float32Array(MAX_SPECIES * MAX_SPECIES);
+                    for (let i = 0; i < S; i++)
+                        for (let j = 0; j < S; j++) {
+                            let v = 0.0;
+                            if (i === j)
+                                v = +0.6;
+                            else if (j === (i + 1) % S)
+                                v = +1.4;
+                            else if (j === (i + S - 1) % S)
+                                v = -1.3;
+                            else
+                                v = -0.2;
+                            M[i * MAX_SPECIES + j] = v;
+                        }
+                    return M;
+                }
+                function makeSwarmPreset(S) {
+                    const M = new Float32Array(MAX_SPECIES * MAX_SPECIES);
+                    for (let i = 0; i < S; i++)
+                        for (let j = 0; j < S; j++) {
+                            let v = (i === j) ? +1.0 : +0.2;
+                            if (i !== j && Math.abs(i - j) === 1)
+                                v = +0.5;
+                            M[i * MAX_SPECIES + j] = v;
+                        }
+                    return M;
+                }
+                const BUILTIN_PRESETS = {
+                    'Ring (organism-like)': makeRingPreset,
+                    'Predator–Prey cycle': makePredPreyPreset,
+                    'Swarm cohesion': makeSwarmPreset,
+                };
+                function loadSavedPresets() {
+                    const raw = localStorage.getItem('plife3d_presets');
+                    let obj = {};
+                    try {
+                        if (raw)
+                            obj = JSON.parse(raw);
+                    } catch (e) {}
+                    return obj;
+                }
+                function savePresets(obj) {
+                    localStorage.setItem('plife3d_presets', JSON.stringify(obj));
+                }
+                function populatePresetMenu() {
+                    elPreset.innerHTML = '';
+                    for (const name of Object.keys(BUILTIN_PRESETS)) {
+                        const o = document.createElement('option');
+                        o.value = 'builtin:' + name;
+                        o.textContent = name;
+                        elPreset.appendChild(o);
+                    }
+                    const custom = loadSavedPresets();
+                    for (const name of Object.keys(custom)) {
+                        const o = document.createElement('option');
+                        o.value = 'user:' + name;
+                        o.textContent = '⭐ ' + name;
+                        elPreset.appendChild(o);
+                    }
+                }
+                populatePresetMenu();
+
+                function applyPresetFromMenu() {
+                    const val = elPreset.value || 'builtin:Ring (organism-like)';
+                    const typ = val.split(':')[0];
+                    const name = val.slice(val.indexOf(':') + 1);
+                    let M = null;
+                    const S = simParams.species | 0;
+                    if (typ === 'builtin')
+                        M = BUILTIN_PRESETS[name](S);
+                    else {
+                        const saved = loadSavedPresets();
+                        const data = saved[name];
+                        if (data) {
+                            M = new Float32Array(MAX_SPECIES * MAX_SPECIES);
+                            M.set(data);
+                        }
+                    }
+                    if (!M)
+                        return;
+                    for (let i = 0; i < MAX_SPECIES; i++)
+                        for (let j = 0; j < MAX_SPECIES; j++) {
+                            const v = (i < S && j < S) ? M[i * MAX_SPECIES + j] : 0.0;
+                            matArray[i * MAX_SPECIES + j] = Math.max(-2, Math.min(2, v));
+                        }
+                    if (elSym.checked)
+                        symmetrizeMatrix();
+                    uploadMatrix();
+                    buildMatrixUI();
+                    // 새 UI 리빌드
+                }
+                elApplyPreset.onclick = applyPresetFromMenu;
+                elSavePreset.onclick = () => {
+                    const name = prompt('Preset name');
+                    if (!name)
+                        return;
+                    const saved = loadSavedPresets();
+                    saved[name] = Array.from(matArray);
+                    savePresets(saved);
+                    populatePresetMenu();
+                    elPreset.value = 'user:' + name;
+                }
+                ;
+                elDeletePreset.onclick = () => {
+                    const val = elPreset.value || '';
+                    if (!val.startsWith('user:')) {
+                        alert('Only custom presets can be deleted.');
+                        return;
+                    }
+                    const name = val.slice(5);
+                    const saved = loadSavedPresets();
+                    delete saved[name];
+                    savePresets(saved);
+                    populatePresetMenu();
+                }
+                ;
+                function symmetrizeMatrix() {
+                    const S = simParams.species | 0;
+                    for (let i = 0; i < S; i++)
+                        for (let j = i + 1; j < S; j++) {
+                            const v = 0.5 * (matArray[i * MAX_SPECIES + j] + matArray[j * MAX_SPECIES + i]);
+                            matArray[i * MAX_SPECIES + j] = matArray[j * MAX_SPECIES + i] = v;
+                        }
+                }
+                elSym.onchange = () => {
+                    if (elSym.checked)
+                        symmetrizeMatrix();
+                    buildMatrixUI();
+                    uploadMatrix();
+                }
+                ;
+
+                // === Relation-grid helpers ===
+                function coeffToHSL(v) {
+                    if (Math.abs(v) < 1e-6)
+                        return 'hsl(0deg,0%,0%)';
+                    const hue = v < 0 ? 120 : 0;
+                    const L = 10 + Math.min(1, Math.abs(v) / 2) * 40;
+                    // |v|==2 -> 50%
+                    return `hsl(${hue}deg,100%,${L}%)`;
+                }
+
+                // === 새 Matrix UI (pointer events + capture) ===
+                function buildMatrixUI() {
+                    const S = simParams.species | 0;
+                    matrixHost.innerHTML = '';
+
+                    // HUD 가용 폭 기반 셀 크기 최적화
+                    const hud = document.querySelector('.hud');
+                    const avail = Math.max(260, Math.min(520, (matrixHost.clientWidth || (hud ? hud.clientWidth - 24 : 520))));
+                    // const cellPx = Math.max(20, Math.min(48, Math.floor(avail / (S+1))));
+                    let cellPx = Math.max(20, Math.min(48, Math.floor(avail / (S + 1))));
+                    cellPx = 20;
+                    // species 색 hex 배열
+                    const speciesHex = [];
+                    for (let i = 0; i < S; i++) {
+                        const r = palArray[i * 4 + 0]
+                          , g = palArray[i * 4 + 1]
+                          , b = palArray[i * 4 + 2];
+                        speciesHex[i] = rgbfToHex(r, g, b).toUpperCase();
+                    }
+
+                    const grid = document.createElement('div');
+                    grid.className = 'relation';
+                    grid.style.setProperty('--cell', `${cellPx}px`);
+                    grid.style.gridTemplateColumns = `repeat(${S + 1}, var(--cell))`;
+
+                    // (0,0) 비우기
+                    grid.appendChild(document.createElement('div'));
+                    // 상단 헤더(열 색)
+                    for (let j = 0; j < S; j++) {
+                        const wrap = document.createElement('div');
+                        const dot = document.createElement('div');
+                        dot.className = 'rel color';
+                        dot.style.backgroundColor = speciesHex[j];
+                        dot.dataset.idx = j;
+                        wrap.appendChild(dot);
+                        grid.appendChild(wrap);
+                    }
+                    // 좌측 헤더 + 값
+                    for (let i = 0; i < S; i++) {
+                        const wrap = document.createElement('div');
+                        const dot = document.createElement('div');
+                        dot.className = 'rel color';
+                        dot.style.backgroundColor = speciesHex[i];
+                        dot.dataset.idx = i;
+                        wrap.appendChild(dot);
+                        grid.appendChild(wrap);
+                        for (let j = 0; j < S; j++) {
+                            const v = matArray[i * MAX_SPECIES + j];
+                            const cell = document.createElement('div');
+                            cell.className = 'rel val';
+                            cell.style.backgroundColor = coeffToHSL(v);
+                            cell.dataset.v = v;
+                            cell.dataset.ij = `${i},${j}`;
+                            grid.appendChild(cell);
+                        }
+                    }
+                    matrixHost.appendChild(grid);
+
+                    // 컨트롤
+                    const inputColor = document.getElementById('colorPicker');
+                    const inputCurrVal = document.getElementById('currVal');
+                    const applyBrush = document.getElementById('applyBrush');
+                    const selectStep = document.getElementById('step');
+
+                    let step = parseFloat(selectStep.value) || 0.01;
+                    selectStep.addEventListener('input', () => {
+                        step = parseFloat(selectStep.value) || 0.01;
+                    }
+                    );
+
+                    // 내부 도우미
+                    function setCoeff(i, j, val) {
+                        const v = Math.max(-2, Math.min(2, val));
+                        matArray[i * MAX_SPECIES + j] = v;
+                        if (elSym.checked && i !== j)
+                            matArray[j * MAX_SPECIES + i] = v;
+                        uploadMatrix();
+                    }
+                    function redrawCell(i, j) {
+                        const idx = i * MAX_SPECIES + j;
+                        const v = matArray[idx];
+                        const q = grid.querySelector(`.rel.val[data-ij="${i},${j}"]`);
+                        if (q) {
+                            q.dataset.v = v;
+                            q.style.backgroundColor = coeffToHSL(v);
+                        }
+                        if (elSym.checked && i !== j) {
+                            const q2 = grid.querySelector(`.rel.val[data-ij="${j},${i}"]`);
+                            if (q2) {
+                                q2.dataset.v = v;
+                                q2.style.backgroundColor = coeffToHSL(v);
+                            }
+                        }
+                    }
+
+                    // 포인터 드래그 상태
+                    let dragging = false
+                      , pointerId = null
+                      , anchorCell = null;
+
+                    grid.addEventListener('pointerdown', (e) => {
+                        const t = e.target;
+                        if (t.classList.contains('val')) {
+                            dragging = true;
+                            pointerId = e.pointerId;
+                            anchorCell = t;
+                            t.setPointerCapture?.(e.pointerId);
+                            document.body.style.cursor = 'ns-resize';
+
+                            if (applyBrush.checked) {
+                                const [i,j] = t.dataset.ij.split(',').map(Number);
+                                const v = parseFloat(inputCurrVal.value) || 0;
+                                setCoeff(i, j, v);
+                                redrawCell(i, j);
+                            }
+                            e.preventDefault();
+                        } else if (t.classList.contains('color')) {
+                            const idx = +t.dataset.idx;
+                            inputColor.value = speciesHex[idx];
+                            const rect = t.getBoundingClientRect();
+                            inputColor.style.left = `${rect.right + 2}px`;
+                            inputColor.style.top = `${rect.top - 2}px`;
+                            inputColor.oninput = () => {
+                                const hx = inputColor.value.toUpperCase();
+                                speciesHex[idx] = hx;
+                                t.style.backgroundColor = hx;
+                                const [r,g,b] = hexToRgbf(hx);
+                                palArray[idx * 4 + 0] = r;
+                                palArray[idx * 4 + 1] = g;
+                                palArray[idx * 4 + 2] = b;
+                                palArray[idx * 4 + 3] = 1;
+                                uploadPalette();
+                                grid.querySelectorAll(`.rel.color[data-idx="${idx}"]`).forEach(el => el.style.backgroundColor = hx);
+                            }
+                            ;
+                            setTimeout( () => inputColor.click(), 10);
+                        }
+                    }
+                    );
+
+                    grid.addEventListener('pointermove', (e) => {
+                        if (!dragging || e.pointerId !== pointerId)
+                            return;
+
+                        if (applyBrush.checked) {
+                            // capture 중에도 실제 아래 셀을 찾기 위해 elementFromPoint 사용
+                            const el = document.elementFromPoint(e.clientX, e.clientY);
+                            if (el && el.classList && el.classList.contains('val')) {
+                                const [i,j] = el.dataset.ij.split(',').map(Number);
+                                const v = parseFloat(inputCurrVal.value) || 0;
+                                setCoeff(i, j, v);
+                                redrawCell(i, j);
+                            }
+                        } else if (anchorCell) {
+                            const [i,j] = anchorCell.dataset.ij.split(',').map(Number);
+                            let v = parseFloat(anchorCell.dataset.v) || 0;
+                            v -= e.movementY * step;
+                            // 위로 올리면 증가
+                            v = Math.max(-2, Math.min(2, v));
+                            setCoeff(i, j, v);
+                            redrawCell(i, j);
+                            inputCurrVal.value = v.toFixed(3);
+                        }
+                    }
+                    );
+
+                    function endDrag(e) {
+                        if (!dragging || (pointerId !== null && e.pointerId !== pointerId))
+                            return;
+                        try {
+                            anchorCell?.releasePointerCapture?.(pointerId);
+                        } catch (_) {}
+                        dragging = false;
+                        pointerId = null;
+                        anchorCell = null;
+                        document.body.style.cursor = '';
+                    }
+                    grid.addEventListener('pointerup', endDrag);
+                    grid.addEventListener('pointercancel', endDrag);
+                    grid.addEventListener('lostpointercapture', endDrag);
+
+                    // 현재 값 직접 입력 → 지정된 셀 즉시 적용(브러시 OFF + 고정편집 중일 때)
+                    inputCurrVal.addEventListener('input', () => {
+                        if (anchorCell && !applyBrush.checked) {
+                            const [i,j] = anchorCell.dataset.ij.split(',').map(Number);
+                            const v = parseFloat(inputCurrVal.value) || 0;
+                            setCoeff(i, j, v);
+                            redrawCell(i, j);
+                        }
+                    }
+                    );
+
+                    // Force band: -2..0 / 0 / 0..2 (pointer)
+                    function bandPick(e) {
+                        const rect = e.target.getBoundingClientRect();
+                        const k = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        let v = 0;
+                        if (e.target.id === 'force-l')
+                            v = -2 + 2 * k;
+                        else if (e.target.id === 'force-r')
+                            v = 2 * k;
+                        else
+                            v = 0;
+                        document.getElementById('applyBrush').checked = true;
+                        inputCurrVal.value = v.toFixed(3);
+                    }
+                    ['force-l', 'force-m', 'force-r'].forEach(id => {
+                        const el = document.getElementById(id);
+                        el.addEventListener('pointerdown', (e) => {
+                            dragging = true;
+                            pointerId = e.pointerId;
+                            el.setPointerCapture?.(e.pointerId);
+                            bandPick(e);
+                        }
+                        );
+                        el.addEventListener('pointermove', (e) => {
+                            if (dragging && e.pointerId === pointerId)
+                                bandPick(e);
+                        }
+                        );
+                        const finish = (e) => {
+                            if (dragging && e.pointerId === pointerId) {
+                                dragging = false;
+                                pointerId = null;
+                                el.releasePointerCapture?.(e.pointerId);
+                            }
+                        }
+                        ;
+                        el.addEventListener('pointerup', finish);
+                        el.addEventListener('pointercancel', finish);
+                        el.addEventListener('lostpointercapture', finish);
+                    }
+                    );
+                }
+
+                // 무작위 행렬
+                function randomizeMatrix() {
+                    const S = simParams.species | 0;
+                    for (let i = 0; i < S; i++)
+                        for (let j = 0; j < S; j++) {
+                            matArray[i * MAX_SPECIES + j] = (Math.random() * 4 - 2);
+                            // [-2,+2]
+                        }
+                    if (elSym.checked)
+                        symmetrizeMatrix();
+                    uploadMatrix();
+                    buildMatrixUI();
+                }
+                document.getElementById('randMatrix').onclick = randomizeMatrix;
+
+                // 추가 버튼 액션
+                elRandColors && (elRandColors.onclick = () => {
+                    randomizePalette();
+                }
+                );
+                elReSeed && (elReSeed.onclick = () => {
+                    initParticles(simParams.num, simParams.species);
+                }
+                );
+
+                // 값 실시간 바인딩
+                elFriction.addEventListener('input', () => {
+                    simParams.friction = +elFriction.value;
+                    syncLabels();
+                }
+                );
+                elStrength.addEventListener('input', () => {
+                    simParams.strength = +elStrength.value;
+                    syncLabels();
+                }
+                );
+                elRadius && (elRadius.oninput = () => {
+                    simParams.radius = +elRadius.value;
+                    syncLabels();
+                    writeSimUBO(0.0);
+                }
+                );
+                elDtCap && (elDtCap.oninput = () => {
+                    dtCap = +elDtCap.value;
+                    syncLabels();
+                }
+                );
+                elWorld && (elWorld.oninput = () => {
+                    worldExtent = +elWorld.value;
+                    syncLabels();
+                    writeSimUBO(0.0);
+                }
+                );
+                elRepulsion && (elRepulsion.oninput = () => {
+                    simParams.coreK = +elRepulsion.value;
+                    syncLabels();
+                }
+                );
+
+                // 종 수 슬라이더 → 미리보기 재빌드
+                elSpecies && (elSpecies.oninput = () => {
+                    syncLabels();
+                    buildMatrixUI();
+                }
+                );
+
+                // === Shaders ===
+                const computeWGSL = /*wgsl*/
+                `
+struct Particle { pos: vec4f, vel: vec4f };
+
+// --- Common params ---
+struct Params {
+  num: u32,
+  species: u32,
+  periodic: u32,
+  seed: u32,
+  worldExtent: f32,
+  radius: f32,
+  strength: f32,
+  friction: f32,
+  dt: f32,
+  boxSize: f32,
+  invRadius: f32,
+  maxSpeed: f32,
+  gridDim: u32,
+  gridCount: u32,
+  _pad0: u32,
+  _pad1: u32,
+  cellSize: f32,
+  invCell: f32,
+  coreFrac: f32,
+  coreK: f32,
+};
+
+fn clampi(x:i32, lo:i32, hi:i32) -> i32 { return max(lo, min(hi, x)); }
+fn wrapi(x:i32, m:i32) -> i32 { let r = (x % m + m) % m; return r; }
+
+// --- Clear heads ---
+@group(0) @binding(0) var<storage, read_write> heads : array<atomic<i32>>;
+@compute @workgroup_size(128)
+fn clearHeads(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let idx = gid.x;
+  if (idx < arrayLength(&heads)) { atomicStore(&heads[idx], -1); }
+}
+
+// --- Build grid ---
+@group(1) @binding(0) var<storage, read_write> b_heads : array<atomic<i32>>;
+@group(1) @binding(1) var<storage, read_write> b_next  : array<i32>;
+@group(1) @binding(2) var<storage, read>       b_src   : array<Particle>;
+@group(1) @binding(3) var<uniform>             bp      : Params;
+
+@compute @workgroup_size(128)
+fn buildGrid(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= bp.num) { return; }
+  let P = b_src[i].pos.xyz;
+  let rel = floor( (P + vec3f(bp.worldExtent)) * bp.invCell );
+  var ix = i32(rel.x); var iy = i32(rel.y); var iz = i32(rel.z);
+  let d = i32(bp.gridDim);
+  if (bp.periodic == 1u) { ix = wrapi(ix, d); iy = wrapi(iy, d); iz = wrapi(iz, d); }
+  else { ix = clampi(ix, 0, d-1); iy = clampi(iy, 0, d-1); iz = clampi(iz, 0, d-1); }
+  let cid = u32((ix * d + iy) * d + iz);
+  // atomic push-front
+  let old = atomicExchange(&b_heads[cid], i32(i));
+  b_next[i] = old;
+}
+
+// --- Step using grid (27-cell neighborhood) ---
+@group(2) @binding(0) var<storage, read>       src : array<Particle>;
+@group(2) @binding(1) var<storage, read_write> dst : array<Particle>;
+@group(2) @binding(2) var<storage, read>       kinds : array<u32>;
+@group(2) @binding(3) var<uniform>             p : Params;
+@group(2) @binding(4) var<storage, read_write>       g_heads : array<atomic<i32>>;
+@group(2) @binding(5) var<storage, read>       g_next  : array<i32>;
+@group(2) @binding(6) var<storage, read>       mat     : array<f32>; // species x species (row-major: i->j)
+
+@compute @workgroup_size(128)
+fn step(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= p.num) { return; }
+  var pi = src[i].pos.xyz;
+  var vi = src[i].vel.xyz;
+  let ki = kinds[i];
+
+  var acc = vec3f(0.0);
+  let r2max = p.radius * p.radius;
+  let box = vec3f(p.boxSize);
+  let d = i32(p.gridDim);
+
+  // my cell
+  let rel = floor( (pi + vec3f(p.worldExtent)) * p.invCell );
+  var ix = i32(rel.x); var iy = i32(rel.y); var iz = i32(rel.z);
+  if (p.periodic == 1u) { ix = wrapi(ix, d); iy = wrapi(iy, d); iz = wrapi(iz, d); }
+  else { ix = clampi(ix, 0, d-1); iy = clampi(iy, 0, d-1); iz = clampi(iz, 0, d-1); }
+
+  // iterate neighbors (27 cells)
+  for (var dx : i32 = -1; dx <= 1; dx = dx + 1) {
+    for (var dy : i32 = -1; dy <= 1; dy = dy + 1) {
+      for (var dz : i32 = -1; dz <= 1; dz = dz + 1) {
+        var nx = ix + dx; var ny = iy + dy; var nz = iz + dz;
+        if (p.periodic == 1u) { nx = wrapi(nx, d); ny = wrapi(ny, d); nz = wrapi(nz, d); }
+        else { if (nx < 0 || nx >= d || ny < 0 || ny >= d || nz < 0 || nz >= d) { continue; } }
+        let cid = u32((nx * d + ny) * d + nz);
+        var h = atomicLoad(&g_heads[cid]);
+        loop {
+          if (h == -1) { break; }
+          let j = u32(h);
+          if (j != i) {
+            var dvec = src[j].pos.xyz - pi;
+            if (p.periodic == 1u) { dvec = dvec - box * round(dvec / box); }
+            let r2 = dot(dvec,dvec) + 1e-8;
+            if (r2 < r2max) {
+              let r = sqrt(r2);
+              let w = max(0.0, 1.0 - r * p.invRadius);
+              let kj = kinds[j];
+              let coeff = mat[u32(ki) * ${MAX_SPECIES}u + u32(kj)]; // read from matrix (MAX stride)
+              // soft-core repulsion inside core radius
+              let rc = p.coreFrac * p.radius;
+              if (r < rc) {
+                let push = (1.0 - r/rc) * p.coreK; acc += (dvec / r) * push;
+              } else {
+                acc += (dvec / r) * (coeff * p.strength * w);
+              }
+            }
+          }
+          h = g_next[j];
+        }
+      }
+    }
+  }
+
+  let damp = max(0.0, 1.0 - p.friction * p.dt);
+  vi = vi * damp + acc * p.dt;
+  let spd = length(vi);
+  if (spd > p.maxSpeed) { vi = vi * (p.maxSpeed / spd); }
+  var newPos = pi + vi * p.dt;
+  if (p.periodic == 1u) { newPos = newPos - vec3f(p.boxSize) * floor((newPos + vec3f(p.worldExtent)) / vec3f(p.boxSize)); }
+  dst[i].pos = vec4f(newPos, 0.0);
+  dst[i].vel = vec4f(vi, 0.0);
+}
+`;
+
+                const particleVS = /*wgsl*/
+                `
+struct Particle { pos: vec4f, vel: vec4f };
+@group(0) @binding(0) var<storage, read> particles : array<Particle>;
+@group(0) @binding(1) var<storage, read> kinds : array<u32>;
+struct Camera { viewProj: mat4x4<f32>, right: vec3f, size: f32, up: vec3f, worldExtent: f32 };
+@group(0) @binding(2) var<uniform> cam : Camera;
+@group(0) @binding(3) var<storage, read> palette : array<vec4f>;
+
+struct VSOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f, @location(1) @interpolate(flat) kind: u32 };
+@vertex
+fn vs(@location(0) q: vec2f, @builtin(instance_index) inst: u32) -> VSOut {
+  let P = particles[inst].pos.xyz;
+  let world = P + (cam.right * q.x + cam.up * q.y) * cam.size;
+  let clip = cam.viewProj * vec4f(world, 1.0);
+  var o: VSOut; o.pos = clip; o.uv = q; o.kind = kinds[inst]; return o;
+}
+`;
+
+                const particleFS = /*wgsl*/
+                `
+@group(0) @binding(3) var<storage, read> palette : array<vec4f>;
+@fragment
+fn fs(@location(0) uv: vec2f, @location(1) @interpolate(flat) kind: u32) -> @location(0) vec4f {
+  let r = length(uv);
+  if (r > 1.0) { discard; }
+  let edge = smoothstep(0.92, 1.0, r);
+  let idx = kind % 16u;
+  let col = palette[idx].xyz;
+  return vec4f(col*(1.0-edge*0.5), 1.0);
+}
+`;
+
+                const boxVS = /*wgsl*/
+                `
+struct Camera { viewProj: mat4x4<f32>, right: vec3f, size: f32, up: vec3f, worldExtent: f32 };
+@group(0) @binding(0) var<uniform> cam : Camera;
+struct VSOut { @builtin(position) pos: vec4f, @location(0) nrm: vec3f };
+@vertex
+fn vs(@location(0) pos: vec3f, @location(1) n: vec3f) -> VSOut {
+  let p = pos * cam.worldExtent; // scale unit cube to world box
+  var o: VSOut; o.pos = cam.viewProj * vec4f(p,1.0); o.nrm = -n; // flip normals inward
+  return o;
+}
+`;
+
+                const boxFS = /*wgsl*/
+                `
+@fragment
+fn fs(@location(0) nrm: vec3f) -> @location(0) vec4f {
+  let L = normalize(vec3f(0.6, 0.8, 0.5));
+  let ndl = clamp(dot(normalize(nrm), L), 0.0, 1.0);
+  let base = vec3f(0.10, 0.14, 0.20);
+  let edge = vec3f(0.18, 0.24, 0.34);
+  let col = mix(base, edge, ndl*0.6 + 0.2);
+  return vec4f(col, 0.16); // subtle face
+}
+`;
+
+                const lineVS = /*wgsl*/
+                `
+struct Camera { viewProj: mat4x4<f32>, right: vec3f, size: f32, up: vec3f, worldExtent: f32 };
+@group(0) @binding(0) var<uniform> cam : Camera;
+@vertex
+fn vs(@location(0) pos: vec3f) -> @builtin(position) vec4f { return cam.viewProj * vec4f(pos * cam.worldExtent, 1.0); }
+`;
+                const lineFS = /*wgsl*/
+                `
+@fragment
+fn fs() -> @location(0) vec4f { return vec4f(0.30,0.45,0.70, 0.65); }
+`;
+
+                // Pipelines
+                const compModule = device.createShaderModule({
+                    code: computeWGSL
+                });
+                const clearPipeline = device.createComputePipeline({
+                    layout: 'auto',
+                    compute: {
+                        module: compModule,
+                        entryPoint: 'clearHeads'
+                    }
+                });
+                const buildPipeline = device.createComputePipeline({
+                    layout: 'auto',
+                    compute: {
+                        module: compModule,
+                        entryPoint: 'buildGrid'
+                    }
+                });
+                const stepPipeline = device.createComputePipeline({
+                    layout: 'auto',
+                    compute: {
+                        module: compModule,
+                        entryPoint: 'step'
+                    }
+                });
+
+                const quadVB = device.createBuffer({
+                    size: 4 * 2 * 4,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+                device.queue.writeBuffer(quadVB, 0, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]));
+                const particleVSMod = device.createShaderModule({
+                    code: particleVS
+                });
+                const particleFSMod = device.createShaderModule({
+                    code: particleFS
+                });
+                const particlePipeline = device.createRenderPipeline({
+                    layout: 'auto',
+                    vertex: {
+                        module: particleVSMod,
+                        entryPoint: 'vs',
+                        buffers: [{
+                            arrayStride: 8,
+                            attributes: [{
+                                shaderLocation: 0,
+                                offset: 0,
+                                format: 'float32x2'
+                            }]
+                        }]
+                    },
+                    fragment: {
+                        module: particleFSMod,
+                        entryPoint: 'fs',
+                        targets: [{
+                            format: canvasFormat
+                        }]
+                    },
+                    primitive: {
+                        topology: 'triangle-strip',
+                        cullMode: 'none'
+                    },
+                    depthStencil: {
+                        format: depthFormat,
+                        depthWriteEnabled: true,
+                        depthCompare: 'less'
+                    },
+                });
+
+                const boxVSMod = device.createShaderModule({
+                    code: boxVS
+                });
+                const boxFSMod = device.createShaderModule({
+                    code: boxFS
+                });
+                const boxPipeline = device.createRenderPipeline({
+                    layout: device.createPipelineLayout({
+                        bindGroupLayouts: [device.createBindGroupLayout({
+                            entries: [{
+                                binding: 0,
+                                visibility: GPUShaderStage.VERTEX,
+                                buffer: {}
+                            }]
+                        })]
+                    }),
+                    vertex: {
+                        module: boxVSMod,
+                        entryPoint: 'vs',
+                        buffers: [{
+                            arrayStride: 12,
+                            attributes: [{
+                                shaderLocation: 0,
+                                offset: 0,
+                                format: 'float32x3'
+                            }]
+                        }, {
+                            arrayStride: 12,
+                            attributes: [{
+                                shaderLocation: 1,
+                                offset: 0,
+                                format: 'float32x3'
+                            }]
+                        }]
+                    },
+                    fragment: {
+                        module: boxFSMod,
+                        entryPoint: 'fs',
+                        targets: [{
+                            format: canvasFormat,
+                            blend: {
+                                color: {
+                                    srcFactor: 'src-alpha',
+                                    dstFactor: 'one-minus-src-alpha',
+                                    operation: 'add'
+                                },
+                                alpha: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one-minus-src-alpha',
+                                    operation: 'add'
+                                }
+                            }
+                        }]
+                    },
+                    primitive: {
+                        topology: 'triangle-list',
+                        cullMode: 'front'
+                    },
+                    depthStencil: {
+                        format: depthFormat,
+                        depthWriteEnabled: false,
+                        depthCompare: 'less'
+                    },
+                });
+
+                const lineVSMod = device.createShaderModule({
+                    code: lineVS
+                });
+                const lineFSMod = device.createShaderModule({
+                    code: lineFS
+                });
+                const linePipeline = device.createRenderPipeline({
+                    layout: device.createPipelineLayout({
+                        bindGroupLayouts: [device.createBindGroupLayout({
+                            entries: [{
+                                binding: 0,
+                                visibility: GPUShaderStage.VERTEX,
+                                buffer: {}
+                            }]
+                        })]
+                    }),
+                    vertex: {
+                        module: lineVSMod,
+                        entryPoint: 'vs',
+                        buffers: [{
+                            arrayStride: 12,
+                            attributes: [{
+                                shaderLocation: 0,
+                                offset: 0,
+                                format: 'float32x3'
+                            }]
+                        }]
+                    },
+                    fragment: {
+                        module: lineFSMod,
+                        entryPoint: 'fs',
+                        targets: [{
+                            format: canvasFormat,
+                            blend: {
+                                color: {
+                                    srcFactor: 'src-alpha',
+                                    dstFactor: 'one-minus-src-alpha',
+                                    operation: 'add'
+                                },
+                                alpha: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one-minus-src-alpha',
+                                    operation: 'add'
+                                }
+                            }
+                        }]
+                    },
+                    primitive: {
+                        topology: 'line-list',
+                        cullMode: 'none'
+                    },
+                    depthStencil: {
+                        format: depthFormat,
+                        depthWriteEnabled: false,
+                        depthCompare: 'less'
+                    },
+                });
+
+                // Box geometry
+                const cubePos = new Float32Array([-1, -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, -1, 1, 1, 1, 1, 1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1]);
+                const cubeNrm = new Float32Array([-1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
+                const cubeEdges = new Float32Array([-1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, -1, -1, 1, -1]);
+                const cubePosBuf = device.createBuffer({
+                    size: cubePos.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+                const cubeNrmBuf = device.createBuffer({
+                    size: cubeNrm.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+                const cubeEdgeBuf = device.createBuffer({
+                    size: cubeEdges.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+                device.queue.writeBuffer(cubePosBuf, 0, cubePos);
+                device.queue.writeBuffer(cubeNrmBuf, 0, cubeNrm);
+                device.queue.writeBuffer(cubeEdgeBuf, 0, cubeEdges);
+
+                // === Bind groups ===
+                let clearBG = null
+                  , buildBG_A = null
+                  , buildBG_B = null
+                  , stepBG_A = null
+                  , stepBG_B = null
+                  , particleBG_A = null
+                  , particleBG_B = null;
+                function makeClearBG() {
+                    return device.createBindGroup({
+                        layout: clearPipeline.getBindGroupLayout(0),
+                        entries: [{
+                            binding: 0,
+                            resource: {
+                                buffer: gridHead
+                            }
+                        }]
+                    });
+                }
+                function makeBuildBG(readA) {
+                    const src = readA ? particleA : particleB;
+                    return device.createBindGroup({
+                        layout: buildPipeline.getBindGroupLayout(1),
+                        entries: [{
+                            binding: 0,
+                            resource: {
+                                buffer: gridHead
+                            }
+                        }, {
+                            binding: 1,
+                            resource: {
+                                buffer: gridNext
+                            }
+                        }, {
+                            binding: 2,
+                            resource: {
+                                buffer: src
+                            }
+                        }, {
+                            binding: 3,
+                            resource: {
+                                buffer: simUBO
+                            }
+                        }, ]
+                    });
+                }
+                function makeStepBG(readA) {
+                    const src = readA ? particleA : particleB;
+                    const dst = readA ? particleB : particleA;
+                    return device.createBindGroup({
+                        layout: stepPipeline.getBindGroupLayout(2),
+                        entries: [{
+                            binding: 0,
+                            resource: {
+                                buffer: src
+                            }
+                        }, {
+                            binding: 1,
+                            resource: {
+                                buffer: dst
+                            }
+                        }, {
+                            binding: 2,
+                            resource: {
+                                buffer: typeBuf
+                            }
+                        }, {
+                            binding: 3,
+                            resource: {
+                                buffer: simUBO
+                            }
+                        }, {
+                            binding: 4,
+                            resource: {
+                                buffer: gridHead
+                            }
+                        }, {
+                            binding: 5,
+                            resource: {
+                                buffer: gridNext
+                            }
+                        }, {
+                            binding: 6,
+                            resource: {
+                                buffer: matBuf
+                            }
+                        }, ]
+                    });
+                }
+                function makeParticleBG(readA) {
+                    const src = readA ? particleA : particleB;
+                    return device.createBindGroup({
+                        layout: particlePipeline.getBindGroupLayout(0),
+                        entries: [{
+                            binding: 0,
+                            resource: {
+                                buffer: src
+                            }
+                        }, {
+                            binding: 1,
+                            resource: {
+                                buffer: typeBuf
+                            }
+                        }, {
+                            binding: 2,
+                            resource: {
+                                buffer: cameraUBO
+                            }
+                        }, {
+                            binding: 3,
+                            resource: {
+                                buffer: palBuf
+                            }
+                        }, ]
+                    });
+                }
+
+                // Box & lines
+                const boxBGL = boxPipeline.getBindGroupLayout(0);
+                const lineBGL = linePipeline.getBindGroupLayout(0);
+                let boxBG = device.createBindGroup({
+                    layout: boxBGL,
+                    entries: [{
+                        binding: 0,
+                        resource: {
+                            buffer: cameraUBO
+                        }
+                    }]
+                });
+                let lineBG = device.createBindGroup({
+                    layout: lineBGL,
+                    entries: [{
+                        binding: 0,
+                        resource: {
+                            buffer: cameraUBO
+                        }
+                    }]
+                });
+
+                // Initialize / rebuild simulation
+                function rebuild() {
+                    simParams.num = (+elCount.value) | 0;
+                    simParams.num = Math.max(32, Math.min(4096 * 4, simParams.num));
+                    simParams.species = (+elSpecies.value) | 0;
+                    simParams.radius = +elRadius.value;
+                    simParams.strength = +elStrength.value;
+                    simParams.friction = +elFriction.value;
+
+                    writeSimUBO(0.0);
+                    createGridBuffersOnce();
+                    ensureGridNextCapacity();
+                    createParticleBuffers(simParams.num);
+                    if (!matBuf)
+                        createMatrixBuffer();
+                    if (!palBuf)
+                        createPaletteBuffer();
+
+                    // 초기 매트릭스가 비어 있으면 기본 preset
+                    if (matArray.every(v => v === 0)) {
+                        for (let i = 0; i < MAX_SPECIES * MAX_SPECIES; i++)
+                            matArray[i] = 0;
+                        const M = makeRingPreset(simParams.species);
+                        for (let i = 0; i < simParams.species; i++)
+                            for (let j = 0; j < simParams.species; j++)
+                                matArray[i * MAX_SPECIES + j] = M[i * MAX_SPECIES + j];
+                    }
+                    uploadMatrix();
+
+                    if (palArray.every(v => v === 0))
+                        setPaletteFromHex(DEFAULT_PALETTE_HEX);
+                    else
+                        uploadPalette();
+
+                    initParticles(simParams.num, simParams.species);
+
+                    clearBG = makeClearBG();
+                    buildBG_A = makeBuildBG(true);
+                    buildBG_B = makeBuildBG(false);
+                    stepBG_A = makeStepBG(true);
+                    stepBG_B = makeStepBG(false);
+                    particleBG_A = makeParticleBG(true);
+                    particleBG_B = makeParticleBG(false);
+
+                    buildMatrixUI();
+                }
+
+                // Build once before the loop
+                rebuild();
+                applyPresetFromMenu();
+
+                // UI actions
+                let paused = false;
+                elToggle.onclick = () => {
+                    paused = !paused;
+                    elToggle.textContent = paused ? '▶︎ Resume' : '⏸︎ Pause';
+                }
+                ;
+                elReset.onclick = () => {
+                    rebuild();
+                }
+                ;
+
+                // Self Test
+                async function selfTest() {
+                    const results = [];
+                    results.push(['buffers', !!particleA && !!particleB && !!typeBuf && !!simUBO && !!cameraUBO && !!gridHead && !!gridNext && !!matBuf && !!palBuf]);
+                    results.push(['matrix_size', matArray.length === MAX_SPECIES * MAX_SPECIES]);
+
+                    device.pushErrorScope('validation');
+                    try {
+                        const enc = device.createCommandEncoder();
+                        {
+                            const pass = enc.beginComputePass();
+                            pass.setPipeline(clearPipeline);
+                            pass.setBindGroup(0, clearBG);
+                            pass.dispatchWorkgroups(Math.ceil(simParams.gridCount / 128));
+                            pass.end();
+                        }
+                        {
+                            const pass = enc.beginComputePass();
+                            pass.setPipeline(buildPipeline);
+                            pass.setBindGroup(1, buildBG_A);
+                            pass.dispatchWorkgroups(Math.ceil(simParams.num / 128));
+                            pass.end();
+                        }
+                        {
+                            const pass = enc.beginComputePass();
+                            pass.setPipeline(stepPipeline);
+                            pass.setBindGroup(2, stepBG_A);
+                            pass.dispatchWorkgroups(Math.ceil(simParams.num / 128));
+                            pass.end();
+                        }
+                        device.queue.submit([enc.finish()]);
+                    } catch (e) {}
+                    const err = await device.popErrorScope();
+                    results.push(['compute_chain', err === null]);
+                    elPerf.textContent = (results.every( ([_,v]) => v) ? '✓ SelfTest OK' : '✗ SelfTest FAIL') + ' • ' + results.map( ([k,v]) => `${k}:${v ? 'ok' : 'fail'}`).join(', ');
+                }
+                elSelf.onclick = () => {
+                    selfTest();
+                }
+                ;
+
+                // Frame loop
+                let tPrev = performance.now();
+                let ping = true;
+                let frames = 0
+                  , accTime = 0;
+                let dtCap = 0.033;
+                function frame() {
+                    resize();
+                    const t = performance.now();
+                    let dt = Math.min(dtCap, (t - tPrev) / 1000);
+                    tPrev = t;
+                    dt = Math.max(0.001, dt);
+                    updateCameraUBO();
+                    writeSimUBO(paused ? 0.0 : dt);
+
+                    const encoder = device.createCommandEncoder();
+                    if (!paused) {
+                        {
+                            const cpass = encoder.beginComputePass();
+                            cpass.setPipeline(clearPipeline);
+                            cpass.setBindGroup(0, clearBG);
+                            cpass.dispatchWorkgroups(Math.ceil(simParams.gridCount / 128));
+                            cpass.end();
+                        }
+                        {
+                            const cpass = encoder.beginComputePass();
+                            cpass.setPipeline(buildPipeline);
+                            cpass.setBindGroup(1, ping ? buildBG_A : buildBG_B);
+                            cpass.dispatchWorkgroups(Math.ceil(simParams.num / 128));
+                            cpass.end();
+                        }
+                        {
+                            const cpass = encoder.beginComputePass();
+                            cpass.setPipeline(stepPipeline);
+                            cpass.setBindGroup(2, ping ? stepBG_A : stepBG_B);
+                            cpass.dispatchWorkgroups(Math.ceil(simParams.num / 128));
+                            cpass.end();
+                        }
+                    }
+
+                    const colorView = context.getCurrentTexture().createView();
+                    const depthView = depthTex.createView();
+                    const rpass = encoder.beginRenderPass({
+                        colorAttachments: [{
+                            view: colorView,
+                            clearValue: {
+                                r: 0.05,
+                                g: 0.07,
+                                b: 0.10,
+                                a: 1
+                            },
+                            loadOp: 'clear',
+                            storeOp: 'store'
+                        }],
+                        depthStencilAttachment: {
+                            view: depthView,
+                            depthClearValue: 1.0,
+                            depthLoadOp: 'clear',
+                            depthStoreOp: 'store'
+                        },
+                    });
+
+                    // world box faces + edges + particles
+                    rpass.setPipeline(boxPipeline);
+                    rpass.setBindGroup(0, boxBG);
+                    rpass.setVertexBuffer(0, cubePosBuf);
+                    rpass.setVertexBuffer(1, cubeNrmBuf);
+                    rpass.draw(36, 1, 0, 0);
+                    rpass.setPipeline(linePipeline);
+                    rpass.setBindGroup(0, lineBG);
+                    rpass.setVertexBuffer(0, cubeEdgeBuf);
+                    rpass.draw(24, 1, 0, 0);
+                    rpass.setPipeline(particlePipeline);
+                    rpass.setVertexBuffer(0, quadVB);
+                    rpass.setBindGroup(0, ping ? particleBG_A : particleBG_B);
+                    rpass.draw(4, simParams.num, 0, 0);
+                    rpass.end();
+
+                    device.queue.submit([encoder.finish()]);
+                    if (!paused)
+                        ping = !ping;
+
+                    frames++;
+                    accTime += dt;
+                    if (accTime > 1.0) {
+                        elPerf.textContent = `${simParams.num}p @ grid ${simParams.gridDim}³  •  ${(frames / accTime).toFixed(0)} FPS`;
+                        frames = 0;
+                        accTime = 0;
+                    }
+                    requestAnimationFrame(frame);
+                }
+                requestAnimationFrame(frame);
+            }
+            )();
+        </script>
+    </body>
+</html>

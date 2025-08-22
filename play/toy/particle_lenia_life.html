@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Hybrid Particle Lenia × Life — Sidebar UI</title>
+<style>
+    :root {
+        --bg: #0e1117;
+        --panel: #131a22;
+        --border: #1f2937;
+        --fg: #e5ecf4;
+        --muted: #8aa1c0;
+        --accent: #7bdff6;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    #wrap {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        height: 100%;
+    }
+
+    #side {
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        padding: 14px 12px;
+        overflow: auto;
+    }
+
+    h1 {
+        font-size: 16px;
+        margin: 0 0 8px;
+    }
+
+    h2 {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 14px 0 8px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+    }
+
+    .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px 8px;
+    }
+
+    .ctrl {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .ctrl label {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    input[type=range] {
+        width: 170px;
+    }
+
+    input[type=checkbox] {
+        transform: translateY(1px);
+    }
+
+    button {
+        background: #182233;
+        color: var(--fg);
+        border: 1px solid #28384f;
+        padding: 7px 10px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        border-color: #3b5173;
+    }
+
+    small {
+        color: var(--muted);
+    }
+
+    #fps {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    #canvasWrap {
+        position: relative;
+        background: #0b0e13;
+    }
+
+    #canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        cursor: crosshair;
+    }
+
+    .badge {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        background: #101826cc;
+        border: 1px solid #1e2a3f;
+        color: #cfe6ff;
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        backdrop-filter: blur(4px)
+    }
+</style>
+<body>
+    <div id="wrap">
+        <aside id="side">
+            <h1>Hybrid Particle Lenia × Life</h1>
+            <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+                <button id="pauseBtn">⏸ Pause</button>
+                <button id="resetBtn">🔄 Reset</button>
+                <button id="randBtn">🎲 Randomize</button>
+            </div>
+            <div class="row" style="justify-content:space-between">
+                <div id="fps">fps —</div>
+                <small id="nLbl"></small>
+            </div>
+            <h2>Dynamics</h2>
+            <div class="grid">
+                <div class="ctrl">
+                    <label>Steps / frame</label>
+                    <input id="steps" type="range" min="1" max="10" step="1" value="3">
+                </div>
+                <div>
+                    <span id="stepsVal">3</span>
+                </div>
+                <div class="ctrl">
+                    <label>Δt</label>
+                    <input id="dt" type="range" min="0.02" max="0.25" step="0.01" value="0.08">
+                </div>
+                <div>
+                    <span id="dtVal">0.08</span>
+                </div>
+                <div class="ctrl">
+                    <label>Mass m</label>
+                    <input id="mass" type="range" min="0" max="0.6" step="0.02" value="0.20">
+                </div>
+                <div>
+                    <span id="massVal">0.20</span>
+                </div>
+                <div class="ctrl">
+                    <label>Damping γ</label>
+                    <input id="gamma" type="range" min="0" max="2.0" step="0.02" value="0.80">
+                </div>
+                <div>
+                    <span id="gammaVal">0.80</span>
+                </div>
+                <div class="ctrl">
+                    <label>Particles</label>
+                    <input id="nPart" type="range" min="80" max="800" step="10" value="220">
+                </div>
+                <div>
+                    <span id="nPartVal">220</span>
+                </div>
+                <div class="ctrl">
+                    <label>Auto scale U</label>
+                    <input id="autoU" type="checkbox" checked>
+                </div>
+                <div></div>
+            </div>
+            <h2>Lenia Kernel (K)</h2>
+            <div class="grid">
+                <div class="ctrl">
+                    <label>
+                        μ<sub>K</sub>
+                    </label>
+                    <input id="muK" type="range" min="1.5" max="8.0" step="0.1" value="4.0">
+                </div>
+                <div>
+                    <span id="muKVal">4.0</span>
+                </div>
+                <div class="ctrl">
+                    <label>
+                        σ<sub>K</sub>
+                    </label>
+                    <input id="sigK" type="range" min="0.4" max="3.0" step="0.05" value="1.2">
+                </div>
+                <div>
+                    <span id="sigKVal">1.2</span>
+                </div>
+                <div class="ctrl">
+                    <label>
+                        w<sub>K</sub>
+                    </label>
+                    <input id="wK" type="range" min="0.00" max="0.15" step="0.005" value="0.06">
+                </div>
+                <div>
+                    <span id="wKVal">0.06</span>
+                </div>
+            </div>
+            <h2>Growth map G(U)</h2>
+            <div class="grid">
+                <div class="ctrl">
+                    <label>
+                        μ<sub>G</sub>
+                    </label>
+                    <input id="muG" type="range" min="0.10" max="1.20" step="0.02" value="0.60">
+                </div>
+                <div>
+                    <span id="muGVal">0.60</span>
+                </div>
+                <div class="ctrl">
+                    <label>
+                        σ<sub>G</sub>
+                    </label>
+                    <input id="sigG" type="range" min="0.04" max="0.40" step="0.01" value="0.18">
+                </div>
+                <div>
+                    <span id="sigGVal">0.18</span>
+                </div>
+            </div>
+            <h2>Repulsion</h2>
+            <div class="grid">
+                <div class="ctrl">
+                    <label>
+                        c<sub>rep</sub>
+                    </label>
+                    <input id="crep" type="range" min="0" max="2.0" step="0.02" value="1.00">
+                </div>
+                <div>
+                    <span id="crepVal">1.00</span>
+                </div>
+            </div>
+            <h2>Non-conservative (Life-ish)</h2>
+            <div class="grid">
+                <div class="ctrl">
+                    <label>α (swirl)</label>
+                    <input id="alpha" type="range" min="0.00" max="1.20" step="0.02" value="0.60">
+                </div>
+                <div>
+                    <span id="alphaVal">0.60</span>
+                </div>
+            </div>
+            <h2>Presets</h2>
+            <div class="row" style="flex-wrap:wrap; gap:6px;">
+                <button class="preset" data-k="calm">Calm Rings</button>
+                <button class="preset" data-k="chase">Chase</button>
+                <button class="preset" data-k="swirl">Swirl Flocks</button>
+                <button class="preset" data-k="lifeish">Life-ish</button>
+            </div>
+            <p>
+                <small>Tip) 더 Lenia스럽게: m=0, α≈0.2–0.4. 더 Life스럽게: m↑, γ↓, α↑.</small>
+            </p>
+        </aside>
+        <div id="canvasWrap">
+            <canvas id="canvas"></canvas>
+            <div class="badge">Lenia (−∇E) + Life swirl (α)</div>
+        </div>
+    </div>
+</body>
+<script>
+    ( () => {
+        // ====== Canvas & layout ======
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', {
+            alpha: false
+        });
+        const dpi = Math.min(window.devicePixelRatio || 1, 2);
+        function resizeCanvas() {
+            const wrap = document.getElementById('canvasWrap');
+            const w = wrap.clientWidth
+                , h = wrap.clientHeight || window.innerHeight;
+            canvas.width = Math.max(1, Math.floor(w * dpi));
+            canvas.height = Math.max(1, Math.floor(h * dpi));
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // ====== World & params (from your previous implementation) ======
+        let steps_per_frame = 3;
+        const WORLD_W = 25.0
+            , HALF_W = WORLD_W * 0.5;
+
+        let params = {
+            mu_k: 4.0,
+            sigma_k: 1.2,
+            w_k: 0.06,
+            mu_g: 0.6,
+            sigma_g: 0.18,
+            c_rep: 1.0,
+            dt: 0.08,
+            mass: 0.20,
+            gamma: 0.80,
+            alpha: 0.60,
+            auto_scale_U: true
+        };
+
+        let point_n = 220;
+        let points, vel, fields, paused = false;
+
+        function init(n, randomize=true) {
+            point_n = n;
+            points = new Float32Array(point_n * 2);
+            vel = new Float32Array(point_n * 2);
+            for (let i = 0; i < point_n; ++i) {
+                if (randomize) {
+                    points[i * 2] = (Math.random() - 0.5) * WORLD_W * 0.6;
+                    points[i * 2 + 1] = (Math.random() - 0.5) * WORLD_W * 0.6;
+                    vel[i * 2] = vel[i * 2 + 1] = 0;
+                }
+            }
+            fields = {
+                R_val: new Float32Array(point_n),
+                U_val: new Float32Array(point_n),
+                R_grad: new Float32Array(point_n * 2),
+                U_grad: new Float32Array(point_n * 2),
+                ROT: new Float32Array(point_n * 2),
+                U_mean: 0
+            };
+            document.getElementById('nLbl').textContent = `${point_n} pts`;
+        }
+
+        function add_xy(a, i, x, y, c=1.0) {
+            a[i * 2] += x * c;
+            a[i * 2 + 1] += y * c;
+        }
+
+        function torus_dxdy(x1, y1, x2, y2) {
+            let dx = x1 - x2
+                , dy = y1 - y2;
+            if (dx > HALF_W)
+                dx -= WORLD_W;
+            else if (dx < -HALF_W)
+                dx += WORLD_W;
+            if (dy > HALF_W)
+                dy -= WORLD_W;
+            else if (dy < -HALF_W)
+                dy += WORLD_W;
+            const r = Math.hypot(dx, dy) + 1e-20;
+            return [dx / r, dy / r, r];
+        }
+
+        function wrap_torus(x) {
+            if (x >= HALF_W)
+                x -= WORLD_W * Math.ceil((x - HALF_W) / WORLD_W + 1e-9);
+            if (x < -HALF_W)
+                x += WORLD_W * Math.ceil((-HALF_W - x) / WORLD_W + 1e-9);
+            return x;
+        }
+
+        function repulsion_f(x, c) {
+            const t = Math.max(1 - x, 0);
+            return [0.5 * c * t * t, -c * t];
+        }
+
+        function fast_exp(x) {
+            let t = 1 + x / 32;
+            t *= t;
+            t *= t;
+            t *= t;
+            t *= t;
+            t *= t;
+            return t;
+        }
+
+        function peak_f(x, mu, sigma, w=1) {
+            const t = (x - mu) / sigma;
+            const y = w / fast_exp(t * t);
+            return [y, -2 * t * y / sigma];
+        }
+
+        function compute_fields() {
+            const {R_val, U_val, R_grad, U_grad, ROT} = fields;
+            const {c_rep, mu_k, sigma_k, w_k, alpha} = params;
+
+            R_val.fill(repulsion_f(0.0, c_rep)[0]);
+            U_val.fill(peak_f(0.0, mu_k, sigma_k, w_k)[0]);
+            R_grad.fill(0);
+            U_grad.fill(0);
+            ROT.fill(0);
+
+            for (let i = 0; i < point_n - 1; ++i) {
+                for (let j = i + 1; j < point_n; ++j) {
+                    const [rx,ry,r] = torus_dxdy(points[i * 2], points[i * 2 + 1], points[j * 2], points[j * 2 + 1]);
+
+                    if (r < 1.0) {
+                        const [R,dR] = repulsion_f(r, c_rep);
+                        add_xy(R_grad, i, rx, ry, dR);
+                        add_xy(R_grad, j, rx, ry, -dR);
+                        R_val[i] += R;
+                        R_val[j] += R;
+                    }
+
+                    const [K,dK] = peak_f(r, mu_k, sigma_k, w_k);
+                    add_xy(U_grad, i, rx, ry, dK);
+                    add_xy(U_grad, j, rx, ry, -dK);
+                    U_val[i] += K;
+                    U_val[j] += K;
+
+                    if (params.alpha !== 0) {
+                        const sx = ry * K
+                            , sy = -rx * K;
+                        add_xy(ROT, i, sx, sy, +alpha);
+                        add_xy(ROT, j, sx, sy, -alpha);
+                    }
+                }
+            }
+
+            if (params.auto_scale_U) {
+                let meanU = 0;
+                for (let i = 0; i < point_n; i++)
+                    meanU += U_val[i];
+                meanU /= Math.max(1, point_n);
+                fields.U_mean = meanU;
+                const target = params.mu_g + params.sigma_g;
+                let s = target / Math.max(1e-6, meanU);
+                s = Math.max(0.5, Math.min(3.0, s));
+                if (Math.abs(s - 1) > 1e-3) {
+                    for (let i = 0; i < point_n; i++) {
+                        U_val[i] *= s;
+                        U_grad[i * 2] *= s;
+                        U_grad[i * 2 + 1] *= s;
+                    }
+                }
+            }
+        }
+
+        function step() {
+            const {R_val, U_val, R_grad, U_grad, ROT} = fields;
+            const {mu_g, sigma_g, dt, mass, gamma} = params;
+
+            compute_fields();
+            for (let i = 0; i < point_n; i++) {
+                const [,dG] = peak_f(U_val[i], mu_g, sigma_g);
+                const fx = dG * U_grad[i * 2] - R_grad[i * 2] + ROT[i * 2];
+                const fy = dG * U_grad[i * 2 + 1] - R_grad[i * 2 + 1] + ROT[i * 2 + 1];
+                if (mass > 0) {
+                    vel[i * 2] += dt * (fx - gamma * vel[i * 2]) / mass;
+                    vel[i * 2 + 1] += dt * (fy - gamma * vel[i * 2 + 1]) / mass;
+                    points[i * 2] = wrap_torus(points[i * 2] + dt * vel[i * 2]);
+                    points[i * 2 + 1] = wrap_torus(points[i * 2 + 1] + dt * vel[i * 2 + 1]);
+                } else {
+                    points[i * 2] = wrap_torus(points[i * 2] + dt * fx);
+                    points[i * 2 + 1] = wrap_torus(points[i * 2 + 1] + dt * fy);
+                }
+            }
+        }
+
+        function render() {
+            const {width: w, height: h} = canvas;
+            ctx.resetTransform();
+            ctx.clearRect(0, 0, w, h);
+            ctx.translate(w / 2, h / 2);
+            const s = w / (WORLD_W);
+            ctx.scale(s, s);
+            ctx.lineWidth = 0.05;
+            for (let i = 0; i < point_n; i++) {
+                const x = points[i * 2]
+                    , y = points[i * 2 + 1];
+                const r = Math.max(0.06, 1 / (fields.R_val[i] * 5 + 0.5));
+                const u = Math.min(1, Math.max(0, fields.U_val[i]));
+                const gx = fields.U_grad[i * 2]
+                    , gy = fields.U_grad[i * 2 + 1]
+                    , gmag = Math.hypot(gx, gy) + 1e-9;
+                const hue = (Math.atan2(gy / gmag, gx / gmag) * 0.5 + 0.5) * 360;
+                ctx.beginPath();
+                ctx.fillStyle = `hsl(${hue}deg,100%,${(0.15 + 0.85 * u) * 100}%)`;
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.stroke();
+            }
+        }
+
+        // ====== UI Bindings ======
+        function bindRange(id, key, fmt= (v) => v.toFixed(2), onchange=null) {
+            const el = document.getElementById(id)
+                , lab = document.getElementById(id + 'Val');
+            const apply = () => {
+                const v = (key === 'steps_per_frame') ? +el.value : +el.value;
+                if (key === 'steps_per_frame') {
+                    steps_per_frame = v;
+                } else if (key in params) {
+                    params[key] = v;
+                }
+                lab.textContent = (fmt ? fmt(v) : v);
+                if (onchange)
+                    onchange(v);
+            }
+            ;
+            el.addEventListener('input', apply);
+            apply();
+            return apply;
+        }
+        const stepsBind = bindRange('steps', 'steps_per_frame', v => String(v));
+        bindRange('dt', 'dt');
+        bindRange('mass', 'mass');
+        bindRange('gamma', 'gamma');
+        const nBind = ( () => {
+            const el = document.getElementById('nPart')
+                , lab = document.getElementById('nPartVal');
+            const apply = () => {
+                lab.textContent = el.value;
+                init(+el.value, false);
+            }
+            ;
+            el.addEventListener('change', apply);
+            el.addEventListener('input', () => lab.textContent = el.value);
+            return apply;
+        }
+        )();
+        document.getElementById('autoU').addEventListener('change', e => params.auto_scale_U = e.target.checked);
+
+        bindRange('muK', 'mu_k');
+        bindRange('sigK', 'sigma_k');
+        bindRange('wK', 'w_k');
+        bindRange('muG', 'mu_g');
+        bindRange('sigG', 'sigma_g');
+        bindRange('crep', 'c_rep');
+        bindRange('alpha', 'alpha');
+
+        // Buttons
+        const pauseBtn = document.getElementById('pauseBtn');
+        pauseBtn.addEventListener('click', () => {
+            paused = !paused;
+            pauseBtn.textContent = paused ? '▶ Resume' : '⏸ Pause';
+        }
+        );
+        document.getElementById('resetBtn').addEventListener('click', () => init(point_n, true));
+        document.getElementById('randBtn').addEventListener('click', () => init(point_n, true));
+
+        // Presets
+        document.querySelectorAll('.preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const k = btn.dataset.k;
+                if (k === 'calm') {
+                    params.mu_k = 4.0;
+                    params.sigma_k = 1.4;
+                    params.w_k = 0.055;
+                    params.mu_g = 0.58;
+                    params.sigma_g = 0.19;
+                    params.c_rep = 0.28;
+                    params.alpha = 0.25;
+                    params.mass = 0.0;
+                    params.gamma = 0.8;
+                }
+                if (k === 'chase') {
+                    params.mu_k = 3.6;
+                    params.sigma_k = 1.0;
+                    params.w_k = 0.07;
+                    params.mu_g = 0.60;
+                    params.sigma_g = 0.16;
+                    params.c_rep = 0.26;
+                    params.alpha = 0.80;
+                    params.mass = 0.30;
+                    params.gamma = 0.50;
+                }
+                if (k === 'swirl') {
+                    params.mu_k = 3.8;
+                    params.sigma_k = 0.95;
+                    params.w_k = 0.075;
+                    params.mu_g = 0.62;
+                    params.sigma_g = 0.15;
+                    params.c_rep = 0.22;
+                    params.alpha = 1.00;
+                    params.mass = 0.25;
+                    params.gamma = 0.60;
+                }
+                if (k === 'lifeish') {
+                    params.mu_k = 3.2;
+                    params.sigma_k = 0.9;
+                    params.w_k = 0.085;
+                    params.mu_g = 0.54;
+                    params.sigma_g = 0.14;
+                    params.c_rep = 0.30;
+                    params.alpha = 0.55;
+                    params.mass = 0.35;
+                    params.gamma = 0.45;
+                }
+                // reflect to sliders visually
+                const set = (id, v) => {
+                    const el = document.getElementById(id);
+                    el.value = v;
+                    const lab = document.getElementById(id + 'Val');
+                    if (lab)
+                        lab.textContent = (id === 'steps') ? String(v) : (+v).toFixed(2);
+                }
+                ;
+                set('muK', params.mu_k);
+                set('sigK', params.sigma_k);
+                set('wK', params.w_k);
+                set('muG', params.mu_g);
+                set('sigG', params.sigma_g);
+                set('crep', params.c_rep);
+                set('alpha', params.alpha);
+                set('mass', params.mass);
+                set('gamma', params.gamma);
+            }
+            );
+        }
+        );
+
+        // ====== Mouse poke ======
+        let mouse = {
+            down: false,
+            x: 0,
+            y: 0,
+            wx: 0,
+            wy: 0
+        };
+        window.addEventListener('mousedown', e => {
+            if (e.target === canvas)
+                mouse.down = true;
+        }
+        );
+        window.addEventListener('mouseup', e => {
+            if (e.target === canvas)
+                mouse.down = false;
+        }
+        );
+        window.addEventListener('mousemove', e => {
+            if (e.target !== canvas)
+                return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            mouse.x = x;
+            mouse.y = y;
+            mouse.wx = x * WORLD_W;
+            mouse.wy = y * WORLD_W;
+        }
+        );
+        function poke() {
+            if (!mouse.down)
+                return;
+            for (let i = 0; i < point_n; i++) {
+                let dx = mouse.wx - points[i * 2]
+                    , dy = mouse.wy - points[i * 2 + 1];
+                if (dx > HALF_W)
+                    dx -= WORLD_W;
+                else if (dx < -HALF_W)
+                    dx += WORLD_W;
+                if (dy > HALF_W)
+                    dy -= WORLD_W;
+                else if (dy < -HALF_W)
+                    dy += WORLD_W;
+                const d = Math.hypot(dx, dy) + 1e-20;
+                if (d < 1.2)
+                    add_xy(points, i, dx / d, dy / d, 0.15);
+            }
+        }
+
+        // ====== Main loop & FPS ======
+        let last = performance.now()
+            , frames = 0
+            , lastFPS = performance.now();
+        function loop(t) {
+            resizeCanvas();
+            // keep in sync with sidebar width
+            if (!paused) {
+                for (let s = 0; s < steps_per_frame; s++)
+                    step();
+                poke();
+                render();
+            }
+            frames++;
+            if (t - lastFPS > 500) {
+                const fps = Math.round(frames * 1000 / (t - lastFPS));
+                document.getElementById('fps').textContent = `fps ${fps}`;
+                frames = 0;
+                lastFPS = t;
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // ====== Boot ======
+        init(point_n, true);
+        // sync initial labels
+        document.getElementById('stepsVal').textContent = String(steps_per_frame);
+        document.getElementById('dtVal').textContent = params.dt.toFixed(2);
+        document.getElementById('massVal').textContent = params.mass.toFixed(2);
+        document.getElementById('gammaVal').textContent = params.gamma.toFixed(2);
+        document.getElementById('nPartVal').textContent = String(point_n);
+        document.getElementById('muKVal').textContent = params.mu_k.toFixed(2);
+        document.getElementById('sigKVal').textContent = params.sigma_k.toFixed(2);
+        document.getElementById('wKVal').textContent = params.w_k.toFixed(2);
+        document.getElementById('muGVal').textContent = params.mu_g.toFixed(2);
+        document.getElementById('sigGVal').textContent = params.sigma_g.toFixed(2);
+        document.getElementById('crepVal').textContent = params.c_rep.toFixed(2);
+        document.getElementById('alphaVal').textContent = params.alpha.toFixed(2);
+
+        requestAnimationFrame(loop);
+    }
+    )();
+</script>
