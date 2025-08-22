@@ -1,1504 +1,1429 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한미 어린이 피아노</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .app-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 10px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        /* 콤팩트 건반 */
-        .piano-container {
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .piano-keys {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .piano-key {
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: #333;
-            padding: 12px 16px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 600;
-            font-size: 1rem;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        .piano-key:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .piano-key:active, .piano-key.playing {
-            transform: translateY(0) scale(0.95);
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-        }
-
-        /* 편집 컨트롤 */
-        .edit-controls {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .control-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            padding: 10px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            font-size: 0.9rem;
-        }
-
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .control-btn.danger {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-            color: white;
-        }
-
-        /* 악보 영역 */
-        .score-area {
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .score-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .page-nav {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .page-info {
-            color: white;
-            font-weight: 500;
-        }
-
-        .file-controls {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .file-controls .control-btn {
-            padding: 8px 12px;
-            font-size: 0.8rem;
-        }
-
-        .score-grid {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 20px;
-            min-height: 200px;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 10px;
-            align-content: start;
-        }
-
-        .note-slot {
-            width: 80px;
-            height: 80px;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .note-slot.filled {
-            border: 2px solid #4CAF50;
-            background: rgba(76, 175, 80, 0.1);
-        }
-
-        .note-slot.playing {
-            border: 2px solid #2196F3;
-            background: rgba(33, 150, 243, 0.2);
-            transform: scale(1.05);
-        }
-
-        .note-slot.rest {
-            border: 2px solid #999;
-            background: rgba(153, 153, 153, 0.1);
-        }
-
-        .note-icon {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-        }
-
-        .rest-icon {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            opacity: 0.6;
-        }
-
-        /* 재생 컨트롤 */
-        .playback-area {
-            width: 100%;
-            max-width: 800px;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .playback-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .playback-controls .control-btn {
-            padding: 12px 20px;
-            font-size: 1rem;
-        }
-
-        .control-btn.primary {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-        }
-
-        .bpm-control {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .bpm-label {
-            color: white;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .bpm-slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .bpm-slider {
-            width: 120px;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.3);
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        .bpm-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        .bpm-value {
-            color: white;
-            font-weight: 600;
-            min-width: 50px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        /* 갤러리 */
-        .gallery-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .gallery-content {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 900px;
-            max-height: 80vh;
-            overflow-y: auto;
-            width: 100%;
-        }
-
-        .gallery-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .score-card {
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .score-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .score-preview {
-            width: 100%;
-            height: 80px;
-            background: #f5f5f5;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .preview-note {
-            width: 20px;
-            height: 20px;
-            object-fit: contain;
-        }
-
-        /* 드래그앤드롭 */
-        .dropzone {
-            border: 2px dashed rgba(255, 255, 255, 0.5);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            color: white;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .dropzone.dragover {
-            border-color: #4CAF50;
-            background: rgba(76, 175, 80, 0.1);
-        }
-
-        /* 모바일 대응 */
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 15px;
-                gap: 15px;
+    <head>
+        <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>솔바람 악보 🌬️🎵</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+        <style>
+            :root {
+                --lineSpacing: 20px;
             }
 
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .piano-keys {
-                gap: 6px;
-            }
-
-            .piano-key {
-                padding: 10px 12px;
-                font-size: 0.9rem;
-                min-width: 50px;
-            }
-
-            .playback-area {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .score-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 8px;
-            }
-
-            .note-slot {
-                width: 60px;
-                height: 60px;
-            }
-
-            .note-icon {
-                width: 45px;
-                height: 45px;
-            }
-
-            .score-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .file-controls {
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .piano-keys {
-                gap: 4px;
-            }
-
-            .piano-key {
-                padding: 8px 10px;
-                font-size: 0.8rem;
-                min-width: 45px;
-            }
-
-            .edit-controls {
-                gap: 6px;
-            }
-
-            .control-btn {
-                padding: 8px 12px;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* 인쇄 스타일 */
-        @media print {
-            @page {
-                size: A4 landscape;
-                margin: 10mm;
+            html, body {
+                height: 100%;
             }
 
             body {
-                background: white !important;
-                color: black !important;
-                margin: 0;
-                padding: 0;
+                font-family: 'Noto Sans KR', 'Inter', sans-serif;
             }
 
-            .app-container {
-                background: white !important;
+            .note-text {
+                user-select: none;
+                pointer-events: none;
             }
 
-            .main-content > *:not(.print-page) {
-                display: none !important;
+            .staff-container {
+                box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                border-radius: 1rem;
+                background: white;
             }
 
-            .print-page {
-                display: block !important;
-                page-break-after: always;
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                margin: 0;
+            .highlight {
+                filter: drop-shadow(0 0 6px #3b82f6);
+                transition: filter 0.18s ease;
             }
 
-            .print-page:last-child {
-                page-break-after: auto;
+            .selected {
+                outline: 3px solid #60a5fa;
+                outline-offset: 2px;
+                border-radius: 6px;
             }
 
-            .print-header {
-                margin-bottom: 20px;
-                font-size: 14pt;
+            .drop-target {
+                outline: 3px dashed #22c55e;
             }
 
-            .print-header span {
-                margin-right: 30px;
+            .print-label {
+                border-bottom: 1.5px solid #000;
+                min-width: 8rem;
+                display: inline-block;
             }
 
-            .print-score-row {
-                display: grid;
-                grid-template-columns: repeat(8, 1fr);
-                gap: 8px;
-                margin-bottom: 8px;
+            #staff {
+                width: 100% !important;
+                height: auto !important;
+                display: block;
             }
 
-            .print-memo-space {
-                height: 45px;
-                border-bottom: 1px solid #ccc;
-                margin-bottom: 20px;
-            }
+            /* 인쇄: A4 세로, 상단 타이틀/이름/날짜 */
+            @media print {
+                body {
+                    background: white;
+                }
 
-            .print-note-slot {
-                width: 80px;
-                height: 80px;
-                border: 1px solid #999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 8px;
-            }
+                .no-print {
+                    display: none !important;
+                }
 
-            .print-note-icon {
-                width: 60px;
-                height: 60px;
-            }
+                .print-container {
+                    box-shadow: none !important;
+                    border: none !important;
+                    width: 100% !important;
+                    padding: 0 !important;
+                }
 
-            .print-page-number {
-                text-align: center;
-                margin-top: 20px;
-                font-size: 12pt;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="app-container">
-        <div class="main-content">
-            <!-- 헤더 -->
-            <div class="header">
-                <h1>🎹 한미 어린이 피아노</h1>
-            </div>
+                svg {
+                    width: 100% !important;
+                    height: auto !important;
+                }
 
-            <!-- 콤팩트 피아노 건반 -->
-            <div class="glass-panel piano-container">
-                <div class="piano-keys" id="pianoKeys">
-                    <button class="piano-key" data-note="C">도</button>
-                    <button class="piano-key" data-note="D">레</button>
-                    <button class="piano-key" data-note="E">미</button>
-                    <button class="piano-key" data-note="F">파</button>
-                    <button class="piano-key" data-note="G">솔</button>
-                    <button class="piano-key" data-note="A">라</button>
-                    <button class="piano-key" data-note="B">시</button>
-                    <button class="piano-key" data-note="C2">도</button>
+                @page {
+                    size: A4 portrait;
+                    margin: 20mm;
+                }
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50 min-h-screen flex flex-col">
+        <!-- 헤더 -->
+        <header class="no-print sticky top-0 z-10 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="text-2xl">🌬️🎵</div>
+                    <h1 class="text-xl md:text-2xl font-extrabold text-gray-800">솔바람 악보</h1>
+                    <span id="pageInfo" class="ml-2 text-sm text-gray-500 hidden md:inline"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="importFile" class="cursor-pointer px-3 py-2 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600" aria-label="불러오기">⬆️ 불러오기</label>
+                    <input id="importFile" type="file" accept="image/svg+xml,.svg" class="hidden"/>
+                    <button id="exportBtn" class="px-3 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600" aria-label="내보내기">⬇️ 내보내기</button>
                 </div>
             </div>
-
-            <!-- 편집 컨트롤 -->
-            <div class="glass-panel edit-controls">
-                <button class="control-btn" id="restBtn">⌐ 쉼표</button>
-                <button class="control-btn" id="undoBtn">↶ 실행취소</button>
-                <button class="control-btn" id="redoBtn">↷ 다시실행</button>
-                <button class="control-btn danger" id="clearBtn">🗑 새로시작</button>
-            </div>
-
-            <!-- 악보 영역 -->
-            <div class="glass-panel score-area">
-                <div class="score-header">
-                    <div class="page-nav">
-                        <button class="control-btn" id="prevPageBtn">◀ 이전</button>
-                        <div class="page-info" id="pageInfo">1 / 1</div>
-                        <button class="control-btn" id="nextPageBtn">다음 ▶</button>
-                    </div>
-                    <div class="file-controls">
-                        <button class="control-btn" id="galleryBtn">📚 악보상자</button>
-                        <button class="control-btn" id="saveBtn">💾 저장</button>
-                        <button class="control-btn" id="loadBtn">📂 불러오기</button>
-                        <button class="control-btn" id="printBtn">🖨 인쇄</button>
-                        <button class="control-btn" id="downloadBtn">⬇ 다운로드</button>
-                    </div>
+        </header>
+        <!-- 툴바 -->
+        <div class="no-print">
+            <div class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="undoBtn" class="px-4 py-2 rounded-xl bg-yellow-500 text-white font-bold hover:bg-yellow-600" aria-label="되돌리기">↩️ 되돌리기</button>
+                    <button id="redoBtn" class="px-4 py-2 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-600" aria-label="다시 하기">↪️ 다시 하기</button>
+                    <button id="clearBtn" class="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600" aria-label="모두 지우기">🧹 전체 삭제</button>
+                    <button id="printBtn" class="px-4 py-2 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-600" aria-label="인쇄">🖨️ 인쇄</button>
                 </div>
-                <div class="score-grid" id="scoreGrid"></div>
-                
-                <!-- 드래그앤드롭 영역 -->
-                <div class="dropzone" id="dropzone" style="display: none;">
-                    <p>JSON 파일을 여기에 드래그하세요</p>
-                </div>
-            </div>
-
-            <!-- 재생 컨트롤 -->
-            <div class="glass-panel playback-area">
-                <div class="playback-controls">
-                    <button class="control-btn primary" id="playPauseBtn">▶ 재생</button>
-                    <button class="control-btn" id="stopBtn">⏹ 정지</button>
-                </div>
-                <div class="bpm-control">
-                    <div class="bpm-label">템포 (BPM)</div>
-                    <div class="bpm-slider-container">
-                        <input type="range" class="bpm-slider" id="bpmSlider" min="60" max="200" value="120">
-                        <div class="bpm-value" id="bpmValue">120</div>
-                    </div>
+                <div class="flex flex-wrap items-center justify-center gap-2" id="notePad"></div>
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                    <button id="playBtn" class="px-4 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600" aria-label="재생/일시정지">▶️ 재생</button>
+                    <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 text-slate-700">
+                        BPM <input id="tempo" type="range" min="60" max="140" value="90" class="accent-blue-600"/>
+                        <span id="tempoLabel" class="font-bold w-10 text-right">90</span>
+                    </label>
+                    <button id="aiFillBtn" class="px-3 py-2 rounded-xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600" aria-label="AI로 채우기">✨ AI로 채우기</button>
                 </div>
             </div>
         </div>
-
-        <!-- 갤러리 모달 -->
-        <div class="gallery-overlay" id="galleryOverlay">
-            <div class="gallery-content">
-                <div class="gallery-header">
-                    <h2>📚 악보 상자</h2>
-                    <button class="control-btn" id="closeGalleryBtn">✕ 닫기</button>
+        <!-- 인쇄용/화면용 타이틀/이름/날짜 영역 -->
+        <section class="max-w-7xl mx-auto w-full px-4 mt-2">
+            <div class="bg-white rounded-xl border p-4 flex flex-wrap items-center gap-4">
+                <div class="text-sm text-gray-500">제목</div>
+                <div id="titleField" class="print-label px-2 py-1" contenteditable="true"></div>
+                <div class="text-sm text-gray-500">이름</div>
+                <div id="nameField" class="print-label px-2 py-1" contenteditable="true"></div>
+                <div class="ml-auto text-sm text-gray-500">날짜</div>
+                <div id="dateField" class="px-2 py-1">-</div>
+            </div>
+        </section>
+        <!-- 악보 영역 -->
+        <main class="flex-1">
+            <div class="max-w-7xl mx-auto px-4">
+                <div id="sheetWrapper" class="staff-container p-6 print-container overflow-x-auto">
+                    <svg id="staff" width="1280" height="340" role="img" aria-label="악보"></svg>
                 </div>
-                <div class="gallery-grid" id="galleryGrid"></div>
+            </div>
+        </main>
+        <!-- 페이지 네비게이션 -->
+        <div class="no-print">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+                <button id="prevPage" class="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">◀️ 이전 페이지</button>
+                <div id="pageIndicator" class="text-sm text-gray-600">1 / 1</div>
+                <button id="nextPage" class="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">다음 페이지 ▶️</button>
             </div>
         </div>
-    </div>
+        <!-- 토스트 -->
+        <div class="no-print fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+            <div id="toast" class="hidden px-4 py-2 rounded-xl bg-red-500 text-white font-semibold shadow-lg"></div>
+        </div>
+        <script>
+            // =========================
+            // 상수 & 유틸
+            // =========================
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const STAFF = document.getElementById('staff');
+            const sheetWrapper = document.getElementById('sheetWrapper');
+            const toastEl = document.getElementById('toast');
 
-    <!-- 숨겨진 파일 입력 -->
-    <input type="file" id="fileInput" accept=".json" style="display: none;">
+            const LINE_SPACING = 20;
+            // staff line gap
+            const STEP = LINE_SPACING / 2;
+            // 한 계단(줄/칸)
+            const STAFF_HEIGHT = 220;
+            // 한 시스템 높이
+            const SYSTEM_GAP = 24;
+            // 시스템 간 간격
+            const START_X = 110;
+            // G-클레프 여유
+            const STAFF_WIDTH = 1280;
+            // 화면 폭 확장
 
-    <script>
-        // 전역 변수
-        const FIXED_OCTAVE = 5; // C5 고정
-        let currentBPM = 120;
-        let currentPage = 0;
-        let isPlaying = false;
-        let isPaused = false;
-        let playbackPosition = 0;
-        let playbackTimer = null;
-        let audioContextStarted = false;
+            const ITEMS_PER_BEAT = 1;
+            // 4분 단위
+            const BEATS_PER_MEASURE = 4;
+            // 4/4
+            const ITEMS_PER_MEASURE = 4;
+            const MEASURES_PER_SYSTEM = 4;
+            // 4마디/시스템
+            const ITEMS_PER_SYSTEM = 16;
+            // 16 아이템/시스템
 
-        // 데이터 구조
-        let musicData = {
-            date: '',
-            createdAt: '',
-            notes: [], // {type: 'note'|'rest', note?: noteObject}
-            bpm: 120
-        };
+            const SYSTEMS_PER_PAGE = 2;
+            // 화면에 항상 2줄
+            const MEASURES_PER_PAGE = MEASURES_PER_SYSTEM * SYSTEMS_PER_PAGE;
+            // 8마디
+            const ITEMS_PER_PAGE = ITEMS_PER_SYSTEM * SYSTEMS_PER_PAGE;
+            // 32아이템
 
-        let undoStack = [];
-        let redoStack = [];
-        let savedScores = []; // localStorage 대신 메모리에 저장
+            const SYSTEMS_PER_PRINT_PAGE = 5;
+            // 인쇄 안전치(세로)
+            const PAGES_LIMIT_PRINT = 2;
+            // 인쇄 최대 2페이지
+            const MAX_SYSTEMS_PRINT = SYSTEMS_PER_PRINT_PAGE * PAGES_LIMIT_PRINT;
+            // 10
+            const MAX_ITEMS_PRINT = MAX_SYSTEMS_PRINT * ITEMS_PER_SYSTEM;
+            // 160
 
-        // 음표 정의
-        const noteDefinitions = [
-            { name: '도', key: 'C', keyboardKey: 'a', midiNote: 0, svgName: 'do', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/do.svg' },
-            { name: '레', key: 'D', keyboardKey: 's', midiNote: 2, svgName: 're', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/re.svg' },
-            { name: '미', key: 'E', keyboardKey: 'd', midiNote: 4, svgName: 'mi', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/mi.svg' },
-            { name: '파', key: 'F', keyboardKey: 'f', midiNote: 5, svgName: 'fa', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/fa.svg' },
-            { name: '솔', key: 'G', keyboardKey: 'g', midiNote: 7, svgName: 'sol', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/sol.svg' },
-            { name: '라', key: 'A', keyboardKey: 'h', midiNote: 9, svgName: 'la', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/la.svg' },
-            { name: '시', key: 'B', keyboardKey: 'j', midiNote: 11, svgName: 'ti', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/ti.svg' },
-            { name: '도', key: 'C2', keyboardKey: 'k', midiNote: 12, svgName: 'do', svgPath: 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/do+.svg', isHighC: true }
-        ];
-
-        // SVG 캐시
-        const svgCache = new Map();
-
-        // Tone.js 신스 초기화
-        const synth = new Tone.Synth({
-            oscillator: { type: "triangle8" },
-            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
-        }).toDestination();
-
-        // 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
-
-        async function initializeApp() {
-            setupEventListeners();
-            initializeMusicData();
-            loadSavedScores();
-            setupPianoKeys();
-            updateScoreGrid();
-            updatePageInfo();
-            initializeMIDI();
-            preloadSVGs();
-        }
-
-        function loadSavedScores() {
-            try {
-                const saved = localStorage.getItem('hanmiPianoScores');
-                if (saved) {
-                    savedScores = JSON.parse(saved);
-                }
-            } catch (error) {
-                console.error('Failed to load saved scores:', error);
-                savedScores = [];
-            }
-        }
-
-        function saveSavedScores() {
-            try {
-                localStorage.setItem('hanmiPianoScores', JSON.stringify(savedScores));
-            } catch (error) {
-                console.error('Failed to save scores to localStorage:', error);
-            }
-        }
-
-        async function preloadSVGs() {
-            const svgUrls = [
-                ...noteDefinitions.map(n => n.svgPath),
-                'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg'
-            ];
-            
-            const uniqueUrls = [...new Set(svgUrls)];
-            
-            for (const url of uniqueUrls) {
-                try {
-                    const response = await fetch(url);
-                    const svgText = await response.text();
-                    svgCache.set(url, svgText);
-                } catch (error) {
-                    console.error(`Failed to load SVG: ${url}`, error);
-                }
-            }
-        }
-
-        function initializeMusicData() {
-            const now = new Date();
-            musicData.date = now.toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            musicData.createdAt = now.toISOString();
-        }
-
-        function setupEventListeners() {
-            // BPM 컨트롤
-            const bpmSlider = document.getElementById('bpmSlider');
-            const bpmValue = document.getElementById('bpmValue');
-            bpmSlider.addEventListener('input', (e) => {
-                currentBPM = parseInt(e.target.value);
-                musicData.bpm = currentBPM;
-                bpmValue.textContent = currentBPM;
-            });
-
-            // 재생 컨트롤
-            document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
-            document.getElementById('stopBtn').addEventListener('click', stopMusic);
-            
-            // 편집 컨트롤
-            document.getElementById('restBtn').addEventListener('click', addRest);
-            document.getElementById('undoBtn').addEventListener('click', undo);
-            document.getElementById('redoBtn').addEventListener('click', redo);
-            document.getElementById('clearBtn').addEventListener('click', clearScore);
-
-            // 페이지 컨트롤
-            document.getElementById('prevPageBtn').addEventListener('click', () => changePage(-1));
-            document.getElementById('nextPageBtn').addEventListener('click', () => changePage(1));
-
-            // 파일 컨트롤
-            document.getElementById('galleryBtn').addEventListener('click', openGallery);
-            document.getElementById('saveBtn').addEventListener('click', saveScore);
-            document.getElementById('loadBtn').addEventListener('click', () => document.getElementById('fileInput').click());
-            document.getElementById('printBtn').addEventListener('click', printScore);
-            document.getElementById('downloadBtn').addEventListener('click', downloadScore);
-
-            // 갤러리
-            document.getElementById('closeGalleryBtn').addEventListener('click', closeGallery);
-
-            // 파일 입력
-            document.getElementById('fileInput').addEventListener('change', loadScore);
-
-            // 키보드 입력
-            document.addEventListener('keydown', handleKeyboardInput);
-
-            // 드래그앤드롭
-            setupDragAndDrop();
-        }
-
-        function setupPianoKeys() {
-            const pianoKeys = document.querySelectorAll('.piano-key');
-            pianoKeys.forEach((keyElement, index) => {
-                // 8개의 키에 대해 처리 (마지막은 높은 도)
-                if (index < noteDefinitions.length) {
-                    const noteData = noteDefinitions[index];
-                    keyElement.addEventListener('click', () => playNote(noteData));
-                }
-            });
-        }
-
-        async function ensureAudioContext() {
-            if (!audioContextStarted && Tone.context.state !== 'running') {
-                await Tone.start();
-                audioContextStarted = true;
-            }
-        }
-
-        async function playNote(noteData) {
-            await ensureAudioContext();
-            
-            const midiNote = 60 + (FIXED_OCTAVE - 4) * 12 + noteData.midiNote;
-            const frequency = Tone.Frequency(midiNote, "midi").toFrequency();
-            
-            synth.triggerAttackRelease(frequency, "8n");
-            
-            // 시각적 피드백
-            highlightKey(noteData);
-            
-            // 악보에 추가
-            addNoteToScore(noteData);
-        }
-
-        function highlightKey(noteData) {
-            const key = noteData.isHighC ? 'C2' : noteData.key;
-            const keyElement = document.querySelector(`[data-note="${key}"]`);
-            if (keyElement) {
-                keyElement.classList.add('playing');
-                setTimeout(() => keyElement.classList.remove('playing'), 200);
-            }
-        }
-
-        function saveState() {
-            undoStack.push(JSON.parse(JSON.stringify(musicData.notes)));
-            redoStack = [];
-            if (undoStack.length > 50) undoStack.shift();
-        }
-
-        function addNoteToScore(noteData) {
-            saveState();
-            musicData.notes.push({
-                type: 'note',
-                note: noteData
-            });
-            updateScoreGrid();
-            updatePageInfo();
-            autoNavigateToNewNote();
-        }
-
-        function addRest() {
-            saveState();
-            musicData.notes.push({
-                type: 'rest'
-            });
-            updateScoreGrid();
-            updatePageInfo();
-            autoNavigateToNewNote();
-        }
-
-        function autoNavigateToNewNote() {
-            const lastNoteIndex = musicData.notes.length - 1;
-            const targetPage = Math.floor(lastNoteIndex / 16);
-            if (targetPage !== currentPage) {
-                currentPage = targetPage;
-                updateScoreGrid();
-                updatePageInfo();
-            }
-        }
-
-        function updateScoreGrid() {
-            const scoreGrid = document.getElementById('scoreGrid');
-            scoreGrid.innerHTML = '';
-
-            const startIndex = currentPage * 16;
-            const endIndex = startIndex + 16;
-
-            for (let i = 0; i < 16; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'note-slot';
-                
-                const noteIndex = startIndex + i;
-                if (noteIndex < musicData.notes.length) {
-                    const noteItem = musicData.notes[noteIndex];
-                    slot.classList.add(noteItem.type === 'rest' ? 'rest' : 'filled');
-                    
-                    if (noteItem.type === 'note') {
-                        const icon = document.createElement('img');
-                        icon.className = 'note-icon';
-                        icon.src = noteItem.note.svgPath;
-                        icon.alt = noteItem.note.name;
-                        slot.appendChild(icon);
-                    } else {
-                        const restIcon = document.createElement('img');
-                        restIcon.className = 'rest-icon';
-                        restIcon.src = 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg';
-                        restIcon.alt = '쉼표';
-                        slot.appendChild(restIcon);
-                    }
-                }
-
-                if (isPlaying && noteIndex === playbackPosition) {
-                    slot.classList.add('playing');
-                }
-
-                scoreGrid.appendChild(slot);
-            }
-        }
-
-        function updatePageInfo() {
-            const totalPages = Math.max(1, Math.ceil(musicData.notes.length / 16));
-            document.getElementById('pageInfo').textContent = `${currentPage + 1} / ${totalPages}`;
-            
-            document.getElementById('prevPageBtn').disabled = currentPage === 0;
-            document.getElementById('nextPageBtn').disabled = currentPage >= totalPages - 1;
-        }
-
-        function changePage(direction) {
-            const totalPages = Math.max(1, Math.ceil(musicData.notes.length / 16));
-            const newPage = currentPage + direction;
-            
-            if (newPage >= 0 && newPage < totalPages) {
-                currentPage = newPage;
-                updateScoreGrid();
-                updatePageInfo();
-            }
-        }
-
-        async function togglePlayPause() {
-            if (isPlaying) {
-                pauseMusic();
-            } else {
-                playMusic();
-            }
-        }
-
-        async function playMusic() {
-            if (musicData.notes.length === 0) return;
-            
-            await ensureAudioContext();
-            
-            if (!isPaused) {
-                playbackPosition = currentPage * 16;
-            }
-            
-            isPlaying = true;
-            isPaused = false;
-            document.getElementById('playPauseBtn').innerHTML = '⏸ 일시정지';
-            
-            playNextNote();
-        }
-
-        function pauseMusic() {
-            if (isPlaying) {
-                isPlaying = false;
-                isPaused = true;
-                if (playbackTimer) clearTimeout(playbackTimer);
-                document.getElementById('playPauseBtn').innerHTML = '▶ 재생';
-                updateScoreGrid();
-            }
-        }
-
-        function playNextNote() {
-            if (!isPlaying || playbackPosition >= musicData.notes.length) {
-                stopMusic();
-                return;
-            }
-
-            const noteItem = musicData.notes[playbackPosition];
-            
-            const targetPage = Math.floor(playbackPosition / 16);
-            if (targetPage !== currentPage) {
-                currentPage = targetPage;
-                updatePageInfo();
-            }
-            
-            updateScoreGrid();
-
-            if (noteItem.type === 'note') {
-                const midiNote = 60 + (FIXED_OCTAVE - 4) * 12 + noteItem.note.midiNote;
-                const frequency = Tone.Frequency(midiNote, "midi").toFrequency();
-                synth.triggerAttackRelease(frequency, "8n");
-            }
-
-            playbackPosition++;
-            
-            const noteDuration = (60 / currentBPM) * 1000;
-            playbackTimer = setTimeout(playNextNote, noteDuration);
-        }
-
-        function stopMusic() {
-            isPlaying = false;
-            isPaused = false;
-            if (playbackTimer) clearTimeout(playbackTimer);
-            document.getElementById('playPauseBtn').innerHTML = '▶ 재생';
-            updateScoreGrid();
-        }
-
-        function undo() {
-            if (undoStack.length > 0) {
-                redoStack.push(JSON.parse(JSON.stringify(musicData.notes)));
-                musicData.notes = undoStack.pop();
-                updateScoreGrid();
-                updatePageInfo();
-            }
-        }
-
-        function redo() {
-            if (redoStack.length > 0) {
-                undoStack.push(JSON.parse(JSON.stringify(musicData.notes)));
-                musicData.notes = redoStack.pop();
-                updateScoreGrid();
-                updatePageInfo();
-            }
-        }
-
-        function handleKeyboardInput(e) {
-            if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
-            
-            if ('ontouchstart' in window) return;
-
-            const key = e.key.toLowerCase();
-            
-            if (key === ' ') {
-                e.preventDefault();
-                addRest();
-                return;
-            }
-
-            const noteData = noteDefinitions.find(n => n.keyboardKey === key);
-            if (noteData) {
-                e.preventDefault();
-                playNote(noteData);
-            }
-        }
-
-        function initializeMIDI() {
-            if (navigator.requestMIDIAccess) {
-                navigator.requestMIDIAccess()
-                    .then(onMIDISuccess)
-                    .catch(onMIDIFailure);
-            }
-        }
-
-        function onMIDISuccess(midiAccess) {
-            for (const input of midiAccess.inputs.values()) {
-                input.onmidimessage = handleMIDIMessage;
-            }
-        }
-
-        function onMIDIFailure(error) {
-            console.log('MIDI access failed:', error);
-        }
-
-        function handleMIDIMessage(message) {
-            const [command, note, velocity] = message.data;
-            
-            if (command === 144 && velocity > 0) {
-                const noteIndex = (note - 60) % 12;
-                const noteData = noteDefinitions.find(n => n.midiNote === noteIndex);
-                if (noteData) {
-                    playNote(noteData);
-                }
-            }
-        }
-
-        function saveScore() {
-            const scoreData = {
-                ...musicData,
-                id: Date.now(),
-                savedAt: new Date().toISOString()
+            const NOTE_NAMES_KR = {
+                C: '도',
+                D: '레',
+                E: '미',
+                F: '파',
+                G: '솔',
+                A: '라',
+                B: '시'
             };
-            
-            savedScores.unshift(scoreData);
-            if (savedScores.length > 20) savedScores.pop();
-            
-            const now = new Date();
-            const filename = `악보_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.json`;
-            
-            const blob = new Blob([JSON.stringify(scoreData, null, 2)], {
-                type: 'application/json'
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            alert('악보가 저장되고 악보 상자에 추가되었습니다!');
-        }
-
-        function loadScore(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const loadedData = JSON.parse(event.target.result);
-                    loadScoreData(loadedData);
-                } catch (error) {
-                    alert('파일을 읽을 수 없습니다.');
-                }
+            const NOTE_COLORS = {
+                C: '#FF6B6B',
+                D: '#FFC048',
+                E: '#F9F871',
+                F: '#84D2C5',
+                G: '#6AABF3',
+                A: '#4A69BD',
+                B: '#8A2BE2'
             };
-            reader.readAsText(file);
-        }
+            const MIDI_RANGE = {
+                min: 60,
+                max: 84
+            };
+            // C4..C6 (최저 C는 C4)
 
-        function loadScoreData(data) {
-            saveState();
-            musicData = { ...data };
-            currentBPM = musicData.bpm || 120;
-            currentPage = 0;
-            
-            document.getElementById('bpmSlider').value = currentBPM;
-            document.getElementById('bpmValue').textContent = currentBPM;
-            
-            updateScoreGrid();
-            updatePageInfo();
-            
-            alert('악보를 불러왔습니다!');
-        }
+            // 사용자 제공 경로
+            const GCLEF_MAIN = 'M 39.708934,63.678683 C 39.317094,65.77065 41.499606,70.115061 45.890584,70.256984 C 51.19892,70.428558 54.590321,66.367906 53.010333,59.740875 L 45.086538,23.171517 C 44.143281,18.81826 44.851281,16.457097 45.354941,15.049945 C 46.698676,11.295749 50.055822,9.7473042 50.873134,10.949208 C 51.339763,11.635413 52.468042,14.844006 49.256275,20.590821 C 46.751378,25.072835 35.096985,30.950138 34.2417,41.468011 C 33.501282,50.614249 43.075689,57.369301 51.339266,54.71374 C 56.825686,52.950639 59.653965,44.62402 56.258057,40.328987 C 47.29624,28.994371 32.923702,46.341263 46.846564,51.0935 C 45.332604,49.90238 44.300646,48.980054 44.1085,47.852721 C 42.237755,36.876941 58.741182,39.774741 54.294493,50.18735 C 52.466001,54.469045 45.080341,55.297323 40.874269,51.477433 C 37.350853,48.277521 35.787387,42.113231 39.708327,37.687888 C 45.018831,31.694223 51.288782,26.31366 52.954064,18.108736 C 54.923313,8.4061491 48.493821,0.84188926 44.429027,10.385835 C 43.065093,13.588288 42.557016,16.803074 43.863006,22.963534 L 51.780549,60.311215 C 52.347386,62.985028 51.967911,66.664419 49.472374,68.355474 C 48.236187,69.193154 43.861784,69.769668 42.791575,67.770092';
+            const GCLEF_DOT = 'M 48.24903 64.584198 A 3.439605 3.4987047 0 1 1  41.36982,64.584198 A 3.439605 3.4987047 0 1 1  48.24903 64.584198 z';
+            const QUARTER_REST_PATH = 'M254.4 20.8c1.5 1.6 13 15.7 13 15.7s-6.4 6.1-6.4 12.5c0 7.5 8.6 14.3 8.6 14.3l-.9 1.1c-3.3-1.9-8.9-2.1-11.4.8-3.1 3.6 3.9 9.1 3.9 9.1l-.8 1.1c-2.4-1.8-12.6-11.4-8.3-16.1 2.6-2.9 5.8-3.8 10.3-1.4l-12.1-12.5c7-8.6 8.2-11.1 8.2-13.4 0-4.8-3.4-8.2-5.1-10.4-.6-.9-1.7-1.6-1-2.2.7-.5 1.1.3 2 1.4z';
 
-        function openGallery() {
-            updateGalleryGrid();
-            document.getElementById('galleryOverlay').style.display = 'flex';
-        }
+            // =========================
+            // 상태
+            // =========================
+            const state = {
+                schemaVersion: 1,
+                title: '솔바람 악보',
+                student: '',
+                timeSig: [4, 4],
+                tempoBPM: 90,
+                range: 'C4-C6',
+                items: [],
+                // 4n 단위 시퀀스 — 초기엔 빈 배열
+                selectedIndex: null,
+                undoStack: [],
+                redoStack: [],
+                pageIndex: 0,
+                // 현재 화면 페이지(0기반)
+                printMode: false,
+            };
 
-        function closeGallery() {
-            document.getElementById('galleryOverlay').style.display = 'none';
-        }
+            // =========================
+            // Tone.js 설정 (피아노 느낌의 기본 Synth)
+            // =========================
+            const synth = new Tone.Synth().toDestination();
 
-        function updateGalleryGrid() {
-            const galleryGrid = document.getElementById('galleryGrid');
-            galleryGrid.innerHTML = '';
-            
-            if (savedScores.length === 0) {
-                galleryGrid.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1/-1;">저장된 악보가 없습니다.</p>';
-                return;
+            // =========================
+            // 유틸 함수
+            // =========================
+            function uid() {
+                return Math.random().toString(36).slice(2, 9);
             }
-            
-            savedScores.forEach((score, index) => {
-                const card = document.createElement('div');
-                card.className = 'score-card';
-                card.style.position = 'relative';
-                
-                const preview = document.createElement('div');
-                preview.className = 'score-preview';
-                
-                const previewNotes = score.notes.slice(0, 3).filter(n => n.type === 'note');
-                previewNotes.forEach(noteItem => {
-                    if (noteItem.note) {
-                        const noteIcon = document.createElement('img');
-                        noteIcon.className = 'preview-note';
-                        noteIcon.src = noteItem.note.svgPath;
-                        noteIcon.alt = noteItem.note.name;
-                        preview.appendChild(noteIcon);
-                    }
-                });
-                
-                const info = document.createElement('p');
-                const savedDate = score.savedAt ? new Date(score.savedAt) : new Date(score.createdAt);
-                info.textContent = `${score.date} • ${savedDate.toLocaleTimeString('ko-KR')}`;
-                info.style.margin = '10px 0 0 0';
-                info.style.fontSize = '0.9rem';
-                info.style.color = '#666';
-                
-                // 삭제 버튼
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = '✕';
-                deleteBtn.style.cssText = 'position: absolute; top: 5px; right: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px;';
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    if (confirm('이 악보를 삭제하시겠습니까?')) {
-                        savedScores.splice(index, 1);
-                        saveSavedScores();
-                        updateGalleryGrid();
-                    }
+            function clamp(v, min, max) {
+                return Math.max(min, Math.min(max, v));
+            }
+            function midiToLetterOct(midi) {
+                const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                return {
+                    letter: names[midi % 12],
+                    oct: Math.floor(midi / 12) - 1
                 };
-                
-                card.appendChild(deleteBtn);
-                card.appendChild(preview);
-                card.appendChild(info);
-                
-                card.addEventListener('click', () => {
-                    loadScoreData(score);
-                    closeGallery();
-                });
-                
-                galleryGrid.appendChild(card);
-            });
-        }
+            }
+            function isNaturalMidi(midi) {
+                return [0, 2, 4, 5, 7, 9, 11].includes(midi % 12);
+            }
+            function snapToNatural(midi) {
+                midi = clamp(midi, MIDI_RANGE.min, MIDI_RANGE.max);
+                if (isNaturalMidi(midi))
+                    return midi;
+                let up = midi + 1
+                  , down = midi - 1;
+                while (up <= MIDI_RANGE.max || down >= MIDI_RANGE.min) {
+                    if (down >= MIDI_RANGE.min && isNaturalMidi(down))
+                        return down;
+                    if (up <= MIDI_RANGE.max && isNaturalMidi(up))
+                        return up;
+                    up++;
+                    down--;
+                }
+                return clamp(midi, MIDI_RANGE.min, MIDI_RANGE.max);
+            }
+            function midiToNoteNameKR(midi) {
+                const {letter} = midiToLetterOct(midi);
+                return NOTE_NAMES_KR[letter.replace('#', '')] || '';
+            }
+            function midiToColor(midi) {
+                const {letter} = midiToLetterOct(midi);
+                return NOTE_COLORS[letter.replace('#', '')] || '#000';
+            }
+            function getContrastColor(hex) {
+                // hex -> #rrggbb, 정규식 없이 파싱
+                const clean = (hex || '').replace('#', '');
+                if (clean.length !== 6)
+                    return '#000';
+                const r = parseInt(clean.slice(0, 2), 16);
+                const g = parseInt(clean.slice(2, 4), 16);
+                const b = parseInt(clean.slice(4, 6), 16);
+                const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+                return yiq >= 170 ? '#000' : '#fff';
+            }
+            function midiToFreq(midi) {
+                return 440 * Math.pow(2, (midi - 69) / 12);
+            }
 
-        function setupDragAndDrop() {
-            const dropzone = document.getElementById('dropzone');
-            const scoreArea = document.querySelector('.score-area');
-            
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                scoreArea.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
+            // E4 기준(맨 아래 줄). E4=64, 최저는 C4
+            const stepMap = {
+                'C4': -2,
+                'D4': -1,
+                'E4': 0,
+                'F4': 1,
+                'G4': 2,
+                'A5': 10,
+                'B5': 11,
+                'A4': 3,
+                'B4': 4,
+                'C5': 5,
+                'D5': 6,
+                'E5': 7,
+                'F5': 8,
+                'G5': 9,
+                'C6': 12
+            };
+            // 정렬 보정
+            const reverseStep = {
+                '-2': 60,
+                '-1': 62,
+                '0': 64,
+                '1': 65,
+                '2': 67,
+                '3': 69,
+                '4': 71,
+                '5': 72,
+                '6': 74,
+                '7': 76,
+                '8': 77,
+                '9': 79,
+                '10': 81,
+                '11': 83,
+                '12': 84
+            };
+            function midiToStepFromE4(midi) {
+                const {letter, oct} = midiToLetterOct(midi);
+                const key = `${letter.replace('#', '')}${oct}`;
+                return stepMap[key] ?? 0;
+            }
+            function stepToMidi(step) {
+                return reverseStep[String(step)] ?? 64;
+            }
+
+            function showToast(msg) {
+                toastEl.textContent = msg;
+                toastEl.classList.remove('hidden');
+                clearTimeout(showToast.timer);
+                showToast.timer = setTimeout( () => toastEl.classList.add('hidden'), 2200);
+            }
+            function snapshot() {
+                return JSON.stringify({
+                    items: state.items,
+                    selectedIndex: state.selectedIndex,
+                    pageIndex: state.pageIndex
+                });
+            }
+            function applySnapshot(j) {
+                const s = JSON.parse(j);
+                state.items = s.items.map(x => ({
+                    ...x
+                }));
+                state.selectedIndex = s.selectedIndex;
+                state.pageIndex = s.pageIndex;
+                renderAll();
+            }
+            function pushUndo(clearRedo=true) {
+                state.undoStack.push(snapshot());
+                if (state.undoStack.length > 200)
+                    state.undoStack.shift();
+                if (clearRedo)
+                    state.redoStack = [];
+            }
+            function undo() {
+                if (state.undoStack.length <= 1)
+                    return;
+                const cur = state.undoStack.pop();
+                state.redoStack.push(cur);
+                const prev = state.undoStack[state.undoStack.length - 1];
+                applySnapshot(prev);
+            }
+            function redo() {
+                if (state.redoStack.length === 0)
+                    return;
+                const next = state.redoStack.pop();
+                state.undoStack.push(next);
+                applySnapshot(next);
+            }
+
+            // =========================
+            // 렌더링
+            // =========================
+            function renderAll() {
+                const totalSystems = Math.max(1, Math.ceil(state.items.length / ITEMS_PER_SYSTEM));
+                const systemsToDraw = state.printMode ? Math.min(totalSystems, MAX_SYSTEMS_PRINT) : SYSTEMS_PER_PAGE;
+                const startSystemIndex = state.printMode ? 0 : state.pageIndex * SYSTEMS_PER_PAGE;
+
+                const height = systemsToDraw * STAFF_HEIGHT + (systemsToDraw - 1) * SYSTEM_GAP;
+
+                // 내부 좌표계(도형 배치)는 width/height + viewBox로 계산
+                STAFF.setAttribute('width', STAFF_WIDTH);
+                STAFF.setAttribute('height', height);
+                STAFF.setAttribute('viewBox', `0 0 ${STAFF_WIDTH} ${height}`);
+
+                // 화면에서는 래퍼 폭에 맞춰 축소 표시
+                STAFF.style.width = '100%';
+                STAFF.style.height = 'auto';
+                STAFF.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+                // 좌측 정렬로 축소
+                STAFF.innerHTML = '';
+
+                // 페이지 인디케이터
+                const totalPages = Math.max(1, Math.ceil(totalSystems / SYSTEMS_PER_PAGE));
+                document.getElementById('pageIndicator').textContent = `${state.pageIndex + 1} / ${totalPages}`;
+                const pageInfo = document.getElementById('pageInfo');
+                pageInfo.textContent = `현재 페이지 ${state.pageIndex + 1}, 전체 아이템 ${state.items.length}`;
+
+                // 시스템 렌더
+                for (let s = 0; s < systemsToDraw; s++) {
+                    const sysIndex = startSystemIndex + s;
+                    const yOffset = s * (STAFF_HEIGHT + SYSTEM_GAP);
+                    drawStaffLines(yOffset);
+                    drawClef(yOffset);
+                    // 4마디 바라인
+                    for (let m = 0; m < MEASURES_PER_SYSTEM; m++) {
+                        const barX = START_X + (m + 1) * ((STAFF_WIDTH - START_X - 20) / MEASURES_PER_SYSTEM);
+                        drawBarline(barX, yOffset);
+                    }
+
+                    const startX = START_X + 20;
+                    const usableWidth = STAFF_WIDTH - startX - 30;
+                    const stepX = usableWidth / ITEMS_PER_SYSTEM;
+
+                    for (let i = 0; i < ITEMS_PER_SYSTEM; i++) {
+                        const globalIdx = sysIndex * ITEMS_PER_SYSTEM + i;
+                        if (globalIdx >= state.items.length)
+                            continue;
+                        // 비어있으면 그리기 생략
+                        const x = startX + i * stepX + stepX / 2;
+                        const item = state.items[globalIdx];
+                        item.elementId = `item-${globalIdx}`;
+                        // 절대 인덱스 기반
+                        if (item.type === 'note')
+                            drawNote(item, x, yOffset, globalIdx);
+                        else
+                            drawRest(item, x, yOffset, globalIdx);
+                        if (s === 0 && (i % ITEMS_PER_MEASURE === 0))
+                            drawMeasureNumber(Math.floor(globalIdx / ITEMS_PER_MEASURE) + 1, startX + i * stepX + 4, yOffset);
+                    }
+                }
+            }
+
+            function drawStaffLines(yOffset) {
+                for (let i = 0; i < 5; i++) {
+                    const line = document.createElementNS(SVG_NS, 'line');
+                    line.setAttribute('x1', '10');
+                    line.setAttribute('y1', String(yOffset + 70 + i * LINE_SPACING));
+                    line.setAttribute('x2', String(STAFF_WIDTH - 10));
+                    line.setAttribute('y2', String(yOffset + 70 + i * LINE_SPACING));
+                    line.setAttribute('stroke', '#232323');
+                    line.setAttribute('stroke-width', '1.5');
+                    STAFF.appendChild(line);
+                }
+            }
+
+            function drawClef(yOffset) {
+                const g = document.createElementNS(SVG_NS, 'g');
+                // 둘째 줄(y2)을 기준으로 고정 배치
+                const y2 = yOffset + 80 + 1 * LINE_SPACING;
+                // 둘째 줄
+                const targetHeight = LINE_SPACING * 5.5;
+                // 오선보다 조금 크게
+                const srcHeight = 75;
+                // 원본 경로 기준 높이
+                const scale = targetHeight / srcHeight * 1.4;
+                const tx = 0;
+                // 좌측 여백 내 배치
+                const ty = y2 - (scale * 38) + 15;
+                g.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+
+                const main = document.createElementNS(SVG_NS, 'path');
+                main.setAttribute('d', GCLEF_MAIN);
+                main.setAttribute('fill', 'black');
+                main.setAttribute('stroke', 'black');
+                main.setAttribute('stroke-width', '0.6');
+
+                const dot = document.createElementNS(SVG_NS, 'path');
+                dot.setAttribute('d', GCLEF_DOT);
+                dot.setAttribute('transform', 'matrix(-1.08512,-0.02036848,0.02036848,-1.08512,90.68868,135.0572)');
+                dot.setAttribute('fill', 'black');
+                dot.setAttribute('stroke', 'black');
+                dot.setAttribute('stroke-width', '0.6');
+
+                g.appendChild(main);
+                g.appendChild(dot);
+                STAFF.appendChild(g);
+            }
+
+            function drawBarline(x, yOffset) {
+                const bar = document.createElementNS(SVG_NS, 'line');
+                bar.setAttribute('x1', x);
+                bar.setAttribute('x2', x);
+                bar.setAttribute('y1', yOffset + 70);
+                bar.setAttribute('y2', yOffset + 70 + 4 * LINE_SPACING);
+                bar.setAttribute('stroke', '#111');
+                bar.setAttribute('stroke-width', '1.5');
+                STAFF.appendChild(bar);
+            }
+            function drawMeasureNumber(num, x, yOffset) {
+                const t = document.createElementNS(SVG_NS, 'text');
+                t.setAttribute('x', x);
+                t.setAttribute('y', yOffset + 60);
+                t.setAttribute('font-size', '12');
+                t.setAttribute('fill', '#64748b');
+                t.textContent = num;
+                STAFF.appendChild(t);
+            }
+            function baseY(yOffset) {
+                return yOffset + 70 + 8 * STEP;
+            }
+
+            function drawNote(item, x, yOffset, absIndex) {
+                const step = midiToStepFromE4(item.midi);
+                const y = baseY(yOffset) - step * STEP;
+                const g = document.createElementNS(SVG_NS, 'g');
+                g.setAttribute('id', item.elementId);
+                g.dataset.index = absIndex;
+                g.setAttribute('tabindex', '0');
+
+                // ledger: C4(-2)와 B5(11) 근처
+                if (step <= -2) {
+                    const l = lineAt(x, baseY(yOffset) - (-2) * STEP);
+                    g.appendChild(l);
+                }
+                if (step >= 10) {
+                    const l = lineAt(x, baseY(yOffset) - (10) * STEP);
+                    g.appendChild(l);
+                }
+
+                const ellipse = document.createElementNS(SVG_NS, 'ellipse');
+                ellipse.setAttribute('cx', x);
+                ellipse.setAttribute('cy', y);
+                ellipse.setAttribute('rx', '12');
+                ellipse.setAttribute('ry', '9');
+                ellipse.setAttribute('transform', `rotate(-18 ${x} ${y})`);
+                const fill = midiToColor(item.midi);
+                ellipse.setAttribute('fill', fill);
+                ellipse.setAttribute('stroke', 'black');
+                ellipse.setAttribute('stroke-width', '1');
+                g.appendChild(ellipse);
+
+                const text = document.createElementNS(SVG_NS, 'text');
+                text.setAttribute('x', x);
+                text.setAttribute('y', y + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '13');
+                text.setAttribute('font-weight', '800');
+                text.setAttribute('fill', getContrastColor(fill));
+                text.setAttribute('class', 'note-text');
+                text.textContent = midiToNoteNameKR(item.midi);
+                g.appendChild(text);
+
+                const stemDown = step >= 4;
+                const stem = document.createElementNS(SVG_NS, 'line');
+                if (stemDown) {
+                    stem.setAttribute('x1', x - 12);
+                    stem.setAttribute('y1', y);
+                    stem.setAttribute('x2', x - 12);
+                    stem.setAttribute('y2', y + 3.5 * LINE_SPACING);
+                } else {
+                    stem.setAttribute('x1', x + 12);
+                    stem.setAttribute('y1', y);
+                    stem.setAttribute('x2', x + 12);
+                    stem.setAttribute('y2', y - 3.5 * LINE_SPACING);
+                }
+                stem.setAttribute('stroke', '#000');
+                stem.setAttribute('stroke-width', '1.5');
+                g.appendChild(stem);
+
+                attachItemHandlers(g, absIndex);
+                if (state.selectedIndex === absIndex)
+                    g.classList.add('selected');
+                STAFF.appendChild(g);
+            }
+            function lineAt(x, y) {
+                const l = document.createElementNS(SVG_NS, 'line');
+                l.setAttribute('x1', x - 16);
+                l.setAttribute('x2', x + 16);
+                l.setAttribute('y1', y);
+                l.setAttribute('y2', y);
+                l.setAttribute('stroke', '#222');
+                l.setAttribute('stroke-width', '1.5');
+                return l;
+            }
+
+            function drawRest(item, x, yOffset, absIndex) {
+                const g = document.createElementNS(SVG_NS, 'g');
+                g.setAttribute('id', item.elementId);
+                g.dataset.index = absIndex;
+                g.setAttribute('tabindex', '0');
+                const path = document.createElementNS(SVG_NS, 'path');
+                path.setAttribute('d', QUARTER_REST_PATH);
+                // 오선 중앙 정렬: 세 번째 줄 부근을 중심
+                const staffMidY = yOffset + 70 + 2 * LINE_SPACING;
+                const srcH = 108.2;
+                // 제공된 샘플 SVG 높이 근사
+                const targetH = LINE_SPACING * 3.6;
+                // 약간 작게
+                const scale = targetH / srcH;
+                const offsetY = staffMidY - (scale * 54);
+                // 대략 중앙(54)
+                path.setAttribute('transform', `translate(${x - 145}, ${offsetY}) scale(${scale})`);
+                path.setAttribute('fill', 'black');
+                path.setAttribute('stroke', 'black');
+                path.setAttribute('stroke-width', '0.6');
+                g.appendChild(path);
+                attachItemHandlers(g, absIndex);
+                if (state.selectedIndex === absIndex)
+                    g.classList.add('selected');
+                STAFF.appendChild(g);
+            }
+
+            function attachItemHandlers(g, index) {
+                g.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    state.selectedIndex = (state.selectedIndex === index) ? null : index;
+                    // 선택 미리듣기
+                    const it = state.items[index];
+                    if (it && it.type === 'note')
+                        previewNote(it.midi);
+                    renderAll();
+                }
+                );
+            }
+            STAFF.addEventListener('click', () => {
+                state.selectedIndex = null;
+                renderAll();
+            }
+            );
+
+            // =========================
+            // 입력/편집
+            // =========================
+            function insertItem(newItem) {
+                const nextCount = state.items.length + 1;
+                if (nextCount > MAX_ITEMS_PRINT) {
+                    showToast('두 장 가득 찼어요! 🌲 몇 마디 지우거나 새 악보를 시작해요.');
+                    return false;
+                }
+                const pos = (state.selectedIndex == null) ? state.items.length : state.selectedIndex + 1;
+                state.items.splice(pos, 0, newItem);
+                state.selectedIndex = null;
+                pushUndo();
+                // 새 항목 페이지로 이동
+                state.pageIndex = Math.floor(pos / ITEMS_PER_PAGE);
+                renderAll();
+                // 미리듣기
+                if (newItem.type === 'note')
+                    previewNote(newItem.midi);
+                return true;
+            }
+            function replaceNoteWithRest(index) {
+                if (index == null || index < 0 || index >= state.items.length)
+                    return;
+                const it = state.items[index];
+                if (it.type === 'note') {
+                    state.items[index] = {
+                        id: uid(),
+                        type: 'rest',
+                        duration: '4n'
+                    };
+                    pushUndo();
+                    renderAll();
+                }
+            }
+            function deleteItem(index) {
+                if (index == null || index < 0 || index >= state.items.length)
+                    return;
+                const it = state.items[index];
+                if (it.type === 'rest') {
+                    state.items.splice(index, 1);
+                    state.selectedIndex = null;
+                    pushUndo();
+                } else {
+                    replaceNoteWithRest(index);
+                }
+                renderAll();
+            }
+
+            // 화살표로 피치 이동(자연음 스텝) + 미리듣기
+            function movePitch(delta) {
+                const i = state.selectedIndex;
+                if (i == null)
+                    return;
+                const it = state.items[i];
+                if (it.type !== 'note')
+                    return;
+                const step = midiToStepFromE4(it.midi);
+                let next = clamp(step + delta, -2, 12);
+                const midi = snapToNatural(stepToMidi(next));
+                it.midi = midi;
+                pushUndo();
+                renderAll();
+                previewNote(midi);
+            }
+
+            // =========================
+            // 재생
+            // =========================
+            async function play() {
+                await Tone.start();
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
+                Tone.Transport.bpm.value = state.tempoBPM;
+                const hasNoteSelected = state.selectedIndex != null && state.items[state.selectedIndex] && state.items[state.selectedIndex].type === 'note';
+                const startIdx = hasNoteSelected ? state.selectedIndex : 0;
+                // 선택한 노트가 없으면 처음부터
+                const secPerItem = Tone.Time('4n').toSeconds();
+                for (let i = startIdx; i < state.items.length; i++) {
+                    const when = (i - startIdx) * secPerItem;
+                    const item = state.items[i];
+                    Tone.Transport.schedule(time => {
+                        // 페이지 자동 전환
+                        const pageNeeded = Math.floor(i / ITEMS_PER_PAGE);
+                        if (!state.printMode && pageNeeded !== state.pageIndex) {
+                            state.pageIndex = pageNeeded;
+                            renderAll();
+                        }
+                        if (item.type === 'note')
+                            synth.triggerAttackRelease(midiToFreq(item.midi), '8n', time);
+                        Tone.Draw.schedule( () => highlightOnce(item.elementId), time);
+                    }
+                    , when);
+                }
+                Tone.Transport.start();
+            }
+            function highlightOnce(id) {
+                const el = document.getElementById(id);
+                if (!el)
+                    return;
+                el.classList.add('highlight');
+                setTimeout( () => el.classList.remove('highlight'), 250);
+            }
+
+            function previewNote(midi) {
+                synth.triggerAttackRelease(midiToFreq(midi), '8n');
+            }
+
+            // =========================
+            // Export / Import (SVG + metadata JSON)
+            // =========================
+            function exportSVG() {
+                try {
+                    // ===== 기본 상수(프로젝트 전역 값 재사용) =====
+                    const svgNS = 'http://www.w3.org/2000/svg';
+
+                    // 여백/높이 — 기존 코드에 TOP_MARGIN/BOTTOM_MARGIN가 없을 수도 있어 기본값 보강
+                    const TOP_MARGIN = (typeof window.TOP_MARGIN !== 'undefined') ? window.TOP_MARGIN : 70;
+                    const BOTTOM_MARGIN = (typeof window.BOTTOM_MARGIN !== 'undefined') ? window.BOTTOM_MARGIN : 50;
+
+                    const lineGap = LINE_SPACING;
+                    // 20
+                    const step = STEP;
+                    // lineGap / 2
+                    const staffWidth = STAFF_WIDTH;
+                    // 1280
+                    const systemGap = SYSTEM_GAP;
+                    // 24
+                    const startXClef = START_X;
+                    // 110 (좌측 클레프 여유)
+                    const measuresPerSystem = MEASURES_PER_SYSTEM;
+                    // 4
+                    const itemsPerSystem = ITEMS_PER_SYSTEM;
+                    // 16
+                    const itemsPerMeasure = ITEMS_PER_MEASURE;
+                    // 4
+
+                    // 한 시스템의 높이 = 위여백 + 5줄 + 아래여백
+                    const systemHeight = TOP_MARGIN + 5 * lineGap + BOTTOM_MARGIN;
+
+                    // 총 시스템 수(최소 1)
+                    const totalSystems = Math.max(1, Math.ceil(state.items.length / itemsPerSystem));
+
+                    // 전체 SVG 높이
+                    const totalHeight = totalSystems * systemHeight + (totalSystems - 1) * systemGap;
+
+                    // ===== 오프스크린 SVG 생성 =====
+                    const svg = document.createElementNS(svgNS, 'svg');
+                    svg.setAttribute('xmlns', svgNS);
+                    svg.setAttribute('width', String(staffWidth));
+                    svg.setAttribute('height', String(totalHeight));
+                    svg.setAttribute('viewBox', `0 0 ${staffWidth} ${totalHeight}`);
+                    svg.setAttribute('role', 'img');
+                    svg.setAttribute('aria-label', state.title || '악보');
+
+                    // 접근성/식별용 제목(선택)
+                    const titleEl = document.createElementNS(svgNS, 'title');
+                    titleEl.textContent = state.title || '솔바람 악보';
+                    svg.appendChild(titleEl);
+
+                    // ===== 내부 유틸(내보내기 전용, 화면 렌더와 동일한 지오메트리) =====
+                    const baseY = (yOffset) => yOffset + TOP_MARGIN + 4 * lineGap;
+                    // E4(맨 아랫줄)
+                    const drawStaffLines = (yOffset) => {
+                        for (let i = 0; i < 5; i++) {
+                            const line = document.createElementNS(svgNS, 'line');
+                            line.setAttribute('x1', '10');
+                            line.setAttribute('y1', String(yOffset + TOP_MARGIN + i * lineGap));
+                            line.setAttribute('x2', String(staffWidth - 10));
+                            line.setAttribute('y2', String(yOffset + TOP_MARGIN + i * lineGap));
+                            line.setAttribute('stroke', '#232323');
+                            line.setAttribute('stroke-width', '1.5');
+                            svg.appendChild(line);
+                        }
+                    }
+                    ;
+                    const drawClef = (yOffset) => {
+                        const g = document.createElementNS(svgNS, 'g');
+                        const y2 = yOffset + TOP_MARGIN + 1 * lineGap;
+                        // 둘째 줄 기준
+                        const targetHeight = lineGap * 5.5;
+                        const srcHeight = 75;
+                        const scale = targetHeight / srcHeight;
+                        const tx = 34;
+                        const ty = y2 - (scale * 38);
+
+                        g.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+
+                        const main = document.createElementNS(svgNS, 'path');
+                        main.setAttribute('d', GCLEF_MAIN);
+                        main.setAttribute('fill', 'black');
+                        main.setAttribute('stroke', 'black');
+                        main.setAttribute('stroke-width', '0.6');
+
+                        const dot = document.createElementNS(svgNS, 'path');
+                        dot.setAttribute('d', GCLEF_DOT);
+                        dot.setAttribute('transform', 'matrix(-1.08512,-0.02036848,0.02036848,-1.08512,90.68868,135.0572)');
+                        dot.setAttribute('fill', 'black');
+                        dot.setAttribute('stroke', 'black');
+                        dot.setAttribute('stroke-width', '0.6');
+
+                        g.appendChild(main);
+                        g.appendChild(dot);
+                        svg.appendChild(g);
+                    }
+                    ;
+                    const drawBarline = (x, yOffset) => {
+                        const bar = document.createElementNS(svgNS, 'line');
+                        bar.setAttribute('x1', String(x));
+                        bar.setAttribute('x2', String(x));
+                        bar.setAttribute('y1', String(yOffset + TOP_MARGIN));
+                        bar.setAttribute('y2', String(yOffset + TOP_MARGIN + 4 * lineGap));
+                        bar.setAttribute('stroke', '#111');
+                        bar.setAttribute('stroke-width', '1.5');
+                        svg.appendChild(bar);
+                    }
+                    ;
+                    const drawMeasureNumber = (num, x, yOffset) => {
+                        const t = document.createElementNS(svgNS, 'text');
+                        t.setAttribute('x', String(x));
+                        t.setAttribute('y', String(yOffset + (TOP_MARGIN - 10)));
+                        t.setAttribute('font-size', '12');
+                        t.setAttribute('fill', '#64748b');
+                        t.textContent = String(num);
+                        svg.appendChild(t);
+                    }
+                    ;
+                    const ledgerLineAt = (x, y) => {
+                        const l = document.createElementNS(svgNS, 'line');
+                        l.setAttribute('x1', String(x - 16));
+                        l.setAttribute('x2', String(x + 16));
+                        l.setAttribute('y1', String(y));
+                        l.setAttribute('y2', String(y));
+                        l.setAttribute('stroke', '#222');
+                        l.setAttribute('stroke-width', '1.5');
+                        return l;
+                    }
+                    ;
+
+                    const drawNote = (item, x, yOffset) => {
+                        const stepFromE4 = midiToStepFromE4(item.midi);
+                        const y = baseY(yOffset) - stepFromE4 * step;
+
+                        const g = document.createElementNS(svgNS, 'g');
+
+                        // 아래/위 보조선
+                        if (stepFromE4 <= -2) {
+                            g.appendChild(ledgerLineAt(x, baseY(yOffset) - (-2) * step));
+                        }
+                        if (stepFromE4 >= 10) {
+                            g.appendChild(ledgerLineAt(x, baseY(yOffset) - (10) * step));
+                        }
+
+                        // 음표 헤드
+                        const ellipse = document.createElementNS(svgNS, 'ellipse');
+                        ellipse.setAttribute('cx', String(x));
+                        ellipse.setAttribute('cy', String(y));
+                        ellipse.setAttribute('rx', '12');
+                        ellipse.setAttribute('ry', '9');
+                        ellipse.setAttribute('transform', `rotate(-18 ${x} ${y})`);
+                        const fill = midiToColor(item.midi);
+                        ellipse.setAttribute('fill', fill);
+                        ellipse.setAttribute('stroke', 'black');
+                        ellipse.setAttribute('stroke-width', '1');
+                        g.appendChild(ellipse);
+
+                        // 음명 텍스트(대비 적용)
+                        const text = document.createElementNS(svgNS, 'text');
+                        text.setAttribute('x', String(x));
+                        text.setAttribute('y', String(y + 4));
+                        text.setAttribute('text-anchor', 'middle');
+                        text.setAttribute('font-size', '13');
+                        text.setAttribute('font-weight', '800');
+                        text.setAttribute('fill', getContrastColor(fill));
+                        text.textContent = midiToNoteNameKR(item.midi);
+                        g.appendChild(text);
+
+                        // 기둥 방향
+                        const stemDown = stepFromE4 >= 4;
+                        const stem = document.createElementNS(svgNS, 'line');
+                        if (stemDown) {
+                            stem.setAttribute('x1', String(x - 12));
+                            stem.setAttribute('y1', String(y));
+                            stem.setAttribute('x2', String(x - 12));
+                            stem.setAttribute('y2', String(y + 3.5 * lineGap));
+                        } else {
+                            stem.setAttribute('x1', String(x + 12));
+                            stem.setAttribute('y1', String(y));
+                            stem.setAttribute('x2', String(x + 12));
+                            stem.setAttribute('y2', String(y - 3.5 * lineGap));
+                        }
+                        stem.setAttribute('stroke', '#000');
+                        stem.setAttribute('stroke-width', '1.5');
+                        g.appendChild(stem);
+
+                        svg.appendChild(g);
+                    }
+                    ;
+
+                    const drawRest = (item, x, yOffset) => {
+                        const g = document.createElementNS(svgNS, 'g');
+                        const path = document.createElementNS(svgNS, 'path');
+
+                        // 오선 중앙 기반 배치
+                        const staffMidY = yOffset + TOP_MARGIN + 2 * lineGap;
+                        const srcH = 108.2;
+                        const targetH = lineGap * 3.6;
+                        const scale = targetH / srcH;
+                        const offsetY = staffMidY - (scale * 54);
+
+                        path.setAttribute('d', QUARTER_REST_PATH);
+                        path.setAttribute('transform', `translate(${x - 145}, ${offsetY}) scale(${scale})`);
+                        path.setAttribute('fill', 'black');
+                        path.setAttribute('stroke', 'black');
+                        path.setAttribute('stroke-width', '0.6');
+
+                        g.appendChild(path);
+                        svg.appendChild(g);
+                    }
+                    ;
+
+                    // ===== 전체 시스템/마디/아이템 렌더 =====
+                    for (let s = 0; s < totalSystems; s++) {
+                        const yOffset = s * (systemHeight + systemGap);
+
+                        drawStaffLines(yOffset);
+                        drawClef(yOffset);
+
+                        // 마디선
+                        for (let m = 0; m < measuresPerSystem; m++) {
+                            const barX = startXClef + (m + 1) * ((staffWidth - startXClef - 20) / measuresPerSystem);
+                            drawBarline(barX, yOffset);
+                        }
+
+                        // 아이템 위치 계산
+                        const startX = startXClef + 20;
+                        const usableWidth = staffWidth - startX - 30;
+                        const stepX = usableWidth / itemsPerSystem;
+
+                        for (let i = 0; i < itemsPerSystem; i++) {
+                            const globalIdx = s * itemsPerSystem + i;
+                            if (globalIdx >= state.items.length)
+                                break;
+
+                            const x = startX + i * stepX + stepX / 2;
+                            const item = state.items[globalIdx];
+
+                            if (item.type === 'note')
+                                drawNote(item, x, yOffset);
+                            else
+                                drawRest(item, x, yOffset);
+
+                            // (선택) 마디 번호: 첫 시스템 상단에만 표시(원래 화면 로직과 동일)
+                            if (s === 0 && (i % itemsPerMeasure === 0)) {
+                                drawMeasureNumber(Math.floor(globalIdx / itemsPerMeasure) + 1, startX + i * stepX + 4, yOffset);
+                            }
+                        }
+                    }
+
+                    // ===== 메타데이터(JSON) 삽입 =====
+                    const meta = document.createElementNS(svgNS, 'metadata');
+                    meta.setAttribute('id', 'score-json');
+                    const payload = {
+                        schemaVersion: state.schemaVersion,
+                        title: state.title,
+                        student: state.student,
+                        timeSig: state.timeSig,
+                        tempoBPM: state.tempoBPM,
+                        range: state.range,
+                        items: state.items
+                    };
+                    meta.textContent = JSON.stringify(payload);
+                    svg.appendChild(meta);
+
+                    // ===== 직렬화 & 다운로드 =====
+                    const serializer = new XMLSerializer();
+                    const svgStr = serializer.serializeToString(svg);
+                    const blob = new Blob([svgStr],{
+                        type: 'image/svg+xml'
+                    });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    const now = new Date();
+                    const y = now.getFullYear();
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const d = String(now.getDate()).padStart(2, '0');
+                    const ymd = `${y}${m}${d}`;
+                    a.href = url;
+                    a.download = `${state.title || 'score'}-${ymd}.svg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+
+                    showToast('전체 악보를 하나의 SVG로 저장했어요 ⬇️');
+                } catch (err) {
+                    console.error(err);
+                    showToast('내보내기에 실패했어요 😿');
+                }
+            }
+
+            function importFromSVGText(text) {
+                try {
+                    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+                    const meta = doc.getElementById('score-json');
+                    if (!meta)
+                        throw new Error('score-json metadata not found');
+                    const json = JSON.parse(meta.textContent || '{}');
+                    if (json.schemaVersion !== 1)
+                        throw new Error('unsupported schema');
+                    if (!Array.isArray(json.items))
+                        throw new Error('items missing');
+                    if (json.items.length > MAX_ITEMS_PRINT) {
+                        showToast('두 장 제한을 넘는 악보예요 🌲 일부를 지우고 다시 시도해요.');
+                        return;
+                    }
+                    state.title = json.title || '솔바람 악보';
+                    state.student = json.student || '';
+                    state.timeSig = json.timeSig || [4, 4];
+                    state.tempoBPM = json.tempoBPM || 90;
+                    state.range = json.range || 'C4-C6';
+                    state.items = json.items.map(it => ({
+                        ...it,
+                        id: it.id || uid()
+                    }));
+                    state.selectedIndex = null;
+                    state.pageIndex = 0;
+                    pushUndo();
+                    renderAll();
+                    showToast('불러왔어요 ⬆️');
+                } catch (err) {
+                    console.error(err);
+                    showToast('불러오기에 실패했어요 😿 SVG 안에 score-json이 없어요');
+                }
+            }
+
+            // 드래그&드롭 불러오기
+            sheetWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
+                sheetWrapper.classList.add('drop-target');
             }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                scoreArea.addEventListener(eventName, () => {
-                    dropzone.style.display = 'block';
-                    dropzone.classList.add('dragover');
-                });
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                scoreArea.addEventListener(eventName, () => {
-                    dropzone.style.display = 'none';
-                    dropzone.classList.remove('dragover');
-                });
-            });
-            
-            scoreArea.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    const file = files[0];
-                    if (file.type === 'application/json' || file.name.endsWith('.json')) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            try {
-                                const data = JSON.parse(event.target.result);
-                                loadScoreData(data);
-                            } catch (error) {
-                                alert('JSON 파일을 읽을 수 없습니다.');
-                            }
-                        };
-                        reader.readAsText(file);
-                    } else {
-                        alert('JSON 파일만 지원됩니다.');
-                    }
+            );
+            sheetWrapper.addEventListener('dragleave', () => sheetWrapper.classList.remove('drop-target'));
+            sheetWrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                sheetWrapper.classList.remove('drop-target');
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (!file)
+                    return;
+                const reader = new FileReader();
+                reader.onload = () => importFromSVGText(reader.result);
+                reader.readAsText(file);
+            }
+            );
+
+            // =========================
+            // MIDI 입력(선택사항). 브라우저 정책상 사용자 액션 후 호출 권장
+            // =========================
+            async function initMIDI() {
+                if (!navigator.requestMIDIAccess) {
+                    showToast('이 브라우저는 Web MIDI를 지원하지 않아요');
+                    return;
                 }
-            });
-        }
-
-        function printScore() {
-            const totalPages = Math.ceil(musicData.notes.length / 32); // 페이지당 32개 (4줄 x 8개)
-            
-            // 인쇄용 페이지 생성
-            const printPages = [];
-            for (let page = 0; page < totalPages; page++) {
-                const printPage = document.createElement('div');
-                printPage.className = 'print-page';
-                
-                // 헤더
-                const header = document.createElement('div');
-                header.className = 'print-header';
-                header.innerHTML = `
-                    <span>곡 제목: __________________</span>
-                    <span>작곡가: __________________</span>
-                    <span>날짜: ${musicData.date}</span>
-                `;
-                printPage.appendChild(header);
-                
-                // 4줄 생성
-                for (let row = 0; row < 4; row++) {
-                    // 음표 줄
-                    const scoreRow = document.createElement('div');
-                    scoreRow.className = 'print-score-row';
-                    
-                    for (let col = 0; col < 8; col++) {
-                        const noteIndex = page * 32 + row * 8 + col;
-                        const noteSlot = document.createElement('div');
-                        noteSlot.className = 'print-note-slot';
-                        
-                        if (noteIndex < musicData.notes.length) {
-                            const noteItem = musicData.notes[noteIndex];
-                            if (noteItem.type === 'note') {
-                                const icon = document.createElement('img');
-                                icon.className = 'print-note-icon';
-                                icon.src = noteItem.note.svgPath;
-                                noteSlot.appendChild(icon);
-                            } else {
-                                const restIcon = document.createElement('img');
-                                restIcon.className = 'print-note-icon';
-                                restIcon.src = 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg';
-                                noteSlot.appendChild(restIcon);
-                            }
-                        }
-                        
-                        scoreRow.appendChild(noteSlot);
-                    }
-                    printPage.appendChild(scoreRow);
-                    
-                    // 메모 공간
-                    const memoSpace = document.createElement('div');
-                    memoSpace.className = 'print-memo-space';
-                    printPage.appendChild(memoSpace);
-                }
-                
-                // 페이지 번호
-                const pageNumber = document.createElement('div');
-                pageNumber.className = 'print-page-number';
-                pageNumber.textContent = `${page + 1} / ${totalPages}`;
-                printPage.appendChild(pageNumber);
-                
-                printPages.push(printPage);
-            }
-            
-            // DOM에 임시로 추가
-            const mainContent = document.querySelector('.main-content');
-            printPages.forEach(page => mainContent.appendChild(page));
-            
-            // 인쇄
-            window.print();
-            
-            // 인쇄 후 제거
-            setTimeout(() => {
-                printPages.forEach(page => page.remove());
-            }, 100);
-        }
-
-        async function downloadScore() {
-            const totalPages = Math.ceil(musicData.notes.length / 32);
-            
-            if (totalPages === 0) {
-                alert('다운로드할 악보가 없습니다.');
-                return;
-            }
-            
-            // SVG 캐시 확인 및 필요시 다시 로드
-            if (svgCache.size === 0) {
-                await preloadSVGs();
-            }
-            
-            const svgs = [];
-            
-            for (let page = 0; page < totalPages; page++) {
-                const svg = createPageSVG(page, totalPages);
-                svgs.push(svg);
-            }
-            
-            const now = new Date();
-            const baseFilename = `악보_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
-            
-            if (svgs.length === 1) {
-                // 단일 페이지
-                const blob = new Blob([svgs[0]], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${baseFilename}.svg`;
-                a.click();
-                URL.revokeObjectURL(url);
-            } else {
-                // 여러 페이지 - ZIP으로 압축
-                const zip = new JSZip();
-                svgs.forEach((svg, index) => {
-                    zip.file(`${baseFilename}_page${index + 1}.svg`, svg);
-                });
-                
-                const content = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(content);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${baseFilename}.zip`;
-                a.click();
-                URL.revokeObjectURL(url);
-            }
-        }
-
-        function createPageSVG(pageIndex, totalPages) {
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            svg.setAttribute("width", "1189");  // A4 landscape in mm at 96dpi
-            svg.setAttribute("height", "841");
-            svg.setAttribute("viewBox", "0 0 1189 841");
-            svg.setAttribute("xmlns", svgNS);
-            
-            // 배경
-            const bg = document.createElementNS(svgNS, "rect");
-            bg.setAttribute("width", "1189");
-            bg.setAttribute("height", "841");
-            bg.setAttribute("fill", "white");
-            svg.appendChild(bg);
-            
-            // 헤더
-            const headerText = document.createElementNS(svgNS, "text");
-            headerText.setAttribute("x", "60");
-            headerText.setAttribute("y", "60");
-            headerText.setAttribute("font-family", "Noto Sans KR, sans-serif");
-            headerText.setAttribute("font-size", "16");
-            headerText.setAttribute("fill", "black");
-            
-            const title = document.createElementNS(svgNS, "tspan");
-            title.textContent = "곡 제목: __________________";
-            headerText.appendChild(title);
-            
-            const composer = document.createElementNS(svgNS, "tspan");
-            composer.setAttribute("x", "350");
-            composer.textContent = "작곡가: __________________";
-            headerText.appendChild(composer);
-            
-            const date = document.createElementNS(svgNS, "tspan");
-            date.setAttribute("x", "640");
-            date.textContent = `날짜: ${musicData.date}`;
-            headerText.appendChild(date);
-            
-            svg.appendChild(headerText);
-            
-            // 음표와 메모 공간
-            let y = 100;
-            for (let row = 0; row < 4; row++) {
-                // 음표 줄
-                for (let col = 0; col < 8; col++) {
-                    const noteIndex = pageIndex * 32 + row * 8 + col;
-                    const x = 60 + col * 140;
-                    
-                    // 음표 슬롯
-                    const rect = document.createElementNS(svgNS, "rect");
-                    rect.setAttribute("x", x);
-                    rect.setAttribute("y", y);
-                    rect.setAttribute("width", "80");
-                    rect.setAttribute("height", "80");
-                    rect.setAttribute("fill", "none");
-                    rect.setAttribute("stroke", "#999");
-                    rect.setAttribute("stroke-width", "1");
-                    rect.setAttribute("rx", "8");
-                    svg.appendChild(rect);
-                    
-                    // 음표 이미지
-                    if (noteIndex < musicData.notes.length) {
-                        const noteItem = musicData.notes[noteIndex];
-                        let svgUrl = null;
-                        
-                        if (noteItem.type === 'note') {
-                            svgUrl = noteItem.note.svgPath;
-                        } else if (noteItem.type === 'rest') {
-                            svgUrl = 'https://www.hanmiu.cc/play/toy/assets/piano/symbols/rest.svg';
-                        }
-                        
-                        if (svgUrl && svgCache.has(svgUrl)) {
-                            const svgContent = svgCache.get(svgUrl);
-                            const g = document.createElementNS(svgNS, "g");
-                            g.setAttribute("transform", `translate(${x + 10}, ${y + 10})`);
-                            
-                            // SVG 내용을 파싱하여 삽입
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = svgContent;
-                            const originalSvg = tempDiv.querySelector('svg');
-                            
-                            if (originalSvg) {
-                                // viewBox 속성 가져오기
-                                const viewBox = originalSvg.getAttribute('viewBox');
-                                if (viewBox) {
-                                    const [, , width, height] = viewBox.split(' ').map(Number);
-                                    const scale = Math.min(60 / width, 60 / height);
-                                    g.setAttribute("transform", `translate(${x + 10}, ${y + 10}) scale(${scale})`);
-                                }
-                                
-                                // SVG 내부 요소들 복사
-                                Array.from(originalSvg.children).forEach(child => {
-                                    const clonedChild = child.cloneNode(true);
-                                    g.appendChild(clonedChild);
+                try {
+                    const access = await navigator.requestMIDIAccess();
+                    for (const input of access.inputs.values()) {
+                        input.onmidimessage = (msg) => {
+                            const [st,note,vel] = msg.data;
+                            if (st === 144 && vel > 0) {
+                                const snapped = snapToNatural(note);
+                                insertItem({
+                                    id: uid(),
+                                    type: 'note',
+                                    midi: snapped,
+                                    duration: '4n'
                                 });
                             }
-                            
-                            svg.appendChild(g);
                         }
+                        ;
                     }
+                    showToast('MIDI 연결 완료 🎹');
+                } catch (e) {
+                    showToast('MIDI 연결 실패');
                 }
-                y += 90;
-                
-                // 메모 공간
-                const memoLine = document.createElementNS(svgNS, "line");
-                memoLine.setAttribute("x1", "60");
-                memoLine.setAttribute("y1", y + 80);
-                memoLine.setAttribute("x2", "1130");
-                memoLine.setAttribute("y2", y + 80);
-                memoLine.setAttribute("stroke", "#ccc");
-                memoLine.setAttribute("stroke-width", "1");
-                svg.appendChild(memoLine);
-                
-                y += 110;
             }
-            
-            // 페이지 번호
-            const pageNum = document.createElementNS(svgNS, "text");
-            pageNum.setAttribute("x", "595");
-            pageNum.setAttribute("y", "800");
-            pageNum.setAttribute("text-anchor", "middle");
-            pageNum.setAttribute("font-family", "Noto Sans KR, sans-serif");
-            pageNum.setAttribute("font-size", "14");
-            pageNum.setAttribute("fill", "black");
-            pageNum.textContent = `${pageIndex + 1} / ${totalPages}`;
-            svg.appendChild(pageNum);
-            
-            return svg.outerHTML;
-        }
 
-        function clearScore() {
-            if (confirm('모든 내용을 삭제하고 새로 시작하시겠습니까?')) {
-                saveState();
-                const now = new Date();
-                musicData = {
-                    date: now.toLocaleDateString('ko-KR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    }),
-                    createdAt: now.toISOString(),
-                    notes: [],
-                    bpm: 120
-                };
-                currentPage = 0;
-                updateScoreGrid();
-                updatePageInfo();
+            // =========================
+            // UI: 노트 패드(유치원용 색 버튼)
+            // =========================
+            // UI: 노트 패드(유치원용 색 버튼)
+            const notePad = document.getElementById('notePad');
+            function buildNotePad() {
+                notePad.innerHTML = '';
+                const btnDefs = [{
+                    midi: 60,
+                    label: '도',
+                    color: '#FF6B6B'
+                }, {
+                    midi: 62,
+                    label: '레',
+                    color: '#FFC048'
+                }, {
+                    midi: 64,
+                    label: '미',
+                    color: '#F9F871'
+                }, {
+                    midi: 65,
+                    label: '파',
+                    color: '#84D2C5'
+                }, {
+                    midi: 67,
+                    label: '솔',
+                    color: '#6AABF3'
+                }, {
+                    midi: 69,
+                    label: '라',
+                    color: '#4A69BD'
+                }, {
+                    midi: 71,
+                    label: '시',
+                    color: '#8A2BE2'
+                }, {
+                    midi: 72,
+                    label: '도',
+                    color: '#F472B6'
+                }];
+
+                for (const b of btnDefs) {
+                    const el = document.createElement('button');
+                    // ⛔️ text-white 제거
+                    el.className = 'w-12 h-12 md:w-14 md:h-14 rounded-full font-extrabold shadow-md hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-offset-2';
+                    el.style.backgroundColor = b.color;
+                    // ✅ 악보와 동일한 대비 로직 사용
+                    el.style.color = getContrastColor(b.color);
+                    el.textContent = b.label;
+                    el.addEventListener('click', () => insertItem({
+                        id: uid(),
+                        type: 'note',
+                        midi: b.midi,
+                        duration: '4n'
+                    }));
+                    notePad.appendChild(el);
+                }
+
+                const restBtn = document.createElement('button');
+                // 쉼표 버튼은 기존 스타일 유지(원하시면 동일 로직 적용 가능)
+                restBtn.className = 'px-4 h-12 md:h-14 rounded-xl bg-gray-700 text-white font-bold shadow-md hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-offset-2';
+                restBtn.textContent = '쉼표';
+                restBtn.addEventListener('click', () => insertItem({
+                    id: uid(),
+                    type: 'rest',
+                    duration: '4n'
+                }));
+                notePad.appendChild(restBtn);
             }
-        }
-    </script>
-</body>
+
+            // =========================
+            // 키보드 입력
+            // =========================
+            document.addEventListener('keydown', (e) => {
+                if (['INPUT', 'TEXTAREA'].includes(e.target.tagName))
+                    return;
+                const key = e.key.toLowerCase();
+                if (e.key === 'Delete') {
+                    deleteItem(state.selectedIndex);
+                    return;
+                }
+                if ((e.metaKey || e.ctrlKey) && key === 'z') {
+                    e.preventDefault();
+                    if (e.shiftKey)
+                        redo();
+                    else
+                        undo();
+                    return;
+                }
+                if ((e.metaKey || e.ctrlKey) && (key === 'y')) {
+                    e.preventDefault();
+                    redo();
+                    return;
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    movePitch(+1);
+                    return;
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    movePitch(-1);
+                    return;
+                }
+                const map = {
+                    a: 60,
+                    s: 62,
+                    d: 64,
+                    f: 65,
+                    g: 67,
+                    h: 69,
+                    j: 71,
+                    k: 72
+                };
+                if (map[key]) {
+                    e.preventDefault();
+                    insertItem({
+                        id: uid(),
+                        type: 'note',
+                        midi: map[key],
+                        duration: '4n'
+                    });
+                    return;
+                }
+                if (key === 'r') {
+                    e.preventDefault();
+                    insertItem({
+                        id: uid(),
+                        type: 'rest',
+                        duration: '4n'
+                    });
+                    return;
+                }
+            }
+            );
+
+            // =========================
+            // 버튼 연결
+            // =========================
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('redoBtn').addEventListener('click', redo);
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                if (confirm('모두 지울까요?')) {
+                    state.items = [];
+                    state.selectedIndex = null;
+                    state.pageIndex = 0;
+                    pushUndo();
+                    renderAll();
+                }
+            }
+            );
+            document.getElementById('printBtn').addEventListener('click', () => {
+                state.printMode = true;
+                renderAll();
+                window.print();
+            }
+            );
+            window.addEventListener('afterprint', () => {
+                state.printMode = false;
+                renderAll();
+            }
+            );
+
+            document.getElementById('playBtn').addEventListener('click', () => {
+                if (Tone.Transport.state === 'started') {
+                    Tone.Transport.stop();
+                } else {
+                    play();
+                }
+            }
+            );
+            document.getElementById('tempo').addEventListener('input', (e) => {
+                state.tempoBPM = Number(e.target.value);
+                document.getElementById('tempoLabel').textContent = state.tempoBPM;
+            }
+            );
+            document.getElementById('exportBtn').addEventListener('click', exportSVG);
+            document.getElementById('importFile').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file)
+                    return;
+                const reader = new FileReader();
+                reader.onload = () => importFromSVGText(reader.result);
+                reader.readAsText(file);
+                e.target.value = '';
+            }
+            );
+            document.getElementById('aiFillBtn').addEventListener('click', () => {
+                // TODO: Gemini API call here.
+                // Inputs: { key:'C', timeSig:[4,4], tempo: state.tempoBPM, context: state.items.slice(0, (state.selectedIndex??-1)+1), fillBars: 2 }
+                // Expected: returns Array<Item> length = 8 (for 2 bars @ 4n)
+                // On success: splice into items at selectedIndex+1 (respect page limit)
+                showToast('여기에 AI(GenAI) 채우기 기능이 들어갈 예정이에요 ✨');
+            }
+            );
+
+            // 페이지 네비게이션
+            document.getElementById('prevPage').addEventListener('click', () => {
+                state.pageIndex = Math.max(0, state.pageIndex - 1);
+                renderAll();
+            }
+            );
+            document.getElementById('nextPage').addEventListener('click', () => {
+                const totalSystems = Math.max(1, Math.ceil(state.items.length / ITEMS_PER_SYSTEM));
+                const totalPages = Math.max(1, Math.ceil(totalSystems / SYSTEMS_PER_PAGE));
+                state.pageIndex = Math.min(totalPages - 1, state.pageIndex + 1);
+                renderAll();
+            }
+            );
+
+            // =========================
+            // 자동 저장 + 타이틀/이름/날짜
+            // =========================
+            const titleField = document.getElementById('titleField');
+            const nameField = document.getElementById('nameField');
+            const dateField = document.getElementById('dateField');
+            function updateMetaFromFields() {
+                state.title = titleField.textContent.trim() || '';
+                state.student = nameField.textContent.trim();
+            }
+            titleField.addEventListener('input', updateMetaFromFields);
+            nameField.addEventListener('input', updateMetaFromFields);
+            function saveLocal() {
+                try {
+                    localStorage.setItem('solbaram-score', JSON.stringify({
+                        ...state,
+                        undoStack: [],
+                        redoStack: [],
+                        printMode: false
+                    }));
+                } catch (_) {}
+            }
+            function loadLocal() {
+                try {
+                    const raw = localStorage.getItem('solbaram-score');
+                    if (!raw)
+                        return false;
+                    const obj = JSON.parse(raw);
+                    if (obj.schemaVersion !== 1)
+                        return false;
+                    Object.assign(state, {
+                        title: obj.title || '솔바람 악보',
+                        student: obj.student || '',
+                        timeSig: obj.timeSig || [4, 4],
+                        tempoBPM: obj.tempoBPM || 90,
+                        range: obj.range || 'C4-C6',
+                        items: (obj.items || []).map(it => ({
+                            ...it,
+                            id: it.id || uid()
+                        })),
+                        selectedIndex: null,
+                        pageIndex: 0,
+                        undoStack: [],
+                        redoStack: [],
+                        printMode: false
+                    });
+                    pushUndo(false);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+            window.addEventListener('beforeunload', saveLocal);
+
+            // =========================
+            // 시작
+            // =========================
+            function start() {
+                // 날짜 자동
+                const now = new Date();
+                dateField.textContent = now.toLocaleDateString('ko-KR');
+                buildNotePad();
+                if (!loadLocal()) {
+                    state.items = [];
+                    state.selectedIndex = null;
+                    state.pageIndex = 0;
+                    pushUndo(false);
+                }
+                renderAll();
+            }
+            start();
+        </script>
+    </body>
 </html>
