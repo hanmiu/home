@@ -114,7 +114,7 @@
                     <button id="clearBtn" class="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600" aria-label="모두 지우기">🧹 전체 삭제</button>
                     <button id="printBtn" class="px-4 py-2 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-600" aria-label="인쇄">🖨️ 인쇄</button>
                 </div>
-                <div class="flex flex-wrap items-center justify-center gap-2" id="notePad"></div>
+                <div class="flex flex-wrap items-center justify-center gap-2" id="notePad" style="min-width: 550px"></div>
                 <div class="flex flex-wrap items-center justify-end gap-2">
                     <button id="playBtn" class="px-4 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600" aria-label="재생/일시정지">▶️ 재생</button>
                     <button id="stopBtn" class="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600" aria-label="중지">⏹️ 중지</button>
@@ -736,18 +736,41 @@
             // 화살표로 피치 이동(자연음 스텝) + 미리듣기
             function movePitch(delta) {
                 const i = state.selectedIndex;
-                if (i == null)
-                    return;
+                if (i == null) return;
+
                 const it = state.items[i];
-                if (it.type !== 'note')
-                    return;
+                if (!it || it.type !== 'note') return;
+
                 const step = midiToStepFromE4(it.midi);
-                let next = clamp(step + delta, -2, 12);
-                const midi = snapToNatural(stepToMidi(next));
-                it.midi = midi;
+                const MAX_STEP_UP = midiToStepFromE4(72); // C5 기준 스텝(= 5)
+
+                let nextStep;
+
+                if (delta > 0) {
+                    // ↑: 이미 C5 이상이면 그대로 유지(undo 스택 증가 방지)
+                    if (step >= MAX_STEP_UP) {
+                    previewNote(it.midi);
+                    return;
+                    }
+                    // C5를 넘지 않도록 상한 고정
+                    nextStep = Math.min(step + delta, MAX_STEP_UP);
+                } else {
+                    // ↓: 기존 범위(-2..12) 내에서만 이동 (C4..C6 범위 유지)
+                    nextStep = clamp(step + delta, -2, 12);
+                }
+
+                const nextMidi = snapToNatural(stepToMidi(nextStep));
+
+                if (nextMidi === it.midi) {
+                    // 변화가 없으면 조용히 종료
+                    previewNote(it.midi);
+                    return;
+                }
+
+                it.midi = nextMidi;
                 pushUndo();
                 renderAll();
-                previewNote(midi);
+                previewNote(nextMidi);
             }
 
             function moveSelection(delta, preview=true) {
@@ -1376,15 +1399,6 @@
                     });
                     return;
                 }
-                // if (key === 'r') {
-                //     e.preventDefault();
-                //     insertItem({
-                //         id: uid(),
-                //         type: 'rest',
-                //         duration: '4n'
-                //     });
-                //     return;
-                // }
                 if (e.code === 'Space') {
                     e.preventDefault();
                     insertItem({
@@ -1396,6 +1410,8 @@
                 }
             });
 
+            // 오른쪽 마우스 버튼 클릭시 컨텍스트 윈도우 막기
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
             // =========================
             // 버튼 연결
             // =========================
