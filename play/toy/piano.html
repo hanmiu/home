@@ -477,7 +477,7 @@
                         drawBarline(barX, yOffset);
                     }
 
-                    const startX = START_X + 20;
+                    const startX = START_X + 10;
                     const usableWidth = STAFF_WIDTH - startX - 30;
                     const stepX = usableWidth / ITEMS_PER_SYSTEM;
 
@@ -486,9 +486,14 @@
                         if (globalIdx >= state.items.length)
                             continue;
                         // 비어있으면 그리기 생략
-                        const x = startX + i * stepX + stepX / 2;
+                        let x = startX + i * stepX + stepX / 2;
                         const item = state.items[globalIdx];
                         item.elementId = `item-${globalIdx}`;
+                        // 마디의 마지막 칸 + 쉼표면 살짝 왼쪽으로
+                        const isLastInMeasure = ((i + 1) % ITEMS_PER_MEASURE === 0);
+                        if (isLastInMeasure && item.type === 'rest') {
+                            x -= 20; // 기본 10px
+                        }
                         // 절대 인덱스 기반
                         if (item.type === 'note')
                             drawNote(item, x, yOffset, globalIdx);
@@ -523,7 +528,7 @@
                 const srcHeight = 75;
                 // 원본 경로 기준 높이
                 const scale = targetHeight / srcHeight * 1.4;
-                const tx = 0;
+                const tx = -20;
                 // 좌측 여백 내 배치
                 const ty = y2 - (scale * 38) + 15;
                 g.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
@@ -1146,7 +1151,7 @@
                         }
 
                         // 아이템 위치 계산
-                        const startX = startXClef + 20;
+                        const startX = startXClef + 10;
                         const usableWidth = staffWidth - startX - 30;
                         const stepX = usableWidth / itemsPerSystem;
 
