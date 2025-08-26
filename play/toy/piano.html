@@ -2,6 +2,7 @@
 <html lang="ko">
     <head>
         <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
+        <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title>솔바람 악보 🌬️🎵</title>
@@ -82,7 +83,7 @@
                 }
 
                 @page {
-                    size: A4 portrait;
+                    size: A4 landscape;
                     margin: 20mm;
                 }
             }
@@ -116,6 +117,7 @@
                 <div class="flex flex-wrap items-center justify-center gap-2" id="notePad"></div>
                 <div class="flex flex-wrap items-center justify-end gap-2">
                     <button id="playBtn" class="px-4 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600" aria-label="재생/일시정지">▶️ 재생</button>
+                    <button id="stopBtn" class="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600" aria-label="중지">⏹️ 중지</button>
                     <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 text-slate-700">
                         BPM <input id="tempo" type="range" min="60" max="140" value="90" class="accent-blue-600"/>
                         <span id="tempoLabel" class="font-bold w-10 text-right">90</span>
@@ -250,6 +252,8 @@
                 pageIndex: 0,
                 // 현재 화면 페이지(0기반)
                 printMode: false,
+                exportAfterPrint: false,
+                // ✅ 인쇄 닫힌 후 자동 내보내기 여부
             };
 
             // =========================
@@ -694,14 +698,18 @@
             function deleteItem(index) {
                 if (index == null || index < 0 || index >= state.items.length)
                     return;
-                const it = state.items[index];
-                if (it.type === 'rest') {
-                    state.items.splice(index, 1);
+
+                // ✅ 선택된 아이템을 종류와 무관하게 완전히 삭제
+                state.items.splice(index, 1);
+
+                // 선택 인덱스 보정
+                if (state.items.length === 0) {
                     state.selectedIndex = null;
-                    pushUndo();
                 } else {
-                    replaceNoteWithRest(index);
+                    state.selectedIndex = clamp(index, 0, state.items.length - 1);
                 }
+
+                pushUndo();
                 renderAll();
             }
 
@@ -720,6 +728,40 @@
                 pushUndo();
                 renderAll();
                 previewNote(midi);
+            }
+
+            function moveSelection(delta, preview=true) {
+                const n = state.items.length;
+                if (n === 0)
+                    return;
+
+                let idx = state.selectedIndex;
+                if (idx == null) {
+                    // 선택이 없으면: → 는 첫 아이템, ← 는 마지막 아이템
+                    idx = delta > 0 ? 0 : n - 1;
+                } else {
+                    // 경계에서 멈춤(랩 없음)
+                    idx = clamp(idx + delta, 0, n - 1);
+                }
+
+                if (idx === state.selectedIndex)
+                    return;
+
+                state.selectedIndex = idx;
+
+                // 선택이 다른 페이지에 있으면 그 페이지로 보여주기(가시성 향상)
+                const pageNeeded = Math.floor(idx / ITEMS_PER_PAGE);
+                if (!state.printMode && pageNeeded !== state.pageIndex) {
+                    state.pageIndex = pageNeeded;
+                }
+
+                renderAll();
+
+                // 새 선택이 음표면 미리듣기
+                const it = state.items[idx];
+                if (preview && it && it.type === 'note') {
+                    previewNote(it.midi);
+                }
             }
 
             // =========================
@@ -1115,6 +1157,24 @@
             // =========================
             // MIDI 입력(선택사항). 브라우저 정책상 사용자 액션 후 호출 권장
             // =========================
+            // 하드웨어 입력 범위(C3~C5)를 내부 체계(C4~C6)로 매핑
+            const HW_INPUT_RANGE = {
+                min: 48,
+                max: 72
+            };
+            // C3..C5
+
+            function mapHardwareMidiToScore(midiIn) {
+                // 지정 범위 밖이면 무시
+                if (midiIn < HW_INPUT_RANGE.min || midiIn > HW_INPUT_RANGE.max)
+                    return null;
+                // 내부 체계에 맞게 1옥타브 올림
+                const transposed = midiIn + 12;
+                // 48..72 -> 60..84
+                // 기존 규칙과 동일: 자연음으로 스냅 (C/D/E/F/G/A/B)
+                return snapToNatural(transposed);
+            }
+
             async function initMIDI() {
                 if (!navigator.requestMIDIAccess) {
                     showToast('이 브라우저는 Web MIDI를 지원하지 않아요');
@@ -1122,22 +1182,38 @@
                 }
                 try {
                     const access = await navigator.requestMIDIAccess();
-                    for (const input of access.inputs.values()) {
-                        input.onmidimessage = (msg) => {
-                            const [st,note,vel] = msg.data;
-                            if (st === 144 && vel > 0) {
-                                const snapped = snapToNatural(note);
+                    // sysex 불필요
+                    const bindInputs = () => {
+                        // 모든 입력에 핸들러 바인딩 (연결/해제 변화도 반영)
+                        for (const input of access.inputs.values()) {
+                            input.onmidimessage = (msg) => {
+                                const [status,note,velocity] = msg.data;
+                                // Note On(0x90) + vel>0 만 처리 (벨로시티 값 자체는 무시)
+                                const isNoteOn = (status & 0xf0) === 0x90 && velocity > 0;
+                                if (!isNoteOn)
+                                    return;
+
+                                const mapped = mapHardwareMidiToScore(note);
+                                if (mapped == null)
+                                    return;
+                                // 범위 밖이면 무시
+
                                 insertItem({
                                     id: uid(),
                                     type: 'note',
-                                    midi: snapped,
-                                    duration: '4n'
+                                    midi: mapped,
+                                    duration: '4n',
                                 });
                             }
+                            ;
                         }
-                        ;
                     }
-                    showToast('MIDI 연결 완료 🎹');
+                    ;
+
+                    bindInputs();
+                    access.onstatechange = () => bindInputs();
+                    // 장비 연결/해제 시 재바인딩
+                    showToast('MIDI 자동 연결 완료 🎹');
                 } catch (e) {
                     showToast('MIDI 연결 실패');
                 }
@@ -1219,8 +1295,10 @@
             document.addEventListener('keydown', (e) => {
                 if (['INPUT', 'TEXTAREA'].includes(e.target.tagName))
                     return;
+                if (e.target.closest('[contenteditable="true"]'))
+                    return;
                 const key = e.key.toLowerCase();
-                if (e.key === 'Delete') {
+                if (e.key === 'Delete' || e.key === 'Backspace') {
                     deleteItem(state.selectedIndex);
                     return;
                 }
@@ -1247,6 +1325,16 @@
                     movePitch(-1);
                     return;
                 }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    moveSelection(-1, true);
+                    return;
+                }
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    moveSelection(+1, true);
+                    return;
+                }
                 const map = {
                     a: 60,
                     s: 62,
@@ -1267,7 +1355,16 @@
                     });
                     return;
                 }
-                if (key === 'r') {
+                // if (key === 'r') {
+                //     e.preventDefault();
+                //     insertItem({
+                //         id: uid(),
+                //         type: 'rest',
+                //         duration: '4n'
+                //     });
+                //     return;
+                // }
+                if (e.code === 'Space') {
                     e.preventDefault();
                     insertItem({
                         id: uid(),
@@ -1296,6 +1393,8 @@
             );
             document.getElementById('printBtn').addEventListener('click', () => {
                 state.printMode = true;
+                state.exportAfterPrint = true;
+                // ✅ 인쇄 후 내보내기 예약
                 renderAll();
                 window.print();
             }
@@ -1303,15 +1402,27 @@
             window.addEventListener('afterprint', () => {
                 state.printMode = false;
                 renderAll();
+                // ✅ 인쇄 대화상자 닫힌 뒤에만 자동 내보내기
+                if (state.exportAfterPrint) {
+                    state.exportAfterPrint = false;
+                    exportSVG();
+                }
             }
             );
 
             document.getElementById('playBtn').addEventListener('click', () => {
                 if (Tone.Transport.state === 'started') {
                     Tone.Transport.stop();
+                    play();
                 } else {
                     play();
                 }
+            }
+            );
+            document.getElementById('stopBtn').addEventListener('click', () => {
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
+                // 예약된 스케줄 제거
             }
             );
             document.getElementById('tempo').addEventListener('input', (e) => {
@@ -1422,6 +1533,22 @@
                     pushUndo(false);
                 }
                 renderAll();
+
+                // 사용자가 페이지에 처음 상호작용하면 MIDI 자동 초기화
+                if ('requestMIDIAccess'in navigator) {
+                    const trigger = () => {
+                        initMIDI();
+                        window.removeEventListener('pointerdown', trigger);
+                        window.removeEventListener('keydown', trigger);
+                    }
+                    ;
+                    window.addEventListener('pointerdown', trigger, {
+                        once: true
+                    });
+                    window.addEventListener('keydown', trigger, {
+                        once: true
+                    });
+                }
             }
             start();
         </script>
