@@ -119,8 +119,8 @@
                     <button id="playBtn" class="px-4 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600" aria-label="재생/일시정지">▶️ 재생</button>
                     <button id="stopBtn" class="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600" aria-label="중지">⏹️ 중지</button>
                     <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 text-slate-700">
-                        BPM <input id="tempo" type="range" min="60" max="140" value="90" class="accent-blue-600"/>
-                        <span id="tempoLabel" class="font-bold w-10 text-right">90</span>
+                        BPM <input id="tempo" type="range" min="60" max="140" value="120" class="accent-blue-600"/>
+                        <span id="tempoLabel" class="font-bold w-10 text-right">120</span>
                     </label>
                     <button id="aiFillBtn" class="px-3 py-2 rounded-xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600" aria-label="AI로 채우기" style="display: none;">✨ AI로 채우기</button>
                 </div>
@@ -243,7 +243,7 @@
                 title: '솔바람 악보',
                 student: '',
                 timeSig: [4, 4],
-                tempoBPM: 90,
+                tempoBPM: 120,
                 range: 'C4-C6',
                 items: [],
                 // 4n 단위 시퀀스 — 초기엔 빈 배열
@@ -1394,8 +1394,7 @@
                     });
                     return;
                 }
-            }
-            );
+            });
 
             // =========================
             // 버튼 연결
@@ -1410,16 +1409,14 @@
                     pushUndo();
                     renderAll();
                 }
-            }
-            );
+            });
             document.getElementById('printBtn').addEventListener('click', () => {
                 state.printMode = true;
                 state.exportAfterPrint = true;
                 // ✅ 인쇄 후 내보내기 예약
                 renderAll();
                 window.print();
-            }
-            );
+            });
             window.addEventListener('afterprint', () => {
                 state.printMode = false;
                 renderAll();
@@ -1428,8 +1425,7 @@
                     state.exportAfterPrint = false;
                     exportSVG();
                 }
-            }
-            );
+            });
 
             document.getElementById('playBtn').addEventListener('click', () => {
                 if (Tone.Transport.state === 'started') {
@@ -1438,19 +1434,17 @@
                 } else {
                     play();
                 }
-            }
-            );
+            });
             document.getElementById('stopBtn').addEventListener('click', () => {
                 Tone.Transport.stop();
                 Tone.Transport.cancel();
                 // 예약된 스케줄 제거
-            }
-            );
+            });
             document.getElementById('tempo').addEventListener('input', (e) => {
                 state.tempoBPM = Number(e.target.value);
                 document.getElementById('tempoLabel').textContent = state.tempoBPM;
-            }
-            );
+                Tone.Transport.bpm.value = state.tempoBPM;
+            });
             document.getElementById('exportBtn').addEventListener('click', exportSVG);
             document.getElementById('importFile').addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -1468,22 +1462,19 @@
                 // Expected: returns Array<Item> length = 8 (for 2 bars @ 4n)
                 // On success: splice into items at selectedIndex+1 (respect page limit)
                 showToast('여기에 AI(GenAI) 채우기 기능이 들어갈 예정이에요 ✨');
-            }
-            );
+            });
 
             // 페이지 네비게이션
             document.getElementById('prevPage').addEventListener('click', () => {
                 state.pageIndex = Math.max(0, state.pageIndex - 1);
                 renderAll();
-            }
-            );
+            });
             document.getElementById('nextPage').addEventListener('click', () => {
                 const totalSystems = Math.max(1, Math.ceil(state.items.length / ITEMS_PER_SYSTEM));
                 const totalPages = Math.max(1, Math.ceil(totalSystems / SYSTEMS_PER_PAGE));
                 state.pageIndex = Math.min(totalPages - 1, state.pageIndex + 1);
                 renderAll();
-            }
-            );
+            });
 
             // =========================
             // 자동 저장 + 타이틀/이름/날짜
@@ -1553,6 +1544,9 @@
                     state.pageIndex = 0;
                     pushUndo(false);
                 }
+                document.getElementById('tempo').value = state.tempoBPM;
+                document.getElementById('tempoLabel').textContent = state.tempoBPM;
+                Tone.Transport.bpm.value = state.tempoBPM;
                 renderAll();
 
                 // 사용자가 페이지에 처음 상호작용하면 MIDI 자동 초기화
