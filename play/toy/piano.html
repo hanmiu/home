@@ -122,7 +122,7 @@
                         BPM <input id="tempo" type="range" min="60" max="140" value="90" class="accent-blue-600"/>
                         <span id="tempoLabel" class="font-bold w-10 text-right">90</span>
                     </label>
-                    <button id="aiFillBtn" class="px-3 py-2 rounded-xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600" aria-label="AI로 채우기">✨ AI로 채우기</button>
+                    <button id="aiFillBtn" class="px-3 py-2 rounded-xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600" aria-label="AI로 채우기" style="display: none;">✨ AI로 채우기</button>
                 </div>
             </div>
         </div>
@@ -148,9 +148,9 @@
         <!-- 페이지 네비게이션 -->
         <div class="no-print">
             <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <button id="prevPage" class="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">◀️ 이전 페이지</button>
+                <button id="prevPage" class="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300" style="visibility: hidden;">◀️ 이전 페이지</button>
                 <div id="pageIndicator" class="text-sm text-gray-600">1 / 1</div>
-                <button id="nextPage" class="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">다음 페이지 ▶️</button>
+                <button id="nextPage" class="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300" style="visibility: hidden;">다음 페이지 ▶️</button>
             </div>
         </div>
         <!-- 토스트 -->
@@ -189,12 +189,13 @@
             const ITEMS_PER_SYSTEM = 16;
             // 16 아이템/시스템
 
-            const SYSTEMS_PER_PAGE = 2;
+            const SYSTEMS_PER_PAGE = 3;
             // 화면에 항상 2줄
             const MEASURES_PER_PAGE = MEASURES_PER_SYSTEM * SYSTEMS_PER_PAGE;
             // 8마디
             const ITEMS_PER_PAGE = ITEMS_PER_SYSTEM * SYSTEMS_PER_PAGE;
             // 32아이템
+            const MAX_ITEMS_SCREEN = ITEMS_PER_SYSTEM * SYSTEMS_PER_PAGE; 
 
             const SYSTEMS_PER_PRINT_PAGE = 5;
             // 인쇄 안전치(세로)
@@ -664,23 +665,42 @@
             // 입력/편집
             // =========================
             function insertItem(newItem) {
+                // 한 시스템에 들어가는 아이템 수(예: 16) * 3줄 = 전체 허용량
+                const MAX_ITEMS_3LINES = ITEMS_PER_SYSTEM * 3; // ex) 16 * 3 = 48
+
+                // 지금 추가하려는 경우의 전체 개수
                 const nextCount = state.items.length + 1;
-                if (nextCount > MAX_ITEMS_PRINT) {
-                    showToast('두 장 가득 찼어요! 🌲 몇 마디 지우거나 새 악보를 시작해요.');
+
+                // ✅ 곡 전체를 3줄만 허용: 화면/페이지와 무관하게 총 개수 제한
+                if (nextCount > MAX_ITEMS_3LINES) {
+                    showToast('이 악보는 최대 3줄까지만 만들 수 있어요. 일부를 지우고 다시 추가해 주세요.');
                     return false;
                 }
+
+                // 삽입 위치: 선택 아이템 다음(없으면 맨 뒤)
                 const pos = (state.selectedIndex == null) ? state.items.length : state.selectedIndex + 1;
+
+                // 실제 삽입
                 state.items.splice(pos, 0, newItem);
+
+                // 선택 해제 및 되돌리기 스냅샷
                 state.selectedIndex = null;
                 pushUndo();
-                // 새 항목 페이지로 이동
+
+                // 새 아이템이 보이도록 페이지 이동
                 state.pageIndex = Math.floor(pos / ITEMS_PER_PAGE);
+
+                // 다시 그리기
                 renderAll();
-                // 미리듣기
-                if (newItem.type === 'note')
+
+                // 음표면 미리듣기
+                if (newItem.type === 'note') {
                     previewNote(newItem.midi);
+                }
+
                 return true;
             }
+
             function replaceNoteWithRest(index) {
                 if (index == null || index < 0 || index >= state.items.length)
                     return;
@@ -1160,9 +1180,11 @@
             // 하드웨어 입력 범위(C3~C5)를 내부 체계(C4~C6)로 매핑
             const HW_INPUT_RANGE = {
                 min: 48,
-                max: 72
+                // max: 72
+                max: 60
+                // max를 C4로 한정 
             };
-            // C3..C5
+            // C3..C4
 
             function mapHardwareMidiToScore(midiIn) {
                 // 지정 범위 밖이면 무시
@@ -1222,7 +1244,6 @@
             // =========================
             // UI: 노트 패드(유치원용 색 버튼)
             // =========================
-            // UI: 노트 패드(유치원용 색 버튼)
             const notePad = document.getElementById('notePad');
             function buildNotePad() {
                 notePad.innerHTML = '';
