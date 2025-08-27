@@ -459,6 +459,29 @@
                 applySnapshot(next);
             }
 
+            // URL의 queryString 처리로 config
+            function getQueryParams() {
+                const qs = new URLSearchParams(window.location.search);
+                const out = {};
+                qs.forEach((v, k) => {
+                    out[k] = /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v; // 숫자면 숫자, 아니면 문자열
+                });
+                return out;
+            }
+
+            function applyConfigFromQuery() {
+                const q = getQueryParams();
+
+                if ('hw_input_range_min' in q) HW_INPUT_RANGE.min = Math.max(0, Math.min(127, q.hw_input_range_min));
+                if ('hw_input_range_max' in q) HW_INPUT_RANGE.max = Math.max(0, Math.min(127, q.hw_input_range_max));
+
+                // 순서 무관 + 잘못된 범위 보정
+                if (HW_INPUT_RANGE.max < HW_INPUT_RANGE.min) {
+                    [HW_INPUT_RANGE.min, HW_INPUT_RANGE.max] = [HW_INPUT_RANGE.max, HW_INPUT_RANGE.min];
+                }
+            }
+
+
             // =========================
             // 렌더링
             // =========================
@@ -2008,6 +2031,8 @@
                 // 날짜 표시
                 const now = new Date();
                 dateField.textContent = now.toLocaleDateString('ko-KR');
+
+                applyConfigFromQuery();
 
                 // 노트 패드 만들기
                 buildNotePad();
