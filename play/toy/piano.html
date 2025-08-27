@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
     <head>
+        <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title>솔바람 악보 🌬️🎵</title>
@@ -8,7 +9,6 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <!-- Magenta UMD: 전역 mm 제공 (tfjs/Tone 내부 포함) -->
         <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/dist/magentamusic.min.js"></script>
-
         <style>
             :root {
                 --lineSpacing: 20px;
@@ -102,6 +102,7 @@
                     <label for="importFile" class="cursor-pointer px-3 py-2 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600" aria-label="불러오기">⬆️ 불러오기</label>
                     <input id="importFile" type="file" accept="image/svg+xml,.svg" class="hidden"/>
                     <button id="exportBtn" class="px-3 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600" aria-label="내보내기">⬇️ 내보내기</button>
+                    <button id="midiBtn" class="px-3 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700" aria-label="MIDI 파일 저장">🎹 MIDI 파일</button>
                 </div>
             </div>
         </header>
@@ -114,7 +115,7 @@
                     <button id="clearBtn" class="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600" aria-label="모두 지우기">🧹 전체 삭제</button>
                     <button id="printBtn" class="px-4 py-2 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-600" aria-label="인쇄">🖨️ 인쇄</button>
                 </div>
-                <div class="flex flex-wrap items-center justify-center gap-2" id="notePad"></div>
+                <div class="flex flex-wrap items-center justify-center gap-1 md:gap-2" id="notePad"></div>
                 <div class="flex flex-wrap items-center justify-end gap-2">
                     <button id="playBtn" class="px-4 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600" aria-label="재생/일시정지">▶️ 재생</button>
                     <button id="stopBtn" class="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600" aria-label="중지">⏹️ 중지</button>
@@ -124,6 +125,20 @@
                     </label>
                     <!--<button id="aiFillBtn" class="px-3 py-2 rounded-xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600" aria-label="AI로 채우기" style="display: none;">✨ AI로 채우기</button>-->
                     <button id="aiPlayBtn" class="px-3 py-2 rounded-xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600" aria-label="AI 연주">✨ AI 연주</button>
+                    <div id="voiceToggles" class="flex items-center gap-2 ml-1 select-none">
+                        <label class="inline-flex items-center gap-1">
+                            <input id="chkAlto" type="checkbox" class="accent-fuchsia-600" checked aria-label="알토 성부 포함"/>
+                            <span class="text-sm">알토</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1">
+                            <input id="chkTenor" type="checkbox" class="accent-fuchsia-600" checked aria-label="테너 성부 포함"/>
+                            <span class="text-sm">테너</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1">
+                            <input id="chkBass" type="checkbox" class="accent-fuchsia-600" checked aria-label="베이스 성부 포함"/>
+                            <span class="text-sm">베이스</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,7 +211,7 @@
             // 8마디
             const ITEMS_PER_PAGE = ITEMS_PER_SYSTEM * SYSTEMS_PER_PAGE;
             // 32아이템
-            const MAX_ITEMS_SCREEN = ITEMS_PER_SYSTEM * SYSTEMS_PER_PAGE; 
+            const MAX_ITEMS_SCREEN = ITEMS_PER_SYSTEM * SYSTEMS_PER_PAGE;
 
             const SYSTEMS_PER_PRINT_PAGE = 5;
             // 인쇄 안전치(세로)
@@ -256,6 +271,10 @@
                 printMode: false,
                 exportAfterPrint: false,
                 // ✅ 인쇄 닫힌 후 자동 내보내기 여부
+                lastAIFull: null,
+                // AI가 만든 4성부 전체(ATB 필터 적용 전)
+                lastAIFiltered: null,
+                // 마지막으로 재생한 상태(필터 적용 후) - 참고용
             };
 
             // === Magenta 전역 플레이어들 ===
@@ -263,31 +282,34 @@
             const SF_URL = 'https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus';
 
             // ✅ 하이라이트 콜백은 5번째 인자에 넣습니다.
-            const mainPlayer = new mm.SoundFontPlayer(
-            SF_URL, /*output*/ undefined, /*programOutputs*/ undefined, /*drumOutputs*/ undefined,
-            {
+            const mainPlayer = new mm.SoundFontPlayer(SF_URL,/*output*/
+            undefined,/*programOutputs*/
+            undefined,/*drumOutputs*/
+            undefined,{
                 run: (note) => {
-                // 시간→스텝 변환(stepsPerQuarter=4)
-                const sps = (mainPlayer._qpm * 4) / 60;
-                const startStep = Math.round((note.startTime || 0) * sps);
-                const localIdx = Math.floor(startStep / 4);
-                const idx = (mainPlayer._startIndex || 0) + localIdx;
+                    // 시간→스텝 변환(stepsPerQuarter=4)
+                    const sps = (mainPlayer._qpm * 4) / 60;
+                    const startStep = Math.round((note.startTime || 0) * sps);
+                    const localIdx = Math.floor(startStep / 4);
+                    const idx = (mainPlayer._startIndex || 0) + localIdx;
 
-                const pageNeeded = Math.floor(idx / ITEMS_PER_PAGE);
-                if (!state.printMode && pageNeeded !== state.pageIndex) {
-                    state.pageIndex = pageNeeded;
-                    renderAll();
+                    const pageNeeded = Math.floor(idx / ITEMS_PER_PAGE);
+                    if (!state.printMode && pageNeeded !== state.pageIndex) {
+                        state.pageIndex = pageNeeded;
+                        renderAll();
+                    }
+                    const it = state.items[idx];
+                    if (it && it.elementId)
+                        highlightOnce(it.elementId);
                 }
-                const it = state.items[idx];
-                if (it && it.elementId) highlightOnce(it.elementId);
-                },
+                ,
                 stop: () => {}
-            }
-            );
+            });
 
-            const previewPlayer = new mm.SoundFontPlayer(SF_URL); // 단음 미리듣기
-            let   aiPlayer      = new mm.SoundFontPlayer(SF_URL); // AI 연주
-
+            const previewPlayer = new mm.SoundFontPlayer(SF_URL);
+            // 단음 미리듣기
+            let aiPlayer = new mm.SoundFontPlayer(SF_URL);
+            // AI 연주
 
             // =========================
             // 유틸 함수
@@ -492,7 +514,8 @@
                         // 마디의 마지막 칸 + 쉼표면 살짝 왼쪽으로
                         const isLastInMeasure = ((i + 1) % ITEMS_PER_MEASURE === 0);
                         if (isLastInMeasure && item.type === 'rest') {
-                            x -= 20; // 기본 10px
+                            x -= 20;
+                            // 기본 10px
                         }
                         // 절대 인덱스 기반
                         if (item.type === 'note')
@@ -698,7 +721,8 @@
             // =========================
             function insertItem(newItem) {
                 // 한 시스템에 들어가는 아이템 수(예: 16) * 3줄 = 전체 허용량
-                const MAX_ITEMS_3LINES = ITEMS_PER_SYSTEM * 3; // ex) 16 * 3 = 48
+                const MAX_ITEMS_3LINES = ITEMS_PER_SYSTEM * 3;
+                // ex) 16 * 3 = 48
 
                 // 지금 추가하려는 경우의 전체 개수
                 const nextCount = state.items.length + 1;
@@ -768,21 +792,24 @@
             // 화살표로 피치 이동(자연음 스텝) + 미리듣기
             function movePitch(delta) {
                 const i = state.selectedIndex;
-                if (i == null) return;
+                if (i == null)
+                    return;
 
                 const it = state.items[i];
-                if (!it || it.type !== 'note') return;
+                if (!it || it.type !== 'note')
+                    return;
 
                 const step = midiToStepFromE4(it.midi);
-                const MAX_STEP_UP = midiToStepFromE4(72); // C5 기준 스텝(= 5)
+                const MAX_STEP_UP = midiToStepFromE4(72);
+                // C5 기준 스텝(= 5)
 
                 let nextStep;
 
                 if (delta > 0) {
                     // ↑: 이미 C5 이상이면 그대로 유지(undo 스택 증가 방지)
                     if (step >= MAX_STEP_UP) {
-                    previewNote(it.midi);
-                    return;
+                        previewNote(it.midi);
+                        return;
                     }
                     // C5를 넘지 않도록 상한 고정
                     nextStep = Math.min(step + delta, MAX_STEP_UP);
@@ -842,65 +869,84 @@
             // =========================
             // 재생
             // =========================
-            function buildSeqFromItems(startIndex = 0) {
+            function buildSeqFromItems(startIndex=0) {
                 const stepsPerQuarter = 4;
                 const seq = {
                     notes: [],
-                    quantizationInfo: { stepsPerQuarter },
+                    quantizationInfo: {
+                        stepsPerQuarter
+                    },
                     totalQuantizedSteps: Math.max(0, (state.items.length - startIndex) * 4),
-                    tempos: [{ time: 0, qpm: state.tempoBPM }],
-                    timeSignatures: [{ time: 0, numerator: state.timeSig[0], denominator: state.timeSig[1] }]
+                    tempos: [{
+                        time: 0,
+                        qpm: state.tempoBPM
+                    }],
+                    timeSignatures: [{
+                        time: 0,
+                        numerator: state.timeSig[0],
+                        denominator: state.timeSig[1]
+                    }]
                 };
                 let step = 0;
                 for (let i = startIndex; i < state.items.length; i++) {
                     const it = state.items[i];
                     if (it.type === 'note') {
-                    seq.notes.push({
-                        pitch: it.midi,
-                        instrument: 0, // 소프라노
-                        quantizedStartStep: step,
-                        quantizedEndStep: step + 4
-                    });
+                        seq.notes.push({
+                            pitch: it.midi,
+                            instrument: 0,
+                            // 소프라노
+                            velocity: 80,
+                            quantizedStartStep: step,
+                            quantizedEndStep: step + 4
+                        });
                     }
-                    step += 4; // 4분음표 1칸
+                    step += 4;
+                    // 4분음표 1칸
                 }
                 return seq;
-                }
+            }
 
             async function play() {
-                if (!state.items.length) return;
+                if (!state.items.length)
+                    return;
 
-                await mainPlayer.resumeContext();        // 오디오 컨텍스트 깨우기
+                await mainPlayer.resumeContext();
+                // 오디오 컨텍스트 깨우기
                 const startIdx = (state.selectedIndex != null) ? state.selectedIndex : 0;
                 const seq = buildSeqFromItems(startIdx);
 
-                mainPlayer._startIndex = startIdx;       // 하이라이트 계산용
+                mainPlayer._startIndex = startIdx;
+                // 하이라이트 계산용
                 mainPlayer._qpm = state.tempoBPM;
 
                 // ⏳ 처음 한 번은 샘플 로딩 때문에 딜레이가 있을 수 있음
-                await mainPlayer.loadSamples(seq);       // 필요 샘플만 선로딩
+                await mainPlayer.loadSamples(seq);
+                // 필요 샘플만 선로딩
                 mainPlayer.stop();
                 previewPlayer.stop();
                 await mainPlayer.start(seq, state.tempoBPM);
             }
 
-
             document.getElementById('playBtn').addEventListener('click', () => {
-                if (mainPlayer.isPlaying()) mainPlayer.stop();
+                if (mainPlayer.isPlaying())
+                    mainPlayer.stop();
                 play();
-            });
+            }
+            );
 
             document.getElementById('stopBtn').addEventListener('click', () => {
                 mainPlayer.stop();
                 previewPlayer.stop();
                 aiPlayer && aiPlayer.stop();
-            });
+            }
+            );
 
             // 템포 슬라이더: 앞으로의 start() 호출에 반영
             document.getElementById('tempo').addEventListener('input', (e) => {
                 state.tempoBPM = Number(e.target.value);
                 document.getElementById('tempoLabel').textContent = state.tempoBPM;
-            });
+            }
+            );
 
             function highlightOnce(id) {
                 const el = document.getElementById(id);
@@ -912,17 +958,26 @@
 
             function previewNote(midi) {
                 const seq = {
-                    notes: [{ pitch: midi, instrument: 0, quantizedStartStep: 0, quantizedEndStep: 2 }],
-                    quantizationInfo: { stepsPerQuarter: 4 },
+                    notes: [{
+                        pitch: midi,
+                        instrument: 0,
+                        quantizedStartStep: 0,
+                        quantizedEndStep: 2
+                    }],
+                    quantizationInfo: {
+                        stepsPerQuarter: 4
+                    },
                     totalQuantizedSteps: 2,
-                    tempos: [{ time: 0, qpm: state.tempoBPM }]
+                    tempos: [{
+                        time: 0,
+                        qpm: state.tempoBPM
+                    }]
                 };
                 previewPlayer.stop();
                 previewPlayer.resumeContext();
                 // 선택: 한 번만 로딩해두면 다음부터 지연이 거의 없음
-                previewPlayer.loadSamples(seq).then(() => previewPlayer.start(seq, state.tempoBPM));
+                previewPlayer.loadSamples(seq).then( () => previewPlayer.start(seq, state.tempoBPM));
             }
-
 
             // =========================
             // Export / Import (SVG + metadata JSON)
@@ -1253,6 +1308,88 @@
                 }
             }
 
+            function exportMIDI() {
+                try {
+                    // 1) 시퀀스 선택 (AI 있으면 ATB 필터 반영, 없으면 멜로디)
+                    let seq = state.lastAIFull ? filterVoices(state.lastAIFull, getSelectedVoices()) : buildSeqFromItems(0);
+
+                    if (!seq.notes || seq.notes.length === 0) {
+                        showToast('내보낼 노트가 없어요 😿');
+                        return;
+                    }
+
+                    // 2) 메타 보강
+                    const stepsPerQuarter = 4;
+                    seq.quantizationInfo = {
+                        stepsPerQuarter
+                    };
+                    seq.totalQuantizedSteps = seq.totalQuantizedSteps ?? (state.items.length * 4);
+                    seq.tempos = [{
+                        time: 0,
+                        qpm: state.tempoBPM
+                    }];
+                    seq.timeSignatures = [{
+                        time: 0,
+                        numerator: state.timeSig[0],
+                        denominator: state.timeSig[1]
+                    }];
+                    seq.ticksPerQuarter = 480;
+
+                    // 3) 벨로시티/프로그램 지정 (S/A/T/B → Piano/Viola/Cello/Bass 예시)
+                    const progMap = {
+                        0: 0,
+                        1: 41,
+                        2: 42,
+                        3: 32
+                    };
+                    for (const n of seq.notes) {
+                        if (!n.velocity || n.velocity <= 0)
+                            n.velocity = 80;
+                        n.isDrum = false;
+                        n.program = progMap[n.instrument ?? 0] ?? 0;
+                    }
+
+                    // 4) (옵션) 단일 트랙로 합치기 — 일부 플레이어 호환 ↑
+                    const singleTrack = false;
+                    // 필요시 true로
+                    if (singleTrack) {
+                        for (const n of seq.notes) {
+                            n.instrument = 0;
+                            n.program = 0;
+                        }
+                    }
+
+                    // 5) 언퀀타이즈 후 MIDI 변환
+                    const unq = mm.sequences.isQuantizedSequence(seq) ? mm.sequences.unquantizeSequence(seq, state.tempoBPM) : seq;
+
+                    const bytes = mm.sequenceProtoToMidi(unq);
+
+                    // 6) 라운드트립 검사 (디버그용)
+                    const ns = mm.midiToSequenceProto(bytes);
+                    // ← Uint8Array 직접 전달
+                    console.log('midi note count:', ns.notes?.length);
+
+                    // 7) 저장
+                    const now = new Date();
+                    const y = now.getFullYear()
+                      , m = String(now.getMonth() + 1).padStart(2, '0')
+                      , d = String(now.getDate()).padStart(2, '0');
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(new Blob([bytes],{
+                        type: 'audio/midi'
+                    }));
+                    a.download = `${state.title || 'score'}-${y}${m}${d}.mid`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    showToast('MIDI 파일을 저장했어요 🎹');
+                } catch (err) {
+                    console.error(err);
+                    showToast('MIDI 내보내기에 실패했어요 😿');
+                }
+            }
+
             // 드래그&드롭 불러오기
             sheetWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -1279,8 +1416,7 @@
             const HW_INPUT_RANGE = {
                 min: 48,
                 // max: 72
-                max: 60
-                // max를 C4로 한정 
+                max: 60 // max를 C4로 한정 
             };
             // C3..C4
 
@@ -1382,7 +1518,7 @@
                 for (const b of btnDefs) {
                     const el = document.createElement('button');
                     // ⛔️ text-white 제거
-                    el.className = 'w-12 h-12 md:w-14 md:h-14 rounded-full font-extrabold shadow-md hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-offset-2';
+                    el.className = 'shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full font-extrabold text-sm sm:text-base shadow-md hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-offset-2';
                     el.style.backgroundColor = b.color;
                     // ✅ 악보와 동일한 대비 로직 사용
                     el.style.color = getContrastColor(b.color);
@@ -1398,7 +1534,7 @@
 
                 const restBtn = document.createElement('button');
                 // 쉼표 버튼은 기존 스타일 유지(원하시면 동일 로직 적용 가능)
-                restBtn.className = 'px-4 h-12 md:h-14 rounded-xl bg-gray-700 text-white font-bold shadow-md hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-offset-2';
+                restBtn.className = 'shrink-0 h-10 sm:h-12 md:h-14 px-4 rounded-xl bg-gray-700 text-white font-bold text-sm sm:text-base shadow-md hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-offset-2';
                 restBtn.textContent = '쉼표';
                 restBtn.addEventListener('click', () => insertItem({
                     id: uid(),
@@ -1483,7 +1619,8 @@
                     });
                     return;
                 }
-            });
+            }
+            );
 
             // 오른쪽 마우스 버튼 클릭시 컨텍스트 윈도우 막기
             document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -1500,14 +1637,16 @@
                     pushUndo();
                     renderAll();
                 }
-            });
+            }
+            );
             document.getElementById('printBtn').addEventListener('click', () => {
                 state.printMode = true;
                 state.exportAfterPrint = true;
                 // ✅ 인쇄 후 내보내기 예약
                 renderAll();
                 window.print();
-            });
+            }
+            );
             window.addEventListener('afterprint', () => {
                 state.printMode = false;
                 renderAll();
@@ -1516,32 +1655,43 @@
                     state.exportAfterPrint = false;
                     exportSVG();
                 }
-            });
+            }
+            );
 
             // ▶️ 재생
             document.getElementById('playBtn').addEventListener('click', () => {
-            if (mainPlayer.isPlaying()) mainPlayer.stop();
-            play();
-            });
+                if (mainPlayer.isPlaying())
+                    mainPlayer.stop();
+                play();
+            }
+            );
 
             // ⏹️ 중지 (수동/프리뷰/AI 모두 중지)
             document.getElementById('stopBtn').addEventListener('click', () => {
-            try { mainPlayer.stop(); } catch(_) {}
-            try { previewPlayer.stop(); } catch(_) {}
-            try { aiPlayer && aiPlayer.stop(); } catch(_) {}
-            });
+                try {
+                    mainPlayer.stop();
+                } catch (_) {}
+                try {
+                    previewPlayer.stop();
+                } catch (_) {}
+                try {
+                    aiPlayer && aiPlayer.stop();
+                } catch (_) {}
+            }
+            );
 
             // ⏱️ 템포 슬라이더
             document.getElementById('tempo').addEventListener('input', (e) => {
-            state.tempoBPM = Number(e.target.value);
-            document.getElementById('tempoLabel').textContent = state.tempoBPM;
+                state.tempoBPM = Number(e.target.value);
+                document.getElementById('tempoLabel').textContent = state.tempoBPM;
 
-            // 재생 중이면 새 템포로 재시작(선택사항)
-            if (mainPlayer.isPlaying()) {
-                mainPlayer.stop();
-                play();
+                // 재생 중이면 새 템포로 재시작(선택사항)
+                if (mainPlayer.isPlaying()) {
+                    mainPlayer.stop();
+                    play();
+                }
             }
-            });
+            );
 
             document.getElementById('exportBtn').addEventListener('click', exportSVG);
             document.getElementById('importFile').addEventListener('change', (e) => {
@@ -1554,25 +1704,21 @@
                 e.target.value = '';
             }
             );
-            // document.getElementById('aiFillBtn').addEventListener('click', () => {
-            //     // TODO: Gemini API call here.
-            //     // Inputs: { key:'C', timeSig:[4,4], tempo: state.tempoBPM, context: state.items.slice(0, (state.selectedIndex??-1)+1), fillBars: 2 }
-            //     // Expected: returns Array<Item> length = 8 (for 2 bars @ 4n)
-            //     // On success: splice into items at selectedIndex+1 (respect page limit)
-            //     showToast('여기에 AI(GenAI) 채우기 기능이 들어갈 예정이에요 ✨');
-            // });
+            document.getElementById('midiBtn').addEventListener('click', exportMIDI);
 
             // 페이지 네비게이션
             document.getElementById('prevPage').addEventListener('click', () => {
                 state.pageIndex = Math.max(0, state.pageIndex - 1);
                 renderAll();
-            });
+            }
+            );
             document.getElementById('nextPage').addEventListener('click', () => {
                 const totalSystems = Math.max(1, Math.ceil(state.items.length / ITEMS_PER_SYSTEM));
                 const totalPages = Math.max(1, Math.ceil(totalSystems / SYSTEMS_PER_PAGE));
                 state.pageIndex = Math.min(totalPages - 1, state.pageIndex + 1);
                 renderAll();
-            });
+            }
+            );
 
             // =========================
             // 자동 저장 + 타이틀/이름/날짜
@@ -1626,7 +1772,11 @@
                     return false;
                 }
             }
-            window.addEventListener('beforeunload', saveLocal);
+            window.addEventListener('beforeunload', () => {
+                saveLocal();
+                saveVoicePrefs();
+            }
+            );
 
             // AI 연주
             const AI_CHECKPOINT = 'https://storage.googleapis.com/magentadata/js/checkpoints/coconet/bach';
@@ -1634,114 +1784,222 @@
             let aiBusy = false;
 
             function buildCoconetSeedFromItems() {
-            const seed = {
-                notes: [],
-                quantizationInfo: { stepsPerQuarter: 4 },
-                totalQuantizedSteps: state.items.length * 4,
-                tempos: [{ time: 0, qpm: state.tempoBPM }],
-                timeSignatures: [{ time: 0, numerator: state.timeSig[0], denominator: state.timeSig[1] }]
-            };
-            let step = 0;
-            for (const it of state.items) {
-                if (it.type === 'note') {
-                seed.notes.push({
-                    pitch: it.midi,
-                    instrument: 0,               // 0=S, 1=A, 2=T, 3=B (Coconet 규칙)
-                    quantizedStartStep: step,
-                    quantizedEndStep: step + 4
-                });
-                }
-                step += 4;
-            }
-            return seed;
-            }
-
-            async function aiPlay() {
-            // 1) 입력 검증
-            if (!state.items.some(it => it.type === 'note')) {
-                showToast('먼저 멜로디(음표)를 한두 개 넣어 주세요 🎵');
-                return;
-            }
-
-            const btn = document.getElementById('aiPlayBtn');
-            try {
-                // 2) 버튼 잠금
-                if (btn) { btn.disabled = true; btn.textContent = '모델 준비 중…'; }
-
-                // 3) Coconet 로드/초기화 (한 번만)
-                if (!aiModel) {
-                // 공식 Bach 체크포인트
-                aiModel = new mm.Coconet('https://storage.googleapis.com/magentadata/js/checkpoints/coconet/bach');
-                }
-                if (!aiModel.isInitialized()) await aiModel.initialize();
-
-                // 4) Seed(우리 멜로디=Soprano, instrument=0) 만들기
-                const stepsPerQuarter = 4;  // 4n 단위
                 const seed = {
-                notes: [],
-                quantizationInfo: { stepsPerQuarter },
-                totalQuantizedSteps: state.items.length * 4,
-                tempos: [{ time: 0, qpm: state.tempoBPM }],
-                timeSignatures: [{ time: 0, numerator: state.timeSig[0], denominator: state.timeSig[1] }]
+                    notes: [],
+                    quantizationInfo: {
+                        stepsPerQuarter: 4
+                    },
+                    totalQuantizedSteps: state.items.length * 4,
+                    tempos: [{
+                        time: 0,
+                        qpm: state.tempoBPM
+                    }],
+                    timeSignatures: [{
+                        time: 0,
+                        numerator: state.timeSig[0],
+                        denominator: state.timeSig[1]
+                    }]
                 };
                 let step = 0;
                 for (const it of state.items) {
-                if (it.type === 'note') {
-                    seed.notes.push({
-                    pitch: it.midi,
-                    instrument: 0,               // Soprano 고정
-                    quantizedStartStep: step,
-                    quantizedEndStep: step + 4   // 4분음표
-                    });
+                    if (it.type === 'note') {
+                        seed.notes.push({
+                            pitch: it.midi,
+                            instrument: 0,
+                            // 0=S, 1=A, 2=T, 3=B (Coconet 규칙)
+                            velocity: 80,
+                            quantizedStartStep: step,
+                            quantizedEndStep: step + 4
+                        });
+                    }
+                    step += 4;
                 }
-                step += 4;
-                }
-
-                if (btn) btn.textContent = '하모니 생성 중…';
-
-                // 5) 인필 실행
-                let out = await aiModel.infill(seed); // 결과는 모든 노트가 1-step 길이로 나옴(모델 특성) :contentReference[oaicite:0]{index=0}
-
-                // 6) 후처리: 1-step 노트 병합 → 지속음으로
-                //    (버전에 따라 이름이 `mergeHeldNotes` 또는 `mergeConsecutiveNotes`)
-                if (mm.sequences.mergeHeldNotes) {
-                out = mm.sequences.mergeHeldNotes(out);                 // 권장: 모델 문서에서 안내 :contentReference[oaicite:1]{index=1}
-                } else if (mm.sequences.mergeConsecutiveNotes) {
-                out = mm.sequences.mergeConsecutiveNotes(out);          // 동등 기능(연속 노트 병합) :contentReference[oaicite:2]{index=2}
-                }
-
-                // 7) 소프라노(voice=instrument 0) 보존: 결과에서 instrument=0 파트를 seed로 치환
-                //    replaceInstruments(original, replace) → replace에 있는 악기 번호만 갈아낍니다.
-                out = mm.sequences.replaceInstruments(out, seed);         // :contentReference[oaicite:3]{index=3}
-
-                // 8) 다른 플레이어 중지 & AI 플레이
-                try { mainPlayer.stop(); } catch(_) {}
-                try { previewPlayer.stop(); } catch(_) {}
-                try { aiPlayer.stop(); } catch(_) {}
-
-                await aiPlayer.resumeContext();        // 오디오 컨텍스트 깨우기
-                await aiPlayer.loadSamples(out);       // 필요한 샘플 선로딩 → 시작 지연 최소화 :contentReference[oaicite:4]{index=4}
-                if (btn) btn.textContent = '연주 중…';
-                await aiPlayer.start(out, state.tempoBPM); // QPM으로 템포 전달
-
-            } catch (err) {
-                console.error(err);
-                showToast('AI 연주에 실패했어요 😿');
-            } finally {
-                if (btn) { btn.disabled = false; btn.textContent = '✨ AI 연주'; }
-            }
+                return seed;
             }
 
+            // === ATB 성부 토글 헬퍼 ===
+            // Soprano(0)는 항상 포함
+            function getSelectedVoices() {
+                const voices = [0];
+                if (document.getElementById('chkAlto')?.checked)
+                    voices.push(1);
+                if (document.getElementById('chkTenor')?.checked)
+                    voices.push(2);
+                if (document.getElementById('chkBass')?.checked)
+                    voices.push(3);
+                return voices;
+            }
+
+            // AI 동작 중 체크박스 잠금/해제
+            function toggleVoiceToggles(disabled) {
+                ['chkAlto', 'chkTenor', 'chkBass'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el)
+                        el.disabled = disabled;
+                }
+                );
+            }
+
+            // 성부 선택 저장/복원
+            function loadVoicePrefs() {
+                try {
+                    const v = JSON.parse(localStorage.getItem('solbaram-voices') || '{}');
+                    if ('alto'in v)
+                        document.getElementById('chkAlto').checked = !!v.alto;
+                    if ('tenor'in v)
+                        document.getElementById('chkTenor').checked = !!v.tenor;
+                    if ('bass'in v)
+                        document.getElementById('chkBass').checked = !!v.bass;
+                } catch (_) {}
+            }
+            function saveVoicePrefs() {
+                try {
+                    localStorage.setItem('solbaram-voices', JSON.stringify({
+                        alto: !!document.getElementById('chkAlto')?.checked,
+                        tenor: !!document.getElementById('chkTenor')?.checked,
+                        bass: !!document.getElementById('chkBass')?.checked,
+                    }));
+                } catch (_) {}
+            }
+
+            // === 유틸: 원하는 성부만 남기기 ===
+            // voices 는 [0,1,2,3] 중 원하는 목록 (0=S,1=A,2=T,3=B)
+            function filterVoices(ns, voices=[0, 1]) {
+                const keep = new Set(voices);
+                const out = mm.sequences.clone(ns);
+                out.notes = (ns.notes || []).filter(n => keep.has(n.instrument ?? 0));
+                // 전체 길이는 유지
+                out.totalQuantizedSteps = ns.totalQuantizedSteps;
+                return out;
+            }
+            async function aiPlay() {
+                // 1) 입력 검증
+                if (!state.items.some(it => it.type === 'note')) {
+                    showToast('먼저 멜로디(음표)를 한두 개 넣어 주세요 🎵');
+                    return;
+                }
+
+                const btn = document.getElementById('aiPlayBtn');
+                try {
+                    // 2) 버튼 잠금
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = '모델 준비 중…';
+                    }
+                    toggleVoiceToggles(true);
+
+                    // 3) Coconet 로드/초기화 (한 번만)
+                    if (!aiModel) {
+                        // 공식 Bach 체크포인트
+                        aiModel = new mm.Coconet('https://storage.googleapis.com/magentadata/js/checkpoints/coconet/bach');
+                    }
+                    if (!aiModel.isInitialized())
+                        await aiModel.initialize();
+
+                    // 4) Seed(우리 멜로디=Soprano, instrument=0) 만들기
+                    const stepsPerQuarter = 4;
+                    // 4n 단위
+                    const seed = {
+                        notes: [],
+                        quantizationInfo: {
+                            stepsPerQuarter
+                        },
+                        totalQuantizedSteps: state.items.length * 4,
+                        tempos: [{
+                            time: 0,
+                            qpm: state.tempoBPM
+                        }],
+                        timeSignatures: [{
+                            time: 0,
+                            numerator: state.timeSig[0],
+                            denominator: state.timeSig[1]
+                        }]
+                    };
+                    let step = 0;
+                    for (const it of state.items) {
+                        if (it.type === 'note') {
+                            seed.notes.push({
+                                pitch: it.midi,
+                                instrument: 0,
+                                // Soprano 고정
+                                quantizedStartStep: step,
+                                quantizedEndStep: step + 4 // 4분음표
+                            });
+                        }
+                        step += 4;
+                    }
+
+                    if (btn)
+                        btn.textContent = '하모니 생성 중…';
+
+                    // 5) 인필 실행
+                    let out = await aiModel.infill(seed);
+                    // 결과는 모든 노트가 1-step 길이로 나옴(모델 특성) :contentReference[oaicite:0]{index=0}
+
+                    // 6) 후처리: 1-step 노트 병합 → 지속음으로
+                    //    (버전에 따라 이름이 `mergeHeldNotes` 또는 `mergeConsecutiveNotes`)
+                    if (mm.sequences.mergeHeldNotes) {
+                        out = mm.sequences.mergeHeldNotes(out);
+                        // 권장: 모델 문서에서 안내 :contentReference[oaicite:1]{index=1}
+                    } else if (mm.sequences.mergeConsecutiveNotes) {
+                        out = mm.sequences.mergeConsecutiveNotes(out);
+                        // 동등 기능(연속 노트 병합) :contentReference[oaicite:2]{index=2}
+                    }
+
+                    // 7) 소프라노(voice=instrument 0) 보존: 결과에서 instrument=0 파트를 seed로 치환
+                    //    replaceInstruments(original, replace) → replace에 있는 악기 번호만 갈아낍니다.
+                    out = mm.sequences.replaceInstruments(out, seed);
+                    // :contentReference[oaicite:3]{index=3}
+
+                    state.lastAIFull = mm.sequences.clone(out);
+
+                    // (0=S,1=A,2=T,3=B)
+                    let voices = getSelectedVoices();
+                    out = filterVoices(out, voices);
+                    state.lastAIFiltered = mm.sequences.clone(out);
+
+                    // 8) 다른 플레이어 중지 & AI 플레이
+                    try {
+                        mainPlayer.stop();
+                    } catch (_) {}
+                    try {
+                        previewPlayer.stop();
+                    } catch (_) {}
+                    try {
+                        aiPlayer.stop();
+                    } catch (_) {}
+
+                    await aiPlayer.resumeContext();
+                    // 오디오 컨텍스트 깨우기
+                    await aiPlayer.loadSamples(out);
+                    // 필요한 샘플 선로딩 → 시작 지연 최소화 :contentReference[oaicite:4]{index=4}
+                    if (btn)
+                        btn.textContent = '연주 중…';
+                    await aiPlayer.start(out, state.tempoBPM);
+                    // QPM으로 템포 전달
+
+                } catch (err) {
+                    console.error(err);
+                    showToast('AI 연주에 실패했어요 😿');
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '✨ AI 연주';
+                    }
+                    toggleVoiceToggles(false);
+                }
+            }
 
             document.getElementById('aiPlayBtn').addEventListener('click', aiPlay);
-
 
             // "중지" 버튼이 AI 연주도 멈추도록 보강
             const _origStopHandler = document.getElementById('stopBtn').onclick;
             document.getElementById('stopBtn').addEventListener('click', () => {
-            try { aiPlayer && aiPlayer.stop(); } catch(_) {}
-            });
-
+                try {
+                    aiPlayer && aiPlayer.stop();
+                } catch (_) {}
+            }
+            );
 
             // =========================
             // 시작
@@ -1769,18 +2027,31 @@
 
                 // 첫 렌더
                 renderAll();
+                // ATB 체크박스 저장/복원
+                loadVoicePrefs();
+                ['chkAlto', 'chkTenor', 'chkBass'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el)
+                        el.addEventListener('change', saveVoicePrefs);
+                }
+                );
 
                 // 사용자가 처음 상호작용할 때 MIDI 초기화
-                if ('requestMIDIAccess' in navigator) {
+                if ('requestMIDIAccess'in navigator) {
                     const trigger = () => {
-                    initMIDI();
-                    window.removeEventListener('pointerdown', trigger);
-                    window.removeEventListener('keydown', trigger);
-                    };
-                    window.addEventListener('pointerdown', trigger, { once: true });
-                    window.addEventListener('keydown', trigger, { once: true });
+                        initMIDI();
+                        window.removeEventListener('pointerdown', trigger);
+                        window.removeEventListener('keydown', trigger);
+                    }
+                    ;
+                    window.addEventListener('pointerdown', trigger, {
+                        once: true
+                    });
+                    window.addEventListener('keydown', trigger, {
+                        once: true
+                    });
                 }
-                }
+            }
 
             start();
         </script>
