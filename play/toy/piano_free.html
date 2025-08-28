@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>신바람 악보</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --gap: 10px; --panel-bg: #f6f7fb; --accent: #1a73e8; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    header { padding: 12px 16px; background: var(--panel-bg); display:flex; flex-wrap: wrap; gap: var(--gap); align-items: center; }
+    header > * { margin: 0; }
+    #controls { display: flex; gap: var(--gap); flex-wrap: wrap; align-items: center; }
+    #scoreWrap { height: 70vh; overflow: auto; border-top: 1px solid #ddd; background: #fff; }
+    #score { min-height: 400px; padding: 16px; }
+    .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.danger { background: #e84545; color: #fff; border-color: #e84545; }
+    label { display: inline-flex; align-items: center; gap: 6px; }
+    #status { margin-left: auto; font-size: 13px; opacity: 0.8; }
+    .note-play path { stroke: var(--accent) !important; fill: var(--accent) !important; }
+  </style>
+
+  <!-- Magenta UMD: 전역 mm 제공 (tfjs/Tone 포함) -->
+  <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/dist/magentamusic.min.js"></script>
+</head>
+<body>
+  <header>
+    <div id="controls">
+      <button id="recordBtn" class="btn primary" disabled>● 녹음 시작</button>
+      <button id="playBtn" class="btn">▶ 재생</button>
+      <button id="clearBtn" class="btn danger">전체 지우기</button>
+
+      <label>장치
+        <select id="inputSelect"></select>
+      </label>
+
+      <label>BPM
+        <input id="bpm" type="range" min="60" max="140" value="120" />
+        <span id="bpmVal">120</span>
+      </label>
+    </div>
+    <div id="status">monitor loading…</div>
+  </header>
+
+  <div id="scoreWrap">
+    <div id="score"></div>
+  </div>
+
+  <!-- WebMIDI & VexFlow (ESM) -->
+  <script type="module">
+    import { WebMidi } from "https://cdn.jsdelivr.net/npm/webmidi@3/dist/esm/webmidi.esm.min.js";
+    import {
+      Renderer, Stave, StaveConnector, Formatter, Voice, StaveNote, Beam, GhostNote, Accidental
+    } from "https://cdn.jsdelivr.net/npm/vexflow@5/build/esm/entry/vexflow.js";
+
+    // ===== Shortcuts =====
+    const mm = window.mm;
+    const DEBUG = true;
+    const dlog = (...a)=>DEBUG&&console.log('[DBG]',...a);
+    const derr = (...a)=>console.error('[ERR]',...a);
+
+    // ===== UI =====
+    const recordBtn = document.getElementById('recordBtn');
+    const playBtn   = document.getElementById('playBtn');
+    const clearBtn  = document.getElementById('clearBtn');
+    const inputSel  = document.getElementById('inputSelect');
+    const bpmRange  = document.getElementById('bpm');
+    const bpmVal    = document.getElementById('bpmVal');
+    const statusEl  = document.getElementById('status');
+    const scoreWrap = document.getElementById('scoreWrap');
+    const scoreDiv  = document.getElementById('score');
+
+    // ===== Audio (count-in) =====
+    let audioCtx = null;
+    function getAudioCtx(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+    function beep(durationMs=100, freq=880){
+      try{
+        const ctx=getAudioCtx(), osc=ctx.createOscillator(), g=ctx.createGain();
+        osc.frequency.value=freq; osc.type='sine'; osc.connect(g).connect(ctx.destination);
+        const now=ctx.currentTime;
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(0.2, now+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, now+durationMs/1000);
+        osc.start(now); osc.stop(now+durationMs/1000+0.01);
+      }catch(e){ derr('beep failed',e); }
+    }
+
+    // ===== Renderer (SVG) =====
+    const renderer = new Renderer(scoreDiv, Renderer.Backends.SVG);
+    const ctx = renderer.getContext();
+    function resizeRenderer(w, h) {
+      const W = Number.isFinite(w) ? Math.max(10, Math.ceil(w)) : 800;
+      const H = Number.isFinite(h) ? Math.max(10, Math.ceil(h)) : 400;
+      renderer.resize(W, H);
+    }
+    const STAVE_HEIGHT = (() => {
+      try {
+        const tmp = new Stave(0,0,100);
+        const h = (typeof tmp.getHeight === 'function') ? tmp.getHeight() : null;
+        const val = Number.isFinite(h) && h > 0 ? h : 80;
+        dlog('STAVE_HEIGHT =', val);
+        return val;
+      } catch { dlog('STAVE_HEIGHT fallback 80'); return 80; }
+    })();
+
+    // ===== State =====
+    const PC=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b'];
+    const SPLIT_MIDI = 60; // C4
+    const SOUNDFONT_URL = 'https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus';
+
+    const state = {
+      // transport
+      transport: 'idle', // 'idle' | 'preroll' | 'recording' | 'playing'
+      // tempo & quantization
+      bpm: 120,
+      quant: 8,                     // 8분 양자화
+      gridMs: 30000 / 120,
+      // recording
+      recordStartMs: 0,
+      appendBaseTick: 0,            // append 기준 절대 tick
+      lastNoteOnMs: null,
+      silenceTimer: null,
+      // timeline
+      totalTicks: 0,                // 절대 tick 길이
+      active: new Map(),            // midi -> { startTick(abs), vel }
+      events: [],                   // { startTick(abs), durTicks, midiNum, vel }
+      cc: [],                       // sustain 등 { tick, number, value }
+      // key/notation
+      key: { tonic:'C', mode:'major', preferSharps:false },
+      // layout
+      layout: { marginX: 16, marginY: 20, sysGap: 26, staffGap: 70, measureWidth: 240 },
+      // render mappings
+      barPos: [],                   // [barIndex] -> { sys, x, y, width }
+      tickToElements: new Map(),    // startAbsTick -> [SVGElement...]
+      // playback
+      player: null,                 // 메인 재생용
+      play: { isPlaying:false, startPerfMs:0, startAbsTick:0, raf:0, qpm:120 },
+      // monitor
+      monitor: { player:null, ready:false, cached:new Set() },
+    };
+
+    // Derived
+    const ticksPerBar  = () => state.quant;
+    const ticksPerBeat = () => ticksPerBar()/4; // 4/4
+    const msPerGrid    = () => (60000 / state.bpm) / (state.quant/4);
+    function updateGrid(){ state.gridMs = msPerGrid(); }
+    function msToTick(ms){ return Math.max(0, Math.round(ms/state.gridMs)); }
+
+    // ===== Key / Enharmonic =====
+    const NATURALS = new Set([0,2,4,5,7,9,11]);
+    const SHARP_NAME = {1:'c#',3:'d#',6:'f#',8:'g#',10:'a#'};
+    const FLAT_NAME  = {1:'db',3:'eb',6:'gb',8:'ab',10:'bb'};
+    const MAJOR_NAMES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+    const MINOR_NAMES = ['A','Bb','B','C','C#','D','Eb','E','F','F#','G','Ab'];
+    const SHARP_PREF_KEYS_MAJOR = new Set(['G','D','A','E','B','F#','C#']);
+    const SHARP_PREF_KEYS_MINOR = new Set(['E','B','F#','C#','G#','D#','A#']);
+
+    function pcNameInKey(pc, preferSharps){ return NATURALS.has(pc) ? PC[pc] : (preferSharps ? SHARP_NAME[pc] : FLAT_NAME[pc]); }
+    function midiToKeyInKey(n){
+      const pc = n % 12, oct = Math.floor(n/12) - 1;
+      return `${pcNameInKey(pc, state.key.preferSharps)}/${oct}`;
+    }
+
+    // Krumhansl–Kessler
+    const KK_MAJOR = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
+    const KK_MINOR = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+    const rotate=(a,n)=>{const k=((n%12)+12)%12; return a.slice(12-k).concat(a.slice(0,12-k));};
+    const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+    const norm=a=>Math.sqrt(a.reduce((s,x)=>s+x*x,0))||1;
+    const cosine=(a,b)=>dot(a,b)/(norm(a)*norm(b));
+    function detectKeyFromEvents(events){
+      const hist = Array(12).fill(0);
+      for(const ev of events) hist[ev.midiNum % 12] += ev.durTicks;
+      let best = { score:-1, pc:0, mode:'major' };
+      const scores=[];
+      for(let pc=0; pc<12; pc++){
+        const maj = cosine(hist, rotate(KK_MAJOR, pc));
+        const min = cosine(hist, rotate(KK_MINOR, pc));
+        scores.push({pc,mode:'major',score:maj});
+        scores.push({pc,mode:'minor',score:min});
+        if (maj > best.score) best = { score:maj, pc, mode:'major' };
+        if (min > best.score) best = { score:min, pc, mode:'minor' };
+      }
+      scores.sort((a,b)=>b.score-a.score);
+      const margin = scores[0].score - scores[1].score;
+      let tonic = best.mode==='major' ? MAJOR_NAMES[best.pc] : MINOR_NAMES[best.pc];
+      let prefer = best.mode==='major' ? SHARP_PREF_KEYS_MAJOR.has(tonic) : SHARP_PREF_KEYS_MINOR.has(tonic);
+      if (margin < 0.03) { tonic = best.mode==='major'?'C':'A'; prefer=false; } // 보수적
+      return { tonic, mode: best.mode, preferSharps: prefer };
+    }
+
+    // ===== Monitor SoundFontPlayer =====
+    async function initMonitor(){
+      statusEl.textContent = 'monitor loading…';
+      recordBtn.disabled = true;
+      try{
+        state.monitor.player = new mm.SoundFontPlayer(SOUNDFONT_URL);
+        // 간단한 웜업: 몇 개 피치 샘플 미리 로딩(너무 많이 로딩하지 않음)
+        const warmupPitches = [48, 60, 72]; // C2, C4, C5
+        const seq = {
+          notes: warmupPitches.map((p,i)=>({
+            pitch: p, program:0, quantizedStartStep: i*2, quantizedEndStep: i*2+1, velocity: 80
+          })),
+          quantizationInfo: { stepsPerQuarter: 4 },
+          totalQuantizedSteps: warmupPitches.length*2+1,
+          tempos: [{ time:0, qpm: state.bpm }]
+        };
+        // 오디오 컨텍스트는 사용자 제스처 후 시작되지만, 샘플 로딩은 미리 가능
+        await state.monitor.player.loadSamples(seq);
+        state.monitor.ready = true;
+        recordBtn.disabled = false;
+        statusEl.textContent = 'idle';
+        dlog('monitor ready');
+      }catch(e){
+        derr('monitor load failed', e);
+        // 실패해도 녹음은 가능하게 하되, 미리듣기는 후속 호출에서 시도
+        state.monitor.ready = false;
+        recordBtn.disabled = false;
+        statusEl.textContent = 'idle (monitor degraded)';
+      }
+    }
+
+    function previewNote(midi, vel=100){
+      // 녹음 중 모니터링: 입력 노트를 짧게 재생
+      const player = state.monitor.player;
+      if (!player) return;
+      const seq = {
+        notes: [{
+          pitch: midi,
+          program: 0,
+          quantizedStartStep: 0,
+          quantizedEndStep: 2,   // 8분 길이
+          velocity: Math.min(127, Math.max(1, vel))
+        }],
+        quantizationInfo: { stepsPerQuarter: 4 },
+        totalQuantizedSteps: 2,
+        tempos: [{ time:0, qpm: state.bpm }]
+      };
+      try{
+        player.stop(); // 이전 미리듣기 중지(겹침 방지)
+        if (player.resumeContext) player.resumeContext();
+        // 새로 등장한 피치면 샘플 로딩
+        if (!state.monitor.cached.has(midi)) {
+          player.loadSamples(seq)
+            .then(()=>{ state.monitor.cached.add(midi); player.start(seq, state.bpm); })
+            .catch(e=>{ derr('monitor loadSamples err', e); player.start(seq, state.bpm); });
+        } else {
+          player.start(seq, state.bpm);
+        }
+      }catch(e){ derr('previewNote err', e); }
+    }
+
+    // ===== MIDI =====
+    async function initMIDI(){
+      try{
+        await WebMidi.enable();
+        refreshInputs();
+        if (WebMidi.inputs[0]) inputSel.value = WebMidi.inputs[0].id;
+        if (WebMidi.inputs.length===0) statusEl.textContent='MIDI 입력 없음(장치 연결/권한 확인)';
+      }catch(e){ statusEl.textContent='WebMIDI 활성화 실패'; derr(e); }
+    }
+    function refreshInputs(){
+      inputSel.innerHTML='';
+      WebMidi.inputs.forEach((inp,idx)=>{
+        const opt=document.createElement('option');
+        opt.value=inp.id; opt.textContent=inp.name||`Input ${idx+1}`;
+        inputSel.appendChild(opt);
+      });
+      attachInputListeners();
+    }
+    function getSelectedInput(){
+      const id=inputSel.value;
+      return WebMidi.inputs.find(i=>i.id===id)||WebMidi.inputs[0]||null;
+    }
+    function attachInputListeners(){
+      WebMidi.inputs.forEach(inp=>inp.removeListener());
+      const input=getSelectedInput();
+      if(!input){ dlog('no input selected'); return; }
+      dlog('attach to', input.name||input.id);
+      input.addListener('noteon',  onNoteOn,  { channels:'all' });
+      input.addListener('noteoff', onNoteOff, { channels:'all' });
+      input.addListener('controlchange', onCC, { channels:'all' }); // sustain
+      input.addListener('midimessage', e=>console.debug('[MIDI]', [...e.data]));
+    }
+
+    // ===== Transport =====
+    function setStatus(s){
+      state.transport=s;
+      statusEl.textContent=s;
+      recordBtn.textContent=(s==='recording'||s==='preroll')?'■ 녹음 정지':'● 녹음 시작';
+      playBtn.textContent=(s==='playing')?'■ 재생 정지':'▶ 재생';
+      dlog('status ->', s);
+    }
+    function startSilenceWatchdog(){
+      clearTimeout(state.silenceTimer);
+      state.silenceTimer=setTimeout(()=>{
+        if(state.transport==='recording'){ dlog('auto stop: 5s silence'); stopRecording('무입력 5초 자동정지'); }
+      },5000);
+    }
+    function resetSilence(){ clearTimeout(state.silenceTimer); startSilenceWatchdog(); }
+
+    async function prerollAndRecord(){
+      try{
+        if (!state.monitor.ready) { dlog('monitor not fully ready; proceeding'); }
+        // Tone 컨텍스트는 사용자 제스처 후 시작 가능
+        if (window.Tone?.start) { try { await window.Tone.start(); } catch(_){} }
+
+        await initMIDI();
+        attachInputListeners();
+        setStatus('preroll');
+
+        const qMs=60000/state.bpm;
+        beep(100,1000); await new Promise(r=>setTimeout(r,qMs));
+        beep(100,1000); await new Promise(r=>setTimeout(r,qMs));
+        beep(100,1200); await new Promise(r=>setTimeout(r,qMs*0.5));
+
+        updateGrid();
+        state.recordStartMs=performance.now();
+        state.appendBaseTick = state.totalTicks; // append 시작점
+        state.lastNoteOnMs=null;
+        startSilenceWatchdog();
+        setStatus('recording');
+        dlog('recording start @', state.recordStartMs, 'gridMs=', state.gridMs, 'appendBaseTick=', state.appendBaseTick);
+        renderNow();
+      }catch(e){ derr('preroll fail',e); setStatus('idle'); }
+    }
+    function stopRecording(reason){
+      setStatus('idle'); clearTimeout(state.silenceTimer);
+      const nowLocalTick=msToTick(performance.now()-state.recordStartMs);
+      const nowAbsTick = state.appendBaseTick + nowLocalTick;
+      for(const [num,n] of state.active){
+        const dur=Math.max(1, nowAbsTick - n.startTick);
+        state.events.push({ startTick:n.startTick, durTicks:dur, midiNum:num, vel:n.vel||96 });
+      }
+      state.active.clear();
+      state.totalTicks=Math.max(state.totalTicks, nowAbsTick);
+
+      // 100마디 상한
+      const bars=Math.ceil(state.totalTicks / ticksPerBar());
+      if(bars>100){
+        const maxTick=100 * ticksPerBar();
+        state.events=state.events.filter(ev=>ev.startTick<maxTick);
+        state.totalTicks=maxTick;
+        dlog('bar cap: 100 bars');
+      }
+      dlog('record stop', reason||'');
+
+      // 후처리(조표 추정)
+      postProcessKeyAndNotation();
+      renderNow();
+    }
+
+    // ===== Event handlers =====
+    function onNoteOn(e){
+      const vel = Math.round((e.rawVelocity ?? 0.7) * 127);
+      if(state.transport==='recording'){
+        // 모니터 즉시 재생
+        previewNote(e.note.number, vel);
+      }
+      if(state.transport!=='recording') return;
+      state.lastNoteOnMs=performance.now();
+      resetSilence();
+      const localTick=msToTick(state.lastNoteOnMs - state.recordStartMs);
+      const startTickAbs = state.appendBaseTick + localTick;
+      state.active.set(e.note.number,{ startTick: startTickAbs, vel });
+      dlog('noteon', {midi:e.note.number, vel:e.rawVelocity, startTick:startTickAbs});
+      renderNow();
+    }
+    function onNoteOff(e){
+      if(state.transport!=='recording') return;
+      const offLocal=msToTick(performance.now()-state.recordStartMs);
+      const offAbs = state.appendBaseTick + offLocal;
+      const st=state.active.get(e.note.number)?.startTick;
+      if(st!==undefined){
+        const dur=Math.max(1, offAbs-st);
+        const vel=state.active.get(e.note.number)?.vel || 96;
+        state.events.push({ startTick:st, durTicks:dur, midiNum:e.note.number, vel });
+        state.totalTicks=Math.max(state.totalTicks, st+dur);
+        state.active.delete(e.note.number);
+        dlog('noteoff', {midi:e.note.number, durTicks:dur, endTick:st+dur});
+        renderNow();
+      }
+    }
+    function onCC(e){
+      if(state.transport!=='recording') return;
+      const localTick=msToTick(performance.now()-state.recordStartMs);
+      const tickAbs = state.appendBaseTick + localTick;
+      state.cc.push({ tick: tickAbs, number: e.controller.number, value: e.value });
+      if (e.controller.number===64) dlog('sustain', e.value, '@', tickAbs);
+    }
+
+    // ===== Sequencing / Barring =====
+    function mergeEventsToChords(events){
+      const byTick=new Map();
+      for(const ev of events){
+        if(!byTick.has(ev.startTick)) byTick.set(ev.startTick,[]);
+        byTick.get(ev.startTick).push(ev);
+      }
+      const ticks=[...byTick.keys()].sort((a,b)=>a-b);
+      const chords=[];
+      for(const t of ticks){
+        const g=byTick.get(t);
+        const dur=Math.max(1, Math.min(...g.map(x=>x.durTicks)));
+        chords.push({ startTick:t, durTicks:dur, midiNums:g.map(x=>x.midiNum) });
+      }
+      return chords.sort((a,b)=>a.startTick-b.startTick);
+    }
+    function seqWithRests(totalTicks, chords){
+      const seq=[]; let cursor=0;
+      for(const ch of chords){
+        if(ch.startTick>cursor) seq.push({ type:'rest', ticks:ch.startTick-cursor });
+        seq.push({ type:'chord', ticks:ch.durTicks, midiNums:ch.midiNums });
+        cursor=ch.startTick+ch.durTicks;
+      }
+      if(totalTicks>cursor) seq.push({ type:'rest', ticks: totalTicks-cursor });
+      return seq;
+    }
+    function splitToDurations(ticks){
+      const out=[]; let rem=ticks;
+      const q = state.quant;
+      const units = [
+        { len: q,   token:'w'  }, // 온
+        { len: q/2, token:'h'  }, // 이분
+        { len: q/4, token:'q'  }, // 사분
+        { len: q/8, token:'8'  }, // 팔분
+        ...(q >= 16 ? [{ len: q/16, token:'16' }] : [])
+      ].filter(u => Number.isFinite(u.len) && u.len >= 1);
+      for(const u of units){ while(rem >= u.len){ out.push(u.token); rem -= u.len; } }
+      return out;
+    }
+    function tokenTicks(tok){
+      const q=state.quant;
+      if(tok==='w') return q;
+      if(tok==='h') return q/2;
+      if(tok==='q') return q/4;
+      if(tok==='8') return q/8;
+      if(tok==='16') return q/16;
+      return 0;
+    }
+    function splitAcrossBars(seq){
+      const bars=[]; let barIdx=0, rem=ticksPerBar();
+      const push=(i)=>{ if(!bars[barIdx]) bars[barIdx]={items:[]}; bars[barIdx].items.push(i); };
+      for(const item of seq){
+        let left=item.ticks;
+        while(left>0){
+          const take=Math.min(left, rem);
+          const piece={ type:item.type, ticks:take };
+          if(item.type==='chord') piece.midiNums=item.midiNums;
+          push(piece);
+          left-=take; rem-=take;
+          if(rem===0){ barIdx++; rem=ticksPerBar(); }
+        }
+      }
+      return bars;
+    }
+
+    // ===== 후처리: 조표 & 엔하모닉 =====
+    function postProcessKeyAndNotation(){
+      if (state.events.length === 0) return;
+      state.key = detectKeyFromEvents(state.events);
+      dlog('Detected key:', state.key);
+    }
+
+    // ===== Beam: 박 경계에서 끊기 =====
+    function buildBeamsPerBeat(notes, noteTickLens){
+      const beams = [];
+      const beatTicks = ticksPerBeat(); // 4/4에서 사분=2 tick(quant=8)
+      let group = []; let acc = 0;
+      const isBeamable = (n) => (n instanceof StaveNote) && !n.isRest() && ['8','16'].includes(n.getDuration());
+      for (let i=0;i<notes.length;i++){
+        const n = notes[i]; const t = noteTickLens[i] || 0;
+        if (!isBeamable(n)) {
+          if (group.length>0) { beams.push(...Beam.generateBeams(group)); group = []; acc = 0; }
+          acc = (acc + t) % beatTicks; continue;
+        }
+        if (acc === 0 && group.length>0) { beams.push(...Beam.generateBeams(group)); group = []; }
+        group.push(n);
+        acc = (acc + t) % beatTicks;
+        if (acc === 0 && group.length>0) { beams.push(...Beam.generateBeams(group)); group = []; }
+      }
+      if (group.length>0) beams.push(...Beam.generateBeams(group));
+      return beams;
+    }
+
+    // ===== 플레이헤드 & 하이라이트 =====
+    function getPlayheadEl(){
+      const svg = scoreDiv.querySelector('svg'); if (!svg) return null;
+      return svg.querySelector('#playhead');
+    }
+    function ensurePlayhead(){
+      if (state.transport!=='playing') return; // 재생 중에만 생성
+      const svg = scoreDiv.querySelector('svg'); if (!svg) return;
+      let line = getPlayheadEl();
+      if (!line) {
+        line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('id','playhead');
+        line.setAttribute('stroke','#e53935');
+        line.setAttribute('stroke-width','2');
+        line.setAttribute('y1','0'); line.setAttribute('y2','0');
+        svg.appendChild(line);
+      }
+      line.setAttribute('opacity','1');
+    }
+    function hidePlayhead(){
+      const line = getPlayheadEl();
+      if (line) line.setAttribute('opacity','0');
+    }
+    function updatePlayhead(absTick){
+      if (state.transport!=='playing') { hidePlayhead(); return; }
+      const svg = scoreDiv.querySelector('svg'); if (!svg) return;
+      const totalBars = Math.ceil((state.totalTicks || 1) / ticksPerBar());
+      const b = Math.min(totalBars-1, Math.max(0, Math.floor(absTick / ticksPerBar())));
+      const inBar = absTick - b * ticksPerBar();
+      const pos = state.barPos[b];
+      if (!pos) { hidePlayhead(); return; }
+      const x = pos.x + (inBar / ticksPerBar()) * pos.width;
+      const y1 = pos.y - 6;
+      const y2 = pos.y + (2*STAVE_HEIGHT + state.layout.staffGap) + 6;
+      const line = getPlayheadEl(); if (!line) return;
+      line.setAttribute('x1', x); line.setAttribute('x2', x);
+      line.setAttribute('y1', y1); line.setAttribute('y2', y2);
+      line.setAttribute('opacity','1');
+    }
+    let lastHighlightTick = -1;
+    function updateHighlights(absTick){
+      const tick = Math.round(absTick);
+      if (tick === lastHighlightTick) return;
+      if (lastHighlightTick >= 0) {
+        const prevEls = state.tickToElements.get(lastHighlightTick) || [];
+        prevEls.forEach(el => el && el.classList.remove('note-play'));
+      }
+      const els = state.tickToElements.get(tick) || [];
+      els.forEach(el => el && el.classList.add('note-play'));
+      lastHighlightTick = tick;
+    }
+
+    // ===== NoteSequence (메인 재생용) =====
+    function buildSustainIntervals(){
+      const intervals = []; let down = null;
+      for (const cc of state.cc.filter(c=>c.number===64).sort((a,b)=>a.tick-b.tick)) {
+        if (cc.value >= 64 && down === null) down = cc.tick;
+        else if (cc.value < 64 && down !== null) { intervals.push([down, cc.tick]); down = null; }
+      }
+      if (down !== null) intervals.push([down, state.totalTicks]);
+      return intervals;
+    }
+    function buildNoteSequence(){
+      const qpm = state.bpm;
+      const gridSec = state.gridMs / 1000;
+      const byPitch = new Map();
+      for(const ev of state.events){
+        const arr = byPitch.get(ev.midiNum) || [];
+        arr.push(ev.startTick);
+        byPitch.set(ev.midiNum, arr);
+      }
+      for (const v of byPitch.values()) v.sort((a,b)=>a-b);
+
+      const sustain = buildSustainIntervals();
+      function extendWithSustain(start, end, midi){
+        let e = end;
+        for (const [s0,s1] of sustain){
+          if (start < s1 && end <= s1 && end >= s0) e = Math.max(e, s1);
+        }
+        const arr = byPitch.get(midi) || [];
+        const idx = arr.findIndex(t => t > start);
+        if (idx >= 0) e = Math.min(e, arr[idx]);
+        return e;
+      }
+
+      const notes = state.events.map(ev => {
+        const start = ev.startTick;
+        let end = ev.startTick + ev.durTicks;
+        end = extendWithSustain(start, end, ev.midiNum);
+        return {
+          pitch: ev.midiNum,
+          startTime: start * gridSec,
+          endTime:   end   * gridSec,
+          program: 0,
+          velocity: Math.min(127, Math.max(1, ev.vel || 96))
+        };
+      });
+
+      const totalTime = (state.totalTicks || 0) * gridSec;
+      return { notes, tempos: [{ qpm }], totalTime };
+    }
+
+    // ===== Playback (메인) =====
+    async function ensurePlayer(){
+      if (state.player) return state.player;
+      state.player = new mm.SoundFontPlayer(SOUNDFONT_URL);
+      state.player.callbackObject = {
+        run: (note) => {
+          const t = Math.round(note.startTime / (state.gridMs/1000));
+          updateHighlights(t);
+        },
+        stop: () => {
+          cancelAnimationFrame(state.play.raf);
+          state.play.isPlaying=false;
+          setStatus('idle');
+          hidePlayhead();
+          if (lastHighlightTick>=0){
+            (state.tickToElements.get(lastHighlightTick)||[]).forEach(el=>el&&el.classList.remove('note-play'));
+            lastHighlightTick=-1;
+          }
+          updatePlayhead(state.totalTicks);
+        }
+      };
+      return state.player;
+    }
+    function getPlayAbsTick(){
+      const elapsedSec = (performance.now() - state.play.startPerfMs) / 1000;
+      const gridSec = state.gridMs / 1000;
+      return state.play.startAbsTick + (elapsedSec / gridSec);
+    }
+    function rafLoop(){
+      if (!state.play.isPlaying) return;
+      const t = getPlayAbsTick();
+      updatePlayhead(t);
+      updateHighlights(t);
+      state.play.raf = requestAnimationFrame(rafLoop);
+    }
+    async function startPlayback(){
+      if (state.events.length === 0) return;
+      await ensurePlayer();
+      if (window.Tone?.start) { try { await window.Tone.start(); } catch(_){} }
+
+      const seq = buildNoteSequence();
+      state.play.qpm = state.bpm;
+      state.play.startAbsTick = 0;
+      state.play.startPerfMs = performance.now();
+      state.play.isPlaying = true;
+      setStatus('playing');
+
+      try { await state.player.loadSamples(seq); } catch(e){ dlog('loadSamples fallback', e); }
+      state.player.start(seq);
+      ensurePlayhead();
+      rafLoop();
+    }
+    function stopPlayback(){
+      if (!state.play.isPlaying) return;
+      state.player?.stop();
+      cancelAnimationFrame(state.play.raf);
+      state.play.isPlaying = false;
+      setStatus('idle');
+      hidePlayhead();
+      if (lastHighlightTick>=0){
+        (state.tickToElements.get(lastHighlightTick)||[]).forEach(el=>el&&el.classList.remove('note-play'));
+        lastHighlightTick=-1;
+      }
+      updatePlayhead(state.totalTicks);
+    }
+
+    // ===== Render (Grand Staff + Bars + Systems) =====
+    function renderNow(){
+      try{
+        // 현재 tick (프리뷰 포함)
+        const nowMs=performance.now();
+        const currentTick=(state.transport==='recording')
+          ? (state.appendBaseTick + msToTick(nowMs-state.recordStartMs))
+          : state.totalTicks;
+
+        // 프리뷰 이벤트 합치기
+        const preview=[];
+        for(const [num,{startTick}] of state.active){
+          const dur=Math.max(1, currentTick-startTick);
+          preview.push({ startTick, durTicks:dur, midiNum:num });
+        }
+        const merged=mergeEventsToChords([...state.events, ...preview]);
+        const totalTicks=Math.max(
+          state.totalTicks,
+          merged.length ? merged[merged.length-1].startTick + merged[merged.length-1].durTicks : 0,
+          currentTick
+        );
+        const seq = seqWithRests(totalTicks, merged);
+        const bars = splitAcrossBars(seq);
+
+        // 시스템 배치 계산
+        const layout=state.layout;
+        const clientW = scoreWrap.clientWidth || 960;
+        const w = Math.max(320, clientW - 32);
+        const sysMeasureCount = Math.max(1, Math.floor((w - layout.marginX*2) / layout.measureWidth));
+        const systemWidth = layout.marginX*2 + sysMeasureCount*layout.measureWidth;
+        const systemHeight = layout.marginY + 2*STAVE_HEIGHT + layout.staffGap + layout.sysGap;
+
+        const systemCount = Math.max(1, Math.ceil(bars.length / sysMeasureCount));
+        const totalHeight = systemCount * systemHeight + layout.marginY;
+        const safeHeight = Number.isFinite(totalHeight) ? Math.max(totalHeight, 400) : 400;
+
+        resizeRenderer(systemWidth, safeHeight);
+        ctx.clear();
+
+        // 초기화: 매핑
+        state.barPos = [];
+        state.tickToElements.clear();
+
+        // 현재 바/시스템
+        const curBar = Math.floor(currentTick / ticksPerBar());
+        const curSys = Math.floor(curBar / sysMeasureCount);
+        const systemYPositions = [];
+
+        let y = layout.marginY;
+        for(let s=0; s<systemCount; s++){
+          systemYPositions.push(y);
+          const startBar = s*sysMeasureCount;
+          const endBar = Math.min(bars.length, startBar + sysMeasureCount);
+          let x = layout.marginX;
+
+          for(let b=startBar; b<endBar; b++){
+            const bar = bars[b] || { items: [] };
+            // 상·하 스태프
+            const staveTop = new Stave(x, y, layout.measureWidth);
+            const staveBot = new Stave(x, y + STAVE_HEIGHT + state.layout.staffGap, layout.measureWidth);
+
+            if (b === startBar) {
+              const ks = state.key.mode === 'minor' ? (state.key.tonic + 'm') : state.key.tonic;
+              staveTop.addClef('treble').addKeySignature(ks).addTimeSignature('4/4');
+              staveBot.addClef('bass').addKeySignature(ks).addTimeSignature('4/4');
+            }
+
+            staveTop.setContext(ctx).draw();
+            staveBot.setContext(ctx).draw();
+
+            // 커넥터
+            if (b === startBar) {
+              new StaveConnector(staveTop, staveBot).setType(StaveConnector.type.BRACE).setContext(ctx).draw();
+              new StaveConnector(staveTop, staveBot).setType(StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
+            } else {
+              new StaveConnector(staveTop, staveBot).setType(StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
+            }
+
+            // 바 위치(플레이헤드 보간용)
+            state.barPos[b] = { sys: s, x: x + 10, y, width: layout.measureWidth - 20 };
+
+            // ==== 마디 → 상·하 보이스(최소 쉼표 + 키 기반 음명) ====
+            const notesTop = [], notesBot = [];
+            const lensTop  = [], lensBot  = [];
+            const bindAfterDraw = [];
+            let topHasAny = false, botHasAny = false;
+            let offsetInBar = 0;
+
+            for (const it of bar.items) {
+              const parts   = splitToDurations(it.ticks);
+              const keysTop = (it.type === 'chord') ? it.midiNums.filter(n => n >= SPLIT_MIDI).map(midiToKeyInKey) : [];
+              const keysBot = (it.type === 'chord') ? it.midiNums.filter(n => n <  SPLIT_MIDI).map(midiToKeyInKey) : [];
+              const sortKeys = (a, b) => {
+                const [ap, ao] = a.split('/'); const [bp, bo] = b.split('/');
+                return (parseInt(ao) * 12 + PC.indexOf(ap)) - (parseInt(bo) * 12 + PC.indexOf(bp));
+              };
+
+              for (const p of parts) {
+                const t = tokenTicks(p);
+                const absStart = b * ticksPerBar() + offsetInBar;
+                if (it.type === 'rest') {
+                  const r = new StaveNote({ keys: ['b/4'], duration: p + 'r', clef: 'treble' });
+                  notesTop.push(r); lensTop.push(t);
+                  notesBot.push(new GhostNote({ duration: p })); lensBot.push(t);
+                } else {
+                  if (keysTop.length > 0) {
+                    const kT = [...keysTop].sort(sortKeys);
+                    const nT = new StaveNote({ keys: kT, duration: p, clef: 'treble' });
+                    notesTop.push(nT); lensTop.push(t); topHasAny = true;
+                    bindAfterDraw.push({ note:nT, startAbsTick: absStart, endAbsTick: absStart + t });
+                  } else { notesTop.push(new GhostNote({ duration: p })); lensTop.push(t); }
+                  if (keysBot.length > 0) {
+                    const kB = [...keysBot].sort(sortKeys);
+                    const nB = new StaveNote({ keys: kB, duration: p, clef: 'bass' });
+                    notesBot.push(nB); lensBot.push(t); botHasAny = true;
+                    bindAfterDraw.push({ note:nB, startAbsTick: absStart, endAbsTick: absStart + t });
+                  } else { notesBot.push(new GhostNote({ duration: p })); lensBot.push(t); }
+                }
+                offsetInBar += t;
+              }
+            }
+
+            if (bar.items.length === 0 || (!topHasAny && !botHasAny)) {
+              notesTop.length = 0; notesBot.length = 0; lensTop.length = 0; lensBot.length = 0;
+              const full = ticksPerBar();
+              const n = new StaveNote({ keys: ['b/4'], duration: 'wr', clef: 'treble' });
+              notesTop.push(n); lensTop.push(full);
+              notesBot.push(new GhostNote({ duration: 'w' })); lensBot.push(full);
+              bindAfterDraw.push({ note:n, startAbsTick: b*ticksPerBar(), endAbsTick: b*ticksPerBar()+full });
+            }
+
+            const vTop = new Voice({ num_beats: 4, beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(notesTop);
+            const vBot = new Voice({ num_beats: 4, beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(notesBot);
+
+            const ksLabel = state.key.mode==='minor' ? (state.key.tonic + 'm') : state.key.tonic;
+            Accidental.applyAccidentals([vTop], ksLabel);
+            Accidental.applyAccidentals([vBot], ksLabel);
+
+            const beamsTop = buildBeamsPerBeat(notesTop, lensTop);
+            const beamsBot = buildBeamsPerBeat(notesBot, lensBot);
+
+            const fmt = new Formatter({ align_rests: true });
+            fmt.joinVoices([vTop]).joinVoices([vBot]).format([vTop, vBot], layout.measureWidth - 20);
+
+            vTop.draw(ctx, staveTop);
+            vBot.draw(ctx, staveBot);
+            beamsTop.forEach(bm => bm.setContext(ctx).draw());
+            beamsBot.forEach(bm => bm.setContext(ctx).draw());
+
+            for (const rec of bindAfterDraw) {
+              const el = rec.note.getAttrs && rec.note.getAttrs().el;
+              if (el) {
+                const arr = state.tickToElements.get(rec.startAbsTick) || [];
+                arr.push(el);
+                state.tickToElements.set(rec.startAbsTick, arr);
+              }
+            }
+
+            if (b === curBar) {
+              queueMicrotask(() => { scoreWrap.scrollTop = systemYPositions[curSys] - 10; });
+            }
+
+            x += layout.measureWidth;
+          }
+
+          y += (2 * STAVE_HEIGHT + state.layout.staffGap + state.layout.sysGap);
+        }
+
+        if (state.transport==='playing') {
+          ensurePlayhead();
+          updatePlayhead(getPlayAbsTick());
+        } else {
+          hidePlayhead();
+        }
+
+        if (DEBUG) {
+          dlog('render', { bars: Math.ceil((state.totalTicks||1)/ticksPerBar()), currentTick, totalTicks, transport: state.transport });
+        }
+      }catch(e){
+        derr('render error', e);
+      }
+    }
+
+    // ===== UI Events =====
+    recordBtn.addEventListener('click', async ()=>{
+      if(state.transport==='idle' || state.transport==='playing'){
+        if (state.transport==='playing') stopPlayback();
+        await prerollAndRecord();
+      } else {
+        stopRecording('수동 정지');
+      }
+    });
+    playBtn.addEventListener('click', async ()=>{
+      if(state.transport==='playing'){ stopPlayback(); }
+      else {
+        if (state.transport==='recording') stopRecording('재생 전 정지');
+        await startPlayback();
+      }
+    });
+    clearBtn.addEventListener('click', ()=>{
+      if(state.transport==='recording') stopRecording('초기화 전 정지');
+      if(state.transport==='playing')   stopPlayback();
+      state.events=[]; state.active.clear(); state.cc=[];
+      state.totalTicks=0; state.appendBaseTick=0;
+      dlog('clear all'); renderNow();
+    });
+    inputSel.addEventListener('change', ()=>{ dlog('input ->', inputSel.value); attachInputListeners(); });
+    bpmRange.addEventListener('input', ()=>{
+      state.bpm=parseInt(bpmRange.value,10); bpmVal.textContent=state.bpm;
+      updateGrid();
+      if(state.transport==='recording') renderNow();
+    });
+
+    WebMidi.addListener('connected', e=>{ if(e.port.type==='input'){ dlog('MIDI connected:', e.port.name); refreshInputs(); }});
+    WebMidi.addListener('disconnected', e=>{ if(e.port.type==='input'){ dlog('MIDI disconnected:', e.port.name); refreshInputs(); }});
+
+    // 초기화: 모니터 로딩 → 완료되면 녹음 버튼 활성화
+    initMonitor();
+
+    // 초기 렌더
+    const clientW = scoreWrap.clientWidth || 960;
+    resizeRenderer(Math.max(320, clientW-32), 420);
+    ctx.clear();
+    updateGrid();
+    renderNow();
+  </script>
+</body>
+</html>
