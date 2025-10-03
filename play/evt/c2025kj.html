@@ -361,7 +361,7 @@
     
     async function loadSpots() {
       try {
-        const response = await fetch('./25_creatures/data/data.tsv');
+        const response = await fetch('./25_creatures/data/data_kj.tsv');
         const text = await response.text();
         parseSpots(text.split('\n'));
       } catch (error) {
