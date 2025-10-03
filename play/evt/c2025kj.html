@@ -398,8 +398,8 @@
       
       // 마커 추가
       for (const spot of spots) {
-        const displayName = spot.name || spot.file || '이름 없음';
-        const marker = L.marker(spot.latlng).addTo(map).bindPopup(displayName);
+        const creatureName = spot.name.includes('_') ? spot.name.split('_')[1] : spot.name;
+        const marker = L.marker(spot.latlng).addTo(map).bindPopup(creatureName);
         spot.marker = marker;
         spotMarkers.push(marker);
       }
