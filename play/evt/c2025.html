@@ -3,820 +3,387 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  
+
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""/>
-  
-  <!-- Fonts -->
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Fonts (유지) -->
   <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Stylish&display=swap" rel="stylesheet">
-  
+
   <title>신기한 생물 사전 2025</title>
-  
+
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background-color: #ffffa6;
+    body { margin: 0; font-family: sans-serif; background-color: #eaffc2; color: #1b2b2b; }
+    #title { width: 100vw; height: 7vh; background-image: url('./25_creatures/front/strange_creatures.png'); background-position: center center; background-repeat: no-repeat; background-size: contain; }
+    #notice { text-align: center; margin: 10px 0; font-family: 'Noto Serif KR'; font-size: 2vh; color: deeppink; }
+    #info { padding: 2vh; font-family: 'Noto Serif KR'; font-size: 2.5vh; color: #000; line-height: 1.5em; }
+    #map { display: block; width: 100vw; height: 50vh; }
+
+    .ui { text-align: center; }
+    .button, .sbutton {
+      display: inline-flex; align-items: center; gap: 8px; position: relative; box-sizing: border-box;
+      margin: 0.5vh; font-family: 'Stylish'; text-align: center; font-size: 2.5vh;
+      background-color: #f4ffff; color: #2f5f5f; padding: .55rem .9rem; border-radius: 999px; border: 1px solid #427979;
+      user-select: none; -webkit-user-select: none; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.12);
+      transition: transform .08s ease-in-out, background-color .15s;
     }
-    
-    #title {
-      width: 100vw;
-      height: 7vh;
-      background-image: url('./25_creatures/front/strange_creatures.png');
-      background-position: center center;
-      background-repeat: no-repeat;
-      background-size: contain;
-    }
-    
-    #notice {
-      text-align: center;
-      margin-top: 10px;
-      margin-bottom: 10px;
-      font-family: 'Noto Serif KR';
-      font-size: 2vh;
-      color: deeppink;
-    }
-    
-    #info {
-      padding: 2vh;
-      font-family: 'Noto Serif KR';
-      font-size: 2.5vh;
-      color: black;
-      line-height: 1.5em;
-    }
-    
-    #map {
-      display: block;
-      width: 100vw;
-      height: 50vh;
-    }
-    
-    .ui {
-      text-align: center;
-    }
-    
-    .button {
-      display: inline-block;
-      position: relative;
-      left: -1px;
-      top: -1px;
-      box-sizing: border-box;
-      margin: 0.5vh;
-      margin-bottom: 1vh;
-      font-family: 'Stylish';
-      text-align: center;
-      font-size: 2.5vh;
-      background-color: azure;
-      color: #2f5f5f;
-      padding: 0.5vh 1vh 0.5vh 1vh;
-      border-radius: 1vh;
-      border: 1px solid #427979;
-      user-select: none;
-      -webkit-user-select: none;
-      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), inset 2px 2px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 2px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-    }
-    
-    .button:active {
-      left: 0px;
-      top: 0px;
-      background-color: #c6d4d4;
-      box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
-    }
-    
-    .sbutton {
-      display: inline-block;
-      position: relative;
-      left: -1px;
-      top: -1px;
-      box-sizing: border-box;
-      margin: 0.5vh;
-      font-family: 'Stylish';
-      text-align: center;
-      font-size: 2.5vh;
-      background-color: azure;
-      color: #2f5f5f;
-      padding: 0.5vh;
-      border-radius: 1vh;
-      border: 1px solid #427979;
-      user-select: none;
-      -webkit-user-select: none;
-      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), inset 2px 2px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 2px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-    }
-    
-    .sbutton:active {
-      left: 0px;
-      top: 0px;
-      background-color: #c6d4d4;
-      box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
-    }
-    
-    .creat {
-      color: deeppink;
-    }
-    
-    #stage {
-      display: none;
-      position: fixed;
-      left: 0px;
-      top: 0px;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 1);
-    }
-    
-    #video-bg {
-      position: absolute;
-      left: 0px;
-      top: 0px;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-    }
-    
-    #webgl {
-      position: absolute;
-      left: 0px;
-      top: 0px;
-      width: 100%;
-      height: 100%;
-    }
-    
-    #profile {
-      position: absolute;
-      left: 0px;
-      top: 0px;
-      width: 82vw;
-      height: 20vh;
-      font-family: 'Stylish';
-      font-size: 3vh;
-      color: white;
-      text-shadow: 0px 0px 2px deeppink;
-      padding: 4vh 2vh 2vh 5vh;
-    }
-    
-    #dialog {
-      position: absolute;
-      left: 0px;
-      bottom: 0px;
-      height: 20vh;
-      font-family: 'Stylish';
-      font-size: 3vh;
-      color: white;
-      text-shadow: 0px 0px 2px deeppink;
-      padding: 2vh 2vh 2vh 5vh;
-    }
-    
-    .t-right {
-      text-align: right;
-    }
-    
-    #loading {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Stylish';
-      font-size: 4vh;
-      color: white;
-      text-shadow: 0px 0px 4px deeppink;
-      display: none;
-    }
-    
-    .spinner {
-      display: inline-block;
-      width: 3vh;
-      height: 3vh;
-      border: 0.5vh solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-left: 1vh;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    .button:active, .sbutton:active { transform: scale(.98); background-color: #e6f2f2; }
+    .sbutton { padding: .45rem .7rem; font-size: 2.3vh; }
+
+    .creat { color: deeppink; }
+
+    #stage { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100dvh; background-color: rgba(0,0,0,1); }
+    #video-bg { position: absolute; left: 0; top: 0; width: 100vw; height: 100dvh; object-fit: cover; }
+    #webgl { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+
+    #profile, #dialog { position: absolute; left: 0; right: 0; margin: 0 auto; width: min(92vw, 680px); color: #fff;
+      /*background: rgba(0,0,0,.45); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      border-radius: 16px; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 2px 10px rgba(0,0,0,.25);*/
+      font-family: 'Stylish'; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+    #profile { top: 3.5vh; padding: 1rem 1.2rem; font-size: 3vh; }
+    #dialog  { bottom: calc(10vh + env(safe-area-inset-bottom)); padding: 1rem 1.2rem; font-size: 2.6vh; }
+    .t-right { text-align: right; }
+
+    #loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: 'Stylish'; font-size: 3.2vh; color: white; text-shadow: 0 0 4px deeppink; display: none; }
+    .spinner { display: inline-block; width: 3vh; height: 3vh; border: 0.5vh solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 1vh; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #backToMap { position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom));
+      display: none; align-items: center; gap: 8px; padding: .75rem 1rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.35);
+      background: rgba(0,0,0,.55); color: #fff; box-shadow: 0 6px 24px rgba(0,0,0,.35);
+      font-family: 'Stylish'; font-size: 2.3vh; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      transition: transform .08s ease-in-out, opacity .15s; }
+    #backToMap:active { transform: scale(.98); }
+    #backToMap.disabled { opacity: .5; pointer-events: none; }
   </style>
 </head>
 <body>
   <div id="title"></div>
   <div id="notice">안전 주의! 스마트폰을 보며 걷지 않기</div>
-  <div class="ui">
-    <div id="trace_on" class="button">현재 위치</div>
-  </div>
+  <div class="ui"><div id="trace_on" class="button">📍 현재 위치</div></div>
   <div id="map"></div>
-  <div id="info">(준비중)</div>
-  
-  <div id="stage">
+  <div id="info" aria-live="polite">(준비중)</div>
+
+  <div id="stage" aria-hidden="true">
     <video id="video-bg" autoplay playsinline muted></video>
     <div id="webgl"></div>
     <div id="loading">로딩중<span class="spinner"></span></div>
     <div id="profile"></div>
     <div id="dialog"></div>
+    <button id="backToMap" aria-label="지도로 돌아가기">🗺️ 지도로 돌아가기</button>
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-  
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
   <script>
-    'use strict';
-    
-    // ============================================================
-    // Josa 유틸리티 (인라인)
-    // ============================================================
-    const Josa = (() => {
-      const hasJong = (string) => {
-        const code = string.charCodeAt(string.length - 1);
-        return (code - 0xac00) % 28 > 0;
-      };
-      
-      const formats = {
-        '을/를': (s) => hasJong(s) ? '을' : '를',
-        '은/는': (s) => hasJong(s) ? '은' : '는',
-        '이/가': (s) => hasJong(s) ? '이' : '가',
-        '와/과': (s) => hasJong(s) ? '과' : '와'
-      };
-      
-      // 축약형도 처리
-      ['을', '를', '을를'].forEach(k => formats[k] = formats['을/를']);
-      ['은', '는', '은는'].forEach(k => formats[k] = formats['은/는']);
-      ['이', '가', '이가'].forEach(k => formats[k] = formats['이/가']);
-      ['와', '과', '와과'].forEach(k => formats[k] = formats['와/과']);
-      
-      return {
-        c: (word, format) => {
-          if (!formats[format]) throw new Error('Invalid format!');
-          return formats[format](word);
-        },
-        r: (word, format) => word + Josa.c(word, format)
-      };
-    })();
-    
-    // ============================================================
-    // 전역 변수
-    // ============================================================
-    let map, markerHere, markerRange, latlngHere;
-    let spots = [];
-    let dicSpots = {};
-    
-    const rangeMeet = {
-      max: 500,
-      now: 500
-    };
-    
-    let isTraceOn = false;
-    let isFirstTrace = true; // 최초 위치 추적 여부
-    let pastTimestamp = 0;
-    let elapsedTime = 0;
-    let spotMarkers = []; // 생물 마커들을 추적
-    
-    // Three.js 변수
-    let camera, scene, renderer;
-    let creatureMesh = null;
-    let videoElement = null;
-    let isVideoInitiated = false;
-    
-    // DOM 요소
-    const el = {
-      traceOn: document.querySelector('#trace_on'),
-      map: document.querySelector('#map'),
-      info: document.querySelector('#info'),
-      stage: document.querySelector('#stage'),
-      videoBg: document.querySelector('#video-bg'),
-      webgl: document.querySelector('#webgl'),
-      profile: document.querySelector('#profile'),
-      dialog: document.querySelector('#dialog'),
-      loading: document.querySelector('#loading')
-    };
-    
-    // ============================================================
-    // 주기적 업데이트 클래스
-    // ============================================================
-    class Periodic {
-      constructor(seconds, callback) {
-        this.dur = seconds * 1000;
-        this.elapsed = 0;
-        this.callback = callback;
-      }
-      
-      update(diff) {
-        this.elapsed += diff;
-        if (this.elapsed >= this.dur) {
-          this.elapsed = 0;
-          this.callback();
-        }
-      }
-    }
-    
-    const periodics = {
-      trace: new Periodic(10, () => {
-        navigator.geolocation.getCurrentPosition(trace, errorTrace);
-        displayInfo();
-      })
-    };
-    
-    // ============================================================
-    // 맵 관련 함수
-    // ============================================================
-    async function initMap() {
-      // 유치원: 37.683408, 126.769612
-      latlngHere = [37.683408, 126.769612];
-      map = L.map('map').setView(latlngHere, 15);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 18,
-        tileSize: 512,
-        zoomOffset: -1
-      }).addTo(map);
-      
-      markerRange = L.circle(latlngHere, {
-        color: 'rgba(255, 255, 0, 0.5)',
-        fillColor: '#f03',
-        fillOpacity: 0.1,
-        radius: rangeMeet.now
-      }).addTo(map);
+  'use strict';
 
-      markerHere = L.circleMarker(latlngHere, {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.25,
-        radius: 5
-      }).addTo(map);
-      
-      // 데이터 로드
-      await loadSpots();
+  // ========================= 공통 유틸 =========================
+  const normalizeText = (s) => (s ?? '').replace(/\u200B/g, '').normalize('NFC');
+
+  const Josa = (() => {
+    const H1 = 0xAC00, H2 = 0xD7A3;
+    function lastJongCode(word){
+      if (!word) return null;
+      const arr = Array.from(normalizeText(word));
+      for (let i=arr.length-1;i>=0;i--){
+        const cp = arr[i].codePointAt(0);
+        if (cp>=H1 && cp<=H2) return (cp - H1) % 28;
+      }
+      return null;
     }
-    
-    async function loadSpots() {
-      try {
-        const response = await fetch('./25_creatures/data/data.tsv');
-        const text = await response.text();
-        parseSpots(text.split('\n'));
-      } catch (error) {
-        console.error('Failed to load spots:', error);
+    function pick(fmt, jong){
+      const has = (jong!==null && jong!==0);
+      switch (fmt){
+        case '을/를': return has ? '을' : '를';
+        case '은/는': return has ? '은' : '는';
+        case '이/가': return has ? '이' : '가';
+        case '와/과': return has ? '과' : '와';
+        case '으로/로': return (jong!==null && jong!==0 && jong!==8) ? '으로' : '로';
+        default: throw new Error('Invalid format!');
       }
     }
-    
-    function parseSpots(lines) {
-      const fields = lines.shift().split('\t').map(x => x.trim());
-      
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (!line.trim()) continue;
-        
-        const items = line.split('\t').map(x => x.trim());
-        const spot = {};
-        
-        for (let j = 0; j < fields.length; j++) {
-          spot[fields[j]] = items[j];
-        }
-        
-        spot.latlng = spot.latlng.split(',').map(x => Number(x.trim()));
-        
-        // file에서 이름 추출 (확장자 제거)
-        if (spot.file) {
-          spot.name = spot.file.replace('.png', '');
-        }
-        
-        spots.push(spot);
-        if (spot.name) {
-          dicSpots[spot.name] = spot;
-        }
-      }
-      
-      // 마커 추가
-      for (const spot of spots) {
-        const creatureName = spot.name.includes('_') ? spot.name.split('_')[1] : spot.name;
-        const marker = L.marker(spot.latlng).addTo(map).bindPopup(creatureName);
-        spot.marker = marker;
-        spotMarkers.push(marker);
-      }
-    }
-    
-    // 500m 반경 내 랜덤 위치 생성
-    function getRandomLocationNearby(centerLatlng, maxDistanceMeters) {
-      // 랜덤 거리 (0 ~ maxDistance)
-      const distance = Math.random() * maxDistanceMeters;
-      // 랜덤 각도 (0 ~ 360도)
-      const angle = Math.random() * 2 * Math.PI;
-      
-      // 대략적인 위도/경도 변환 (1도 ≈ 111km)
-      // 경도는 위도에 따라 다르지만, 한국 기준으로 대략 계산
-      const lat = centerLatlng[0];
-      const lng = centerLatlng[1];
-      
-      const deltaLat = (distance * Math.cos(angle)) / 111000;
-      const deltaLng = (distance * Math.sin(angle)) / (111000 * Math.cos(lat * Math.PI / 180));
-      
-      return [lat + deltaLat, lng + deltaLng];
-    }
-    
-    function placeRandomCreaturesNearby() {
-      if (spots.length === 0) return;
-      
-      // PNG file이 있는 생물만 필터링
-      const creaturesWithAssets = spots.filter(spot => spot.file && spot.file.endsWith('.png'));
-      
-      // 모든 생물이 file을 가지고 있어야 하므로, 전체를 후보로 사용
-      const candidatePool = creaturesWithAssets.length > 0 ? creaturesWithAssets : spots;
-      
-      // 랜덤으로 2개 선택 (중복 없이)
-      const selectedCount = Math.min(2, candidatePool.length);
-      const shuffled = [...candidatePool].sort(() => Math.random() - 0.5);
-      const selectedCreatures = shuffled.slice(0, selectedCount);
-      
-      // 선택된 생물들을 현재 위치 근처로 이동
-      selectedCreatures.forEach(creature => {
-        const newLocation = getRandomLocationNearby(latlngHere, 450); // 500m보다 약간 작게
-        creature.latlng = newLocation;
-        creature.isNearby = true; // 근처 배치 표시
-        
-        // 마커 위치 업데이트
-        if (creature.marker) {
-          creature.marker.setLatLng(newLocation);
-        }
-      });
-      
-      console.log(`${selectedCount}개의 생물을 현재 위치 근처에 배치했습니다:`, 
-                  selectedCreatures.map(c => c.name));
-      
-      // 안내 메시지 업데이트
-      const names = selectedCreatures.map(c => {
-        // "작가명_생물명" 형태에서 생물명만 추출
-        const parts = c.name.split('_');
-        return parts.length > 1 ? parts[1] : c.name;
-      }).join(', ');
-      el.info.innerHTML = `주변에 ${selectedCount}마리의 생물이 나타났습니다! (${names})<br><br>가까이 다가가서 만나보세요!`;
-    }
-    
-    
-    function findNearestSpot() {
-      const list = spots.map(spot => ({
-        name: spot.name,
-        dist: map.distance(spot.latlng, latlngHere)
-      })).sort((a, b) => a.dist - b.dist);
-      
-      return list.slice(0, 3);
-    }
-    
-    function displayInfo() {
-      if (!isTraceOn) return;
-      
-      const res = findNearestSpot();
-      if (res.length === 0) return;
-      
-      const creats = res.filter(r => r.dist <= rangeMeet.max);
-      let toMeet = '';
-      
-      if (creats.length > 0) {
-        toMeet = creats.map(x => {
-          const spot = dicSpots[x.name];
-          const emoji = spot && spot.isNearby ? '⭐ ' : '';
-          // "작가명_생물명" 형태에서 생물명만 추출
-          const displayName = x.name.includes('_') ? x.name.split('_')[1] : x.name;
-          return `<button class="sbutton">${emoji}${displayName}</button>`;
-        }).join(', ');
-        
-        if (creats.length === 1) {
-          const displayName = creats[0].name.includes('_') ? creats[0].name.split('_')[1] : creats[0].name;
-          const josa = Josa.c(displayName, '을/를');
-          toMeet += `${josa} 클릭해서 만나 보세요.`;
-        } else {
-          toMeet += ` 중에 하나를 클릭해서 만나 보세요. (⭐ 표시는 근처에 나타난 생물!)`;
-        }
-      }
-      
-      const name = res[0].name.includes('_') ? res[0].name.split('_')[1] : res[0].name;
-      const isNearby = dicSpots[res[0].name] && dicSpots[res[0].name].isNearby;
-      const nearbyHint = isNearby ? ' (⭐ 근처에 나타남!)' : '';
-      
-      rangeMeet.now = Math.min(res[res.length - 1].dist, rangeMeet.max) | 0;
-      markerRange.setRadius(rangeMeet.now);
-      
-      el.info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 떨어져 있는 『<span class="creat">${name}</span>』입니다${nearbyHint}. ${rangeMeet.now}m 안으로 가까이 다가가면 만날 수 있습니다. ${toMeet}`;
-      
-      // 버튼 이벤트 재설정
-      const buttons = el.info.querySelectorAll('.sbutton');
-      buttons.forEach(bt => bt.onclick = onCreatureClick);
-    }
-    
-    function goThere(latlng) {
-      latlngHere = latlng;
-      map.setView(latlngHere, map.getZoom());
-      markerRange.setLatLng(latlngHere);
-      markerHere.setLatLng(latlngHere);
-      displayInfo();
-    }
-    
-    function trace(position) {
-      const newLatlng = [position.coords.latitude, position.coords.longitude];
-      
-      // 최초 위치 추적 시 생물 배치 (위치 업데이트 전에 먼저 실행)
-      if (isFirstTrace) {
-        isFirstTrace = false;
-        // 먼저 latlngHere를 업데이트 (placeRandomCreaturesNearby에서 사용)
-        latlngHere = newLatlng;
-        placeRandomCreaturesNearby();
-      }
-      
-      goThere(newLatlng);
-    }
-    
-    function errorTrace() {
-      isTraceOn = false;
-      console.error('Trace error');
-      el.info.innerHTML = '스마트폰의 설정에서 브라우저의 위치 정보 사용을 켰는지 확인해 보세요.';
-    }
-    
-    // ============================================================
-    // Three.js AR 관련 함수
-    // ============================================================
-    function initThreeScene() {
-      // 카메라
-      camera = new THREE.PerspectiveCamera(
-        40, 
-        window.innerWidth / window.innerHeight, 
-        1, 
-        3000
-      );
-      camera.position.z = 6;
-      
-      // 씬
-      scene = new THREE.Scene();
-      
-      // 렌더러
-      renderer = new THREE.WebGLRenderer({ 
-        alpha: true, 
-        antialias: true 
-      });
-      
-      // 모바일 최적화: 픽셀 비율 제한
-      const pixelRatio = Math.min(window.devicePixelRatio, 2);
-      renderer.setPixelRatio(pixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      
-      el.webgl.appendChild(renderer.domElement);
-    }
-    
-    async function initCamera() {
-      if (isVideoInitiated) return;
-      
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: { facingMode: 'environment' }
-        });
-        
-        el.videoBg.srcObject = stream;
-        await el.videoBg.play();
-        isVideoInitiated = true;
-        
-      } catch (error) {
-        console.error('Camera error:', error);
-        alert('카메라 접근 권한이 필요합니다.');
-      }
-    }
-    
-    async function loadCreature(name) {
-      showLoading(true);
-      
-      // 기존 생물 제거
-      if (creatureMesh) {
-        scene.remove(creatureMesh);
-        if (creatureMesh.geometry) creatureMesh.geometry.dispose();
-        if (creatureMesh.material) {
-          if (creatureMesh.material.map) creatureMesh.material.map.dispose();
-          creatureMesh.material.dispose();
-        }
-        creatureMesh = null;
-      }
-      
-      const spot = dicSpots[name];
-      
-      if (!spot || !spot.file) {
-        console.warn('Asset not found for:', name);
-        showLoading(false);
-        return;
-      }
-      
-      // spot.file을 직접 사용
-      await createCreatureMesh(`./25_creatures/assets/${spot.file.normalize('NFC')}`, spot);
-      
-      showLoading(false);
-    }
-    
-    async function createCreatureMesh(url, spot) {
-      return new Promise((resolve, reject) => {
-        const loader = new THREE.TextureLoader();
-        
-        loader.load(
-          url,
-          (texture) => {
-            // 1024x1024 텍스처에 밉맵 생성
-            texture.generateMipmaps = true;
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            
-            // 투명도 처리
-            const material = new THREE.MeshBasicMaterial({
-              map: texture,
-              transparent: true,
-              alphaTest: 0.5,
-              side: THREE.DoubleSide
-            });
-            
-            // Quad 생성 (1:1 비율, 화면에 맞게 크기 조정)
-            // 카메라 FOV와 거리를 고려하여 화면의 60-70% 정도 차지하도록
-            const size = 1.5;
-            const geometry = new THREE.PlaneGeometry(size, size);
-            
-            creatureMesh = new THREE.Mesh(geometry, material);
-            scene.add(creatureMesh);
-            
-            resolve();
-          },
-          undefined,
-          (error) => {
-            console.error('Texture loading error:', error);
-            reject(error);
-          }
-        );
-      });
-    }
-    
-    function showLoading(show) {
-      el.loading.style.display = show ? 'block' : 'none';
-    }
-    
-    function animateCreature() {
-      if (!creatureMesh) return;
-      
-      const time = elapsedTime / 1000;
-      
-      // Y축 회전
-      creatureMesh.rotation.y = 0.2 * Math.PI * Math.sin(time);
-      
-      // 상하 움직임
-      const k = 0.5 + 0.5 * Math.sin(time * 4);
-      creatureMesh.position.y = k * k * 0.2 - 0.2;
-    }
-    
-    function render3D() {
-      animateCreature();
-      renderer.render(scene, camera);
-    }
-    
-    // ============================================================
-    // 뷰 모드 전환
-    // ============================================================
-    function changeViewMode(mode) {
-      if (mode === 'map') {
-        el.stage.style.display = 'none';
-        el.map.style.display = 'block';
-        if (el.videoBg.srcObject) {
-          el.videoBg.pause();
-        }
-      } else if (mode === '3d') {
-        if (!isVideoInitiated) {
-          initCamera();
-        }
-        el.stage.style.display = 'block';
-        el.map.style.display = 'none';
-        if (el.videoBg.srcObject) {
-          el.videoBg.play();
-        }
-      }
-    }
-    
-    // ============================================================
-    // 이벤트 핸들러
-    // ============================================================
-    async function onCreatureClick(e) {
-      if (e.target.className !== 'sbutton') return;
-      
-      // 버튼 텍스트에서 이모지 제거하여 생물명만 추출
-      const displayName = e.target.textContent.replace('⭐ ', '').trim();
-      console.log('Meet creature:', displayName);
-      
-      // dicSpots에서 해당 생물 찾기 (전체 이름으로 저장되어 있음)
-      let spot = null;
-      for (const key in dicSpots) {
-        const s = dicSpots[key];
-        const creatureName = s.name.includes('_') ? s.name.split('_')[1] : s.name;
-        if (creatureName === displayName) {
-          spot = s;
-          break;
-        }
-      }
-      
-      if (!spot) {
-        console.error('Spot not found for:', displayName);
-        return;
-      }
-      
-      changeViewMode('3d');
-      
-      // 생물 정보 표시
-      const emos = '🙀,🚀,🌀,🦋,🛸,🜀,🝀,🞀,🦠,🌸,💖,💚,🍓,🧸,🌕,🌧,💧,🌪,⭐,🦀,🍄,🌹,🌱,🌷,🌻,🍀,🐠,🦐,🤖,🏹,🍼'.split(',');
-      const emo = emos[Math.random() * emos.length | 0];
-      
-      // file에서 작가명 추출 (예: "오유리_춤추는 뽀글뽀글 뽀글이.png" -> "오유리")
-      let author = '';
-      if (spot.name && spot.name.includes('_')) {
-        author = spot.name.split('_')[0];
-        if (author.length > 1) {
-          author = author[0] + emo + author.slice(2);
-        }
-      }
-      
-      const profileText = spot.file 
-        ? `${displayName}${Josa.c(displayName, '이/가')} 나타났다!`
-        : `${displayName}${Josa.c(displayName, '은/는')} 아직 준비중!`;
-      
-      el.profile.innerHTML = `${profileText} ${author ? `<div class="t-right">- ${author}</div>` : ''}`;
-      el.dialog.innerHTML = `${displayName}${Josa.c(displayName, '은/는')}... <br>${spot.desc}`;
-      
-      // 생물 로드 (전체 이름으로 전달)
-      await loadCreature(spot.name);
-    }
-    
-    el.traceOn.onclick = () => {
-      isTraceOn = true;
-      navigator.geolocation.getCurrentPosition(trace, errorTrace);
+    return { c:(w,f)=>pick(f,lastJongCode(w)), r:(w,f)=>w+pick(f,lastJongCode(w)) };
+  })();
+
+  // ========================= 전역 =========================
+  let map, markerHere, markerRange, markerAccuracy, latlngHere;
+  let spots = [], dicSpots = {}, spotMarkers = [];
+  const rangeMeet = { max: 500, now: 500 };
+  let isTraceOn = false, isFirstTrace = true, pastTimestamp = 0, elapsedTime = 0;
+
+  const MapState = { IDLE:'idle', FOLLOW:'follow', FOCUS:'focusSpot', AR:'ar' };
+  let mapState = MapState.IDLE;
+
+  // Three.js
+  let camera, scene, renderer, creatureMesh = null, isVideoInitiated = false;
+
+  const el = {
+    traceOn: document.querySelector('#trace_on'),
+    map: document.querySelector('#map'),
+    info: document.querySelector('#info'),
+    stage: document.querySelector('#stage'),
+    videoBg: document.querySelector('#video-bg'),
+    webgl: document.querySelector('#webgl'),
+    profile: document.querySelector('#profile'),
+    dialog: document.querySelector('#dialog'),
+    loading: document.querySelector('#loading')
+  };
+
+  class Periodic{ constructor(sec,cb){ this.dur=sec*1000; this.elapsed=0; this.cb=cb; } update(diff){ this.elapsed+=diff; if(this.elapsed>=this.dur){ this.elapsed=0; this.cb(); } } }
+  const periodics = { trace: new Periodic(10, () => { if(isTraceOn) navigator.geolocation.getCurrentPosition(trace, errorTrace); }) };
+
+  // ========================= Movement (월간 경로 엔진) =========================
+  const Movement = (()=>{
+    const CFG = {
+      routeLen: 15,
+      neighborPickTopK: 6,
+      minStepMeters: 80,
+      closeLoopBiasMeters: 250,
+      swayMeters: 18,
+      microJitterMeters: 4,
+      nearUserCount: 2,
+      nearRadiusMin: 120,
+      nearRadiusMax: 420,
+      nearTimeSlotMin: 60,
+      quantizeDeg: 0.003,
+      minSeparationMeters: 30,
+      relaxIters: 2
     };
-    
-    el.stage.onclick = () => {
-      changeViewMode('map');
-    };
-    
-    window.onresize = () => {
-      if (camera && renderer) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+
+    let _spots = [], _routes = new Map(), _nearIdx = new Set();
+
+    function xmur3(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=(h<<13)|(h>>>19);} return function(){ h=Math.imul(h^(h>>>16),2246822507); h=Math.imul(h^(h>>>13),3266489909); return (h^=h>>>16)>>>0; }; }
+    function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t^=t+Math.imul(t^t>>>7,61|t); return ((t^t>>>14)>>>0)/4294967296; }; }
+    function prng(...parts){ return mulberry32(xmur3(parts.join('|'))()); }
+
+    const toRad = d=>d*Math.PI/180;
+    function distMeters(a,b){ const R=6371000,dLat=toRad(b[0]-a[0]),dLng=toRad(b[1]-a[1]); const sa=Math.sin(dLat/2),sb=Math.sin(dLng/2); const h=sa*sa+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*sb*sb; return 2*R*Math.asin(Math.min(1,Math.sqrt(h))); }
+    function metersToDelta(lat,dx,dy){ const dLat=dy/111000; const dLng=dx/(111000*Math.cos(toRad(lat))); return [dLat,dLng]; }
+
+    function catmullRom(p0,p1,p2,p3,t){ const t2=t*t,t3=t2*t; const a0=[-0.5*p0[0]+1.5*p1[0]-1.5*p2[0]+0.5*p3[0], -0.5*p0[1]+1.5*p1[1]-1.5*p2[1]+0.5*p3[1]]; const a1=[p0[0]-2.5*p1[0]+2*p2[0]-0.5*p3[0], p0[1]-2.5*p1[1]+2*p2[1]-0.5*p3[1]]; const a2=[-0.5*p0[0]+0.5*p2[0], -0.5*p0[1]+0.5*p2[1]]; const a3=[p1[0],p1[1]]; return [a0[0]*t3+a1[0]*t2+a2[0]*t+a3[0], a0[1]*t3+a1[1]*t2+a2[1]*t+a3[1]]; }
+
+    function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+    function dayProgressInMonth(d){ const M=daysInMonth(d); const day=d.getDate()-1; const frac=(d.getHours()*60+d.getMinutes())/1440; return (day+frac)/M; }
+
+    function buildRoutes(){ if(!_spots.length) return; const points=_spots.map(s=>s.baseLatLng||s.latlng); for(let i=0;i<_spots.length;i++){ const s=_spots[i]; const name=s.name||('idx'+i); if(_routes.has(name)) continue; const startIdx=i; const used=new Set([startIdx]); const routeIdx=[startIdx]; const rnd=prng('route',name); let cur=startIdx; for(let step=1; step<CFG.routeLen; step++){ const cand=[]; for(let j=0;j<points.length;j++){ if(used.has(j)) continue; const d=distMeters(points[cur],points[j]); cand.push({j,d}); } cand.sort((a,b)=>a.d-b.d); let filtered=cand.filter(x=>x.d>=CFG.minStepMeters); if(!filtered.length) filtered=cand; if(step===CFG.routeLen-1){ filtered.sort((a,b)=>{ const da=Math.abs(distMeters(points[a.j],points[startIdx])-CFG.closeLoopBiasMeters); const db=Math.abs(distMeters(points[b.j],points[startIdx])-CFG.closeLoopBiasMeters); return da-db; }); }
+        const top=filtered.slice(0, Math.max(1, Math.min(CFG.neighborPickTopK, filtered.length)));
+        const pick=top[Math.floor(rnd()*top.length)] || filtered[0];
+        const nxt= pick?pick.j:cur; routeIdx.push(nxt); used.add(nxt); cur=nxt; }
+      const route=routeIdx.map(k=>points[k]); _routes.set(name, route); } }
+
+    function positionOnMonthlyRoute(d, route, name){ const L=route.length; if(L===1) return route[0]; const baseProg=dayProgressInMonth(d)*L; const phase=prng('phase',name)(); const u=(baseProg+phase*L)%L; const i1=Math.floor(u)%L; const t=u-Math.floor(u); const i0=(i1-1+L)%L, i2=(i1+1)%L, i3=(i1+2)%L; let pos=catmullRom(route[i0],route[i1],route[i2],route[i3],t); const r2=prng('sway',name); const amp=CFG.swayMeters*(0.7+0.3*r2()); const phi=2*Math.PI*r2(); const sway=Math.sin(2*Math.PI*dayProgressInMonth(d)+phi)*amp; const micro=CFG.microJitterMeters*Math.cos(6*Math.PI*dayProgressInMonth(d)+phi*1.3); const pA=catmullRom(route[i0],route[i1],route[i2],route[i3],Math.max(0,t-0.01)); const pB=catmullRom(route[i0],route[i1],route[i2],route[i3],Math.min(1,t+0.01)); const east=(pB[1]-pA[1])*111000*Math.cos(toRad(pos[0])); const north=(pB[0]-pA[0])*111000; const segLen=Math.hypot(east,north)+1e-6; const nx=-north/segLen, ny=east/segLen; const [dLat,dLng]=metersToDelta(pos[0], (sway+micro)*nx, (sway+micro)*ny); pos=[pos[0]+dLat, pos[1]+dLng]; return pos; }
+
+    function selectNear(now,userLL){ const mins=now.getHours()*60+now.getMinutes(); const slot=Math.floor(mins/CFG.nearTimeSlotMin); const qLat=Math.round(userLL[0]/CFG.quantizeDeg)*CFG.quantizeDeg; const qLng=Math.round(userLL[1]/CFG.quantizeDeg)*CFG.quantizeDeg; const r=prng('near', now.getFullYear(), now.getMonth(), now.getDate(), slot, qLat.toFixed(4), qLng.toFixed(4)); const chosen=new Set(); while(chosen.size<Math.min(CFG.nearUserCount,_spots.length)){ chosen.add(Math.floor(r()*_spots.length)); } return chosen; }
+    function nearPosition(now,userLL,index,order){ const r=prng('near-pos', index, now.getFullYear(), now.getMonth(), now.getDate()); const base=CFG.nearRadiusMin+(CFG.nearRadiusMax-CFG.nearRadiusMin)*(0.25+0.5*r()); const ring=base+(order?+25:-25); const theta=2*Math.PI*(dayProgressInMonth(now)+r()); const [dLat,dLng]=metersToDelta(userLL[0], ring*Math.cos(theta), ring*Math.sin(theta)); return [userLL[0]+dLat, userLL[1]+dLng]; }
+
+    function relax(positions, fixed){ const N=positions.length; const toRad=d=>d*Math.PI/180; for(let it=0; it<CFG.relaxIters; it++){ for(let i=0;i<N;i++){ for(let j=i+1;j<N;j++){ const a=positions[i], b=positions[j]; const R=6371000; const dLat=toRad(b[0]-a[0]), dLng=toRad(b[1]-a[1]); const sa=Math.sin(dLat/2), sb=Math.sin(dLng/2); const h=sa*sa+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*sb*sb; const d=2*R*Math.asin(Math.min(1,Math.sqrt(h))); if(d<CFG.minSeparationMeters){ const east=(b[1]-a[1])*111000*Math.cos(toRad((a[0]+b[0])/2)); const north=(b[0]-a[0])*111000; let ex=east, ey=north; if(ex===0&&ey===0){ex=1;ey=0;} const L=Math.hypot(ex,ey); const ux=ex/L, uy=ey/L; const push=(CFG.minSeparationMeters-d)*0.55; const moveI=!fixed.has(i), moveJ=!fixed.has(j); if(moveI && moveJ){ const [dLat,dLng]=metersToDelta(positions[j][0], ux*push, uy*push); positions[j]=[positions[j][0]+dLat, positions[j][1]+dLng]; } else if(moveI && !moveJ){ const [dLat,dLng]=metersToDelta(positions[i][0], -ux*push, -uy*push); positions[i]=[positions[i][0]+dLat, positions[i][1]+dLng]; } else if(!moveI && moveJ){ const [dLat,dLng]=metersToDelta(positions[j][0], ux*push, uy*push); positions[j]=[positions[j][0]+dLat, positions[j][1]+dLng]; } } } } } return positions; }
+
+    function init(spots){ _spots = spots || []; for(const s of _spots){ if(!s.baseLatLng) s.baseLatLng=[...(s.latlng||[0,0])]; } buildRoutes(); }
+    function update(now,userLL){ if(!_spots.length) return; _nearIdx=selectNear(now,userLL); const positions=new Array(_spots.length); const nearList=[..._nearIdx]; for(let i=0;i<_spots.length;i++){ const s=_spots[i]; const name=s.name||('idx'+i); const route=_routes.get(name)||[s.baseLatLng||s.latlng]; if(_nearIdx.has(i)){ positions[i]=nearPosition(now,userLL,i, nearList.indexOf(i)); s.isNearby=true; } else { positions[i]=positionOnMonthlyRoute(now,route,name); s.isNearby=false; } }
+      const fixed=new Set(_nearIdx); relax(positions,fixed);
+      for(let i=0;i<_spots.length;i++){ const s=_spots[i]; s.latlng=positions[i]; if(s.marker && s.marker.setLatLng) s.marker.setLatLng(positions[i]);
+        if(s.marker){ s.marker.setZIndexOffset(s.isNearby?1000:0); const tt = getTooltipText(s); const ttip = s.marker.getTooltip(); if(ttip) ttip.setContent(tt); else s.marker.bindTooltip(tt, {direction:'top', offset:[0,-28]}); }
       }
-    };
-    
-    // ============================================================
-    // 메인 루프
-    // ============================================================
-    function loop(timestamp) {
-      if (timestamp) {
-        const diffTime = timestamp - pastTimestamp;
-        elapsedTime += diffTime;
-        pastTimestamp = timestamp;
-        
-        if (isTraceOn) {
-          periodics.trace.update(diffTime);
-        }
-        
-        if (el.stage.style.display === 'block') {
-          render3D();
-        }
-      }
-      
-      requestAnimationFrame(loop);
     }
-    
-    // ============================================================
-    // 초기화
-    // ============================================================
-    function init() {
-      const params = new URLSearchParams(location.search.slice(1));
-      let desc = `<strong>신기한 생물들이 주변에 나타났습니다!</strong><br><br>『현재 위치』 버튼을 눌러 가까운 생물을 만나보세요.<br><br><small>버튼을 누른 후 '위치 정보'와 '카메라' 사용 권한을 허용해주세요.</small>`;
-      
-      switch (params.get('w')) {
-        case 'H1_5l6g':
-          desc = `시험판: 이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. '현재 위치' 버튼을 클릭해 보세요!<br><br>버튼을 누른 후 '위치 정보'와 '카메라' 사용 권한을 수락해 주셔야 작동합니다.`;
-          break;
-      }
-      
-      switch (params.get('k')) {
-        case '4545':
-          desc = `가능한가!?`;
-          break;
-      }
-      
-      el.info.innerHTML = desc;
-      
-      initMap();
-      initThreeScene();
-      loop();
+    return { init, update, CFG };
+  })();
+
+  // ========================= 이모지 툴팁 (버튼/라벨에는 이모지 금지, 근처⭐만 허용) =========================
+  const EMOJI_PALETTE = ['🦋','🛸','🍄','🌸','🐚','🦀','🐠','🌟','🧚','🍀','🔮','🦐','🪼','🌈','🐉'];
+  function hashStr(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=(h<<13)|(h>>>19);} h=Math.imul(h^(h>>>16),2246822507); h=Math.imul(h^(h>>>13),3266489909); return (h^=h>>>16)>>>0; }
+  function getEmojiForSpot(spot){ const name=normalizeText(spot?.name||''); const idx = hashStr(name) % EMOJI_PALETTE.length; return EMOJI_PALETTE[idx]; }
+  function getCreatureDisplayName(spot){ const nm=normalizeText(spot?.name||''); return nm.includes('_') ? nm.split('_')[1] : nm; }
+  function getTooltipText(spot){ const displayName = getCreatureDisplayName(spot); const emoji = spot.isNearby ? '⭐' : getEmojiForSpot(spot); return `${emoji} ${displayName}`; }
+
+  // ========================= 지도/데이터 =========================
+  async function initMap(){
+    latlngHere = [37.683408, 126.769612];
+    map = L.map('map', { preferCanvas: true, zoomSnap: 0.25, wheelDebounceTime: 25, inertia: true, tapTolerance: 15 }).setView(latlngHere, 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19, tileSize: 512, zoomOffset: -1, detectRetina: true, updateWhenIdle: true, keepBuffer: 2
+    }).addTo(map);
+
+    L.control.scale({position:'bottomright', imperial:false}).addTo(map);
+
+    markerRange = L.circle(latlngHere, { color: 'rgba(255,255,0,0.5)', fillColor: '#f03', fillOpacity: 0.1, radius: rangeMeet.now }).addTo(map);
+    markerHere  = L.circleMarker(latlngHere, { color: '#f03', fillColor: '#f03', fillOpacity: 0.25, radius: 6 }).addTo(map);
+    markerAccuracy = L.circle(latlngHere, { radius: 0, color: '#2f5f5f', weight: 1, opacity: .6, fillOpacity: .06 }).addTo(map);
+
+    await loadSpots();
+  }
+
+  async function loadSpots(){
+    try{
+      const res = await fetch('./25_creatures/data/data.tsv');
+      const text = await res.text();
+      parseSpots(text.split('\n'));
+      Movement.init(spots);
+      Movement.update(new Date(), latlngHere);
+    }catch(e){ console.error('Failed to load spots:', e); }
+  }
+
+  function parseSpots(lines){
+    const fields = lines.shift().split('\t').map(x=>x.trim());
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i]; if(!line.trim()) continue;
+      const items = line.split('\t').map(x=>normalizeText(x.trim()));
+      const spot = {};
+      for(let j=0;j<fields.length;j++){ spot[fields[j]] = normalizeText(items[j]||''); }
+      if(spot.latlng) spot.latlng = spot.latlng.split(',').map(x=>Number(x.trim()));
+      if(spot.file){ spot.file = normalizeText(spot.file); spot.name = normalizeText(spot.file.replace(/\.png$/i,'')); }
+      if(spot.desc) spot.desc = normalizeText(spot.desc);
+
+      const displayName = getCreatureDisplayName(spot);
+      const marker = L.marker(spot.latlng).addTo(map).bindPopup(displayName);
+      marker.bindTooltip(getTooltipText(spot), { direction:'top', offset:[0,-28] });
+
+      spot.marker = marker; spotMarkers.push(marker);
+      spots.push(spot); if(spot.name) dicSpots[spot.name]=spot;
     }
-    
-    window.onload = init;
+  }
+
+  function findNearestSpot(){
+    const list = spots.map(spot=>({ name: spot.name, dist: map.distance(spot.latlng, latlngHere) })).sort((a,b)=>a.dist-b.dist);
+    return list.slice(0,3);
+  }
+
+  function displayInfo(){
+    if(!isTraceOn) return;
+    const res = findNearestSpot(); if(!res.length) return;
+    const creats = res.filter(r=>r.dist<=rangeMeet.max);
+    let toMeet='';
+    if(creats.length>0){
+      toMeet = creats.map(x=>{ 
+        const spot=dicSpots[x.name];
+        const n=normalizeText(x.name||'');
+        const displayName = n.includes('_') ? n.split('_')[1] : n;
+        const label = `${spot && spot.isNearby ? '⭐ ' : ''}${displayName}`; // 버튼 라벨은 근처 2마리에만 ⭐
+        return `<button class="sbutton" data-name="${displayName}">${label}</button>`; 
+      }).join(' ');
+      if(creats.length===1){ const n=normalizeText(creats[0].name||''); const displayName = n.includes('_')?n.split('_')[1]:n; const josa=Josa.c(displayName,'을/를'); toMeet += `${josa} 클릭해서 만나 보세요.`; } else { toMeet += ` 중에 하나를 클릭해서 만나 보세요. (⭐는 근처에 놀러온 생물!)`; }
+    }
+    const nm0=normalizeText(res[0].name||''); const name = nm0.includes('_')?nm0.split('_')[1]:nm0; const isNearby = dicSpots[res[0].name] && dicSpots[res[0].name].isNearby; const nearbyHint = isNearby ? '' : '';
+    rangeMeet.now = Math.min(res[res.length-1].dist, rangeMeet.max)|0; markerRange.setRadius(rangeMeet.now);
+    el.info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist|0}m 떨어져 있는 『<span class="creat">${name}</span>』입니다${nearbyHint}. ${rangeMeet.now}m 안으로 가까이 다가가면 만날 수 있습니다. ${toMeet}`;
+    // 클릭 위임: 텍스트 파싱 대신 data-name 사용
+    el.info.querySelectorAll('.sbutton').forEach(bt=> bt.onclick=onCreatureClick);
+  }
+
+  function goThere(latlng){
+    latlngHere = latlng;
+    if(mapState===MapState.FOLLOW) map.setView(latlngHere, map.getZoom(), {animate:true});
+    markerRange.setLatLng(latlngHere);
+    markerHere.setLatLng(latlngHere);
+    Movement.update(new Date(), latlngHere);
+    displayInfo();
+  }
+
+  function trace(position){
+    const newLatlng = [position.coords.latitude, position.coords.longitude];
+    const acc = position.coords.accuracy || 0;
+    if(isFirstTrace){ isFirstTrace=false; mapState = MapState.FOLLOW; map.flyTo(newLatlng, 16, {duration: .8}); }
+    goThere(newLatlng);
+    markerAccuracy.setLatLng(newLatlng); markerAccuracy.setRadius(acc);
+  }
+  function errorTrace(){ isTraceOn=false; console.error('Trace error'); el.info.innerHTML='스마트폰의 설정에서 브라우저의 위치 정보 사용을 켰는지 확인해 보세요.'; }
+
+  // ========================= Three.js AR =========================
+  function initThreeScene(){
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 1, 3000); camera.position.z=5;
+    scene = new THREE.Scene();
+    renderer = new THREE.WebGLRenderer({ alpha:true, antialias:true });
+    const pixelRatio = Math.min(window.devicePixelRatio, 2); renderer.setPixelRatio(pixelRatio); renderer.setSize(window.innerWidth, window.innerHeight);
+    el.webgl.appendChild(renderer.domElement);
+  }
+  async function initCamera(){ if(isVideoInitiated) return; try{ const stream=await navigator.mediaDevices.getUserMedia({audio:false, video:{facingMode:'environment'}}); el.videoBg.srcObject=stream; await el.videoBg.play(); isVideoInitiated=true; }catch(e){ console.error('Camera error:', e); alert('카메라 접근 권한이 필요합니다.'); } }
+
+  async function loadCreature(name){
+    showLoading(true);
+    if(creatureMesh){ scene.remove(creatureMesh); if(creatureMesh.geometry) creatureMesh.geometry.dispose(); if(creatureMesh.material){ if(creatureMesh.material.map) creatureMesh.material.map.dispose(); creatureMesh.material.dispose(); } creatureMesh=null; }
+    const spot = dicSpots[name]; if(!spot||!spot.file){ console.warn('Asset not found for:', name); showLoading(false); return; }
+    const urlNFC = `./25_creatures/assets/${normalizeText(spot.file)}`;
+    try{ await createCreatureMesh(urlNFC, spot); }catch(e){ console.warn('NFC 경로 실패, NFD 재시도:', e); const parts=urlNFC.split('/'); const filename=parts.pop(); const urlNFD=parts.join('/')+'/'+filename.normalize('NFD'); try{ await createCreatureMesh(urlNFD, spot); }catch(e2){ console.error('텍스처 로드 실패:', e2); } }
+    showLoading(false);
+  }
+  async function createCreatureMesh(url){
+    return new Promise((resolve,reject)=>{
+      const loader = new THREE.TextureLoader();
+      loader.load(url, (texture)=>{
+        texture.generateMipmaps=true; texture.minFilter=THREE.LinearMipmapLinearFilter; texture.magFilter=THREE.LinearFilter;
+        const material = new THREE.MeshBasicMaterial({ map:texture, transparent:true, alphaTest:0.5, side:THREE.DoubleSide });
+        const size=1.5; const geometry=new THREE.PlaneGeometry(size,size);
+        creatureMesh = new THREE.Mesh(geometry, material); scene.add(creatureMesh); resolve();
+      }, undefined, (err)=>reject(err));
+    });
+  }
+  function showLoading(b){ el.loading.style.display = b ? 'block' : 'none'; if(el.backToMap){ el.backToMap.classList.toggle('disabled', b); el.backToMap.disabled = !!b; } }
+  function animateCreature(){ if(!creatureMesh) return; const time=elapsedTime/1000; creatureMesh.rotation.y = 0.2*Math.PI*Math.sin(time); const k=0.5+0.5*Math.sin(time*4); creatureMesh.position.y = k*k*0.2 - 0.2; }
+  function render3D(){ animateCreature(); renderer.render(scene, camera); }
+
+  // ========================= 뷰 전환 & 이벤트 =========================
+  function changeViewMode(mode){
+    if(mode==='map'){
+      mapState = MapState.IDLE; el.stage.style.display='none'; el.stage.setAttribute('aria-hidden','true'); el.map.style.display='block'; if(el.videoBg.srcObject){ el.videoBg.pause(); }
+      if(el.backToMap) el.backToMap.style.display='none';
+    } else if(mode==='3d'){
+      mapState = MapState.AR; if(!isVideoInitiated){ initCamera(); }
+      el.stage.style.display='block'; el.stage.setAttribute('aria-hidden','false'); el.map.style.display='none'; if(el.videoBg.srcObject){ el.videoBg.play(); }
+      if(el.backToMap) el.backToMap.style.display='inline-flex';
+    }
+  }
+
+  function onCreatureClick(e){
+    const btn = e.target.closest('.sbutton');
+    if(!btn) return;
+    const displayName = normalizeText(btn.dataset.name || btn.textContent.replace(/^⭐\s*/, '').trim());
+    let spot=null; 
+    for(const key in dicSpots){ const s=dicSpots[key]; const nm=normalizeText(s.name||''); const creatureName = nm.includes('_')?nm.split('_')[1]:nm; if(creatureName===displayName){ spot=s; break; } }
+    if(!spot){ console.error('Spot not found for:', displayName); return; }
+    changeViewMode('3d');
+    const emos='🙀,🚀,🌀,🦋,🛸,🜀,🝀,🞀,🦠,🌸,💖,💚,🍓,🧸,🌕,🌧,💧,🌪,⭐,🦀,🍄,🌹,🌱,🌷,🌻,🍀,🐠,🦐,🤖,🏹,🍼'.split(',');
+    const emo = emos[Math.random()*emos.length|0];
+    let author=''; if(spot.name && spot.name.includes('_')){ author=normalizeText(spot.name.split('_')[0]); if(author.length>1){ author = author[0]+emo+author.slice(2); } }
+    const profileText = spot.file ? `${displayName}${Josa.c(displayName,'이/가')} 나타났다!` : `${displayName}${Josa.c(displayName,'은/는')} 아직 준비중!`;
+    el.profile.innerHTML = `${profileText} ${author ? `<div class="t-right">- ${author}</div>` : ''}`;
+    el.dialog.innerHTML = `${displayName}${Josa.c(displayName,'은/는')}... <br>${spot.desc||''}`;
+    loadCreature(spot.name);
+  }
+
+  // 이벤트
+  el.traceOn.onclick = () => { isTraceOn=true; mapState=MapState.FOLLOW; navigator.geolocation.getCurrentPosition(trace, errorTrace); };
+  // stage 클릭 복귀 제거
+  // el.stage.onclick = () => { changeViewMode('map'); };
+
+  window.onresize = () => { if(camera&&renderer){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); } };
+
+  // ========================= 루프 & 초기화 =========================
+  function loop(ts){ if(ts){ const diff=ts - pastTimestamp; elapsedTime += diff; pastTimestamp = ts; if(isTraceOn){ periodics.trace.update(diff); } if(el.stage.style.display==='block'){ render3D(); } } requestAnimationFrame(loop); }
+
+  function init(){
+    const params = new URLSearchParams(location.search.slice(1));
+    let desc = `<strong>신기한 생물들이 주변에 나타났습니다!</strong><br><br>『현재 위치』 버튼을 눌러 가까운 생물을 만나보세요.<br><br><small>버튼을 누른 후 '위치 정보'와 '카메라' 사용 권한을 허용해주세요.</small>`;
+    switch(params.get('w')){ case 'H1_5l6g': desc = `시험판: 이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. '현재 위치' 버튼을 클릭해 보세요!<br><br>버튼을 누른 후 '위치 정보'와 '카메라' 사용 권한을 수락해 주셔야 작동합니다.`; break; }
+    switch(params.get('k')){ case '4545': desc = `가능한가!?`; break; }
+    el.info.innerHTML = desc;
+
+    initMap();
+    initThreeScene();
+    loop();
+
+    const backBtn = document.querySelector('#backToMap');
+    if(backBtn){ backBtn.addEventListener('click', ()=> changeViewMode('map')); el.backToMap = backBtn; }
+  }
+  window.onload = init;
   </script>
 </body>
 </html>
