@@ -573,7 +573,7 @@
     ></iframe>
 
     <div class="hero">
-        <h1 style="font-family: 'Noto Serif KR';">“놀이는 어린이의 삶”이라고<br> 말해온 역사 · 문화 · 환경</h1>
+        <h1 style="font-family: 'Noto Serif KR';">“<span id="motto">놀이는 어린이의 삶</span>”이라고<br> 말해온 역사 · 문화 · 환경</h1>
     </div>
     <!-- Event Section -->
     <section class="event-section">
@@ -737,5 +737,113 @@
     animate();
     */
   </script>
+  <script>
+/**
+ * mottoGlitter(options)
+ * options:
+ *  - mode: 'rainbow' | 'gold'  (default 'rainbow')
+ *  - duration: number (초, 기본 1.5)
+ *  - delay: number (초, 기본 0.2) — 글자 간 지연
+ */
+function mottoGlitter({ mode = 'rainbow', duration = 1.5, delay = 0.2 } = {}) {
+  const mottoEl = document.querySelector('#motto');
+  if (!mottoEl) return;
+  if (mottoEl.querySelector('.motto-letter')) return; // 중복 실행 방지
+
+  const originalText = mottoEl.textContent;
+  mottoEl.setAttribute('aria-label', originalText);
+  mottoEl.setAttribute('role', 'text');
+
+  // 유니코드 그래프림 분해 (이모지/복합 문자 안전)
+  function splitGraphemes(text) {
+    try {
+      if (Intl && Intl.Segmenter) {
+        const seg = new Intl.Segmenter('ko', { granularity: 'grapheme' });
+        return Array.from(seg.segment(text), s => s.segment);
+      }
+    } catch (_) {}
+    return Array.from(text);
+  }
+
+  const segments = splitGraphemes(originalText);
+  const isWhitespace = ch => /\s/.test(ch);
+  const letterCount = segments.reduce((n, ch) => n + (isWhitespace(ch) ? 0 : 1), 0) || 1;
+
+  // 스타일 주입(1회)
+  if (!document.getElementById('motto-glitter-style')) {
+    const style = document.createElement('style');
+    style.id = 'motto-glitter-style';
+    style.textContent = `
+      .motto-letter {
+        display: inline-block;
+        color: #000;
+        animation-duration: var(--dur, 1.5s);
+        animation-timing-function: ease;
+        animation-fill-mode: both;
+        animation-iteration-count: 1;
+        animation-delay: calc(var(--i) * var(--delay, 0.2s));
+        will-change: color, filter, background-position;
+      }
+      /* 무지개: hue 회전, 밝아짐 후 복귀 (text-shadow 미사용) */
+      .motto-letter--rainbow { animation-name: motto-rainbow; }
+      @keyframes motto-rainbow {
+        0%   { color: #000; filter: none; }
+        40%  { color: hsl(var(--h), 100%, 55%); color: hsl(var(--h) 100% 55%); filter: brightness(1.0); }
+        55%  { color: hsl(var(--h), 100%, 65%); color: hsl(var(--h) 100% 65%); filter: brightness(1.15); }
+        100% { color: #000; filter: none; }
+      }
+
+      /* 금색 물결: 금빛이 번쩍 → 복귀 (text-shadow 미사용) */
+      .motto-letter--gold { animation-name: motto-gold; }
+      @keyframes motto-gold {
+        0%   { color: #000; filter: none; }
+        35%  { color: hsl(45, 90%, 42%); color: hsl(45 90% 42%); filter: brightness(1.0); }
+        50%  { color: hsl(46, 96%, 62%); color: hsl(46 96% 62%); filter: brightness(1.2); }
+        65%  { color: hsl(44, 88%, 46%); color: hsl(44 88% 46%); filter: brightness(1.0); }
+        100% { color: #000; filter: none; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // 문자 래핑(공백 제외)
+  let seq = 0;
+  const html = segments.map(ch => {
+    if (isWhitespace(ch)) return ch;
+
+    const hue = Math.round((seq / letterCount) * 360); // 무지개용 hue
+    const escaped = ch.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const cls = mode === 'gold' ? 'motto-letter motto-letter--gold' : 'motto-letter motto-letter--rainbow';
+    const span = `<span class="${cls}" aria-hidden="true" style="--i:${seq};--h:${hue};--dur:${duration}s;--delay:${delay}s">${escaped}</span>`;
+    seq++;
+    return span;
+  }).join('');
+
+  mottoEl.innerHTML = html;
+}
+
+/* 금색 버전 바로 쓰고 싶을 때 편의 함수 */
+function mottoGlitterGold() {
+  mottoGlitter({ mode: 'gold', duration: 1.5, delay: 0.2 });
+}
+
+/* 폰트 로드 이후 자동 실행 (기본: 무지개) */
+(function runAfterFonts() {
+  function run() {
+    const start = () => mottoGlitter({ mode: Math.random() > 0.5 ? 'gold' : 'rainbow', duration: 1.5, delay: 0.2 });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(start).catch(start);
+    } else {
+      start();
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
+  }
+})();
+</script>
+
 </body>
 </html>
