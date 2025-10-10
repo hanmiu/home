@@ -529,7 +529,7 @@
       if (gImg){
         const maxSize = CELL*0.9;
         const r = Math.min(maxSize / gImg.width, maxSize / gImg.height);
-        const w = gImg.width*r, h = gImg.height*r;
+        const w = gImg.width*r*2, h = gImg.height*r*2;
         if (faceDir && goalFacing === 'left'){
           ctx.save(); ctx.translate(gx, gy); ctx.scale(-1,1); ctx.drawImage(gImg, -w/2, -h/2, w, h); ctx.restore();
         } else {
@@ -549,7 +549,7 @@
         if (img){
           const maxSize = CELL*0.9;
           const r = Math.min(maxSize / img.width, maxSize / img.height);
-          const w = img.width*r, h = img.height*r;
+          const w = img.width*r*2, h = img.height*r*2;
           if (faceDir && a.facing==='left'){
             ctx.save(); ctx.translate(ax, ay); ctx.scale(-1,1); ctx.drawImage(img, -w/2, -h/2, w, h); ctx.restore();
           } else {
