@@ -29,7 +29,7 @@
     .footer-item.fade-out { opacity: 0; transform: scale(0.95); }
     .footer-item img.thumb {
       width: 100%; height: 100%; object-fit: contain; display: block;
-      transform: none; transition: transform .25s ease;
+      transform: none; transition: transform .5s ease;
     }
     .footer-item img.thumb.flip { transform: scaleX(-1); }
   </style>
@@ -488,7 +488,8 @@
     function ensureCapacity(){
       // Remove just enough to make room for ONE new item
       const count = footerEl.childElementCount;
-      const toRemove = Math.max(0, count - (AGENTS_TARGET - 1));
+      // const toRemove = Math.max(0, count - (AGENTS_TARGET - 1));
+      const toRemove = Math.max(0, count - (AGENTS_TARGET));
       let p = Promise.resolve();
       for (let i=0;i<toRemove;i++) p = p.then(()=>fadeOutOldest());
       return p;
@@ -505,9 +506,12 @@
     function pushTrophy(url, facingLeft){
       if (!url || !isLoadedImage(url)) return; // rule: no thumbnail when source is missing
       appendChain = appendChain
-        .then(()=>ensureCapacity())
         .then(()=>appendThumb(url, facingLeft))
+        .then(()=>ensureCapacity())
         .catch(()=>{});
+        // .then(()=>ensureCapacity())
+        // .then(()=>appendThumb(url, facingLeft))
+        // .catch(()=>{});
     }
 
     // ====================== Main Loop ======================
@@ -613,9 +617,9 @@
           ctx.drawImage(gImg, gx - w/2, gy - h/2, w, h);
         }
       } else {
-        ctx.beginPath(); ctx.arc(gx, gy, CELL*0.36*pulse, 0, Math.PI*2);
-        ctx.fillStyle = '#f59e0b'; ctx.fill();
-        ctx.lineWidth = 3; ctx.strokeStyle = '#111827'; ctx.stroke();
+        // ctx.beginPath(); ctx.arc(gx, gy, CELL*0.36*pulse, 0, Math.PI*2);
+        // ctx.fillStyle = '#f59e0b'; ctx.fill();
+        // ctx.lineWidth = 3; ctx.strokeStyle = '#111827'; ctx.stroke();
       }
 
       // Agents
@@ -633,12 +637,12 @@
             ctx.drawImage(img, ax - w/2, ay - h/2, w, h);
           }
         } else {
-          ctx.save();
-          ctx.beginPath(); ctx.arc(ax, ay, CELL*0.38, 0, Math.PI*2);
-          ctx.shadowColor = a.color; ctx.shadowBlur = 12;
-          ctx.fillStyle = a.color; ctx.fill();
-          ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = '#111827'; ctx.stroke();
-          ctx.restore();
+        //   ctx.save();
+        //   ctx.beginPath(); ctx.arc(ax, ay, CELL*0.38, 0, Math.PI*2);
+        //   ctx.shadowColor = a.color; ctx.shadowBlur = 12;
+        //   ctx.fillStyle = a.color; ctx.fill();
+        //   ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = '#111827'; ctx.stroke();
+        //   ctx.restore();
         }
       }
 
