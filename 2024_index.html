@@ -1,0 +1,991 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta property="og:url" content="https://www.hanmiu.cc" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="한미유치원" />
+<meta property="og:description" content="‘놀이는 어린이의 삶’이라고 말해온 역사 · 문화 · 환경" />
+<meta property="og:image" content="https://www.hanmiu.cc/images/logotype/preview.jpg" />
+
+<title>한미유치원</title>
+<link rel="icon" type="image/png" href="./images/logotype/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Song+Myung&display=swap" rel="stylesheet">
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SQRZJBQ06L"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-SQRZJBQ06L');
+</script>
+
+<style>
+  body {
+    margin: 0;
+    font-size: 14px;
+    background-color: white;
+  }
+  
+  a {
+    color: black;
+    text-decoration: none;
+    border-bottom: 1px solid black;
+    /*
+    border-style: solid;
+    border-image: linear-gradient(90deg, cyan, #dd04dd) 30;
+    transition: 0.2s;
+    border-width: 0px 0px 1px 0px;
+    */
+    transition: 0.2s;
+  }
+  
+  a.no-underline {
+    border-width: 0px;
+    background-color: transparent;
+  }
+  
+  a:hover {
+    background-color: #bdf8ff;
+    /* text-shadow: 0px 0px 5px #95f3ff; */
+  }
+  
+  a.no-underline:hover {
+    background-color: transparent;
+  }
+  
+  a:visited {
+    color: black;
+  }
+  
+  #stage {
+    margin: auto;
+    max-width: 1024px;
+    overflow: hidden;
+  }
+  
+  #pebbles {
+    position: relative;
+    width: 100%;
+    background-color: white;
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+  
+  #bg3d {
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    opacity: 0;
+    transition: opacity 1s ease-in-out, left 5s ease-in-out;
+  }
+  
+  .pebble {
+    position: relative;
+    box-sizing: border-box;
+    font-family: 'Noto Serif KR', serif;
+    height: 200px;
+    overflow: hidden;
+    /* border-bottom: 1px solid #cecece; */
+    border-style: solid;
+    border-image: linear-gradient(90deg, cyan, #dd04dd) 30;
+    transition: 0.2s;
+    border-width: 0px 0px 1px 0px;
+  }
+  
+  .pebble .layer {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  .pebble .subject {
+    /*
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    font-size: 3rem;
+    font-weight: 400;
+    */
+    position: absolute;
+    /* left: 1rem; */
+    left: 1.8rem;
+    top: 2rem;
+    font-size: 2.7rem;
+    font-weight: 400;
+  }
+  
+  .pebble .description {
+    position: absolute;
+    /*left: 1.5rem;*/
+    left: 2rem;
+    top: 6rem;
+    /* font-size: 1.5rem; */
+    font-size: 1.25rem;
+    font-weight: 200;
+  }
+  
+  .pebble #description-logo {
+    /*
+    position: relative;
+    display: flex;
+    margin-top: 6.5rem;
+    font-size: 1.5rem;
+    justify-content: center;
+    */
+    position: relative;
+    display: flex;
+    margin-top: 6.5rem;
+    font-size: 1.35rem;
+    justify-content: center;
+  }
+  
+  .pebble .touch {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  
+  #info {
+    display: none;
+    position: fixed;
+    right: 0px;
+    top: 0px;
+  }
+  
+  #detail {
+    visibility: hidden;
+    width: 100%;
+    height: 0;
+    font-family: 'Noto Serif KR', serif;
+    background-color: white;
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+  
+  #detail #header {
+    position: fixed;
+    display: flex;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    max-width: 1024px;
+    height: 100px;
+    background-color: white;
+    z-index: 100;
+    cursor: pointer;
+    
+    border-style: solid;
+    border-image: linear-gradient(90deg, cyan, #dd04dd) 30;
+    transition: 0.2s;
+    border-width: 0px 0px 1px 0px;
+  }
+  
+  #detail #header #back-arrow{
+    width: 40px;
+    height: 100px;
+    padding-left: 1rem;
+    padding-top: 1.5rem;
+    font-size: 2rem;
+    color: #989898;
+  }
+  
+  #detail #header #title {
+    margin-top: 1rem;
+    font-size: 2.7rem;
+  }
+  
+  #detail #header #logo {
+    /* transform: translate(-10px, -10px); */
+  }
+  
+  #detail #content {
+    margin-top: 100px;
+    font-size: 1.5rem;
+    line-height: 2.25rem;
+    padding: 2rem;
+  }
+  
+  #detail #content .subtle {
+    font-size: 1.25rem;
+    line-height: 1.875rem;
+    word-break: break-all;
+  }
+  
+  #detail #content .quote {
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: #6a6a6a;
+    word-break: break-all;
+    /* border-left: 1px dashed #b5b5b5; */
+  }
+  
+  #detail #content strong {
+    display: inline;
+    background-image: linear-gradient(90deg, yellow, cyan);
+    border-radius: 5px;
+  }
+  
+  #detail #content ul.leaf {
+    list-style: url('./images/symbols/leaf01.svg');
+  }
+  
+  #detail #content ul.flower {
+    list-style: url('./images/symbols/flower01.svg');
+  }
+  
+  #detail #content ul.musical {
+   list-style: url('./images/symbols/musical_note_01.svg');
+  }
+  
+  #detail #content li {
+    margin-bottom: 1rem;
+    margin-left: -1em;
+  }
+  
+  #detail #content li.bambini {
+    margin-bottom: 1rem;
+    font-family: 'Song Myung', serif;
+  }
+  
+  #detail #content span.bambini {
+    font-family: 'Song Myung', serif;
+  }
+  
+  #detail #content .full {
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  #detail #content audio {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  #musical {
+    display: block;
+    margin: auto;
+    width: 75%;
+    cursor: pointer;
+    image-rendering: pixelated;
+    transition: opacity 1s;
+  }
+  
+  .iframe-container {
+    position: relative;
+    width: 100%;
+    height: 250px;
+  }
+  
+  .iframe-container .video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #footer {
+    /* padding-top: 1rem;  */
+    /* padding-bottom: 1rem; */
+    font-family: 'Noto Serif KR', serif;
+    line-height: 1.5rem;
+  }
+
+  #footer .subject {
+    padding-left: 1.8rem;
+    margin-top: 2rem;
+    font-size: 2rem;
+  }
+  
+  #footer .tel {
+    padding-left: 2rem;
+    margin-top: 1rem;
+    font-size: 1rem;
+  }
+  
+  #footer .address {
+    padding-left: 2rem;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  #footer .notice {
+    padding-left: 2rem;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  @media print {
+    #detail #header {
+      position: absolute;
+      left: 0px !important;
+    }
+    
+    img {
+      page-break-inside: avoid;
+    }
+  }
+</style>
+<body>
+  <div id="stage">
+    <div id="pebbles">
+      <div id="bg3d"></div>
+      <div class="pebble">
+        <canvas class="layer" id="c-hanmi" ></canvas>
+        <div id="description-logo"><div id="phrase">‘놀이는 어린이의 삶’이라고<br>말해온 역사 · 문화 · 환경</div></div>
+        <div class="touch" id="t-hanmi"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-admission" ></canvas>
+        <div class="subject">입학</div>
+        <div class="description">2025학년도 입학 안내</div>
+        <div class="touch" id="t-admission"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-thought"></canvas>
+        <div class="subject">생각</div>
+        <div class="description">한미유치원의 교육에 관한 생각</div>
+        <div class="touch" id="t-thought"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-about_play" ></canvas>
+        <div class="subject">놀이</div>
+        <div class="description">한미유치원의 풍요롭고<br>재미있는 놀이</div>
+        <div class="touch" id="t-about_play"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-playground"></canvas>
+        <div class="subject">디지털 놀이터</div>
+        <div class="description">어린이의 놀이를 지원하기 위한<br>건강한 미디어</div>
+        <div class="touch" id="t-playground"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-parent"></canvas>
+        <div class="subject">부모 참여</div>
+        <div class="description">공유 모임, 참여 수업</div>
+        <div class="touch" id="t-parent"></div>
+      </div>
+      <div class="pebble" style="display: none">
+        <canvas class="layer" id="c-covid19"></canvas>
+        <div class="subject">코로나19 대응</div>
+        <div class="description">현 상황의 대안, 원격 수업 경험</div>
+        <div class="touch" id="t-covid19"></div>
+      </div>
+      <div class="pebble">
+        <canvas class="layer" id="c-study"></canvas>
+        <div class="subject">연구</div>
+        <div class="description">현장 연구, 교사 연수</div>
+        <div class="touch" id="t-study"></div>
+      </div>
+      <div id="footer">
+        <div class="subject">문의</div>
+        <div class="tel"><a href="tel:031-975-6567">031-975-6567</a>, <a href="tel:031-976-6567">031-976-6567</a></div>
+        <div class="address"><a href="https://www.google.com/maps/place/%ED%95%9C%EB%AF%B8%EC%9C%A0%EC%B9%98%EC%9B%90/@37.6835995,126.7720682,3a,75y,246.71h,88.2t/data=!3m6!1e1!3m4!1sZsMn1vavuVv2dQoIrgyJXw!2e0!7i13312!8i6656!4m5!3m4!1s0x357c8fe61a842b73:0xe9ca1a051e9682d7!8m2!3d37.6835187!4d126.7717634" target="_blank">경기도 고양시 일산서구 고양대로 686-8</a></div>
+        <div class="notice"><a href="https://docs.google.com/document/d/1TBc-xMdBGwZKq9SxyNhGSeDEgfPRBM_5uZZPlRgb_qQ/edit?usp=sharing" target="_blank">그 밖의 공지사항</a>, <a href="https://docs.google.com/document/d/1iwbgzLtPogFxp73XsFKu897Y_taZKGcZSIVRtaopnEI/edit?usp=sharing" target="_blank">각종 양식</a></div>
+      </div>
+    </div>
+    <div id="detail">
+      <div id="header">
+        <div id="back-arrow">←</div>
+        <div id="title"></div>
+      </div>
+      <div id="content">
+      </div>
+    </div>
+  </div>
+  <div id="info">:-)</div>
+  <audio id="hanmi_song" style="width: 100%; display: none;" src="./music/hanmi_song.mp3" controls></audio>
+</body>
+<script>
+  let html = {};
+</script>
+<script src="./javascripts/util.js"></script>
+<script src="./javascripts/d.js"></script>
+<script src="./javascripts/critter_racing.js"></script>
+<script src="./javascripts/hanmi_base.js"></script>
+<script src="./javascripts/hanmi_history.js"></script>
+<script src="./javascripts/hanmi_admission.js"></script>
+<script src="./javascripts/hanmi_thought.js"></script>
+<script src="./javascripts/hanmi_about_play.js"></script>
+<script src="./javascripts/hanmi_playground.js"></script>
+<script src="./javascripts/hanmi_parent.js"></script>
+<script src="./javascripts/hanmi_covid19.js"></script>
+<script src="./javascripts/hanmi_study.js"></script>
+<script src="./javascripts/hanmi_musical.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+<script>
+  function css() {
+    let domStyle = document.getElementById('domStylee');
+    if (domStyle) {
+      document.body.removeChild(domStyle);
+      return;
+    }
+    domStyle = document.createElement("style");
+    domStyle.setAttribute('id', 'domStylee');
+    domStyle.append(
+      ['* { color:#0f0!important;outline:solid #f00 1px!important; background-color: rgba(255,0,0,.2) !important; }'],
+      ['* * { background-color: rgba(0,255,0,.2) !important; }'],
+      ['* * * { background-color: rgba(0,0,255,.2) !important; }'],
+      ['* * * * { background-color: rgba(255,0,255,.2) !important; }'],
+      ['* * * * * { background-color: rgba(0,255,255,.2) !important; }'],
+      ['* * * * * * { background-color: rgba(255,255,0,.2) !important; }'],
+      ['* * * * * * * { background-color: rgba(255,0,0,.2) !important; }'],
+      ['* * * * * * * * { background-color: rgba(0,255,0,.2) !important; }'],
+      ['* * * * * * * * * { background-color: rgba(0,0,255,.2) !important; }'].join()
+    );
+    document.body.appendChild(domStyle);
+  }
+  //css();
+  
+  let el_bg3d = document.querySelector('#bg3d');
+  let el_pebbles = document.querySelector('#pebbles');
+  let el_detail = document.querySelector('#detail');
+  let el_detail_header = document.querySelector('#detail #header');
+  let el_detail_header_title = document.querySelector('#detail #header #title');
+  let el_detail_content = document.querySelector('#detail #content');
+  let el_footer = document.querySelector('#footer');
+  let audio_hanmi_song = document.querySelector('#hanmi_song');
+
+  let el_info = document.querySelector('#info');
+  
+  let ctx_hanmi = document.querySelector('#c-hanmi').getContext('2d');
+  let ctx_admission = document.querySelector('#c-admission').getContext('2d');
+  let ctx_thought = document.querySelector('#c-thought').getContext('2d');
+  let ctx_about_play = document.querySelector('#c-about_play').getContext('2d');
+  let ctx_playground = document.querySelector('#c-playground').getContext('2d');
+  let ctx_parent = document.querySelector('#c-parent').getContext('2d');
+  let ctx_covid19 = document.querySelector('#c-covid19').getContext('2d');
+  let ctx_study = document.querySelector('#c-study').getContext('2d');
+  
+  let eX = 300;
+  let eY = 100;
+  let is_showing_detail = false;
+  
+  let world_tempo = 1;
+  
+  let page_titles = {
+    'hanmi': '역사 문화 환경',
+    'admission': '입학',
+    'thought': '생각',
+    'about_play': '놀이',
+    'playground': '디지털 놀이터',
+    'parent': '부모 참여',
+    'covid19': '코로나19 대응',
+    'study': '연구',
+  };
+  
+  let ctxs = [
+    ctx_hanmi, ctx_admission, ctx_thought, ctx_about_play, ctx_playground, ctx_parent, ctx_covid19, ctx_study
+  ];
+  
+  let params = new URLSearchParams(location.search.slice(1));
+  
+  let last_focused_id = '';
+  let timeout_id = 0;
+  let current_hanmi = null;
+  
+  let biped_classes = [Biped, Quadruped, Worm];
+  let biped_classes_for_shuffle = biped_classes.map(x => x);
+  shuffle(biped_classes_for_shuffle);
+  let current_biped_class = biped_classes_for_shuffle[0];
+  
+  function focus_by(id) {
+    if(id) {
+      let iY = 0;
+      switch(id) {
+        case 't-admission':
+          current_loop = loop_admission;
+          current_hanmi = hanmi_admission;
+          iY = 1;
+          break;
+        case 't-thought':
+          current_loop = loop_thought;
+          current_hanmi = hanmi_thought;
+          iY = 2;
+          break;
+        case 't-about_play':
+          current_loop = loop_about_play;
+          current_hanmi = hanmi_about_play;
+          iY = 3;
+          break;
+        case 't-playground':
+          current_loop = loop_playground;
+          current_hanmi = hanmi_playground;
+          iY = 4;
+          break;
+        case 't-parent':
+          current_loop = loop_parent;
+          current_hanmi = hanmi_parent;
+          iY = 5;
+          break;
+        case 't-covid19':
+          current_loop = loop_covid19;
+          current_hanmi = hanmi_covid19;
+          iY = 6;
+          break;
+        case 't-study':
+          current_loop = loop_study;
+          current_hanmi = hanmi_study;
+          iY = 7;
+          break;
+      }
+      if(current_hanmi) {
+        current_hanmi.wait = 120;  
+      }
+
+      if(id !== last_focused_id) {
+        el_bg3d.style.opacity = 0;
+        el_bg3d.style.left = last_width + 'px';
+        clearTimeout(timeout_id);
+        timeout_id = setTimeout(() => {
+          el_bg3d.style.left = 0 + 'px';
+          el_bg3d.style.top = iY * 200 + 'px';
+          el_bg3d.style.opacity = 1;
+        }, 5000);
+      }
+      last_focused_id = id;  
+    }
+  }
+  
+  function touchstart(e) {
+    if(e.targetTouches) {
+      eX = e.targetTouches[0].pageX;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX;
+      eY = e.pageY;
+    }
+    
+    focus_by(e.target.id);
+    
+    hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, eY - 200], 3, 200, 100);
+    hanmi_base.wait = 120;
+    hanmi_base.wait_dur = hanmi_base.wait;
+  }
+  
+  function touchmove(e) {
+    let rect = e.target.getBoundingClientRect();
+    if(e.targetTouches) {
+      e.preventDefault();
+      eX = e.targetTouches[0].pageX - rect.x;
+      eY = e.targetTouches[0].pageY;
+	}
+    else {
+      eX = e.pageX - rect.x;
+      eY = e.pageY;
+    }
+    eX = Math.min(eX, 1024 - 150);
+    
+    hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, eY - 200], 3, 150, 100);
+    hanmi_base.wait = 120;
+    hanmi_base.wait_dur = hanmi_base.wait;
+    if(Math.abs(hanmi_base.scale - hanmi_base.to_scale) < 0.01) {
+      hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
+    }
+    
+    focus_by(e.target.id);
+  }
+  
+  function touchend(e) {
+    
+  }
+  
+  function show_detail(b, title) {
+    is_showing_detail = b;
+    let rect = el_pebbles.getBoundingClientRect();
+    if(b) {
+      el_detail_header_title.innerHTML = page_titles[title];
+      el_detail_content.innerHTML = html[title];
+      last_scrollY = window.scrollY;
+      
+      el_pebbles.style.visibility = 'hidden';
+      el_pebbles.style.height = '0';
+      el_pebbles.style.opacity = 0;
+      
+      el_detail_header.style.left = `${rect.left}px`;
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        el_detail.style.opacity = 1;
+        el_detail.style.visibility = 'unset';
+        el_detail.style.height = 'unset';  
+      }, 250);
+      
+      if(title === 'about_play') {
+        audio_hanmi_song.style.display = 'block';
+        document.querySelector('#musical_container').appendChild(ctx_musical.canvas);
+        document.querySelector('#song_container').appendChild(audio_hanmi_song);
+        document.querySelector('#play_as_life').addEventListener('click', (e) => {
+          audio_hanmi_song.play();
+          if(hanmi_musical.audio_ctx.state === 'suspended') {
+            hanmi_musical.audio_ctx.resume();
+            shuffle(hanmi_musical.ptcls);
+          }
+        });
+        ctx_musical.canvas.addEventListener('click', (e) => {
+          audio_hanmi_song.play();
+          if(hanmi_musical.audio_ctx.state === 'suspended') {
+            hanmi_musical.audio_ctx.resume();
+            shuffle(hanmi_musical.ptcls);
+          }
+        });
+      }
+    }
+    else {
+      el_detail.style.visibility = 'hidden';
+      el_detail.style.height = '0';
+      el_detail.style.opacity = 0;
+      setTimeout(() => {
+        el_pebbles.style.opacity = 1;
+        el_pebbles.style.visibility = 'unset';
+        el_pebbles.style.height = 'unset';
+        window.scrollTo(0, last_scrollY);
+        hanmi_history.respawn();
+      }, 250);
+    }
+  }
+  
+
+  
+  let hanmi_base = new HanmiBase();
+  let hanmi_history = new HanmiHistory();
+  let hanmi_admission = new HanmiAdmission();
+  let hanmi_thought = new HanmiThought();
+  let hanmi_about_play = new HanmiAboutPlay();
+  let hanmi_playground = new HanmiPlayground();
+  let hanmi_parent = new HanmiParent();
+  let hanmi_covid19 = new HanmiCovid19();
+  let hanmi_study = new HanmiStudy();
+  let hanmi_musical = new HanmiMusical();
+  
+  let current_loop = null;
+  let current_ctx = null;
+  let scroll_wait = 30;
+  let last_scrollY = 0;
+  let last_width = 0;
+  
+  let ctx_musical = document.createElement('canvas').getContext('2d');
+  ctx_musical.canvas.id = 'musical';
+  ctx_musical.canvas.width = 512;
+  ctx_musical.canvas.height = 512;
+  
+  function layout() {
+    let rect_pebbles = el_pebbles.getBoundingClientRect();
+    el_detail_header.style.left = `${rect_pebbles.left}px`;
+    if(last_width !== rect_pebbles.width) {
+      let els = document.querySelectorAll('.pebble');
+    
+      for(let i = 0; i < els.length; i++) {
+        let el = els[i];
+        let rect = el.getBoundingClientRect();
+        let canvas = el.querySelector('.layer');
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+      last_width = rect_pebbles.width;
+    }
+    
+    renderer.setSize(rect_pebbles.width, 200);
+    uniforms.resolution.value = new THREE.Vector2(rect_pebbles.width, 200);
+    camera.aspect = rect_pebbles.width / 200;
+    camera.updateProjectionMatrix();
+    
+    hanmi_history.draw(ctx_hanmi);
+    hanmi_admission.draw(ctx_admission);
+  }
+  
+  function on_scroll_end() {
+    if(!is_showing_detail) {
+      let y = scrollY + innerHeight / 2 - 200;
+      let iY = Math.max(y / 200 | 0, 0);
+      
+      hanmi_base.trail = buildRandomCurve([hanmi_base.x, hanmi_base.y], [eX, iY * 200 + 100], 3, 150, 100);
+      hanmi_base.wait = 120;
+      hanmi_base.wait_dur = hanmi_base.wait;
+      if(Math.abs(hanmi_base.scale - hanmi_base.to_scale) < 0.01) {
+        hanmi_base.to_scale = 0.3 + Math.random() * 0.3;  
+      }
+      
+      let ids = Array.prototype.slice.call(el_pebbles.querySelectorAll('.touch')).slice(1, 8).map(el => el.id);
+      focus_by(ids[iY]);
+    }
+  }
+  
+  function loop_hanmi() {
+    hanmi_history.update(ctx_hanmi);
+    hanmi_history.draw(ctx_hanmi);
+  }
+  
+  function loop_admission() {
+    hanmi_admission.update(ctx_admission);
+    hanmi_admission.draw(ctx_admission);
+    current_ctx = ctx_admission;
+    
+    if(hanmi_admission.wait > 0) {
+      hanmi_thought.update(ctx_thought);
+      hanmi_thought.draw(ctx_thought);  
+    }
+  }
+  
+  function loop_thought() {
+    hanmi_thought.update(ctx_thought);
+    hanmi_thought.draw(ctx_thought);
+    current_ctx = ctx_thought;
+    
+    if(hanmi_thought.wait > 0) {
+      hanmi_admission.update(ctx_admission);
+      hanmi_admission.draw(ctx_admission);
+      hanmi_about_play.update(ctx_about_play);
+      hanmi_about_play.draw(ctx_about_play);
+    }
+  }
+  
+  function loop_about_play() {
+    hanmi_about_play.update(ctx_about_play);
+    hanmi_about_play.draw(ctx_about_play);
+    current_ctx = ctx_about_play;
+    
+    if(hanmi_about_play.wait > 0) {
+      hanmi_thought.update(ctx_thought);
+      hanmi_thought.draw(ctx_thought);
+      hanmi_playground.update(ctx_playground);
+      hanmi_playground.draw(ctx_playground);
+    }
+  }
+  
+  function loop_playground() {
+    hanmi_playground.update(ctx_playground);
+    hanmi_playground.draw(ctx_playground);
+    current_ctx = ctx_playground;
+    
+    if(hanmi_playground.wait > 0) {
+      hanmi_about_play.update(ctx_about_play);
+      hanmi_about_play.draw(ctx_about_play);
+      hanmi_parent.update(ctx_parent);
+      hanmi_parent.draw(ctx_parent);
+    }
+  }
+  
+  function loop_parent() {
+    hanmi_parent.update(ctx_parent);
+    hanmi_parent.draw(ctx_parent);
+    current_ctx = ctx_parent;
+    
+    if(hanmi_parent.wait > 0) {
+      hanmi_playground.update(ctx_playground);
+      hanmi_playground.draw(ctx_playground);
+      hanmi_covid19.update(ctx_covid19);
+      hanmi_covid19.draw(ctx_covid19);
+    }
+  }
+  
+  function loop_covid19() {
+    hanmi_covid19.update(ctx_covid19);
+    hanmi_covid19.draw(ctx_covid19);
+    current_ctx = ctx_covid19;
+    
+    if(hanmi_covid19.wait > 0) {
+      hanmi_parent.update(ctx_parent);
+      hanmi_parent.draw(ctx_parent);
+      hanmi_study.update(ctx_study);
+      hanmi_study.draw(ctx_study);
+    }
+  }
+  
+  function loop_study() {
+    hanmi_study.update(ctx_study);
+    hanmi_study.draw(ctx_study);
+    current_ctx = ctx_study;
+    
+    if(hanmi_study.wait > 0) {
+      hanmi_covid19.update(ctx_covid19);
+      hanmi_covid19.draw(ctx_covid19);
+    }
+  }
+  
+  function loop(timestamp) {
+    if(!is_showing_detail) {
+      uniforms.time.value = timestamp / 1000;
+      if(hanmi_history.frame_count < 1000) {
+        loop_hanmi();
+      }
+    
+      hanmi_base.update(ctx_hanmi);
+      if(current_loop) {
+        current_loop();
+      }
+      //renderer.render( scene_bg, camera_bg );
+      //thing.rotation.x += 0.01;
+      //thing.rotation.z += 0.01;
+      renderer.render( scene, camera );
+      
+      if(scroll_wait > 0) {
+        scroll_wait -= 1;
+        if(scroll_wait === 0) {
+          on_scroll_end();
+        }
+      }
+    }
+    
+    if(!audio_hanmi_song.paused) {
+      hanmi_musical.update(ctx_musical);
+      hanmi_musical.draw(ctx_musical);
+      ctx_musical.canvas.style.opacity = 1;
+    }
+    else {
+      ctx_musical.canvas.style.opacity = 0;
+    }
+    
+    requestAnimationFrame(loop);
+  }
+  
+  let vertex_shader = `
+varying vec2 vUv;
+
+void main()	{
+
+    vUv = uv;
+
+    gl_Position = vec4( position, 1.0 );
+
+}
+  `;
+  let fragment_shader = `
+varying vec2 vUv;
+
+uniform float time;
+uniform vec2 resolution;
+
+void main()	{
+
+    vec2 p = - 1.0 + 2.0 * vUv;
+    p.x *= resolution.x / resolution.y;
+    float d = length(p + vec2(resolution.x / resolution.y, 0.0));
+    float d2 = 1.0 / d + (0.5 + 0.5*sin(d * 3.141592 * 3.0 - time)) * 0.2;
+
+    vec3 c0 = vec3(0.0, 1.0, 0.4);
+    vec3 c1 = vec3(1.0, 0.4, 0.1);
+
+    //d2 = step(d2, 0.5);
+
+    vec3 c = mix(c0, c1, d * vUv.x);
+    gl_FragColor = vec4(c, 0.5);
+}
+  `;
+  
+  let scene_bg = new THREE.Scene();
+  let camera_bg = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+  let scene = new THREE.Scene();
+  let camera = new THREE.PerspectiveCamera( 75, 1, 0.1, 1000 );
+  camera.position.z = 5;
+  
+  let geometry = new THREE.PlaneBufferGeometry( 2, 2 );
+  let renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+  el_bg3d.appendChild(renderer.domElement);
+  let uniforms = {
+    time: { value: 1.0 },
+    resolution: { value: new THREE.Vector2(1024, 200) },
+  };
+  let material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: vertex_shader,
+    fragmentShader: fragment_shader
+  });
+  let mesh = new THREE.Mesh( geometry, material );
+  scene_bg.add( mesh );
+  
+  /*
+  let light = new THREE.PointLight( 0xffffff, 1, 100 );
+  light.position.set( 50, 50, 50 );
+  scene.add( light );
+  */
+  let ambientLight = new THREE.AmbientLight( 0xb7b7b7 ); // soft white light
+  scene.add( ambientLight );
+  
+  let directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+  directionalLight.position.set(0, 5, 5);
+  scene.add( directionalLight );
+
+  //let icosahedron = new THREE.IcosahedronBufferGeometry(1, 2);
+  let cone = new THREE.ConeBufferGeometry( 1, 2, 32 );
+  let mat = new THREE.MeshPhongMaterial( { color: 0xfaa55d } );
+  let thing = new THREE.Mesh( cone, mat );
+  scene.add( thing );
+  
+  camera.lookAt(new THREE.Vector3(0, 4, 0));
+  thing.position.y = 1;
+  
+  function init() {
+    
+    let title = params.get('page');
+    if(title) {
+      show_detail(true, title);
+    }
+    
+    window.addEventListener('mousedown', touchstart);
+    window.addEventListener('mouseup', touchend); 
+    window.addEventListener('mousemove', touchmove);
+
+    window.addEventListener('touchstart', touchstart);
+    window.addEventListener('touchend', touchend);
+    window.addEventListener('touchmove', touchmove);
+    
+    window.addEventListener('scroll', (e) => {
+      scroll_wait = 10;
+    });
+
+    window.addEventListener('contextmenu', (e) => {
+      //e.preventDefault();
+      //e.stopPropagation();
+    });
+
+    window.addEventListener('resize', layout);
+    window.addEventListener('oreintationchange', layout);
+    
+    document.querySelectorAll('.touch').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        el_info.textContent = 'clicked: ' + e.target.id;
+        let title = e.target.id.split('t-')[1];
+        //show_detail(true, title);
+        window.location.href = window.location.origin + `?page=${title}`;
+      });
+    });
+    
+    el_detail_header.addEventListener('click', (e) => {
+      show_detail(false, '');
+    });
+    
+    audio_hanmi_song.addEventListener('play', (e) => {
+      if(hanmi_musical.audio_ctx.state === 'suspended') {
+        hanmi_musical.audio_ctx.resume();
+        shuffle(hanmi_musical.ptcls);
+      }
+    });
+    
+    audio_hanmi_song.addEventListener('touchstart', (e) => {
+      if(hanmi_musical.audio_ctx.state === 'suspended') {
+        hanmi_musical.audio_ctx.resume();
+        shuffle(hanmi_musical.ptcls);
+      }
+    });
+    
+    current_loop = loop_admission;
+    
+    //show_detail(true, 'about_play');
+    
+    layout();
+    loop();
+  }
+  
+  init();
+</script>
