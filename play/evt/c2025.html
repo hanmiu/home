@@ -333,11 +333,31 @@
   // ========================= 뷰 전환 & 이벤트 =========================
   function changeViewMode(mode){
     if(mode==='map'){
-      mapState = MapState.IDLE; el.stage.style.display='none'; el.stage.setAttribute('aria-hidden','true'); el.map.style.display='block'; if(el.videoBg.srcObject){ el.videoBg.pause(); }
+      mapState = isTraceOn ? MapState.FOLLOW : MapState.IDLE;
+      el.stage.style.display='none';
+      el.stage.setAttribute('aria-hidden','true');
+      el.map.style.display='block';
+      if(el.videoBg.srcObject){ el.videoBg.pause(); }
       if(el.backToMap) el.backToMap.style.display='none';
+
+      // 🔧 핵심: 숨겼던 Leaflet 컨테이너 리사이즈/재그리기
+      requestAnimationFrame(() => {
+        map.invalidateSize();                              // 컨테이너 사이즈 재계산
+        if (latlngHere) {
+          map.setView(latlngHere, map.getZoom(), {animate:false}); // 마지막 위치로 센터 복구
+          markerRange.setLatLng(latlngHere);               // 오버레이 위치도 확실히 동기화
+          markerHere.setLatLng(latlngHere);
+          markerAccuracy.setLatLng(latlngHere);
+        }
+        displayInfo(); // 안내문도 갱신
+      });
     } else if(mode==='3d'){
-      mapState = MapState.AR; if(!isVideoInitiated){ initCamera(); }
-      el.stage.style.display='block'; el.stage.setAttribute('aria-hidden','false'); el.map.style.display='none'; if(el.videoBg.srcObject){ el.videoBg.play(); }
+      mapState = MapState.AR;
+      if(!isVideoInitiated){ initCamera(); }
+      el.stage.style.display='block';
+      el.stage.setAttribute('aria-hidden','false');
+      el.map.style.display='none';
+      if(el.videoBg.srcObject){ el.videoBg.play(); }
       if(el.backToMap) el.backToMap.style.display='inline-flex';
     }
   }
