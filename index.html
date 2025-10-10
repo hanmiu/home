@@ -800,8 +800,15 @@
       return Array.from(text);
     }
 
-    makeGlitter('#motto', { delayMs: 1000, mode: 'random', duration: 1.5, charDelay: 0.2 });
-    makeGlitter('#hce', { delayMs: 3500, mode: 'random', duration: 1.5, charDelay: 0.2 });
+    if(Math.random() > 0.5) {
+      makeGlitter('#motto', { delayMs: 1000, mode: 'rainbow', duration: 1.5, charDelay: 0.2 });
+      makeGlitter('#hce', { delayMs: 3500, mode: 'gold', duration: 1.5, charDelay: 0.2 });
+    }
+    else {
+      makeGlitter('#motto', { delayMs: 1000, mode: 'gold', duration: 1.5, charDelay: 0.2 });
+      makeGlitter('#hce', { delayMs: 3500, mode: 'rainbow', duration: 1.5, charDelay: 0.2 });
+    }
+    
   </script>
 </body>
 </html>
