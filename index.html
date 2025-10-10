@@ -23,7 +23,7 @@
   
   body {
     font-family: 'Noto Serif KR', serif;
-    background-color: #ffffff;
+    background-color: #F0EEE7;
     color: #1a1a1a;
     line-height: 1.7;
     overflow-x: hidden;
@@ -36,7 +36,7 @@
     left: 0;
     right: 0;
     height: 60px;
-    background-color: rgba(255, 255, 255, 0.98);
+    background-color: #F0EEE7;;
     backdrop-filter: blur(20px);
     z-index: 1000;
     border-bottom: 1px solid #e8e8e8;
@@ -168,7 +168,7 @@
   /* Hero Section with Canvas */
   .hero {
     position: relative;
-    min-height: 200px;
+    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -186,9 +186,10 @@
   }
   
   .hero-content {
-    position: relative;
+    /* position: relative;
     z-index: 2;
     max-width: 900px;
+    text-align: center; */
   }
   
   .hero h1 {
@@ -201,7 +202,7 @@
   
   /* Event Section */
   .event-section {
-    background-color: #fafafa;
+    background-color: #F0EEE7;
     border-bottom: 1px solid #e8e8e8;
   }
   
@@ -230,6 +231,7 @@
     background-color: white;
     padding: 40px;
     border: 1px solid #e8e8e8;
+    border-radius: 10px;
     margin-bottom: 40px;
   }
   
@@ -270,6 +272,7 @@
     text-align: center;
     transition: all 0.2s ease;
     border: 1px solid #000000;
+    border-radius: 10px;
     letter-spacing: 0.02em;
   }
   
@@ -303,6 +306,7 @@
     height: 0;
     overflow: hidden;
     border: 1px solid #e8e8e8;
+    border-radius: 10px;
   }
   
   .video-wrapper iframe {
@@ -385,7 +389,7 @@
   
   /* Creatures Section */
   .creatures-section {
-    background-color: #ffffff;
+    background-color: #F0EEE7;
   }
   
   .creatures-container {
@@ -403,7 +407,7 @@
   
   .creatures-image {
     width: 100%;
-    border: 1px solid #e8e8e8;
+    /* border: 1px solid #e8e8e8; */
     margin-bottom: 40px;
   }
   
@@ -422,6 +426,7 @@
     color: #000000;
     transition: all 0.2s ease;
     border: 1px solid #e8e8e8;
+    border-radius: 10px;
   }
   
   .creatures-link:hover {
@@ -557,13 +562,19 @@
   <!-- Main Content -->
   <main>
     <!-- Hero Section with Canvas -->
-    <section class="hero">
+    <!-- <section class="hero">
       <canvas id="c-hanmi"></canvas>
-      <div class="hero-content">
-        <h1>『놀이는 어린이의 삶』이라고<br>말해온 역사 · 문화 · 환경</h1>
-      </div>
-    </section>
+    </section> -->
+    <iframe
+      id="maze"
+      src="maze.html?cols=29&rows=15&wall=F0EEE7&path=FFFFFF"
+      style="border:0; width: 100%;"
+      height="200"
+    ></iframe>
 
+    <div class="hero">
+        <h1>“놀이는 어린이의 삶”이라고<br> 말해온 역사 · 문화 · 환경</h1>
+    </div>
     <!-- Event Section -->
     <section class="event-section">
       <div class="event-container">
@@ -622,6 +633,13 @@
     </section>
   </main>
 
+  <iframe
+    id="maze"
+    src="maze.html?cols=29&rows=13&agents=6&wall=F0EEE7&path=FFFFFF"
+    style="border:0; width: 100%;"
+    height="200"
+  ></iframe>
+
   <!-- Footer -->
   <footer>
     <div class="footer-container">
@@ -649,6 +667,7 @@
       }
     });
     
+    /*
     // Canvas Setup for Hero Animation
     const canvas = document.getElementById('c-hanmi');
     const ctx = canvas.getContext('2d');
@@ -709,6 +728,7 @@
     }
     
     animate();
+    */
   </script>
 </body>
 </html>
