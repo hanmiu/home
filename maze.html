@@ -3,15 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Maze · A* Multi-Agent (Iframe-ready, images & facing)</title>
+  <title>Maze · A* Multi-Agent (Iframe-ready, images & facing + footer)</title>
   <style>
+    :root { --footer-h: 64px; --thumb: 64px; }
     html, body { height: 100%; margin: 0; }
-    body { display: flex; align-items: center; justify-content: center; background: #F0EEE7; }
+    /* Body is a vertical stack: canvas then footer, centered horizontally */
+    body { display: flex; flex-direction: column; align-items: center; background: #F0EEE7; color: #111; }
+    /* #main should NOT stretch; keep it snug so the footer sits right under the canvas */
+    #main { flex: 0 0 auto; display: flex; justify-content: center; width: 100%; }
     canvas { display: block; outline: none; touch-action: manipulation; image-rendering: auto; }
+    #footer {
+      height: var(--footer-h);
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 0 12px; overflow: hidden; width: 100%;
+      box-sizing: border-box; margin: 0; /* stick to canvas with no gap */
+    }
+    .footer-item {
+      width: var(--thumb); height: var(--thumb); flex: 0 0 auto; border-radius: 50%;
+      position: relative; opacity: 0; transform: scale(0.85);
+      transition: opacity .5s ease, transform .5s ease;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent;
+    }
+    .footer-item.pop-in { opacity: 1; transform: scale(1); }
+    .footer-item.fade-out { opacity: 0; transform: scale(0.95); }
+    .footer-item img.thumb {
+      width: 100%; height: 100%; object-fit: contain; display: block;
+      transform: none; transition: transform .25s ease;
+    }
+    .footer-item img.thumb.flip { transform: scaleX(-1); }
   </style>
 </head>
 <body>
-  <canvas id="maze" aria-label="interactive maze canvas" role="img"></canvas>
+  <div id="main">
+    <canvas id="maze" aria-label="interactive maze canvas" role="img"></canvas>
+  </div>
+  <div id="footer" aria-label="agents that passed the goal"></div>
+
   <script>
   (function(){
     'use strict';
@@ -42,6 +70,8 @@
 
     const seedParam = Q.get('seed'); // if absent -> use Math.random so each load is different
     const faceDir = (parseInt(def(Q.get('faceDir'), '1'),10) === 1); // 1 => mirror according to direction (agents+goal)
+    const footerHeight = clamp(parseInt(String(def(Q.get('footer_height'), '64')),10) || 64, 0, 400);
+    const spriteScale = clamp(parseFloat(String(def(Q.get('spriteScale'), '1.8'))) || 1.8, 0.2, 3.0);
 
     // Image list parameters
     let imgBase = (Q.get('imgBase') || '').trim();
@@ -175,8 +205,11 @@
     강하율_스파이더X.png,
     이시안_혼자 있는 것보단 친구들이랑 같이 있는 게 좋아!.png`.normalize('NFC');
 
-    // apply frame/letterbox color = wall
+    // apply colors and footer CSS vars
     document.body.style.background = wallColor;
+    document.documentElement.style.setProperty('--footer-h', footerHeight + 'px');
+    const thumbSize = Math.max(24, Math.min(64, footerHeight - 0)); // remove vertical padding gap
+    document.documentElement.style.setProperty('--thumb', thumbSize + 'px');
 
     // ====================== RNG (seeded optional) ======================
     let rand; // returns [0,1)
@@ -290,12 +323,14 @@
     // ====================== Canvas & Scaling ======================
     const canvas = document.getElementById('maze');
     const ctx = canvas.getContext('2d');
+    const footerEl = document.getElementById('footer');
     let scale = 1; // CSS logical scale to fit (contain)
 
     function layout(){
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       const vw = window.innerWidth; const vh = window.innerHeight;
-      scale = Math.min(vw / LOGICAL_W, vh / LOGICAL_H);
+      const availH = Math.max(1, vh - footerHeight);
+      scale = Math.min(vw / LOGICAL_W, availH / LOGICAL_H);
       const cssW = Math.floor(LOGICAL_W * scale);
       const cssH = Math.floor(LOGICAL_H * scale);
       canvas.style.width = cssW + 'px';
@@ -327,6 +362,7 @@
       }
       return entry || null;
     }
+    function isLoadedImage(url){ const v = imageCache.get(url); return !!(v && v.width); }
 
     // Cycle-based URL selection
     function selectGoalImageURL(){
@@ -350,7 +386,7 @@
     }
 
     // Initial goal
-    let goal = (function(){ const c={x:(cols>>1), y:(rows>>1)}; return (grid[c.y]&&grid[c.y][c.x]===0)?c:randomFreeCell(); })();
+    let goal = (function(){ const c={x:(cols>>1), y:(rows>>1)}; return (grid[c.y]&&grid[c.x]!==undefined && grid[c.y][c.x]===0)?c:randomFreeCell(); })();
     let goalVis = { x: goal.x, y: goal.y };
     let goalFacing = 'right';
     let goalImgURL = selectGoalImageURL();
@@ -438,6 +474,42 @@
     spawnAgents(AGENTS_TARGET);
     replanAll();
 
+    // ====================== Footer Trophy Queue ======================
+    let appendChain = Promise.resolve();
+    function fadeOutOldest(){
+      const el = footerEl.firstElementChild; if (!el) return Promise.resolve();
+      return new Promise((res)=>{
+        el.classList.add('fade-out');
+        const done = ()=>{ el.removeEventListener('transitionend', done); if (el.parentNode) el.parentNode.removeChild(el); res(); };
+        el.addEventListener('transitionend', done);
+        setTimeout(done, 700); // fallback safeguard
+      });
+    }
+    function ensureCapacity(){
+      // Remove just enough to make room for ONE new item
+      const count = footerEl.childElementCount;
+      const toRemove = Math.max(0, count - (AGENTS_TARGET - 1));
+      let p = Promise.resolve();
+      for (let i=0;i<toRemove;i++) p = p.then(()=>fadeOutOldest());
+      return p;
+    }
+    function appendThumb(url, facingLeft){
+      const item = document.createElement('div'); item.className='footer-item';
+      const img = document.createElement('img'); img.className='thumb'; img.alt='agent passed'; img.decoding='async'; img.loading='eager'; img.src=url;
+      if (facingLeft) img.classList.add('flip');
+      item.appendChild(img);
+      footerEl.appendChild(item);
+      // trigger pop-in on next frame
+      requestAnimationFrame(()=>{ item.classList.add('pop-in'); });
+    }
+    function pushTrophy(url, facingLeft){
+      if (!url || !isLoadedImage(url)) return; // rule: no thumbnail when source is missing
+      appendChain = appendChain
+        .then(()=>ensureCapacity())
+        .then(()=>appendThumb(url, facingLeft))
+        .catch(()=>{});
+    }
+
     // ====================== Main Loop ======================
     let lastTs = null; let rafId = 0;
     function frame(ts){
@@ -497,7 +569,12 @@
           const s = { x: Math.round(a.pos.x), y: Math.round(a.pos.y) };
           const p = astar(grid, s, goal); a.path=p; a.idx=p?1:0;
         }
-        if (!arrived) alive.push(a);
+        if (!arrived) {
+          alive.push(a);
+        } else {
+          // trophy: only if image exists & loaded
+          if (a.imgURL) pushTrophy(a.imgURL, a.facing==='left');
+        }
       }
       agents.length = 0; agents.push(...alive);
 
@@ -529,7 +606,7 @@
       if (gImg){
         const maxSize = CELL*0.9;
         const r = Math.min(maxSize / gImg.width, maxSize / gImg.height);
-        const w = gImg.width*r*2, h = gImg.height*r*2;
+        const w = gImg.width*r*spriteScale, h = gImg.height*r*spriteScale; // spriteScale applies here
         if (faceDir && goalFacing === 'left'){
           ctx.save(); ctx.translate(gx, gy); ctx.scale(-1,1); ctx.drawImage(gImg, -w/2, -h/2, w, h); ctx.restore();
         } else {
@@ -549,7 +626,7 @@
         if (img){
           const maxSize = CELL*0.9;
           const r = Math.min(maxSize / img.width, maxSize / img.height);
-          const w = img.width*r*2, h = img.height*r*2;
+          const w = img.width*r*spriteScale, h = img.height*r*spriteScale; // spriteScale applies here
           if (faceDir && a.facing==='left'){
             ctx.save(); ctx.translate(ax, ay); ctx.scale(-1,1); ctx.drawImage(img, -w/2, -h/2, w, h); ctx.restore();
           } else {
@@ -610,6 +687,9 @@
 
         // Test 8: faceDir default is 1
         logs.push({ test: 'faceDir default==1?', pass: faceDir === (parseInt(def(Q.get('faceDir'),'1'),10)===1) });
+
+        // Test 9: spriteScale clamp
+        logs.push({ test: 'spriteScale clamp', pass: spriteScale>=0.2 && spriteScale<=3.0, value: spriteScale });
       } catch (e){
         logs.push({ test:'harness error', pass:false, error: String(e && e.message || e) });
       }
