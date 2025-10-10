@@ -573,7 +573,7 @@
     ></iframe>
 
     <div class="hero">
-        <h1 style="font-family: 'Noto Serif KR';">“<span id="motto">놀이는 어린이의 삶</span>”이라고<br> 말해온 역사 · 문화 · 환경</h1>
+        <h1 style="font-family: 'Noto Serif KR';">“<span id="motto">놀이는 어린이의 삶</span>”이라고<br> 말해온 <span id="hce">역사 · 문화 · 환경</span></h1>
     </div>
     <!-- Event Section -->
     <section class="event-section">
@@ -673,177 +673,135 @@
         navOverlay.classList.remove('active');
       }
     });
-    
-    /*
-    // Canvas Setup for Hero Animation
-    const canvas = document.getElementById('c-hanmi');
-    const ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
-      const hero = document.querySelector('.hero');
-      canvas.width = hero.offsetWidth;
-      canvas.height = hero.offsetHeight;
-    }
-    
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    
-    // Placeholder canvas animation - replace with actual hanmi_base.js and hanmi_history.js scripts
-    // For now, a simple particle animation
-    const particles = [];
-    const particleCount = 30;
-    
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.radius = Math.random() * 2 + 1;
-        this.opacity = Math.random() * 0.5 + 0.2;
-      }
-      
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-      }
-      
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 0, 0, ${this.opacity})`;
-        ctx.fill();
-      }
-    }
-    
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
-    
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-      
-      requestAnimationFrame(animate);
-    }
-    
-    animate();
-    */
   </script>
   <script>
-/**
- * mottoGlitter(options)
- * options:
- *  - mode: 'rainbow' | 'gold'  (default 'rainbow')
- *  - duration: number (초, 기본 1.5)
- *  - delay: number (초, 기본 0.2) — 글자 간 지연
- */
-function mottoGlitter({ mode = 'rainbow', duration = 1.5, delay = 0.2 } = {}) {
-  const mottoEl = document.querySelector('#motto');
-  if (!mottoEl) return;
-  if (mottoEl.querySelector('.motto-letter')) return; // 중복 실행 방지
+    /**
+     * makeGlitter(target, options)
+     *  - target: CSS 선택자 문자열 또는 HTMLElement
+     *  - options:
+     *      mode: 'rainbow' | 'gold' | 'random'  (기본: 'random')
+     *      duration: number (초)                 (기본: 1.5)
+     *      charDelay: number (초, 글자 간 지연)  (기본: 0.2)
+     *      delayMs: number (ms, 시작 지연)       (기본: 0)
+     *
+     * 특징
+     *  - 폰트 로드(document.fonts.ready) 이후 delayMs만큼 기다렸다가 시작
+     *  - 1회 재생(무한 반복 X)
+     *  - 공백은 래핑하지 않음
+     *  - 접근성: 원문은 aria-label, 분할된 글자는 aria-hidden
+     *  - 동일 요소에 중복 적용 방지
+     */
+    function makeGlitter(target, {
+      mode = 'random',
+      duration = 1.5,
+      charDelay = 0.2,
+      delayMs = 0
+    } = {}) {
+      const el = typeof target === 'string' ? document.querySelector(target) : target;
+      if (!el) return;
+      if (el.querySelector('.glitter-letter')) return; // 이미 처리됨
 
-  const originalText = mottoEl.textContent;
-  mottoEl.setAttribute('aria-label', originalText);
-  mottoEl.setAttribute('role', 'text');
+      // 스타일 1회 주입
+      ensureGlitterStyles();
 
-  // 유니코드 그래프림 분해 (이모지/복합 문자 안전)
-  function splitGraphemes(text) {
-    try {
-      if (Intl && Intl.Segmenter) {
-        const seg = new Intl.Segmenter('ko', { granularity: 'grapheme' });
-        return Array.from(seg.segment(text), s => s.segment);
+      // 원문 확보 + 접근성
+      const originalText = el.textContent;
+      el.setAttribute('aria-label', originalText);
+      el.setAttribute('role', 'text');
+
+      // 유니코드 그래프림 분해(이모지 안전)
+      const segments = splitGraphemes(originalText);
+      const isWS = ch => /\s/.test(ch);
+      const letterCount = segments.reduce((n, ch) => n + (isWS(ch) ? 0 : 1), 0) || 1;
+
+      // 시작 함수: 실제로 span 래핑을 *시작 시점*에 수행 (조기 재생 방지)
+      const start = () => {
+        let seq = 0;
+        const isGold = mode === 'gold' || (mode === 'random' && Math.random() > 0.5);
+        const klass = isGold ? 'glitter-letter glitter-letter--gold'
+                            : 'glitter-letter glitter-letter--rainbow';
+
+        const html = segments.map(ch => {
+          if (isWS(ch)) return ch;
+          const hue = Math.round((seq / letterCount) * 360); // 무지개용
+          const escaped = ch.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const span = `<span class="${klass}" aria-hidden="true"
+                          style="--i:${seq};--h:${hue};
+                                --dur:${duration}s;--charDelay:${charDelay}s">${escaped}</span>`;
+          seq++;
+          return span;
+        }).join('');
+        el.innerHTML = html;
+      };
+
+      // DOM 준비 + 폰트 로드 이후에 delayMs 기다렸다가 시작
+      const run = () => {
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => setTimeout(start, delayMs))
+                              .catch(() => setTimeout(start, delayMs));
+        } else {
+          // 폰트 API 미지원 폴백
+          setTimeout(start, delayMs);
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run, { once: true });
+      } else {
+        run();
       }
-    } catch (_) {}
-    return Array.from(text);
-  }
-
-  const segments = splitGraphemes(originalText);
-  const isWhitespace = ch => /\s/.test(ch);
-  const letterCount = segments.reduce((n, ch) => n + (isWhitespace(ch) ? 0 : 1), 0) || 1;
-
-  // 스타일 주입(1회)
-  if (!document.getElementById('motto-glitter-style')) {
-    const style = document.createElement('style');
-    style.id = 'motto-glitter-style';
-    style.textContent = `
-      .motto-letter {
-        display: inline-block;
-        color: #000;
-        animation-duration: var(--dur, 1.5s);
-        animation-timing-function: ease;
-        animation-fill-mode: both;
-        animation-iteration-count: 1;
-        animation-delay: calc(var(--i) * var(--delay, 0.2s));
-        will-change: color, filter, background-position;
-      }
-      /* 무지개: hue 회전, 밝아짐 후 복귀 (text-shadow 미사용) */
-      .motto-letter--rainbow { animation-name: motto-rainbow; }
-      @keyframes motto-rainbow {
-        0%   { color: #000; filter: none; }
-        40%  { color: hsl(var(--h), 100%, 55%); color: hsl(var(--h) 100% 55%); filter: brightness(1.0); }
-        55%  { color: hsl(var(--h), 100%, 65%); color: hsl(var(--h) 100% 65%); filter: brightness(1.15); }
-        100% { color: #000; filter: none; }
-      }
-
-      /* 금색 물결: 금빛이 번쩍 → 복귀 (text-shadow 미사용) */
-      .motto-letter--gold { animation-name: motto-gold; }
-      @keyframes motto-gold {
-        0%   { color: #000; filter: none; }
-        35%  { color: hsl(45, 90%, 42%); color: hsl(45 90% 42%); filter: brightness(1.0); }
-        50%  { color: hsl(46, 96%, 62%); color: hsl(46 96% 62%); filter: brightness(1.2); }
-        65%  { color: hsl(44, 88%, 46%); color: hsl(44 88% 46%); filter: brightness(1.0); }
-        100% { color: #000; filter: none; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // 문자 래핑(공백 제외)
-  let seq = 0;
-  const html = segments.map(ch => {
-    if (isWhitespace(ch)) return ch;
-
-    const hue = Math.round((seq / letterCount) * 360); // 무지개용 hue
-    const escaped = ch.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const cls = mode === 'gold' ? 'motto-letter motto-letter--gold' : 'motto-letter motto-letter--rainbow';
-    const span = `<span class="${cls}" aria-hidden="true" style="--i:${seq};--h:${hue};--dur:${duration}s;--delay:${delay}s">${escaped}</span>`;
-    seq++;
-    return span;
-  }).join('');
-
-  mottoEl.innerHTML = html;
-}
-
-/* 금색 버전 바로 쓰고 싶을 때 편의 함수 */
-function mottoGlitterGold() {
-  mottoGlitter({ mode: 'gold', duration: 1.5, delay: 0.2 });
-}
-
-/* 폰트 로드 이후 자동 실행 (기본: 무지개) */
-(function runAfterFonts() {
-  function run() {
-    const start = () => mottoGlitter({ mode: Math.random() > 0.5 ? 'gold' : 'rainbow', duration: 1.5, delay: 0.2 });
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(start).catch(start);
-    } else {
-      start();
     }
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
-  } else {
-    run();
-  }
-})();
-</script>
 
+    /* ----- 헬퍼 & 스타일 ----- */
+
+    function ensureGlitterStyles() {
+      if (document.getElementById('glitter-style')) return;
+      const style = document.createElement('style');
+      style.id = 'glitter-style';
+      style.textContent = `
+        .glitter-letter {
+          display: inline-block;
+          color: #000;
+          animation-duration: var(--dur, 1.5s);
+          animation-timing-function: ease;
+          animation-fill-mode: both;
+          animation-iteration-count: 1;
+          animation-delay: calc(var(--i) * var(--charDelay, 0.2s));
+          will-change: color, filter;
+        }
+        /* 무지개 */
+        .glitter-letter--rainbow { animation-name: glitter-rainbow; }
+        @keyframes glitter-rainbow {
+          0%   { color: #000; filter: none; }
+          40%  { color: hsl(var(--h) 100% 55%); filter: brightness(1.0); }
+          55%  { color: hsl(var(--h) 100% 65%); filter: brightness(1.15); }
+          100% { color: #000; filter: none; }
+        }
+        /* 금색 물결 */
+        .glitter-letter--gold { animation-name: glitter-gold; }
+        @keyframes glitter-gold {
+          0%   { color: #000; filter: none; }
+          35%  { color: hsl(45 90% 42%);  filter: brightness(1.0); }
+          50%  { color: hsl(46 96% 62%);  filter: brightness(1.2); }
+          65%  { color: hsl(44 88% 46%);  filter: brightness(1.0); }
+          100% { color: #000; filter: none; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function splitGraphemes(text) {
+      try {
+        if (Intl && Intl.Segmenter) {
+          const seg = new Intl.Segmenter('ko', { granularity: 'grapheme' });
+          return Array.from(seg.segment(text), s => s.segment);
+        }
+      } catch (_) {}
+      return Array.from(text);
+    }
+
+    makeGlitter('#motto', { delayMs: 1000, mode: 'random', duration: 1.5, charDelay: 0.2 });
+    makeGlitter('#hce', { delayMs: 3500, mode: 'random', duration: 1.5, charDelay: 0.2 });
+  </script>
 </body>
 </html>
