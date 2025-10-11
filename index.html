@@ -38,7 +38,7 @@
     background-color: #F0EEE7;;
     backdrop-filter: blur(20px);
     z-index: 1000;
-    border-bottom: 1px solid #e8e8e8;
+    /* border-bottom: 1px solid #e8e8e8; */
   }
   
   .header-container {
@@ -198,7 +198,17 @@
     justify-content: center;
     text-align: center;
     overflow: hidden;
-    border-bottom: 1px solid #e8e8e8;
+    /* border-bottom: 1px solid #e8e8e8; */
+    --gap: 22px;        /* 좌우 여백 */
+    --thickness: 1px;   /* 선 두께 */
+    --color: #9b9b9b;
+
+    /* 선을 배경으로 한 번 그리기 */
+    background: linear-gradient(var(--color), var(--color)) no-repeat;
+    /* 선의 가로 길이 = 전체 - 좌우 여백*2, 세로 길이 = 두께 */
+    background-size: calc(100% - (var(--gap) * 2)) var(--thickness);
+    /* 좌표: 왼쪽에서 gap만큼, 아래쪽(바닥)에 붙임 */
+    background-position: left var(--gap) bottom;
   }
   
   #c-hanmi {
@@ -227,8 +237,16 @@
   /* Event Section */
   .event-section {
     background-color: #F0EEE7;
-    border-bottom: 1px solid #9b9b9b;
-    border-spacing: 5px;
+    --gap: 22px;        /* 좌우 여백 */
+    --thickness: 1px;   /* 선 두께 */
+    --color: #9b9b9b;
+
+    /* 선을 배경으로 한 번 그리기 */
+    background: linear-gradient(var(--color), var(--color)) no-repeat;
+    /* 선의 가로 길이 = 전체 - 좌우 여백*2, 세로 길이 = 두께 */
+    background-size: calc(100% - (var(--gap) * 2)) var(--thickness);
+    /* 좌표: 왼쪽에서 gap만큼, 아래쪽(바닥)에 붙임 */
+    background-position: left var(--gap) bottom;
   }
   
   .event-container {
@@ -309,7 +327,16 @@
   /* Video Section */
   .video-section {
     background-color: #F0EEE7;
-    border-bottom: 1px solid #9b9b9b;
+    --gap: 22px;        /* 좌우 여백 */
+    --thickness: 1px;   /* 선 두께 */
+    --color: #9b9b9b;
+
+    /* 선을 배경으로 한 번 그리기 */
+    background: linear-gradient(var(--color), var(--color)) no-repeat;
+    /* 선의 가로 길이 = 전체 - 좌우 여백*2, 세로 길이 = 두께 */
+    background-size: calc(100% - (var(--gap) * 2)) var(--thickness);
+    /* 좌표: 왼쪽에서 gap만큼, 아래쪽(바닥)에 붙임 */
+    background-position: left var(--gap) bottom;
   }
   
   .video-container {
