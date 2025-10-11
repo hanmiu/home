@@ -192,16 +192,16 @@
   /* Hero Section with Canvas */
   .hero {
     position: relative;
-    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     overflow: hidden;
+    padding-bottom: 2rem;
     /* border-bottom: 1px solid #e8e8e8; */
     --gap: 22px;        /* 좌우 여백 */
     --thickness: 1px;   /* 선 두께 */
-    --color: #9b9b9b;
+    --color: #dbdbdb;
 
     /* 선을 배경으로 한 번 그리기 */
     background: linear-gradient(var(--color), var(--color)) no-repeat;
@@ -371,8 +371,18 @@
   
   /* Carousel Section */
   .carousel-section {
-    background-color: #fafafa;
-    border-bottom: 1px solid #e8e8e8;
+    display: none;
+    background-color: #F0EEE7;
+    --gap: 22px;        /* 좌우 여백 */
+    --thickness: 1px;   /* 선 두께 */
+    --color: #9b9b9b;
+
+    /* 선을 배경으로 한 번 그리기 */
+    background: linear-gradient(var(--color), var(--color)) no-repeat;
+    /* 선의 가로 길이 = 전체 - 좌우 여백*2, 세로 길이 = 두께 */
+    background-size: calc(100% - (var(--gap) * 2)) var(--thickness);
+    /* 좌표: 왼쪽에서 gap만큼, 아래쪽(바닥)에 붙임 */
+    background-position: left var(--gap) bottom;
   }
   
   .carousel-title {
@@ -502,6 +512,8 @@
   
   /* Footer */
   footer {
+    position: relative;
+    overflow: hidden;
     background-color: #000000;
     color: #ffffff;
     padding: 80px 40px 50px;
@@ -534,6 +546,39 @@
   
   .footer-info a:hover {
     border-bottom-color: rgba(255, 255, 255, 1);
+  }
+
+  /* 오른쪽 아래 '까꿍' 아이콘 컨테이너 */
+  .footer-peeker {
+    --size: 140px;    /* 아이콘 크기 */
+    --reveal: 100px;   /* 보이게 남겨둘 폭(픽셀) */
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: var(--size);
+    height: var(--size);
+    transform: rotate(20deg) translateX(100%); /* 처음엔 완전히 밖에 */
+    transition: transform .55s cubic-bezier(0.2, 0.7, 0, 1);
+    z-index: 1;
+    pointer-events: none; /* 클릭 방해 X */
+  }
+
+  /* footer가 보일 때: 완전 진입이 아니라 일부만 '까꿍' */
+  .footer-peeker.peeking {
+    transform: rotate(0deg) translateX(calc(100% - var(--reveal)));
+  }
+
+  /* 실제 아이콘은 ::before로 그림 */
+  .footer-peeker::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-image: var(--creature-url);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    filter: invert(1);
   }
   
   /* Responsive */
@@ -674,6 +719,60 @@
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen>
           </iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- Carousel Section -->
+    <section class="carousel-section">
+      <div class="carousel-container">
+        <h2 class="carousel-title">한미유치원 소식</h2>
+        <div class="carousel-wrapper">
+          <div class="carousel-track" id="carouselTrack">
+            <!-- Slide 1 - Placeholder Image -->
+            <div class="carousel-slide">
+              <img src="https://via.placeholder.com/900x600/00bcd4/ffffff?text=한미유치원+소식+1" alt="소식 1">
+            </div>
+            <!-- Slide 2 - Placeholder Video -->
+            <div class="carousel-slide">
+              <div class="video-wrapper">
+                <iframe 
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                  title="소식 영상 1" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
+              </div>
+            </div>
+            <!-- Slide 3 - Placeholder Image -->
+            <div class="carousel-slide">
+              <img src="https://via.placeholder.com/900x600/dd04dd/ffffff?text=한미유치원+소식+2" alt="소식 2">
+            </div>
+            <!-- Slide 4 - Placeholder Image -->
+            <div class="carousel-slide">
+              <img src="https://via.placeholder.com/900x600/00bcd4/ffffff?text=한미유치원+소식+3" alt="소식 3">
+            </div>
+            <!-- Slide 5 - Placeholder Video -->
+            <div class="carousel-slide">
+              <div class="video-wrapper">
+                <iframe 
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                  title="소식 영상 2" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="carousel-indicators" id="carouselIndicators">
+          <span class="indicator active" data-index="0"></span>
+          <span class="indicator" data-index="1"></span>
+          <span class="indicator" data-index="2"></span>
+          <span class="indicator" data-index="3"></span>
+          <span class="indicator" data-index="4"></span>
         </div>
       </div>
     </section>
@@ -893,5 +992,177 @@
       makeGlitter('#hce', { delayMs: 3500, mode: 'rainbow', duration: 1.5, charDelay: 0.2 });
     }
   </script>
+  <script>
+    /**
+     * Carousel initializer
+     * 요구 구조:
+     * .carousel-container
+     *   .carousel-wrapper
+     *     .carousel-track
+     *       .carousel-slide* (img 또는 .video-wrapper 포함 가능)
+     * 선택 기능:
+     *   data-auto="false"  → 자동재생 끔(기본 true)
+     *   data-interval="4000" → 자동재생 간격(ms), 기본 5000
+     */
+    (function () {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.carousel-container').forEach(setupCarousel);
+      });
+
+      function setupCarousel(container) {
+        const track = container.querySelector('.carousel-track');
+        const slides = track ? Array.from(track.querySelectorAll('.carousel-slide')) : [];
+        if (!track || slides.length === 0) return;
+
+        // prefers-reduced-motion이면 자동재생 비활성
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const autoFromAttr = container.dataset.auto !== 'false';
+        const auto = !reduceMotion && autoFromAttr;
+        const interval = parseInt(container.dataset.interval, 10) || 5000;
+
+        // 인디케이터 없으면 생성
+        let indicators = container.querySelector('.carousel-indicators');
+        if (!indicators) {
+          indicators = document.createElement('div');
+          indicators.className = 'carousel-indicators';
+          slides.forEach((_, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'indicator';
+            b.setAttribute('aria-label', `${i + 1}번째 슬라이드`);
+            indicators.appendChild(b);
+          });
+          container.appendChild(indicators);
+        }
+        const dots = Array.from(indicators.querySelectorAll('.indicator'));
+
+        let index = 0;
+        let autoTimer = null;
+
+        const setTransform = (x) => { track.style.transform = x; };
+
+        function update() {
+          setTransform(`translateX(-${index * 100}%)`);
+          dots.forEach((d, i) => d.classList.toggle('active', i === index));
+        }
+        function next() { index = (index + 1) % slides.length; update(); }
+        function prev() { index = (index - 1 + slides.length) % slides.length; update(); }
+
+        function startAuto() {
+          if (!auto || slides.length < 2 || autoTimer) return;
+          autoTimer = setInterval(next, interval);
+        }
+        function stopAuto() {
+          if (!autoTimer) return;
+          clearInterval(autoTimer);
+          autoTimer = null;
+        }
+        function resetAuto() { stopAuto(); startAuto(); }
+
+        // 인디케이터 클릭
+        dots.forEach((d, i) => d.addEventListener('click', () => { index = i; update(); resetAuto(); }));
+
+        // 포인터 스와이프(드래그)
+        let dragging = false, startX = 0, deltaX = 0;
+        const threshold = 50; // px
+        const transitionCSS = getComputedStyle(track).transition;
+
+        const onDown = (e) => {
+          dragging = true;
+          startX = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+          deltaX = 0;
+          track.style.transition = 'none';
+          stopAuto();
+        };
+        const onMove = (e) => {
+          if (!dragging) return;
+          const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+          deltaX = x - startX;
+          setTransform(`translateX(calc(-${index * 100}% + ${deltaX}px))`);
+        };
+        const onUp = () => {
+          if (!dragging) return;
+          dragging = false;
+          track.style.transition = transitionCSS || 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
+          if (Math.abs(deltaX) > threshold) {
+            deltaX < 0 ? next() : prev();
+          } else {
+            update();
+          }
+          resetAuto();
+        };
+
+        track.addEventListener('pointerdown', onDown);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        // 터치 지원(사파리 등)
+        track.addEventListener('touchstart', onDown, { passive: true });
+        track.addEventListener('touchmove', onMove, { passive: true });
+        track.addEventListener('touchend', onUp);
+
+        // 키보드 내비게이션
+        container.setAttribute('tabindex', '0');
+        container.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight') { next(); resetAuto(); }
+          else if (e.key === 'ArrowLeft') { prev(); resetAuto(); }
+        });
+
+        // hover 시 자동재생 일시정지
+        container.addEventListener('mouseenter', stopAuto);
+        container.addEventListener('mouseleave', startAuto);
+
+        // 탭 비가시 상태에서 정지
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) stopAuto(); else startAuto();
+        });
+
+        // 초기 렌더
+        update();
+        startAuto();
+      }
+    })();
+    </script>
+    <script>
+      (function () {
+        const footer = document.querySelector('footer');
+        if (!footer) return;
+
+        // sentinel: footer의 '끝'이 뷰포트에 들어왔는지 감지
+        const sentinel = document.createElement('div');
+        sentinel.setAttribute('aria-hidden', 'true');
+        Object.assign(sentinel.style, {
+          position: 'absolute', right: '0', bottom: '0', width: '1px', height: '1px'
+        });
+        footer.appendChild(sentinel);
+
+        // 아이콘 컨테이너 생성
+        const peeker = document.createElement('div');
+        peeker.className = 'footer-peeker';
+        footer.appendChild(peeker);
+
+        // 10개 중 랜덤 1개 선택
+        const base = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/monster';
+        const n = Math.floor(Math.random() * 10) + 1;
+        const url = `${base}${n}.svg`;
+        peeker.style.setProperty('--creature-url', `url("${url}")`);
+
+        // IntersectionObserver: footer의 "끝"이 보이면 까꿍, 아니면 숨김
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) peeker.classList.add('peeking');
+            else peeker.classList.remove('peeking');
+          });
+        }, {
+          threshold: 0.01
+        });
+        io.observe(sentinel);
+
+        // (선택) 접근성/감각 줄임 사용자 배려: 모션 최소화 시 애니메이션 비활성
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          peeker.style.transition = 'none';
+        }
+      })();
+    </script>
+
 </body>
 </html>
