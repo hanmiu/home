@@ -133,8 +133,12 @@
     border-bottom: 1px solid #f5f5f5;
   }
 
-  .nav-links .emoji {
+  .emoji {
     font-family: 'Noto Emoji';
+  }
+
+  .nav-links .emoji {
+    color: green;
   }
   
   .nav-links li:last-child {
@@ -143,18 +147,35 @@
   
   .nav-links a {
     display: block;
+    position: relative;
     font-size: 1rem;
     font-weight: 400;
     color: #000000;
     text-decoration: none;
-    padding: 16px 0;
+    padding: 16px 56px 16px 0px;
     transition: all 0.2s ease;
     letter-spacing: -0.01em;
   }
   
   .nav-links a:hover {
-    color: #666666;
+    color: green;
     padding-left: 8px;
+  }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-image: var(--creature-url);
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: contain;
+    pointer-events: none; /* 클릭 방해 X */
+    opacity: 0.95;        /* 필요하면 조절 */
   }
   
   /* Main Content */
@@ -587,12 +608,12 @@
         <p class="event-subtitle">대상: 2022, 2021, 2020년생 어린이 가족</p>
         
         <div class="event-details">
-          <p>🌱 교육설명회는 한미유치원의 풍요롭고 재미있는 놀이와 배움에 대한 교육과 공지사항(일과시간, 방과후 특성화활동, 방과후과정, 통학차, 교육비 등)에 대해 듣는 시간입니다.</p>
-          <p>🌱 시설참관은 자녀와 함께 유치원을 방문하여 다양한 매체와 놀이감을 가지고 놀이를 체험하는 시간입니다. 16시 부터 18시 사이에 참관하실 수 있습니다.</p>
+          <p><span class="emoji" style="color: green">🌱</span> 교육설명회는 한미유치원의 풍요롭고 재미있는 놀이와 배움에 대한 교육과 공지사항(일과시간, 방과후 특성화활동, 방과후과정, 통학차, 교육비 등)에 대해 듣는 시간입니다.</p>
+          <p><span class="emoji" style="color: green">🌱</span> 시설참관은 자녀와 함께 유치원을 방문하여 다양한 매체와 놀이감을 가지고 놀이를 체험하는 시간입니다. 16시 부터 18시 사이에 참관하실 수 있습니다.</p>
           
           <div class="event-info">
-            <p><strong>▣ 교육 설명회</strong><br>10/25(토) 10시, 10/30(목), 10/31(금) 오전 11시</p>
-            <p><strong>▣ 시설 참관 기간</strong><br>10/27(월) ~ 10/31(금) 16시 ~ 18시</p>
+            <p><strong><span class="emoji" style="color: green">🕙</span> 교육 설명회</strong><br>10/25(토) 10시, 10/30(목), 10/31(금) 오전 11시</p>
+            <p><strong><span class="emoji" style="color: green">🕓</span> 시설 참관 기간</strong><br>10/27(월) ~ 10/31(금) 16시 ~ 18시</p>
           </div>
         </div>
         
@@ -640,11 +661,11 @@
 
         <div class="creatures-links">
           <a href="https://www.hanmiu.cc/play/evt/c2025.html" target="_blank" class="creatures-link">
-            <div class="creatures-link-title">🎮 플레이</div>
+            <div class="creatures-link-title"><span class="emoji">🎮</span> 플레이</div>
             <div class="creatures-link-desc">신기한 생물들과 만나보세요</div>
           </a>
           <a href="https://www.youtube.com/shorts/Wi1D4IgtDJE" target="_blank" class="creatures-link">
-            <div class="creatures-link-title">🎬 소개 영상</div>
+            <div class="creatures-link-title"><span class="emoji">🎬</span> 소개 영상</div>
             <div class="creatures-link-desc">어떤 행사인지 알아보세요</div>
           </a>
         </div>
@@ -688,6 +709,27 @@
         navOverlay.classList.remove('active');
       }
     });
+
+    (function assignCreatureBadges() {
+      const links = document.querySelectorAll('.nav-links a');
+      if (!links.length) return;
+
+      // 10개 SVG URL 생성
+      const base = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/monster';
+      const svgs = Array.from({ length: 10 }, (_, i) => `${base}${i + 1}.svg`);
+
+      // Fisher–Yates 셔플
+      for (let i = svgs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [svgs[i], svgs[j]] = [svgs[j], svgs[i]];
+      }
+
+      // 링크 개수만큼 순서대로 할당 (10개 초과 시 순환)
+      links.forEach((a, idx) => {
+        const url = svgs[idx % svgs.length];
+        a.style.setProperty('--creature-url', `url("${url}")`);
+      });
+    })();
   </script>
   <script>
     /**
@@ -823,7 +865,6 @@
       makeGlitter('#motto', { delayMs: 1000, mode: 'gold', duration: 1.5, charDelay: 0.2 });
       makeGlitter('#hce', { delayMs: 3500, mode: 'rainbow', duration: 1.5, charDelay: 0.2 });
     }
-    
   </script>
 </body>
 </html>
