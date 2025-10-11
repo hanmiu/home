@@ -1023,17 +1023,13 @@
       makeGlitter('#hce', { delayMs: 3500, mode: 'rainbow', duration: 1.5, charDelay: 0.2 });
     }
   </script>
+  
   <script>
     /**
-     * Carousel initializer
-     * 요구 구조:
-     * .carousel-container
-     *   .carousel-wrapper
-     *     .carousel-track
-     *       .carousel-slide* (img 또는 .video-wrapper 포함 가능)
-     * 선택 기능:
-     *   data-auto="false"  → 자동재생 끔(기본 true)
-     *   data-interval="4000" → 자동재생 간격(ms), 기본 5000
+     * Carousel v2.1 (간단판)
+     * - 슬라이드 개수: DOM 엘리먼트 개수로 계산
+     * - 사용자 상호작용 1회 → 자동재생 영구 정지
+     * - .carousel-section 어디서 터치해도 스와이프
      */
     (function () {
       document.addEventListener('DOMContentLoaded', () => {
@@ -1042,158 +1038,148 @@
 
       function setupCarousel(container) {
         const track = container.querySelector('.carousel-track');
-        const slides = track ? Array.from(track.querySelectorAll('.carousel-slide')) : [];
-        if (!track || slides.length === 0) return;
+        if (!track) return;
 
-        // prefers-reduced-motion이면 자동재생 비활성
-        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const autoFromAttr = container.dataset.auto !== 'false';
-        const auto = !reduceMotion && autoFromAttr;
-        const interval = parseInt(container.dataset.interval, 10) || 5000;
+        const slides = Array.from(track.querySelectorAll('.carousel-slide')); // ★ 엘리먼트 개수
+        const section = container.closest('.carousel-section') || container;
 
-        // 인디케이터 없으면 생성
+        // 인디케이터 생성/연결 (초기 1회)
         let indicators = container.querySelector('.carousel-indicators');
         if (!indicators) {
           indicators = document.createElement('div');
           indicators.className = 'carousel-indicators';
-          slides.forEach((_, i) => {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'indicator';
-            b.setAttribute('aria-label', `${i + 1}번째 슬라이드`);
-            indicators.appendChild(b);
-          });
           container.appendChild(indicators);
         }
-        const dots = Array.from(indicators.querySelectorAll('.indicator'));
+        indicators.innerHTML = '';
+        const dots = slides.map((_, i) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'indicator';
+          b.setAttribute('aria-label', `${i + 1}번째 슬라이드`);
+          b.addEventListener('click', () => { index = i; update(); hardStopAuto(); });
+          indicators.appendChild(b);
+          return b;
+        });
 
         let index = 0;
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const autoAttr = container.dataset.auto !== 'false';
+        const interval = parseInt(container.dataset.interval, 10) || 5000;
         let autoTimer = null;
+        let userInteracted = false;
 
         const setTransform = (x) => { track.style.transform = x; };
-
-        function update() {
+        const update = () => {
+          if (!slides.length) return;
+          index = (index + slides.length) % slides.length;
           setTransform(`translateX(-${index * 100}%)`);
           dots.forEach((d, i) => d.classList.toggle('active', i === index));
-        }
-        function next() { index = (index + 1) % slides.length; update(); }
-        function prev() { index = (index - 1 + slides.length) % slides.length; update(); }
+        };
+        const next = () => { index++; update(); };
+        const prev = () => { index--; update(); };
 
-        function startAuto() {
-          if (!auto || slides.length < 2 || autoTimer) return;
-          autoTimer = setInterval(next, interval);
-        }
-        function stopAuto() {
-          if (!autoTimer) return;
-          clearInterval(autoTimer);
-          autoTimer = null;
-        }
-        function resetAuto() { stopAuto(); startAuto(); }
+        const autoAllowed = () => autoAttr && !reduceMotion && !userInteracted && slides.length > 1;
+        const startAuto = () => { if (!autoAllowed() || autoTimer) return; autoTimer = setInterval(next, interval); };
+        const stopAuto = () => { if (!autoTimer) return; clearInterval(autoTimer); autoTimer = null; };
+        const hardStopAuto = () => { userInteracted = true; stopAuto(); };
 
-        // 인디케이터 클릭
-        dots.forEach((d, i) => d.addEventListener('click', () => { index = i; update(); resetAuto(); }));
-
-        // 포인터 스와이프(드래그)
-        let dragging = false, startX = 0, deltaX = 0;
-        const threshold = 50; // px
+        // ---- 스와이프: 섹션 전체에서 시작 가능 ----
+        let dragging = false, startX = 0, startY = 0, dx = 0, dy = 0, axis = null;
+        const threshold = 50;
         const transitionCSS = getComputedStyle(track).transition;
 
-        const onDown = (e) => {
-          dragging = true;
-          startX = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-          deltaX = 0;
+        function dragStart(x, y) {
+          dragging = true; startX = x; startY = y; dx = dy = 0; axis = null;
           track.style.transition = 'none';
           stopAuto();
-        };
-        const onMove = (e) => {
+        }
+        function dragMove(x, y, rawEvt) {
           if (!dragging) return;
-          const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-          deltaX = x - startX;
-          setTransform(`translateX(calc(-${index * 100}% + ${deltaX}px))`);
-        };
-        const onUp = () => {
+          dx = x - startX; dy = y - startY;
+          if (!axis && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+            axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+          }
+          if (axis === 'x') {
+            setTransform(`translateX(calc(-${index * 100}% + ${dx}px))`);
+            if (rawEvt && rawEvt.cancelable) rawEvt.preventDefault(); // 수평 제스처면 스크롤 방지
+          }
+        }
+        function dragEnd() {
           if (!dragging) return;
           dragging = false;
           track.style.transition = transitionCSS || 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
-          if (Math.abs(deltaX) > threshold) {
-            deltaX < 0 ? next() : prev();
-          } else {
-            update();
-          }
-          resetAuto();
+          if (axis === 'x' && Math.abs(dx) > threshold) (dx < 0 ? next() : prev()); else update();
+          hardStopAuto(); // 상호작용 처리
+        }
+
+        // pointer + touch 리스너를 track과 section 모두에 부착
+        const downOn = (el) => {
+          el.addEventListener('pointerdown', (e) => { el.setPointerCapture?.(e.pointerId); dragStart(e.clientX, e.clientY); }, { passive: true });
+          el.addEventListener('touchstart', (e) => { const t = e.touches[0]; if (t) dragStart(t.clientX, t.clientY); }, { passive: true });
+          el.addEventListener('click', hardStopAuto, { capture: true, passive: true });
+          el.addEventListener('pointerdown', hardStopAuto, { capture: true, passive: true });
+          el.addEventListener('touchstart', hardStopAuto, { capture: true, passive: true });
         };
+        downOn(track);
+        if (section !== container) downOn(section);
 
-        track.addEventListener('pointerdown', onDown);
-        window.addEventListener('pointermove', onMove);
-        window.addEventListener('pointerup', onUp);
-        // 터치 지원(사파리 등)
-        track.addEventListener('touchstart', onDown, { passive: true });
-        track.addEventListener('touchmove', onMove, { passive: true });
-        track.addEventListener('touchend', onUp);
+        // move/up는 넓게
+        window.addEventListener('pointermove', (e) => dragMove(e.clientX, e.clientY, e));
+        window.addEventListener('pointerup', dragEnd);
+        section.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) dragMove(t.clientX, t.clientY, e); }, { passive: false });
+        section.addEventListener('touchend', dragEnd);
 
-        // 키보드 내비게이션
-        container.setAttribute('tabindex', '0');
-        container.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowRight') { next(); resetAuto(); }
-          else if (e.key === 'ArrowLeft') { prev(); resetAuto(); }
-        });
+        // 가시성 전환 시 자동재생만 관리(상호작용 상태는 유지)
+        document.addEventListener('visibilitychange', () => { if (document.hidden) stopAuto(); else startAuto(); });
 
-        // hover 시 자동재생 일시정지
-        container.addEventListener('mouseenter', stopAuto);
-        container.addEventListener('mouseleave', startAuto);
-
-        // 탭 비가시 상태에서 정지
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) stopAuto(); else startAuto();
-        });
-
-        // 초기 렌더
+        // 초기화
         update();
         startAuto();
       }
     })();
-    </script>
-    <script>
-      (function () {
-        const footer = document.querySelector('footer');
-        if (!footer) return;
+  </script>
 
-        // sentinel: footer의 '끝'이 뷰포트에 들어왔는지 감지
-        const sentinel = document.createElement('div');
-        sentinel.setAttribute('aria-hidden', 'true');
-        Object.assign(sentinel.style, {
-          position: 'absolute', right: '0', bottom: '0', width: '1px', height: '1px'
+  <script>
+    (function () {
+      const footer = document.querySelector('footer');
+      if (!footer) return;
+
+      // sentinel: footer의 '끝'이 뷰포트에 들어왔는지 감지
+      const sentinel = document.createElement('div');
+      sentinel.setAttribute('aria-hidden', 'true');
+      Object.assign(sentinel.style, {
+        position: 'absolute', right: '0', bottom: '0', width: '1px', height: '1px'
+      });
+      footer.appendChild(sentinel);
+
+      // 아이콘 컨테이너 생성
+      const peeker = document.createElement('div');
+      peeker.className = 'footer-peeker';
+      footer.appendChild(peeker);
+
+      // 10개 중 랜덤 1개 선택
+      const base = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/monster';
+      const n = Math.floor(Math.random() * 10) + 1;
+      const url = `${base}${n}.svg`;
+      peeker.style.setProperty('--creature-url', `url("${url}")`);
+
+      // IntersectionObserver: footer의 "끝"이 보이면 까꿍, 아니면 숨김
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) peeker.classList.add('peeking');
+          else peeker.classList.remove('peeking');
         });
-        footer.appendChild(sentinel);
+      }, {
+        threshold: 0.01
+      });
+      io.observe(sentinel);
 
-        // 아이콘 컨테이너 생성
-        const peeker = document.createElement('div');
-        peeker.className = 'footer-peeker';
-        footer.appendChild(peeker);
-
-        // 10개 중 랜덤 1개 선택
-        const base = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/monster';
-        const n = Math.floor(Math.random() * 10) + 1;
-        const url = `${base}${n}.svg`;
-        peeker.style.setProperty('--creature-url', `url("${url}")`);
-
-        // IntersectionObserver: footer의 "끝"이 보이면 까꿍, 아니면 숨김
-        const io = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) peeker.classList.add('peeking');
-            else peeker.classList.remove('peeking');
-          });
-        }, {
-          threshold: 0.01
-        });
-        io.observe(sentinel);
-
-        // (선택) 접근성/감각 줄임 사용자 배려: 모션 최소화 시 애니메이션 비활성
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          peeker.style.transition = 'none';
-        }
-      })();
-    </script>
+      // (선택) 접근성/감각 줄임 사용자 배려: 모션 최소화 시 애니메이션 비활성
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        peeker.style.transition = 'none';
+      }
+    })();
+  </script>
 
 </body>
 </html>
