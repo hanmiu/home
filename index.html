@@ -716,8 +716,18 @@
         <h2 class="carousel-title">우리들의 이야기</h2>
         <div class="carousel-wrapper">
           <div class="carousel-track" id="carouselTrack">
+            <!-- <div class="carousel-slide">
+              <div class="video-wrapper">
+                <iframe
+                  src="https://drive.google.com/embeddedfolderview?id=11ntQRxsLfw0aRNZzcRR7gUUyKvAplS2Q#grid"
+                  style="width:100%; height:600px; border:0; overflow:hidden;"
+                  loading="lazy"
+                  referrerpolicy="no-referrer">
+                </iframe>
+              </div>
+            </div> -->
             <!-- Slide 1 - Placeholder Video -->
-            <div class="carousel-slide">
+            <!-- <div class="carousel-slide">
               <div class="video-wrapper">
                 <iframe 
                   src="https://www.youtube.com/embed/MHiW9ZXBpcI" 
@@ -793,7 +803,7 @@
                   allowfullscreen>
                 </iframe>
               </div>
-            </div>
+            </div> -->
             <!-- Slide 3 - Placeholder Image -->
             <!-- <div class="carousel-slide">
               <img src="https://via.placeholder.com/900x600/dd04dd/ffffff?text=한미유치원+소식+2" alt="소식 2">
@@ -806,11 +816,11 @@
           </div>
         </div>
         <div class="carousel-indicators" id="carouselIndicators">
-          <span class="indicator active" data-index="0"></span>
+          <!-- <span class="indicator active" data-index="0"></span>
           <span class="indicator" data-index="1"></span>
           <span class="indicator" data-index="2"></span>
           <span class="indicator" data-index="3"></span>
-          <span class="indicator" data-index="4"></span>
+          <span class="indicator" data-index="4"></span> -->
         </div>
       </div>
     </section>
@@ -1048,24 +1058,91 @@
 
   <script>
     /**
-     * Carousel v2.1 (간단판)
-     * - 슬라이드 개수: DOM 엘리먼트 개수로 계산
-     * - 사용자 상호작용 1회 → 자동재생 영구 정지
-     * - .carousel-section 어디서 터치해도 스와이프
+     * 1) video_list에서 7개 샘플링해 슬라이드 DOM 생성
+     * 2) 생성 후 setupCarousel 실행 (인디케이터/오토플레이 그대로 작동)
      */
     (function () {
+      // ====== 사용자 데이터 ======
+      const video_list = [
+        { src: "https://www.youtube.com/embed/MHiW9ZXBpcI", title: "움직이는 그림, 엄마 찾아가다 나비를 만난 굼벵이" },
+        { src: "https://www.youtube.com/embed/h09rOAnmkbU", title: "디테일 꾸미기 - 감정도 '세밀'하게" },
+        { src: "https://www.youtube.com/embed/cU7ow6orkGo", title: "🪐 우주 셰프 🚀" },
+        { src: "https://www.youtube.com/embed/tuIV6BBK0XQ", title: "정발산 가을 산책" },
+        { src: "https://www.youtube.com/embed/ew8h6hlqCno?start=73", title: "병아리가 태어난 날" },
+        { src: "https://www.youtube.com/embed/CCfkaf9Mrow", title: "한미유치원의 40살을 축하해" },
+        { src: "https://www.youtube.com/embed/9rBwplik7EM", title: "미래 학교" },
+        { src: "https://www.youtube.com/embed/cU7ow6orkGo", title: "🪐 우주 셰프 🚀" },
+        { src: "https://www.youtube.com/embed/OPVobXlpJt8", title: "공주 👸🏻 / 왕자 🫅🏻 / 생쥐 🐭⠀" },
+        { src: "https://www.youtube.com/embed/7ouN7WPA3m8", title: "움직이는 그림: 비하인드" },
+        { src: "https://www.youtube.com/embed/mkVbkTVRLh4", title: "🪴 화분 도둑을 찾아라: 라이브 🎥" },
+      ];
+
+      const MAX_SLIDES = 7;
+
+      // ====== 유틸 ======
+      // 중복 src 제거
+      function dedupeBySrc(list) {
+        const seen = new Set();
+        return list.filter(v => v && v.src && !seen.has(v.src) && (seen.add(v.src), true));
+      }
+      // Fisher–Yates 셔플 후 n개 슬라이스
+      function sampleShuffled(list, n) {
+        const a = list.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a.slice(0, n);
+      }
+      // 비디오 슬라이드 DOM 생성
+      function mountVideoSlides(track, videos) {
+        track.innerHTML = '';
+        videos.forEach(v => {
+          const slide = document.createElement('div');
+          slide.className = 'carousel-slide';
+
+          const wrap = document.createElement('div');
+          wrap.className = 'video-wrapper';
+
+          const iframe = document.createElement('iframe');
+          iframe.src = v.src;
+          iframe.title = v.title || '';
+          iframe.loading = 'lazy';
+          iframe.frameborder = '0';
+          iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+          iframe.setAttribute('allowfullscreen', '');
+
+          wrap.appendChild(iframe);
+          slide.appendChild(wrap);
+          track.appendChild(slide);
+        });
+      }
+
+      // ====== 초기화 ======
       document.addEventListener('DOMContentLoaded', () => {
+        const clean = dedupeBySrc(video_list);
+        const picks = sampleShuffled(clean, Math.min(MAX_SLIDES, clean.length));
+
+        // 1) 각 캐로셀에 동적으로 슬라이드 주입
+        document.querySelectorAll('.carousel-container').forEach(container => {
+          const track = container.querySelector('.carousel-track');
+          if (!track) return;
+          mountVideoSlides(track, picks);
+        });
+
+        // 2) 그다음 캐로셀 동작 세팅(기존 로직)
         document.querySelectorAll('.carousel-container').forEach(setupCarousel);
       });
 
+      // ====== 기존 setupCarousel 그대로 사용 ======
       function setupCarousel(container) {
         const track = container.querySelector('.carousel-track');
         if (!track) return;
 
-        const slides = Array.from(track.querySelectorAll('.carousel-slide')); // ★ 엘리먼트 개수
+        const slides = Array.from(track.querySelectorAll('.carousel-slide'));
         const section = container.closest('.carousel-section') || container;
 
-        // 인디케이터 생성/연결 (초기 1회)
+        // 인디케이터 생성/연결
         let indicators = container.querySelector('.carousel-indicators');
         if (!indicators) {
           indicators = document.createElement('div');
@@ -1105,7 +1182,7 @@
         const stopAuto = () => { if (!autoTimer) return; clearInterval(autoTimer); autoTimer = null; };
         const hardStopAuto = () => { userInteracted = true; stopAuto(); };
 
-        // ---- 스와이프: 섹션 전체에서 시작 가능 ----
+        // 스와이프(섹션 전체)
         let dragging = false, startX = 0, startY = 0, dx = 0, dy = 0, axis = null;
         const threshold = 50;
         const transitionCSS = getComputedStyle(track).transition;
@@ -1123,7 +1200,7 @@
           }
           if (axis === 'x') {
             setTransform(`translateX(calc(-${index * 100}% + ${dx}px))`);
-            if (rawEvt && rawEvt.cancelable) rawEvt.preventDefault(); // 수평 제스처면 스크롤 방지
+            if (rawEvt && rawEvt.cancelable) rawEvt.preventDefault();
           }
         }
         function dragEnd() {
@@ -1131,30 +1208,17 @@
           dragging = false;
           track.style.transition = transitionCSS || 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
           if (axis === 'x' && Math.abs(dx) > threshold) (dx < 0 ? next() : prev()); else update();
-          hardStopAuto(); // 상호작용 처리
+          hardStopAuto();
         }
-
-        // pointer + touch 리스너를 track과 section 모두에 부착
-        // const downOn = (el) => {
-        //   el.addEventListener('pointerdown', (e) => { el.setPointerCapture?.(e.pointerId); dragStart(e.clientX, e.clientY); }, { passive: true });
-        //   el.addEventListener('touchstart', (e) => { const t = e.touches[0]; if (t) dragStart(t.clientX, t.clientY); }, { passive: true });
-        //   el.addEventListener('click', hardStopAuto, { capture: true, passive: true });
-        //   el.addEventListener('pointerdown', hardStopAuto, { capture: true, passive: true });
-        //   el.addEventListener('touchstart', hardStopAuto, { capture: true, passive: true });
-        // };
-        // downOn(track);
-        // if (section !== container) downOn(section);
 
         const downOn = (el) => {
           el.addEventListener('pointerdown', (e) => {
-            // ⬇️ 인디케이터 클릭이면 드래그/포인터 캡처 금지
             if (e.target.closest('.carousel-indicators')) return;
             el.setPointerCapture?.(e.pointerId);
             dragStart(e.clientX, e.clientY);
           }, { passive: true });
 
           el.addEventListener('touchstart', (e) => {
-            // ⬇️ 인디케이터 터치도 드래그 금지
             if (e.target.closest('.carousel-indicators')) return;
             const t = e.touches[0]; if (t) dragStart(t.clientX, t.clientY);
           }, { passive: true });
@@ -1167,16 +1231,13 @@
         downOn(track);
         if (section !== container) downOn(section);
 
-        // move/up는 넓게
         window.addEventListener('pointermove', (e) => dragMove(e.clientX, e.clientY, e));
         window.addEventListener('pointerup', dragEnd);
         section.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) dragMove(t.clientX, t.clientY, e); }, { passive: false });
         section.addEventListener('touchend', dragEnd);
 
-        // 가시성 전환 시 자동재생만 관리(상호작용 상태는 유지)
         document.addEventListener('visibilitychange', () => { if (document.hidden) stopAuto(); else startAuto(); });
 
-        // 초기화
         update();
         startAuto();
       }
