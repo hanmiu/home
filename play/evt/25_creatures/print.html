@@ -25,7 +25,7 @@
   <label>basename: <input id="base" size="28" placeholder="예) 김연우_달 디테일"/></label>
   <label>code: <input id="code" size="28" placeholder="auto"/></label>
   <label>cell(px): <input id="cell" type="number" value="150" min="80" max="220" step="2"/></label>
-  <label>QR base: <input id="qrbase" size="36" placeholder="기본값: https://www.hanmiu.cc/play/evt/25_creatures/cards.html"/></label>
+  <label>QR base: <input id="qrbase" size="36" placeholder="기본값: https://www.hanmiu.cc/play/evt/25_creatures/card.html"/></label>
   <button id="render">렌더</button>
   <button id="save">JPG 저장</button>
   <button id="batchSave">🔄 전체 JPG 저장</button>
@@ -57,11 +57,11 @@ async function render(){
   const basename = baseInput.value.trim();
   CONFIG.CELL_S = Math.max(80, Math.min(220, parseInt(cellInput.value||150,10)));
   // QR 코드는 항상 배포된 URL을 사용
-  const defaultQrBase = 'https://www.hanmiu.cc/play/evt/25_creatures/cards.html';
+  const defaultQrBase = 'https://www.hanmiu.cc/play/evt/25_creatures/card.html';
   const inputBase = (document.getElementById('qrbase').value || '').trim();
   const qrBase = inputBase || defaultQrBase;
   const url = qrBase + '?code=' + encodeURIComponent(b64urlEncode(basename));
-  await drawCard({canvas, basename, allBasenames:bases, drawQR:true, qrUrl:url});
+  await drawCard({canvas, basename, allBasenames:bases, drawQR:true, qrUrl:url, drawBorders:true});
 }
 
 async function loadByIndex(index){

@@ -8,15 +8,21 @@
   body{margin:0;background:#f2f2f2;font-family:"Noto Sans KR",system-ui,sans-serif}
   .wrap{max-width:420px;margin:0 auto;padding:16px}
   canvas{width:100%;height:auto;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.12);}
+  .btn-wrap{margin-top:20px;text-align:center}
+  .form-btn{display:inline-block;padding:16px 32px;background:#4a90e2;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:16px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(74,144,226,.3);transition:all .3s}
+  .form-btn:hover{background:#357abd;box-shadow:0 6px 16px rgba(74,144,226,.4);transform:translateY(-2px)}
+  .form-btn:active{transform:translateY(0)}
   .err{color:#c00;padding:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <canvas id="card"></canvas>
+  <div class="btn-wrap">
+    <button class="form-btn" id="formBtn">설문 참여하기</button>
+  </div>
   <div id="msg" class="err" hidden></div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import { CONFIG, parseTSV, b64urlDecode, drawCard } from './layout.js';
 
@@ -39,11 +45,15 @@ try{
   const bases = parseTSV(tsv);
   if(!bases.includes(basename)) console.warn('주의: TSV에 현재 basename이 없거나 파일명이 변경되었을 수 있습니다.');
 
-  // 캔버스 렌더
+  // 캔버스 렌더 (보더 이미지 및 QR 코드 제외)
   const canvas = document.getElementById('card');
-  const qrBase = params.get('qrBase');
-  const selfUrl = (qrBase ? qrBase.replace(/\/$/, '') : (location.origin + location.pathname)) + '?code=' + encodeURIComponent(code);
-  await drawCard({canvas, basename, allBasenames:bases, assetsBase, drawQR:true, qrUrl:selfUrl});
+  await drawCard({canvas, basename, allBasenames:bases, assetsBase, drawQR:false, drawBorders:false});
+  
+  // 구글 폼 버튼 이벤트 (나중에 prefill URL 연결 예정)
+  document.getElementById('formBtn').addEventListener('click', ()=>{
+    // TODO: 구글 폼 URL + prefill 파라미터
+    alert('구글 폼 연결 예정\nbasename: ' + basename);
+  });
 } catch(e){ fail(e); }
 </script>
 </body>

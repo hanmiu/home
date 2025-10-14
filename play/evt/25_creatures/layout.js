@@ -7,7 +7,7 @@ export const CONFIG = {
   GRID: { COLS: 9, ROWS: 15 },  // 개념상 그리드(보더 뜯어 사용)
   // 리소스 경로 (필요 시 cards/print에서 override 가능)
   ASSETS_BASE: "./assets/",
-  TSV_URL: "./data/data.tsv",
+  TSV_URL: "./data.tsv",
   SALT: "25_creatures_v1"
 };
 
@@ -111,7 +111,7 @@ export function loadImage(url){
 }
 
 // 캔버스 그리기: 테두리, 메인, 텍스트, QR(옵션)
-export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFIG.ASSETS_BASE, drawQR=true, qrUrl, titleFromBase=true}){
+export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFIG.ASSETS_BASE, drawQR=true, qrUrl, titleFromBase=true, drawBorders=true}){
   const ctx = canvas.getContext('2d');
   canvas.width = CONFIG.PAPER.W; canvas.height = CONFIG.PAPER.H;
   // 배경
@@ -121,13 +121,15 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
   const seed = await seedFrom(basename);
   const borders = pickBorders(allBasenames, basename, seed);
 
-  // 테두리 이미지 배치
-  const cellPad = CONFIG.INNER_PAD; // 내부 패딩
-  for(let i=0;i<borders.length;i++){
-    const [x,y]=borderXY(i,metrics);
-    const img = await loadImage(assetUrl(borders[i], assetsBase));
-    const s = metrics.s - cellPad*2;
-    ctx.drawImage(img, x+cellPad, y+cellPad, s, s);
+  // 테두리 이미지 배치 (옵션)
+  if(drawBorders){
+    const cellPad = CONFIG.INNER_PAD; // 내부 패딩
+    for(let i=0;i<borders.length;i++){
+      const [x,y]=borderXY(i,metrics);
+      const img = await loadImage(assetUrl(borders[i], assetsBase));
+      const s = metrics.s - cellPad*2;
+      ctx.drawImage(img, x+cellPad, y+cellPad, s, s);
+    }
   }
 
   // 메인 캐릭터 (가로 65% 폭)
