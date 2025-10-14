@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Creatures Card — Print</title>
+<style>
+  body{margin:0;background:#111;color:#eee;font-family:"Noto Sans KR",system-ui,sans-serif}
+  header{padding:12px 16px;display:flex;gap:8px;align-items:center;background:#1c1c1c;position:sticky;top:0;flex-wrap:wrap}
+  header input, header select, header button{font-size:14px;padding:6px 8px;border-radius:6px;border:1px solid #333;background:#222;color:#eee}
+  #prev, #next{background:#334;font-weight:700;cursor:pointer}
+  #prev:hover, #next:hover{background:#445}
+  #batchSave{background:#433;font-weight:700}
+  #batchSave:hover:not(:disabled){background:#544}
+  #batchSave:disabled{opacity:0.6;cursor:not-allowed}
+  main{padding:16px;display:grid;gap:16px;grid-template-columns:1fr;max-width:1080px;margin:0 auto}
+  canvas{width:600px;max-width:100%;height:auto;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .hint{opacity:.8;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <button id="prev">◀ 이전</button>
+  <button id="next">다음 ▶</button>
+  <label>basename: <input id="base" size="28" placeholder="예) 김연우_달 디테일"/></label>
+  <label>code: <input id="code" size="28" placeholder="auto"/></label>
+  <label>cell(px): <input id="cell" type="number" value="150" min="80" max="220" step="2"/></label>
+  <label>QR base: <input id="qrbase" size="36" placeholder="예) https://www.hanmiu.cc/play/evt/25_creatures/cards.html"/></label>
+  <button id="render">렌더</button>
+  <button id="save">JPG 저장</button>
+  <button id="batchSave">🔄 전체 JPG 저장</button>
+  <span class="hint">TSV/자산 경로는 layout.js의 기본값을 사용합니다.</span>
+</header>
+<main>
+  <canvas id="card"></canvas>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { CONFIG, parseTSV, b64urlEncode, b64urlDecode, drawCard } from './layout.js';
+
+const $ = (s)=>document.querySelector(s);
+const baseInput = $('#base');
+const codeInput = $('#code');
+const cellInput = $('#cell');
+const canvas = $('#card');
+
+// TSV 로드
+const tsv = await (await fetch(CONFIG.TSV_URL, {cache:'reload'})).text();
+const bases = parseTSV(tsv);
+let currentIndex = 0;
+
+// 초기 값
+baseInput.value = bases[currentIndex] || '';
+codeInput.value = baseInput.value ? b64urlEncode(baseInput.value) : '';
+
+async function render(){
+  const basename = baseInput.value.trim();
+  CONFIG.CELL_S = Math.max(80, Math.min(220, parseInt(cellInput.value||150,10)));
+  const here = new URL(location.href);
+  const defaultQrBase = new URL('./cards.html', here).href;
+  const inputBase = (document.getElementById('qrbase').value || '').trim();
+  const qrBase = inputBase || defaultQrBase;
+  const url = qrBase + '?code=' + encodeURIComponent(b64urlEncode(basename));
+  await drawCard({canvas, basename, allBasenames:bases, drawQR:true, qrUrl:url});
+}
+
+async function loadByIndex(index){
+  if(index < 0 || index >= bases.length) return;
+  currentIndex = index;
+  baseInput.value = bases[currentIndex];
+  codeInput.value = b64urlEncode(baseInput.value);
+  await render();
+}
+
+// 네비게이션
+$('#prev').addEventListener('click', ()=>loadByIndex(currentIndex - 1));
+$('#next').addEventListener('click', ()=>loadByIndex(currentIndex + 1));
+
+// 수동 렌더
+$('#render').addEventListener('click', render);
+
+// basename↔code 동기화
+baseInput.addEventListener('input', ()=>{ 
+  codeInput.value = b64urlEncode(baseInput.value);
+  // 현재 인덱스 업데이트
+  const idx = bases.indexOf(baseInput.value.trim());
+  if(idx !== -1) currentIndex = idx;
+});
+codeInput.addEventListener('input', ()=>{ 
+  try{ 
+    baseInput.value = b64urlDecode(codeInput.value);
+    const idx = bases.indexOf(baseInput.value.trim());
+    if(idx !== -1) currentIndex = idx;
+  }catch{}
+});
+
+await render();
+
+// 단일 저장(JPEG)
+$('#save').addEventListener('click', async ()=>{
+  canvas.toBlob((blob)=>{
+    const a=document.createElement('a');
+    const basename = baseInput.value.trim() || 'card';
+    a.download = `${basename}.jpg`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  }, 'image/jpeg', 0.95);
+});
+
+// 배치 저장
+$('#batchSave').addEventListener('click', async ()=>{
+  const btn = $('#batchSave');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  
+  try {
+    for(let i = 0; i < bases.length; i++){
+      btn.textContent = `저장 중... ${i+1}/${bases.length}`;
+      
+      // 각 basename으로 렌더
+      await loadByIndex(i);
+      
+      // blob 생성 및 다운로드
+      await new Promise((resolve) => {
+        canvas.toBlob((blob)=>{
+          const a = document.createElement('a');
+          a.download = `${bases[i]}.jpg`;
+          a.href = URL.createObjectURL(blob);
+          a.click();
+          setTimeout(()=>{
+            URL.revokeObjectURL(a.href);
+            resolve();
+          }, 300); // 각 다운로드 사이에 약간의 딜레이
+        }, 'image/jpeg', 0.95);
+      });
+    }
+    
+    btn.textContent = '✅ 완료!';
+    setTimeout(()=>{
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 2000);
+  } catch(e) {
+    alert('배치 저장 중 오류: ' + e.message);
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
