@@ -7,7 +7,7 @@ export const CONFIG = {
   GRID: { COLS: 9, ROWS: 15 },  // 개념상 그리드(보더 뜯어 사용)
   // 리소스 경로 (필요 시 cards/print에서 override 가능)
   ASSETS_BASE: "./assets/",
-  TSV_URL: "./data.tsv",
+  TSV_URL: "./data/data.tsv",
   SALT: "25_creatures_v1"
 };
 
