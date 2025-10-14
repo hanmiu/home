@@ -156,6 +156,27 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
   const mainY = Math.round(PAD + (WORK_H-mainH)*0.18); // 상단에 살짝 치우침
   ctx.drawImage(mainImg, mainX, mainY, mainW, mainH);
 
+  // 한미유치원 로고
+  const logoX = mainX + mm2px(10);
+  const logoY = mainY + mm2px(10);
+  const logoPath = new Path2D('M26.405471,23.244963C26.405471,23.244963 26.880837,26.114323 27.220195,29.950259 M37.189743,48.338714C37.189743,43.724875 33.062148,39.980291 27.979476,39.980291L24.830489,39.980291C19.746433,39.980291 15.620222,43.724875 15.620222,48.338714C15.620222,52.952553 19.746433,56.697136 24.830489,56.697136L27.979476,56.697136C33.062148,56.697136 37.189743,52.952553 37.189743,48.338714Z M54.945547,23.241356L54.945547,60.041296 M11.354173,29.950091L41.454242,29.950091 M18.038490,66.729916C18.038490,71.342105 16.821848,76.787099 25.890786,76.759868L58.120517,76.759868 M54.944924,43.324091L64.902262,43.324091 M262.922953,59.077087C262.922953,59.077087 263.527444,55.428316 263.958983,50.550415 M273.706943,31.599714C273.706943,26.985875 269.579348,23.241291 264.496676,23.241291L261.347689,23.241291C256.263633,23.241291 252.137422,26.985875 252.137422,31.599714C252.137422,36.213553 256.263633,39.958136 261.347689,39.958136L264.496676,39.958136C269.579348,39.958136 273.706943,36.213553 273.706943,31.599714Z M253.685090,66.729916C253.685090,71.342105 252.468448,76.787099 261.537386,76.759868L293.767117,76.759868 M292.293457,23.241356L292.293457,63.406550 M282.312224,57.379091L292.269562,57.379091 M246.855598,50.011786C262.999964,50.801475 272.258382,51.403953 280.394670,46.668091 M171.459341,34.570717C171.459341,28.397029 166.277669,23.386474 159.897018,23.386474L155.943864,23.386474C149.561476,23.386474 144.381541,28.397029 144.381541,34.570717C144.381541,40.744406 149.561476,45.754960 155.943864,45.754960L159.897018,45.754960C166.277669,45.754960 171.459341,40.744406 171.459341,34.570717Z M151.172657,76.708062C151.172657,62.098824 152.196076,54.288169 142.886601,53.984093C135.823653,53.753768 132.046537,49.789440 131.672115,45.755902 M164.606474,76.760062C164.606474,62.150824 163.644324,54.340169 172.953799,54.036093C180.016747,53.805768 183.793863,50.522206 184.168285,46.488668 M206.677144,26.649414C206.677144,26.649414 208.893038,40.001504 206.677144,46.092091C204.446501,52.221254 193.313708,63.261009 193.295554,63.428931 M206.674734,46.092091L220.042709,63.428931 M233.418747,23.263356L233.418747,73.416521 M193.295311,33.337091L220.043742,33.337091 M117.554547,23.263356L117.554547,73.416521 M77.430841,29.950134L100.398687,29.950134L100.398687,63.385425L77.430841,63.385425Z');
+  ctx.lineWidth = mm2px(0.2);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'black';
+  ctx.save();
+  ctx.translate(mm2px(12), mm2px(12));
+  ctx.scale(1, 1);
+  ctx.stroke(logoPath);
+  ctx.restore();
+
+  // 신기한 생물 사전 2025 로고
+  const creatureLogoImg = await loadImage('./front/strange_creatures.png');
+  ctx.save();
+  ctx.translate(mainW - mm2px(6), mm2px(12));
+  ctx.scale(0.3, 0.3);
+  ctx.drawImage(creatureLogoImg, 0, 0);
+  ctx.restore();
+
   // 텍스트(이름/제목)
   const [author, title] = splitBase(basename);
   const nameY = mainY + mainH + mm2px(8); // 메인 아래 8mm
@@ -173,7 +194,7 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
 
   // QR (하단 중앙)
   if(drawQR && qrUrl){
-    const sizePx = mm2px(16); // 26mm
+    const sizePx = mm2px(14); // 14mm
     // qrcodejs 라이브러리는 DOM 요소에 직접 생성하므로 임시 div 사용
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -195,11 +216,17 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
     const qrImg = tempDiv.querySelector('img');
     if(qrImg && qrImg.complete){
       const qx = Math.round((CONFIG.PAPER.W - sizePx)/2);
-      const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(8);
+      const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(11);
       ctx.save();
       ctx.translate(qx + sizePx * 0.5, qy + mm2px(4));
       ctx.rotate(Math.PI * 1.25);
       ctx.drawImage(qrImg, -sizePx * 0.5, -sizePx * 0.5, sizePx, sizePx);
+      const n = 4;
+      for(let i = 1; i < n; i++) {
+        const gap = mm2px(2) * i;
+        ctx.strokeStyle = `rgba(0, 0, 0, ${(1 - i / n) * 0.75})`;
+        ctx.strokeRect(-(sizePx + gap) * 0.5, -(sizePx + gap) * 0.5, sizePx + gap, sizePx + gap);
+      }
       ctx.restore();
     }
     
@@ -217,7 +244,7 @@ export function splitBase(base){
 export function drawFitText(ctx, text, centerX, baselineY, boxW, maxPx, minPx){
   let size=maxPx; let lines;
   while(size>=minPx){
-    ctx.font = `900 ${size}px 'Noto Sans KR', system-ui, sans-serif`;
+    ctx.font = `700 ${size}px 'Noto Sans KR', system-ui, sans-serif`;
     lines = wrapByWords(ctx, text, boxW);
     if(lines.length<=2) break; // 최대 2줄로 제한(필요시 3으로)
     size-=2;
