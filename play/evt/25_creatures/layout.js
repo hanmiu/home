@@ -186,7 +186,7 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
       height: sizePx,
       colorDark: '#000000',
       colorLight: '#ffffff',
-      correctLevel: window.QRCode.CorrectLevel.H
+      correctLevel: window.QRCode.CorrectLevel.L
     });
     
     // QR 코드 이미지가 생성될 때까지 대기
