@@ -6,7 +6,7 @@
 <title>Creatures Card</title>
 <style>
   body{margin:0;background:#f2f2f2;font-family:"Noto Sans KR",system-ui,sans-serif}
-  .wrap{max-width:420px;margin:0 auto;padding:16px}
+  .wrap{max-width:480px;margin:0 auto;padding:16px}
   canvas{width:100%;height:auto;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.12);}
   .btn-wrap{margin-top:20px;text-align:center}
   .form-btn{display:inline-block;padding:16px 32px;background:#4a90e2;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:16px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(74,144,226,.3);transition:all .3s}
@@ -47,7 +47,14 @@ try{
 
   // 캔버스 렌더 (보더 이미지 및 QR 코드 제외)
   const canvas = document.getElementById('card');
-  await drawCard({canvas, basename, allBasenames:bases, assetsBase, drawQR:false, drawBorders:false});
+  await drawCard({
+    canvas, 
+    basename, 
+    allBasenames:bases, 
+    assetsBase, 
+    drawQR:false, 
+    drawBorders:false
+  });
   
   // 구글 폼 버튼 이벤트 (나중에 prefill URL 연결 예정)
   document.getElementById('formBtn').addEventListener('click', ()=>{

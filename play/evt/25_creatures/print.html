@@ -16,20 +16,61 @@
   main{padding:16px;display:grid;gap:16px;grid-template-columns:1fr;max-width:1080px;margin:0 auto}
   canvas{width:600px;max-width:100%;height:auto;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.4)}
   .hint{opacity:.8;font-size:13px}
+  .border-controls{display:flex;gap:12px;align-items:center;padding:8px 12px;background:#252525;border-radius:6px;margin-top:8px}
+  .border-controls label{display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer}
+  .border-controls input[type="checkbox"]{cursor:pointer;width:16px;height:16px}
+  .controls-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .slider-container{display:flex;gap:12px;align-items:center;padding:8px 12px;background:#252525;border-radius:6px;margin-top:8px;width:100%}
+  .slider-container input[type="range"]{flex:1;height:8px;border-radius:4px;background:#444;outline:none;-webkit-appearance:none;appearance:none}
+  .slider-container input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#4a90e2;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .slider-container input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#4a90e2;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .slider-container input[type="range"]::-webkit-slider-thumb:hover{background:#357abd}
+  .slider-container input[type="range"]::-moz-range-thumb:hover{background:#357abd}
+  .slider-info{font-size:13px;color:#bbb;min-width:80px;text-align:right}
 </style>
 </head>
 <body>
 <header>
-  <button id="prev">◀ 이전</button>
-  <button id="next">다음 ▶</button>
-  <label>basename: <input id="base" size="28" placeholder="예) 김연우_달 디테일"/></label>
-  <label>code: <input id="code" size="28" placeholder="auto"/></label>
-  <label>cell(px): <input id="cell" type="number" value="150" min="80" max="220" step="2"/></label>
-  <label>QR base: <input id="qrbase" size="36" placeholder="기본값: https://www.hanmiu.cc/play/evt/25_creatures/card.html"/></label>
-  <button id="render">렌더</button>
-  <button id="save">JPG 저장</button>
-  <button id="batchSave">🔄 전체 JPG 저장</button>
-  <span class="hint">TSV/자산 경로는 layout.js의 기본값을 사용합니다.</span>
+  <div class="controls-row">
+    <button id="prev">◀ 이전</button>
+    <button id="next">다음 ▶</button>
+    <label>basename: <input id="base" size="28" placeholder="예) 김연우_달 디테일"/></label>
+    <label>code: <input id="code" size="28" placeholder="auto"/></label>
+  </div>
+  <div class="controls-row">
+    <label>cell(px): <input id="cell" type="number" value="150" min="80" max="220" step="2"/></label>
+    <label>QR base: <input id="qrbase" size="36" placeholder="기본값: https://www.hanmiu.cc/play/evt/25_creatures/card.html"/></label>
+  </div>
+  <div class="controls-row">
+    <button id="render">렌더</button>
+    <button id="save">JPG 저장</button>
+    <button id="batchSave">🔄 전체 JPG 저장</button>
+  </div>
+  <div class="border-controls">
+    <span style="font-weight:600">보더 표시:</span>
+    <label>
+      <input type="checkbox" id="borderTop" checked />
+      상단
+    </label>
+    <label>
+      <input type="checkbox" id="borderRight" checked />
+      우측
+    </label>
+    <label>
+      <input type="checkbox" id="borderBottom" checked />
+      하단
+    </label>
+    <label>
+      <input type="checkbox" id="borderLeft" checked />
+      좌측
+    </label>
+  </div>
+  <div class="slider-container">
+    <span style="font-weight:600;min-width:60px">탐색:</span>
+    <input type="range" id="slider" min="0" max="0" value="0" step="1" />
+    <span class="slider-info" id="sliderInfo">1 / 1</span>
+  </div>
+  <span class="hint">카드 사이즈: 89mm x 127mm (2102 x 3000px @600dpi) | 키보드 ← → 로 이동</span>
 </header>
 <main>
   <canvas id="card"></canvas>
@@ -44,10 +85,25 @@ const codeInput = $('#code');
 const cellInput = $('#cell');
 const canvas = $('#card');
 
+// 보더 체크박스
+const borderTop = $('#borderTop');
+const borderRight = $('#borderRight');
+const borderBottom = $('#borderBottom');
+const borderLeft = $('#borderLeft');
+
+// 슬라이더
+const slider = $('#slider');
+const sliderInfo = $('#sliderInfo');
+
 // TSV 로드
 const tsv = await (await fetch(CONFIG.TSV_URL, {cache:'reload'})).text();
 const bases = parseTSV(tsv);
 let currentIndex = 0;
+
+// 슬라이더 초기화
+slider.max = bases.length - 1;
+slider.value = 0;
+sliderInfo.textContent = `1 / ${bases.length}`;
 
 // 초기 값
 baseInput.value = bases[currentIndex] || '';
@@ -56,13 +112,31 @@ codeInput.value = baseInput.value ? await shortCode(baseInput.value) : '';
 async function render(){
   const basename = baseInput.value.trim();
   CONFIG.CELL_S = Math.max(80, Math.min(220, parseInt(cellInput.value||150,10)));
+  
+  // 보더 사이드 설정
+  const borderSides = {
+    top: borderTop.checked,
+    right: borderRight.checked,
+    bottom: borderBottom.checked,
+    left: borderLeft.checked
+  };
+  
   // QR 코드는 항상 배포된 URL을 사용
   const defaultQrBase = 'https://www.hanmiu.cc/play/evt/25_creatures/card.html';
   const inputBase = (document.getElementById('qrbase').value || '').trim();
   const qrBase = inputBase || defaultQrBase;
   const code = await shortCode(basename);
   const url = qrBase + '?code=' + code;
-  await drawCard({canvas, basename, allBasenames:bases, drawQR:true, qrUrl:url, drawBorders:true});
+  
+  await drawCard({
+    canvas, 
+    basename, 
+    allBasenames:bases, 
+    drawQR:true, 
+    qrUrl:url, 
+    drawBorders:true,
+    borderSides
+  });
 }
 
 async function loadByIndex(index){
@@ -70,6 +144,8 @@ async function loadByIndex(index){
   currentIndex = index;
   baseInput.value = bases[currentIndex];
   codeInput.value = await shortCode(baseInput.value);
+  slider.value = currentIndex;
+  sliderInfo.textContent = `${currentIndex + 1} / ${bases.length}`;
   await render();
 }
 
@@ -77,15 +153,47 @@ async function loadByIndex(index){
 $('#prev').addEventListener('click', ()=>loadByIndex(currentIndex - 1));
 $('#next').addEventListener('click', ()=>loadByIndex(currentIndex + 1));
 
+// 키보드 화살표키 네비게이션
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'ArrowLeft'){
+    e.preventDefault();
+    loadByIndex(currentIndex - 1);
+  } else if(e.key === 'ArrowRight'){
+    e.preventDefault();
+    loadByIndex(currentIndex + 1);
+  }
+});
+
+// 슬라이더 이벤트
+slider.addEventListener('input', ()=>{
+  const index = parseInt(slider.value, 10);
+  sliderInfo.textContent = `${index + 1} / ${bases.length}`;
+});
+
+slider.addEventListener('change', ()=>{
+  const index = parseInt(slider.value, 10);
+  loadByIndex(index);
+});
+
 // 수동 렌더
 $('#render').addEventListener('click', render);
+
+// 보더 체크박스 변경 시 자동 렌더
+borderTop.addEventListener('change', render);
+borderRight.addEventListener('change', render);
+borderBottom.addEventListener('change', render);
+borderLeft.addEventListener('change', render);
 
 // basename↔code 동기화
 baseInput.addEventListener('input', async ()=>{ 
   codeInput.value = await shortCode(baseInput.value);
   // 현재 인덱스 업데이트
   const idx = bases.indexOf(baseInput.value.trim());
-  if(idx !== -1) currentIndex = idx;
+  if(idx !== -1) {
+    currentIndex = idx;
+    slider.value = idx;
+    sliderInfo.textContent = `${idx + 1} / ${bases.length}`;
+  }
 });
 codeInput.addEventListener('input', async ()=>{ 
   try{ 
@@ -94,7 +202,11 @@ codeInput.addEventListener('input', async ()=>{
     if(basename) {
       baseInput.value = basename;
       const idx = bases.indexOf(basename);
-      if(idx !== -1) currentIndex = idx;
+      if(idx !== -1) {
+        currentIndex = idx;
+        slider.value = idx;
+        sliderInfo.textContent = `${idx + 1} / ${bases.length}`;
+      }
     }
   }catch{}
 });

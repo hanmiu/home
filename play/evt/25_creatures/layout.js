@@ -1,10 +1,10 @@
 export const CONFIG = {
   DPI: 600,
-  PAPER: { W: 1800, H: 3000 }, // 3x5in @600dpi
+  PAPER: { W: 2102, H: 3000 }, // 89mm x 127mm @600dpi
   PAD_MM: 3,                    // 전역 테두리 패딩
   CELL_S: 150,                  // 보더 한 셀 정사각 크기(px)
   INNER_PAD: 6,                 // 각 셀 내부 여백(px) 5~7 권장
-  GRID: { COLS: 9, ROWS: 15 },  // 개념상 그리드(보더 뜯어 사용)
+  GRID: { COLS: 11, ROWS: 15 },  // 개념상 그리드(보더 뜯어 사용)
   // 리소스 경로 (필요 시 cards/print에서 override 가능)
   ASSETS_BASE: "./assets/",
   TSV_URL: "./data/data.tsv",
@@ -84,33 +84,58 @@ export function assetUrl(basename, base=CONFIG.ASSETS_BASE){
   return base + encodeURIComponent(basename + '.png');
 }
 
-// 보더 44 슬롯 좌표 (시계방향, 모서리 중복 제거: 상9 + 우14 + 하8 + 좌13)
+// 보더 그리드 메트릭
 export function gridMetrics(cellS=CONFIG.CELL_S){
   const s = cellS;
   const gx = Math.round((WORK_W - CONFIG.GRID.COLS*s) / (CONFIG.GRID.COLS-1));
   const gy = Math.round((WORK_H - CONFIG.GRID.ROWS*s) / (CONFIG.GRID.ROWS-1));
   return {s,gx,gy};
 }
-export function borderXY(idx, m){
-  const {s,gx,gy}=m; const W=CONFIG.PAPER.W, H=CONFIG.PAPER.H; const pad=PAD;
-  // 상단 9개: 좌상 모서리부터 우상 모서리까지
-  if(idx<9) return [pad + idx*(s+gx), pad];
-  idx-=9;
-  // 우측 14개: 우상 모서리 바로 아래부터 우하 모서리까지
-  if(idx<14) return [W-pad-s, pad + (idx+1)*(s+gy)];
-  idx-=14;
-  // 하단 8개: 우하 모서리 바로 왼쪽부터 좌하 모서리 바로 오른쪽까지
-  if(idx<8) return [W - pad - s - (idx+1)*(s+gx), H-pad-s];
-  idx-=8;
-  // 좌측 13개: 좌하 모서리 바로 위부터 좌상 모서리 바로 아래까지 (역순)
-  return [pad, H - pad - s - (idx+1)*(s+gy)];
+
+// 보더 슬롯별 좌표 계산 (상하좌우 분리, 각 사이드 독립적으로 모서리까지)
+export function borderXY(side, idx, m){
+  const {s,gx,gy}=m; 
+  const W=CONFIG.PAPER.W, H=CONFIG.PAPER.H; 
+  const pad=PAD;
+  
+  switch(side){
+    case 'top': // 상단 COLS개 (좌상 모서리부터 우상 모서리까지)
+      return [pad + idx*(s+gx), pad];
+    
+    case 'right': // 우측 ROWS개 (우상 모서리부터 우하 모서리까지)
+      return [W-pad-s, pad + idx*(s+gy)];
+    
+    case 'bottom': // 하단 COLS개 (우하 모서리부터 좌하 모서리까지, 우→좌 순서)
+      return [W - pad - s - idx*(s+gx), H-pad-s];
+    
+    case 'left': // 좌측 ROWS개 (좌하 모서리부터 좌상 모서리까지, 하→상 순서)
+      return [pad, H - pad - s - idx*(s+gy)];
+    
+    default:
+      return [0, 0];
+  }
 }
 
-// 메인 제외, 결정적 셔플로 44개 선택
-export function pickBorders(allBases, mainBase, seed){
+// 보더 이미지 선택 (사이드별로 분리, 모서리까지 채움)
+export function pickBordersBySide(allBases, mainBase, seed, sides={top:true, right:true, bottom:true, left:true}){
   const list = allBases.filter(b=>b!==mainBase);
   const sh = shuffleDeterministic(list, seed);
-  return sh.slice(0,44);
+  
+  // 각 사이드의 개수: 상/하는 COLS개, 좌/우는 ROWS개
+  const topCount = CONFIG.GRID.COLS;    // 11개
+  const rightCount = CONFIG.GRID.ROWS;  // 15개
+  const bottomCount = CONFIG.GRID.COLS; // 11개
+  const leftCount = CONFIG.GRID.ROWS;   // 15개
+  
+  let offset = 0;
+  const result = {
+    top: sides.top ? sh.slice(offset, offset + topCount) : [],
+    right: sides.right ? sh.slice(offset + topCount, offset + topCount + rightCount) : [],
+    bottom: sides.bottom ? sh.slice(offset + topCount + rightCount, offset + topCount + rightCount + bottomCount) : [],
+    left: sides.left ? sh.slice(offset + topCount + rightCount + bottomCount, offset + topCount + rightCount + bottomCount + leftCount) : []
+  };
+  
+  return result;
 }
 
 // 이미지 로더
@@ -128,7 +153,17 @@ export function loadImage(url){
 }
 
 // 캔버스 그리기: 테두리, 메인, 텍스트, QR(옵션)
-export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFIG.ASSETS_BASE, drawQR=true, qrUrl, titleFromBase=true, drawBorders=true}){
+export async function drawCard({
+  canvas, 
+  basename, 
+  allBasenames, 
+  assetsBase=CONFIG.ASSETS_BASE, 
+  drawQR=true, 
+  qrUrl, 
+  titleFromBase=true, 
+  drawBorders=true,
+  borderSides={top:true, right:true, bottom:true, left:true}
+}){
   const ctx = canvas.getContext('2d');
   canvas.width = CONFIG.PAPER.W; canvas.height = CONFIG.PAPER.H;
   // 배경
@@ -136,24 +171,28 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
 
   const metrics=gridMetrics(CONFIG.CELL_S);
   const seed = await seedFrom(basename);
-  const borders = pickBorders(allBasenames, basename, seed);
+  const borders = pickBordersBySide(allBasenames, basename, seed, borderSides);
 
   // 테두리 이미지 배치 (옵션)
   if(drawBorders){
     const cellPad = CONFIG.INNER_PAD; // 내부 패딩
-    for(let i=0;i<borders.length;i++){
-      const [x,y]=borderXY(i,metrics);
-      const img = await loadImage(assetUrl(borders[i], assetsBase));
-      const s = metrics.s - cellPad*2;
-      ctx.drawImage(img, x+cellPad, y+cellPad, s, s);
+    
+    // 각 사이드별로 그리기
+    for(const [side, items] of Object.entries(borders)){
+      for(let i=0; i<items.length; i++){
+        const [x,y] = borderXY(side, i, metrics);
+        const img = await loadImage(assetUrl(items[i], assetsBase));
+        const s = metrics.s - cellPad*2;
+        ctx.drawImage(img, x+cellPad, y+cellPad, s, s);
+      }
     }
   }
 
-  // 메인 캐릭터 (가로 65% 폭)
+  // 메인 캐릭터 (가로 60% 폭으로 약간 줄임)
   const mainImg = await loadImage(assetUrl(basename, assetsBase));
-  const mainW = Math.round(WORK_W*0.65), mainH=mainW; // 정사각형
+  const mainW = Math.round(WORK_W*0.60), mainH=mainW; // 정사각형
   const mainX = Math.round((CONFIG.PAPER.W - mainW)/2);
-  const mainY = Math.round(PAD + (WORK_H-mainH)*0.18); // 상단에 살짝 치우침
+  const mainY = Math.round(PAD + (WORK_H-mainH)*0.20); // 상단에 배치
   ctx.drawImage(mainImg, mainX, mainY, mainW, mainH);
 
   // 한미유치원 로고
@@ -164,7 +203,7 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
   ctx.lineCap = 'round';
   ctx.strokeStyle = 'black';
   ctx.save();
-  ctx.translate(mm2px(12), mm2px(12));
+  ctx.translate(mm2px(12), CONFIG.PAPER.H - mm2px(14));
   ctx.scale(1, 1);
   ctx.stroke(logoPath);
   ctx.restore();
@@ -172,29 +211,29 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
   // 신기한 생물 사전 2025 로고
   const creatureLogoImg = await loadImage('./front/strange_creatures.png');
   ctx.save();
-  ctx.translate(mainW - mm2px(6), mm2px(12));
-  ctx.scale(0.3, 0.3);
+  ctx.translate(mainW - mm2px(2), CONFIG.PAPER.H - mm2px(14));
+  ctx.scale(0.25, 0.25);
   ctx.drawImage(creatureLogoImg, 0, 0);
   ctx.restore();
 
   // 텍스트(이름/제목)
   const [author, title] = splitBase(basename);
-  const nameY = mainY + mainH + mm2px(8); // 메인 아래 8mm
+  const nameY = mainY + mainH + mm2px(5); // 메인 아래 10mm
   ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
 
   // 제목(큰 글씨, 단어단위 줄바꿈)
-  const titleBoxW = Math.round(WORK_W*0.9);
-  const titleMax = 120; const titleMin = 56;
+  const titleBoxW = Math.round(WORK_W*0.65);
+  const titleMax = 110; const titleMin = 52;
   drawFitText(ctx, titleFromBase?title:basename, CONFIG.PAPER.W/2, nameY, titleBoxW, titleMax, titleMin);
 
   // 이름(작은 글씨)
-  const authorY = nameY + mm2px(16); // 16mm 아래
-  ctx.font = `500 ${Math.round(mm2px(5))}px 'Noto Sans KR', system-ui, sans-serif`;
+  const authorY = nameY + mm2px(14); // 10mm 아래
+  ctx.font = `500 ${Math.round(mm2px(4.5))}px 'Noto Sans KR', system-ui, sans-serif`;
   ctx.fillText(author, CONFIG.PAPER.W/2, authorY);
 
   // QR (하단 중앙)
   if(drawQR && qrUrl){
-    const sizePx = mm2px(14); // 14mm
+    const sizePx = mm2px(13); // 13mm
     // qrcodejs 라이브러리는 DOM 요소에 직접 생성하므로 임시 div 사용
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -216,10 +255,10 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
     const qrImg = tempDiv.querySelector('img');
     if(qrImg && qrImg.complete){
       const qx = Math.round((CONFIG.PAPER.W - sizePx)/2);
-      const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(11);
+      const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(13);
       ctx.save();
       ctx.translate(qx + sizePx * 0.5, qy + mm2px(4));
-      ctx.rotate(Math.PI * 1.25);
+      ctx.rotate(Math.PI * 1.25 * 1);
       ctx.drawImage(qrImg, -sizePx * 0.5, -sizePx * 0.5, sizePx, sizePx);
       const n = 4;
       for(let i = 1; i < n; i++) {
