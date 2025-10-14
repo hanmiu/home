@@ -36,7 +36,7 @@
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import { CONFIG, parseTSV, b64urlEncode, b64urlDecode, drawCard } from './layout.js';
+import { CONFIG, parseTSV, shortCode, fromShortCode, drawCard } from './layout.js';
 
 const $ = (s)=>document.querySelector(s);
 const baseInput = $('#base');
@@ -51,7 +51,7 @@ let currentIndex = 0;
 
 // 초기 값
 baseInput.value = bases[currentIndex] || '';
-codeInput.value = baseInput.value ? b64urlEncode(baseInput.value) : '';
+codeInput.value = baseInput.value ? await shortCode(baseInput.value) : '';
 
 async function render(){
   const basename = baseInput.value.trim();
@@ -60,7 +60,8 @@ async function render(){
   const defaultQrBase = 'https://www.hanmiu.cc/play/evt/25_creatures/card.html';
   const inputBase = (document.getElementById('qrbase').value || '').trim();
   const qrBase = inputBase || defaultQrBase;
-  const url = qrBase + '?code=' + encodeURIComponent(b64urlEncode(basename));
+  const code = await shortCode(basename);
+  const url = qrBase + '?code=' + code;
   await drawCard({canvas, basename, allBasenames:bases, drawQR:true, qrUrl:url, drawBorders:true});
 }
 
@@ -68,7 +69,7 @@ async function loadByIndex(index){
   if(index < 0 || index >= bases.length) return;
   currentIndex = index;
   baseInput.value = bases[currentIndex];
-  codeInput.value = b64urlEncode(baseInput.value);
+  codeInput.value = await shortCode(baseInput.value);
   await render();
 }
 
@@ -80,17 +81,21 @@ $('#next').addEventListener('click', ()=>loadByIndex(currentIndex + 1));
 $('#render').addEventListener('click', render);
 
 // basename↔code 동기화
-baseInput.addEventListener('input', ()=>{ 
-  codeInput.value = b64urlEncode(baseInput.value);
+baseInput.addEventListener('input', async ()=>{ 
+  codeInput.value = await shortCode(baseInput.value);
   // 현재 인덱스 업데이트
   const idx = bases.indexOf(baseInput.value.trim());
   if(idx !== -1) currentIndex = idx;
 });
-codeInput.addEventListener('input', ()=>{ 
+codeInput.addEventListener('input', async ()=>{ 
   try{ 
-    baseInput.value = b64urlDecode(codeInput.value);
-    const idx = bases.indexOf(baseInput.value.trim());
-    if(idx !== -1) currentIndex = idx;
+    const code = codeInput.value.trim();
+    const basename = await fromShortCode(code, bases);
+    if(basename) {
+      baseInput.value = basename;
+      const idx = bases.indexOf(basename);
+      if(idx !== -1) currentIndex = idx;
+    }
   }catch{}
 });
 

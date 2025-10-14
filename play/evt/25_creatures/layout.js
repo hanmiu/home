@@ -16,7 +16,7 @@ export const PAD = mm2px(CONFIG.PAD_MM, CONFIG.DPI);
 export const WORK_W = CONFIG.PAPER.W - 2*PAD;
 export const WORK_H = CONFIG.PAPER.H - 2*PAD;
 
-// base64url ⇄ utf8 string (NFC/trim 보장)
+// base64url ⇄ utf8 string (NFC/trim 보장) - DEPRECATED, 하위 호환용
 export function b64urlEncode(str) {
   const s = str.normalize('NFC').trim();
   const bytes = new TextEncoder().encode(s);
@@ -29,6 +29,23 @@ export function b64urlDecode(code) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
   return new TextDecoder().decode(bytes);
+}
+
+// 짧은 코드 생성 (SHA256 해시 앞 8자리 hex)
+export async function shortCode(basename, length=8) {
+  const normalized = (basename||'').normalize('NFC').trim();
+  const hex = await sha256hex(normalized);
+  return hex.slice(0, length);
+}
+
+// 짧은 코드로부터 basename 찾기
+export async function fromShortCode(code, allBasenames) {
+  const len = code.length;
+  for(const base of allBasenames) {
+    const hash = await shortCode(base, len);
+    if(hash === code) return base;
+  }
+  return null; // 찾을 수 없음
 }
 
 // sha256 hex (WebCrypto)
@@ -150,13 +167,13 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
   drawFitText(ctx, titleFromBase?title:basename, CONFIG.PAPER.W/2, nameY, titleBoxW, titleMax, titleMin);
 
   // 이름(작은 글씨)
-  const authorY = nameY + mm2px(18); // 18mm 아래
-  ctx.font = `700 ${Math.round(mm2px(6))}px 'Noto Sans KR', system-ui, sans-serif`;
+  const authorY = nameY + mm2px(16); // 16mm 아래
+  ctx.font = `500 ${Math.round(mm2px(5))}px 'Noto Sans KR', system-ui, sans-serif`;
   ctx.fillText(author, CONFIG.PAPER.W/2, authorY);
 
   // QR (하단 중앙)
   if(drawQR && qrUrl){
-    const sizePx = mm2px(26); // 26mm
+    const sizePx = mm2px(16); // 26mm
     // qrcodejs 라이브러리는 DOM 요소에 직접 생성하므로 임시 div 사용
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -179,7 +196,11 @@ export async function drawCard({canvas, basename, allBasenames, assetsBase=CONFI
     if(qrImg && qrImg.complete){
       const qx = Math.round((CONFIG.PAPER.W - sizePx)/2);
       const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(8);
-      ctx.drawImage(qrImg, qx, qy, sizePx, sizePx);
+      ctx.save();
+      ctx.translate(qx + sizePx * 0.5, qy + mm2px(4));
+      ctx.rotate(Math.PI * 1.25);
+      ctx.drawImage(qrImg, -sizePx * 0.5, -sizePx * 0.5, sizePx, sizePx);
+      ctx.restore();
     }
     
     document.body.removeChild(tempDiv);

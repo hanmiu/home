@@ -24,7 +24,7 @@
   <div id="msg" class="err" hidden></div>
 </div>
 <script type="module">
-import { CONFIG, parseTSV, b64urlDecode, drawCard } from './layout.js';
+import { CONFIG, parseTSV, fromShortCode, drawCard } from './layout.js';
 
 // 설정(필요시 쿼리로 오버라이드)
 const params = new URLSearchParams(location.search);
@@ -36,14 +36,14 @@ const msg = document.getElementById('msg');
 function fail(e){ msg.hidden=false; msg.textContent = e instanceof Error? e.message : e; throw e; }
 if(!code) fail('code 파라미터가 필요합니다.');
 
-let basename;
-try { basename = b64urlDecode(code); } catch(e){ fail('code 디코드 실패'); }
-
 try{
   // TSV 로드 → basename 리스트
   const tsv = await (await fetch(dataUrl, {cache:'reload'})).text();
   const bases = parseTSV(tsv);
-  if(!bases.includes(basename)) console.warn('주의: TSV에 현재 basename이 없거나 파일명이 변경되었을 수 있습니다.');
+  
+  // shortCode로부터 basename 복원
+  const basename = await fromShortCode(code, bases);
+  if(!basename) fail('유효하지 않은 코드입니다.');
 
   // 캔버스 렌더 (보더 이미지 및 QR 코드 제외)
   const canvas = document.getElementById('card');
