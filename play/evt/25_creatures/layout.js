@@ -152,6 +152,51 @@ export function loadImage(url){
   });
 }
 
+// 이미지의 투명하지 않은 픽셀로 bounding box 계산
+export function getBoundingBox(img){
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = img.width;
+  tempCanvas.height = img.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(img, 0, 0);
+  
+  const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+  const data = imageData.data;
+  
+  let minX = img.width, minY = img.height, maxX = 0, maxY = 0;
+  let hasContent = false;
+  
+  for (let y = 0; y < img.height; y++) {
+    for (let x = 0; x < img.width; x++) {
+      const alpha = data[(y * img.width + x) * 4 + 3];
+      if (alpha > 0) { // 투명하지 않은 픽셀
+        hasContent = true;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  
+  // 콘텐츠가 없으면 전체 이미지 반환
+  if (!hasContent) {
+    return {
+      x: 0,
+      y: 0,
+      width: img.width,
+      height: img.height
+    };
+  }
+  
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1
+  };
+}
+
 // 캔버스 그리기: 테두리, 메인, 텍스트, QR(옵션)
 export async function drawCard({
   canvas, 
@@ -188,12 +233,33 @@ export async function drawCard({
     }
   }
 
-  // 메인 캐릭터 (가로 60% 폭으로 약간 줄임)
+  // 메인 캐릭터 - bounding box 기반 스케일링 (45mm 크기)
   const mainImg = await loadImage(assetUrl(basename, assetsBase));
-  const mainW = Math.round(WORK_W*0.60), mainH=mainW; // 정사각형
-  const mainX = Math.round((CONFIG.PAPER.W - mainW)/2);
-  const mainY = Math.round(PAD + (WORK_H-mainH)*0.20); // 상단에 배치
-  ctx.drawImage(mainImg, mainX, mainY, mainW, mainH);
+  const bbox = getBoundingBox(mainImg);
+  
+  // bounding box의 긴 쪽이 45mm가 되도록 스케일 계산
+  const targetSize = mm2px(45);
+  const scale = targetSize / Math.max(bbox.width, bbox.height);
+  
+  // 스케일된 전체 이미지 크기
+  const scaledW = Math.round(mainImg.width * scale);
+  const scaledH = Math.round(mainImg.height * scale);
+  
+  // 스케일된 bounding box 크기
+  const scaledBboxW = Math.round(bbox.width * scale);
+  const scaledBboxH = Math.round(bbox.height * scale);
+  
+  // bounding box의 센터가 올 위치 계산 (카드 중앙 위쪽)
+  const bboxCenterX = CONFIG.PAPER.W / 2;
+  const topSafeMargin = PAD + CONFIG.CELL_S + mm2px(3); // 보더로부터 안전 거리
+  const availableHeight = WORK_H - topSafeMargin * 2;
+  const bboxCenterY = topSafeMargin + availableHeight * 0.30; // 상단 30% 위치
+  
+  // 실제 이미지 그리기 위치 (bbox offset 보정)
+  const mainX = Math.round(bboxCenterX - scaledW/2);
+  const mainY = Math.round(bboxCenterY - scaledBboxH/2 - bbox.y * scale);
+  
+  ctx.drawImage(mainImg, mainX, mainY, scaledW, scaledH);
 
   // 한미유치원 로고
   const logoX = mainX + mm2px(10);
@@ -211,23 +277,23 @@ export async function drawCard({
   // 신기한 생물 사전 2025 로고
   const creatureLogoImg = await loadImage('./front/strange_creatures.png');
   ctx.save();
-  ctx.translate(mainW - mm2px(2), CONFIG.PAPER.H - mm2px(14));
+  ctx.translate(CONFIG.PAPER.W - mm2px(14), CONFIG.PAPER.H - mm2px(14));
   ctx.scale(0.25, 0.25);
   ctx.drawImage(creatureLogoImg, 0, 0);
   ctx.restore();
 
-  // 텍스트(이름/제목)
+  // 텍스트(이름/제목) - bounding box 하단 기준
   const [author, title] = splitBase(basename);
-  const nameY = mainY + mainH + mm2px(5); // 메인 아래 10mm
+  const nameY = bboxCenterY + scaledBboxH/2 + mm2px(10); // bbox 하단에서 10mm 아래
   ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
 
   // 제목(큰 글씨, 단어단위 줄바꿈)
-  const titleBoxW = Math.round(WORK_W*0.65);
+  const titleBoxW = Math.round(WORK_W*0.85);
   const titleMax = 110; const titleMin = 52;
   drawFitText(ctx, titleFromBase?title:basename, CONFIG.PAPER.W/2, nameY, titleBoxW, titleMax, titleMin);
 
   // 이름(작은 글씨)
-  const authorY = nameY + mm2px(14); // 10mm 아래
+  const authorY = nameY + mm2px(18); // 18mm 아래
   ctx.font = `500 ${Math.round(mm2px(4.5))}px 'Noto Sans KR', system-ui, sans-serif`;
   ctx.fillText(author, CONFIG.PAPER.W/2, authorY);
 
@@ -255,10 +321,10 @@ export async function drawCard({
     const qrImg = tempDiv.querySelector('img');
     if(qrImg && qrImg.complete){
       const qx = Math.round((CONFIG.PAPER.W - sizePx)/2);
-      const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(13);
+      const qy = CONFIG.PAPER.H - PAD - sizePx - mm2px(10);
       ctx.save();
       ctx.translate(qx + sizePx * 0.5, qy + mm2px(4));
-      ctx.rotate(Math.PI * 1.25 * 1);
+      ctx.rotate(Math.PI * 1.25);
       ctx.drawImage(qrImg, -sizePx * 0.5, -sizePx * 0.5, sizePx, sizePx);
       const n = 4;
       for(let i = 1; i < n; i++) {
