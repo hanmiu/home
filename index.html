@@ -863,7 +863,7 @@
           <span class="indicator" data-index="4"></span> -->
         </div>
       </div>
-      <div class="social social--lg social--center social--mt" role="group" aria-label="공식 채널" data-no-carousel>
+      <div class="social social--lg social--center social--mt" role="group" aria-label="공식 채널">
         <a href="https://www.youtube.com/hanmiu" target="_blank" rel="noreferrer" aria-label="YouTube" class="icon-link">
           <svg aria-hidden="true" focusable="false"><use href="#i-yt"></use></svg>
         </a>
@@ -1135,6 +1135,7 @@
         { src: "https://www.youtube.com/embed/KqQCudMknEQ", title: "🎨 물감 · ✨ 빛 · 🌈 색" },
         { src: "https://www.youtube.com/embed/cVS5VWrgmoc", title: "피구 !" },
         { src: "https://www.youtube.com/embed/ttI82GOLg28", title: "딱지에 한자 쓰면 진짜 세져요?! 💪🏻" },
+        { src: "https://www.youtube.com/embed/hC0ui2_2OF8", title: "엘리베이터 만들기" },
       ];
 
       const MAX_SLIDES = 7;
@@ -1202,10 +1203,8 @@
         const slides = Array.from(track.querySelectorAll('.carousel-slide'));
         const section = container.closest('.carousel-section') || container;
 
-        // ⛳ 드래그/자동정지 예외(인디케이터 + 소셜 링크 + data-no-carousel 영역)
-        const EXEMPT = '.carousel-indicators, .carousel-indicators *,' +
-          ' .social a, .social button,' +
-          ' [data-no-carousel], [data-no-carousel] *';
+        // 인디케이터 + 소셜 아이콘(링크)만 예외
+        const EXEMPT = '.carousel-indicators, .carousel-indicators * , .social a';
 
         // 인디케이터 생성/연결
         let indicators = container.querySelector('.carousel-indicators');
