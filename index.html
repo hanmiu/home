@@ -901,12 +901,12 @@
               <ellipse class="eye" cx="23" cy="16" rx="7" ry="9"/>
 
               <!-- 동공: 오른쪽을 보는 배치 -->
-              <ellipse cx="11.5" cy="15" rx="3" ry="3.6" fill="#000"/>
-              <ellipse cx="25.5" cy="15" rx="3" ry="3.6" fill="#000"/>
+              <ellipse class="pupil pupil--left"  cx="11.5" cy="15" rx="3" ry="3.6" fill="#000"/>
+              <ellipse class="pupil pupil--right" cx="25.5" cy="15" rx="3" ry="3.6" fill="#000"/>
 
-              <!-- 하이라이트 -->
-              <circle cx="10.6" cy="13.9" r="0.9" fill="#fff"/>
-              <circle cx="24.6" cy="13.9" r="0.9" fill="#fff"/>
+              <!-- 하이라이트 (동공과 함께 이동) -->
+              <circle class="pupil-hi pupil-hi--left"  cx="10.6" cy="13.9" r="0.9" fill="#fff"/>
+              <circle class="pupil-hi pupil-hi--right" cx="24.6" cy="13.9" r="0.9" fill="#fff"/>
             </g>
           </svg>
         </span></span>
@@ -1356,6 +1356,141 @@
         startAuto();
       }
     })();
+  </script>
+
+  <script>
+  /**
+   * Eyes follow swipe (minimal hook, with highlights)
+   * - pointerdown/up의 clientX만 사용해 좌↔우로 '흘깃'
+   * - 상호작용 없으면 초기 '오른쪽' 시선(rest)으로 복귀
+   * - 동공(clamp) + 하이라이트는 동공 기준 상대 오프셋 유지
+   */
+  (function () {
+    const section = document.querySelector('.carousel-section');
+    const eyesRoot = document.getElementById('eyes');
+    if (!section || !eyesRoot) return;
+
+    const pupils = eyesRoot.querySelectorAll('.pupil');
+    const whites = eyesRoot.querySelectorAll('.eye');
+    const highs  = eyesRoot.querySelectorAll('.pupil-hi');
+    if (pupils.length !== 2 || whites.length !== 2 || highs.length !== 2) return;
+
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const margin = 0.5;              // 흰자-동공 사이 안전 여백(px)
+    const animDur = 160;             // 일반 이동 시간(ms)
+    const restDur = 220;             // 복귀 이동 시간(ms)
+    const idleDelay = 1000;          // 복귀 대기 시간(ms)
+
+    // 각 눈의 기하 파라미터 + 하이라이트 오프셋
+    const eyes = [0, 1].map(i => {
+      const eye   = whites[i];
+      const pupil = pupils[i];
+      const hi    = highs[i];
+
+      const cx0 = parseFloat(eye.getAttribute('cx'));     // 흰자 중심
+      const rxW = parseFloat(eye.getAttribute('rx'));     // 흰자 rx
+      const rxP = parseFloat(pupil.getAttribute('rx'));   // 동공 rx
+
+      const rest = parseFloat(pupil.getAttribute('cx'));  // 초기(오른쪽 보는) 동공 cx
+      const hiCx = parseFloat(hi.getAttribute('cx'));     // 초기 하이라이트 cx
+      const hiDx = hiCx - rest;                           // 하이라이트의 동공 기준 x 오프셋(고정)
+
+      const range = (rxW - rxP) - margin;                 // 좌/우 최대 이동량(동공 기준)
+      const min = cx0 - range;
+      const max = cx0 + range;
+
+      return { pupil, hi, cx0, range, min, max, rest, hiDx };
+    });
+
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    // 즉시 위치 세팅
+    function setInstant(pupilTargets) {
+      eyes.forEach((e, i) => {
+        const pcx = clamp(pupilTargets[i], e.min, e.max);
+        e.pupil.setAttribute('cx', String(pcx));
+        e.hi.setAttribute('cx', String(pcx + e.hiDx)); // 동공 기준 상대 오프셋 유지
+      });
+    }
+
+    // rAF 트윈
+    let rafId = 0;
+    function animateTo(pupilTargets, duration) {
+      if (reduceMotion || duration <= 0) { setInstant(pupilTargets); return; }
+      cancelAnimationFrame(rafId);
+      const start = eyes.map(e => parseFloat(e.pupil.getAttribute('cx')));
+      const t0 = performance.now();
+      const ease = t => 1 - Math.pow(1 - t, 3); // easeOutCubic
+
+      function step(now) {
+        const tt = Math.min(1, (now - t0) / duration);
+        eyes.forEach((e, i) => {
+          const target = clamp(pupilTargets[i], e.min, e.max);
+          const v = start[i] + (target - start[i]) * ease(tt);
+          e.pupil.setAttribute('cx', String(v));
+          e.hi.setAttribute('cx', String(v + e.hiDx));
+        });
+        if (tt < 1) rafId = requestAnimationFrame(step);
+      }
+      rafId = requestAnimationFrame(step);
+    }
+
+    // n ∈ [-1, 1] 로 정규화된 시선 → 각 눈 타깃 cx로 매핑
+    function lookNormalized(n, duration = animDur) {
+      n = Math.max(-1, Math.min(1, n));
+      const targets = eyes.map(e => clamp(e.cx0 + n * e.range, e.min, e.max));
+      animateTo(targets, duration);
+    }
+
+    // 화면 x좌표 → 시선 정규화
+    function lookAtClientX(x, rect, duration = animDur) {
+      const n = ((x - rect.left) / rect.width) * 2 - 1; // 좌:-1, 우:+1
+      lookNormalized(n, duration);
+    }
+
+    // 초기(오른쪽 보는) 상태로 복귀
+    function lookRest(duration = restDur) {
+      const targets = eyes.map(e => clamp(e.rest, e.min, e.max));
+      animateTo(targets, duration);
+    }
+
+    // 아이들 복귀 타이머
+    let idleTimer = 0, activePointerId = null;
+    function scheduleRest(delay = idleDelay) {
+      clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => lookRest(), delay);
+    }
+
+    // EXEMPT: 캐로셀 인디케이터나 소셜 아이콘을 누를 땐 무시
+    function isExempt(target) {
+      return !!(target.closest('.carousel-indicators') || target.closest('.social a'));
+    }
+
+    section.addEventListener('pointerdown', (e) => {
+      if (isExempt(e.target)) return;
+      activePointerId = e.pointerId;
+      const rect = section.getBoundingClientRect();
+      lookAtClientX(e.clientX, rect, animDur - 20);
+      clearTimeout(idleTimer);
+    }, { capture: true });
+
+    window.addEventListener('pointerup', (e) => {
+      if (activePointerId == null || e.pointerId !== activePointerId) return;
+      const rect = section.getBoundingClientRect();
+      lookAtClientX(e.clientX, rect, animDur);
+      activePointerId = null;
+      scheduleRest();
+    });
+
+    window.addEventListener('pointercancel', () => {
+      activePointerId = null;
+      scheduleRest();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { clearTimeout(idleTimer); }
+    });
+  })();
   </script>
 
   <script>
