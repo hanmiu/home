@@ -864,7 +864,52 @@
         </div>
       </div>
       <div class="social social--lg social--center social--mt" role="group" aria-label="공식 채널">
-        <!--<span style="padding: 10px; color: gray;">더 많은 이야기 ➡</span>-->
+        <span style="padding: 10px; color: gray;">더 보기 <span style="display: inline-block;">
+          <!-- 32x32 Eyes (CSS only, pseudo-random with double-blink) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32" role="img" aria-labelledby="title desc">
+            <title id="title">Blinking eyes</title>
+            <desc id="desc">Two right-looking eyes that blink irregularly with an occasional quick double-blink.</desc>
+            <style>
+              .blink {
+                animation: blink12 12s infinite;
+                transform-origin: 50% 50%;
+                transform-box: fill-box;
+              }
+              /* 불규칙: 단일 깜빡임 + 빠른 더블 깜빡임(중반) */
+              @keyframes blink12 {
+                0%, 16.8% { transform: scaleY(1); }
+                17.5%     { transform: scaleY(0.06); }  /* single */
+                18.2%, 46.8% { transform: scaleY(1); }
+
+                /* quick double-blink cluster */
+                47.5%     { transform: scaleY(0.06); }
+                48.2%     { transform: scaleY(1); }
+                48.9%     { transform: scaleY(0.10); }
+                49.6%, 81.0% { transform: scaleY(1); }
+
+                81.7%     { transform: scaleY(0.08); }  /* single */
+                82.4%, 100% { transform: scaleY(1); }
+              }
+
+              @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+              .eye { fill:#fff; stroke:#000; stroke-width:1; vector-effect: non-scaling-stroke; }
+            </style>
+
+            <g class="blink" id="eyes" shape-rendering="geometricPrecision">
+              <!-- 서로 '딱 붙는' 배치 -->
+              <ellipse class="eye" cx="9"  cy="16" rx="7" ry="9"/>
+              <ellipse class="eye" cx="23" cy="16" rx="7" ry="9"/>
+
+              <!-- 동공: 오른쪽을 보는 배치 -->
+              <ellipse cx="11.5" cy="15" rx="3" ry="3.6" fill="#000"/>
+              <ellipse cx="25.5" cy="15" rx="3" ry="3.6" fill="#000"/>
+
+              <!-- 하이라이트 -->
+              <circle cx="10.6" cy="13.9" r="0.9" fill="#fff"/>
+              <circle cx="24.6" cy="13.9" r="0.9" fill="#fff"/>
+            </g>
+          </svg>
+        </span></span>
         <a href="https://www.youtube.com/hanmiu" target="_blank" rel="noreferrer" aria-label="YouTube" class="icon-link">
           <svg aria-hidden="true" focusable="false"><use href="#i-yt"></use></svg>
         </a>
