@@ -3,20 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Maze · A* Multi-Agent</title>
+  <title>Maze · A* Multi-Agent (TSV + Route, Keyboard Fix)</title>
   <style>
     :root { --footer-h: 64px; --thumb: 64px; }
     html, body { height: 100%; margin: 0; }
-    /* Body is a vertical stack: canvas then footer, centered horizontally */
     body { display: flex; flex-direction: column; align-items: center; background: #F0EEE7; color: #111; }
-    /* #main should NOT stretch; keep it snug so the footer sits right under the canvas */
     #main { flex: 0 0 auto; display: flex; justify-content: center; width: 100%; }
     canvas { display: block; outline: none; touch-action: manipulation; image-rendering: auto; }
     #footer {
       height: var(--footer-h);
       display: flex; align-items: center; justify-content: center;
       gap: 12px; padding: 0 12px; overflow: hidden; width: 100%;
-      box-sizing: border-box; margin: 0; /* stick to canvas with no gap */
+      box-sizing: border-box; margin: 0;
     }
     .footer-item {
       width: var(--thumb); height: var(--thumb); flex: 0 0 auto; border-radius: 50%;
@@ -27,10 +25,7 @@
     }
     .footer-item.pop-in { opacity: 1; transform: scale(1); }
     .footer-item.fade-out { opacity: 0; transform: scale(0.95); }
-    .footer-item img.thumb {
-      width: 100%; height: 100%; object-fit: contain; display: block;
-      transform: none; transition: transform .5s ease;
-    }
+    .footer-item img.thumb { width: 100%; height: 100%; object-fit: contain; display: block; }
     .footer-item img.thumb.flip { transform: scaleX(-1); }
   </style>
 </head>
@@ -47,7 +42,6 @@
     // ====================== Query Parsing ======================
     const Q = new URLSearchParams(location.search);
     const def = (v, f) => (v === null || v === undefined || v === "") ? f : v;
-
     const ensureOdd = (n)=>{ n = Math.max(5, Math.floor(+n||0)); return (n%2===1)?n:n+1; };
     const clamp = (n,a,b)=> Math.max(a, Math.min(b, n));
 
@@ -56,7 +50,7 @@
       s = s.replace(/^#/,'');
       if (!/^[0-9a-fA-F]{3,8}$/.test(s)) s = fallback;
       if (s.length===3) s = s.split('').map(ch=>ch+ch).join('');
-      if (s.length===4) s = s.split('').map(ch=>ch+ch).join(''); // #RGBA => #RRGGBBAA
+      if (s.length===4) s = s.split('').map(ch=>ch+ch).join('');
       if (s.length===6 || s.length===8) return '#'+s.toUpperCase();
       return '#'+fallback.toUpperCase();
     }
@@ -68,153 +62,30 @@
     const wallColor = normalizeHex(def(Q.get('wall'), 'F0EEE7'), 'F0EEE7');
     const pathColor = normalizeHex(def(Q.get('path'), 'FFFFFF'), 'FFFFFF');
 
-    const seedParam = Q.get('seed'); // if absent -> use Math.random so each load is different
-    const faceDir = (parseInt(def(Q.get('faceDir'), '1'),10) === 1); // 1 => mirror according to direction (agents+goal)
+    const seedParam = Q.get('seed');
+    const faceDir = (parseInt(def(Q.get('faceDir'), '1'),10) === 1);
     const footerHeight = clamp(parseInt(String(def(Q.get('footer_height'), '64')),10) || 64, 0, 400);
     const spriteScale = clamp(parseFloat(String(def(Q.get('spriteScale'), '1.8'))) || 1.8, 0.2, 3.0);
 
-    // Image list parameters
+    const collectRatio = clamp(parseFloat(def(Q.get('collect'), 0.4)) || 0.4, 0.2, 1.0);
+    const useSnap = (parseInt(def(Q.get('snap'), '1'),10) === 1);
+
+    // ====================== Image list parameters (TSV-driven) ======================
     let imgBase = (Q.get('imgBase') || '').trim();
     imgBase = 'https://www.hanmiu.cc/play/evt/25_creatures/assets/';
-    let goalFilesStr = (Q.get('goalFiles') || '').trim();
+    const TSV_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/data/data.tsv';
+
+    let goalFilesStr = `hanmi_runner.png`.normalize('NFC');
     let agentFilesStr = (Q.get('agentFiles') || '').trim();
-    const goalIdxParam = Q.get('goalIdx'); // 1-based index override for goal image
 
-    goalFilesStr = `hanmi_runner.png`.normalize('NFC');
-    agentFilesStr = `조용준_하늘에서 구름먹는 용 모사.png,
-    강하린_공주와 왕자의 결혼.png,
-    김로운_식물이 자라는 집.png,
-    김재원_유치원 가는 토끼.png,
-    김지유_공주가 사는 성.png,
-    김태양_뿔 달린 로봇.png,
-    박세종_로봇 얼굴 보석.png,
-    설레오_뿔이 있는 멧돼지.png,
-    우수아_촛불 부는 공룡.png,
-    이승하_먹물 쏘는 문어.png,
-    김아임_초록 고양이.png,
-    김연우_공주와 성.png,
-    김연우_달 디테일.png,
-    김지유_공주와 성.png,
-    김하이_이상한 아저씨.png,
-    김현비_타티맨 로보트.png,
-    노윤후_반짝이 보석.png,
-    박서아_보라 디테일.png,
-    사공연_황금 도토리.png,
-    송다온_주황 고양이.png,
-    심유민_백설공주와 왕자.png,
-    안슬찬_황금 커비.png,
-    원예하_먹깽이 여왕.png,
-    유지원_날아가는 별.png,
-    이우재_상상의 동물.png,
-    임설아_무서운 인간.png,
-    장주연_헤엄치는 고래.png,
-    표혜성_귀여운 혜성이.png,
-    한수빈_시크릿 쥬쥬.png,
-    한연진_거미줄 마녀.png,
-    강시율_별.png,
-    강예준_사과먹은하마.png,
-    강예찬_에이괴물.png,
-    강태우_공주성.png,
-    구시하_콩콩이.png,
-    김다온_무지개유령.png,
-    김민서_레인보우셰인.png,
-    김민재_사람.png,
-    김수현_용감이.png,
-    김예빛_파랑이.png,
-    김제나_제나와친구.png,
-    김하랑_지글문어.png,
-    김하선_호떡햄스터.png,
-    김하온_파이리.png,
-    김현겸_티라노사우르스로봇.png,
-    노유하_놀이터.png,
-    모아란_진흙괴물.png,
-    문하람_공주.png,
-    민서준_피카츄.png,
-    박담이_고양이.png,
-    박서아_귀욤이.png,
-    박서아_열쇠.png,
-    박시하_상큼요정.png,
-    박윤우_지네괴물.png,
-    박주하_커비.png,
-    박태건_눈사람.png,
-    백승현_피라미드섬.png,
-    변이준_커비.png,
-    서지아_아스트로봇.png,
-    설레임_초코링.png,
-    손은우_탕탕이.png,
-    송다은_동글이무지개.png,
-    송다은_해파리발.png,
-    송해린_쥬쥬.png,
-    신서우_네모아저씨.png,
-    신중건_로봇.png,
-    심이나_토끼.png,
-    심이서_고질라.png,
-    안하람_망치씨.png,
-    여도진_스파이더아이.png,
-    오윤_개굴외계인.png,
-    유라임_양양이.png,
-    유시온_화산티비.png,
-    유연서_라푼젤.png,
-    윤라은_핑트.png,
-    이라온_착한이캐논.png,
-    이로운_전화받는사람.png,
-    이봄_프라.png,
-    이성윤_먹깽이.png,
-    이세리_달콤솜사탕.png,
-    이수아_반짝이.png,
-    이수찬_마음대로.png,
-    이시온_이브피카츄.png,
-    이시윤_물소.png,
-    이에덴_요요괴물.png,
-    이에스더_공주.png,
-    이여름_겨울이.png,
-    이우준_무지개.png,
-    이재희_깡충이.png,
-    이하희_반짝반짝구름.png,
-    이현민_만두맨.png,
-    전설_사슴.png,
-    전예승_워든슬램던.png,
-    전하령_아코.png,
-    정유준_쿠로미.png,
-    정하린_공주.png,
-    정현준_쿠로미.png,
-    조아윤_깡충토끼.png,
-    조유하_다이아몬드.png,
-    조윤제_하트사람.png,
-    조은우_헬리콥터.png,
-    조준우_도리.png,
-    조혜주_곰인형.png,
-    천강희_커비.png,
-    천아윤_여자아이.png,
-    최도아_로그.png,
-    최설_예쁜이.png,
-    최연서_사자.png,
-    최연우_좀비워든.png,
-    최연준_르테트리.png,
-    최하엘_무지개사진.png,
-    하다율_피카포.png,
-    하이안_태양.png,
-    하태성_몬스터.png,
-    하태양_스티커맨.png,
-    한도현_코코넛.png,
-    홍정연_먹깽이.png,
-    홍지안_꽃다발츄.png,
-    홍채우_트리케라톱스.png,
-    황시아_깨끗로봇.png,
-    이산하_탐험선씨.png,
-    강하율_스파이더X.png,
-    이시안_혼자 있는 것보단 친구들이랑 같이 있는 게 좋아!.png`.normalize('NFC');
-
-    // apply colors and footer CSS vars
     document.body.style.background = wallColor;
     document.documentElement.style.setProperty('--footer-h', footerHeight + 'px');
-    const thumbSize = Math.max(24, Math.min(64, footerHeight - 0)); // remove vertical padding gap
+    const thumbSize = Math.max(24, Math.min(64, footerHeight - 0));
     document.documentElement.style.setProperty('--thumb', thumbSize + 'px');
 
-    // ====================== RNG (seeded optional) ======================
+    // ====================== RNG ======================
     let rand; // returns [0,1)
     if (seedParam !== null && seedParam !== undefined) {
-      // xorshift32 on a hashed seed (deterministic)
       let s = 0x811C9DC5;
       const str = String(seedParam);
       for (let i=0;i<str.length;i++){ s ^= str.charCodeAt(i); s = Math.imul(s, 0x45d9f3b); s ^= s>>>16; }
@@ -222,12 +93,11 @@
       let state = s|0;
       rand = ()=>{ state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return ((state>>>0) / 4294967296); };
     } else {
-      // no seed -> truly random every page load
       rand = Math.random;
     }
     const randInt = (min, max)=> (Math.floor(rand() * (max - min + 1)) + min);
 
-    // ====================== Utility: shuffle & URL join ======================
+    // ====================== Utility ======================
     function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = Math.floor(rand()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
     function joinURL(base, name){
       if (!base) return null;
@@ -238,27 +108,29 @@
     }
     function parseList(str){ return str ? str.split(',').map(s=>s.trim()).filter(Boolean) : []; }
 
-    const goalBaseFiles = parseList(goalFilesStr);
-    const agentBaseFiles = parseList(agentFilesStr);
-    const goalURLBase = imgBase ? goalBaseFiles.map(fn => joinURL(imgBase, fn)).filter(Boolean) : [];
-    const agentURLBase = imgBase ? agentBaseFiles.map(fn => joinURL(imgBase, fn)).filter(Boolean) : [];
-
-    // ====================== Cycle Pools ======================
-    function createCyclePool(base){
-      let pool = [];
-      function reset(){ pool = shuffle(base.slice()); }
-      function next(){ if (base.length===0) return null; if (pool.length===0) reset(); return pool.pop(); }
-      return { next, reset, base: base.slice() };
+    async function fetchAgentFilesFromTSV(url){
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to fetch TSV: ' + res.status);
+      const text = (await res.text()).replace(/^\uFEFF/, ''); // BOM 제거
+      const lines = text.split(/\r?\n/).filter(l => l.trim() && !/^#/.test(l));
+      if (!lines.length) return [];
+      const header = lines[0].split('\t').map(h => h.trim());
+      const fileIdx = header.findIndex(h => h.toLowerCase() === 'file');
+      if (fileIdx < 0) throw new Error('TSV missing "file" column');
+      const files = [];
+      for (let i = 1; i < lines.length; i++){
+        const cols = lines[i].split('\t');
+        const f = (cols[fileIdx] || '').trim();
+        if (f) files.push(f.normalize('NFC'));
+      }
+      return files;
     }
-    const goalPool = createCyclePool(goalURLBase);
-    const agentPool = createCyclePool(agentURLBase);
 
     // ====================== Grid / Maze ======================
-    const CELL = 32; // logical pixels per cell (internal resolution)
+    const CELL = 32; // logical pixels per cell (internal)
     const LOGICAL_W = cols * CELL;
     const LOGICAL_H = rows * CELL;
 
-    // 1 = wall, 0 = path
     function generateMaze(cols, rows){
       const grid = Array.from({length: rows}, ()=> Array(cols).fill(1));
       const visited = Array.from({length: rows}, ()=> Array(cols).fill(false));
@@ -280,7 +152,6 @@
         }
         if (!carved) stack.pop();
       }
-      // open a few dead-ends gently
       for (let i=0;i<(cols*rows)/200;i++){
         const x=((randInt(1, cols-2)/2)|0)*2+1; const y=((randInt(1, rows-2)/2)|0)*2+1; grid[y][x]=0;
       }
@@ -297,7 +168,6 @@
       const inBounds = (x,y)=> x>=0 && y>=0 && x<cols && y<rows;
       const passable = (x,y)=> inBounds(x,y) && grid[y][x]===0;
       if (!passable(start.x,start.y) || !passable(goal.x,goal.y)) return null;
-      // binary heap
       const heap = [];// [f,x,y]
       const push = (n)=>{ heap.push(n); bubbleUp(heap.length-1); };
       const pop = ()=>{ if(!heap.length) return undefined; const top=heap[0]; const end=heap.pop(); if(heap.length){ heap[0]=end; sinkDown(0);} return top; };
@@ -324,7 +194,7 @@
     const canvas = document.getElementById('maze');
     const ctx = canvas.getContext('2d');
     const footerEl = document.getElementById('footer');
-    let scale = 1; // CSS logical scale to fit (contain)
+    let scale = 1;
 
     function layout(){
       const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -343,12 +213,12 @@
 
     // ====================== Goal & Agents ======================
     const held = { left:false, right:false, up:false, down:false };
-    const GOAL_SLIDE_SPEED = 8; // cells per second when held
-    const agents = []; // {id,color,pos:{x,y}, path:Pt[], idx:number, facing:'left'|'right', imgURL:string|null}
+    const GOAL_SLIDE_SPEED = 8; // cells/s
+    const agents = [];
     let nextId = 1;
 
     // Image cache
-    const imageCache = new Map(); // url -> HTMLImageElement|null|undefined(pending)
+    const imageCache = new Map();
     function getImage(url){
       if (!url) return null;
       const entry = imageCache.get(url);
@@ -356,7 +226,7 @@
         const img = new Image(); img.crossOrigin='anonymous';
         img.onload = ()=>{ imageCache.set(url, img); };
         img.onerror = ()=>{ imageCache.set(url, null); };
-        imageCache.set(url, undefined); // pending
+        imageCache.set(url, undefined);
         img.src = url;
         return null;
       }
@@ -364,80 +234,101 @@
     }
     function isLoadedImage(url){ const v = imageCache.get(url); return !!(v && v.width); }
 
-    // Cycle-based URL selection
-    function selectGoalImageURL(){
-      // goalIdx is 1-based
-      if (goalIdxParam){
-        const idx = parseInt(goalIdxParam, 10);
-        if (!Number.isNaN(idx) && idx>=1 && idx<=goalURLBase.length){
-          return goalURLBase[idx-1] || null;
-        }
-      }
-      return goalPool.next();
+    // Pools
+    function createCyclePool(base){
+      let pool = [];
+      function reset(){ pool = shuffle(base.slice()); }
+      function next(){ if (base.length===0) return null; if (pool.length===0) reset(); return pool.pop(); }
+      return { next, reset, base: base.slice() };
     }
+    let goalPool = null;
+    let agentPool = null;
 
-    // Pick random free cell
     function randomFreeCell(){
       for (let guard=0; guard<10000; guard++){
         const x = randInt(1, cols-2), y = randInt(1, rows-2);
         if (grid[y][x] === 0) return {x,y};
       }
-      return {x:1,y:1}; // fallback
+      return {x:1,y:1};
     }
 
     // Initial goal
     let goal = (function(){ const c={x:(cols>>1), y:(rows>>1)}; return (grid[c.y]&&grid[c.x]!==undefined && grid[c.y][c.x]===0)?c:randomFreeCell(); })();
     let goalVis = { x: goal.x, y: goal.y };
     let goalFacing = 'right';
-    let goalImgURL = selectGoalImageURL();
+    let goalImgURL = null;
 
-    // Keyboard
+    // Route state
+    let goalRoute = null;
+    let routeIdx = 0;
+
+    // Keyboard — FIX: ignore auto-repeat & don't kill current slide
+    function isArrow(key){ return key==='ArrowLeft'||key==='ArrowRight'||key==='ArrowUp'||key==='ArrowDown'; }
     function isTyping(){ const a=document.activeElement; return a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/i.test(a.tagName)); }
+
     window.addEventListener('keydown', (e)=>{
-      if (isTyping()) return;
-      if (e.key==='ArrowLeft'){ held.left=true; e.preventDefault(); }
-      else if (e.key==='ArrowRight'){ held.right=true; e.preventDefault(); }
-      else if (e.key==='ArrowUp'){ held.up=true; e.preventDefault(); }
-      else if (e.key==='ArrowDown'){ held.down=true; e.preventDefault(); }
+      if (isTyping() || !isArrow(e.key)) return;
+
+      // Set held flags first
+      if (e.key==='ArrowLeft')  held.left=true;
+      if (e.key==='ArrowRight') held.right=true;
+      if (e.key==='ArrowUp')    held.up=true;
+      if (e.key==='ArrowDown')  held.down=true;
+
+      // Cancel only the route ONCE; keep current slide to avoid jitter
+      if (!e.repeat) cancelRoute('keyboard');
+
+      // If not currently sliding, try start immediately
+      if (!sliding.active) tryStartSlideKeyboard();
+
+      e.preventDefault();
     }, {passive:false});
+
     window.addEventListener('keyup', (e)=>{
-      if (e.key==='ArrowLeft') held.left=false;
-      else if (e.key==='ArrowRight') held.right=false;
-      else if (e.key==='ArrowUp') held.up=false;
-      else if (e.key==='ArrowDown') held.down=false;
+      if (!isArrow(e.key)) return;
+      if (e.key==='ArrowLeft')  held.left=false;
+      if (e.key==='ArrowRight') held.right=false;
+      if (e.key==='ArrowUp')    held.up=false;
+      if (e.key==='ArrowDown')  held.down=false;
     });
 
-    // Pointer (mouse/touch): set goal instantly if tapping a free cell (keep facing)
+    // Pointer (mouse/touch)
+    const canvasRect = ()=> canvas.getBoundingClientRect();
     canvas.addEventListener('pointerdown', (e)=>{
-      const rect = canvas.getBoundingClientRect();
-      const nx = (e.clientX - rect.left) / rect.width; // 0..1
+      const rect = canvasRect();
+      const nx = (e.clientX - rect.left) / rect.width;
       const ny = (e.clientY - rect.top) / rect.height;
       const lx = Math.floor((nx * LOGICAL_W) / CELL);
       const ly = Math.floor((ny * LOGICAL_H) / CELL);
-      if (lx>=0 && ly>=0 && lx<cols && ly<rows && grid[ly][lx]===0){
-        sliding.active=false; sliding.t=0; sliding.to=null;
-        setGoal({x:lx,y:ly});
-        goalVis = {x:lx, y:ly};
-      }
+      if (lx<0 || ly<0 || lx>=cols || ly>=rows) return;
+      let target = {x:lx, y:ly};
+      if (grid[ly][lx]!==0 && useSnap){
+        const snapped = findNearestFreeCell(lx, ly);
+        if (snapped) target = snapped; else return;
+      } else if (grid[ly][lx]!==0) { return; }
+      const start = { x: goal.x, y: goal.y };
+      const route = astar(grid, start, target);
+      if (route && route.length>=1){ beginRoute(route); }
     });
 
     function setGoal(g){ goal = {x:g.x, y:g.y}; replanAll(); }
 
-    // Sliding goal state
+    // Sliding state
     const sliding = { active:false, from:{x:goal.x,y:goal.y}, to:null, t:0 };
 
-    function tryStartSlide(){
+    function startSlide(from, to){
+      sliding.active=true; sliding.from={x:from.x,y:from.y}; sliding.to={x:to.x,y:to.y}; sliding.t=0;
+      if (faceDir){ const dx = to.x - from.x; if (dx>0) goalFacing='right'; else if (dx<0) goalFacing='left'; }
+    }
+
+    function tryStartSlideKeyboard(){
       let dx = (held.right?1:0)-(held.left?1:0);
       let dy = (held.down?1:0)-(held.up?1:0);
-      if (dx && dy) dy = 0; // 4-connected; prefer horizontal
+      if (dx && dy) dy = 0; // prefer horizontal
       if (!dx && !dy) return false;
       const nx = clamp(goal.x + dx, 0, cols-1);
       const ny = clamp(goal.y + dy, 0, rows-1);
-      if (grid[ny] && grid[ny][nx]===0){
-        sliding.active=true; sliding.from={x:goal.x,y:goal.y}; sliding.to={x:nx,y:ny}; sliding.t=0;
-        if (faceDir){ if (dx>0) goalFacing='right'; else if (dx<0) goalFacing='left'; }
-        return true;
-      }
+      if (grid[ny] && grid[ny][nx]===0){ startSlide(goal, {x:nx, y:ny}); return true; }
       return false;
     }
 
@@ -445,18 +336,16 @@
       const g = randomFreeCell();
       setGoal(g);
       goalVis = {x:g.x, y:g.y};
-      // rotate goal image if no override
       if (!goalIdxParam) goalImgURL = selectGoalImageURL();
     }
 
-    // Spawn helpers
     function spawnAgents(n){
       const out=[];
       for(let i=0;i<n;i++){
         let s = randomFreeCell();
         let guard=0; while((s.x===goal.x && s.y===goal.y) && guard++<500) s = randomFreeCell();
         const hue = ( (nextId*57) % 360 );
-        const imgURL = agentPool.next();
+        const imgURL = agentPool ? agentPool.next() : null;
         out.push({ id: nextId++, color: `hsl(${hue}, 95%, 45%)`, pos:{x:s.x, y:s.y}, path:null, idx:0, facing:'right', imgURL: imgURL || null });
       }
       agents.push(...out);
@@ -470,10 +359,6 @@
       }
     }
 
-    // Initial spawn
-    spawnAgents(AGENTS_TARGET);
-    replanAll();
-
     // ====================== Footer Trophy Queue ======================
     let appendChain = Promise.resolve();
     function fadeOutOldest(){
@@ -482,13 +367,11 @@
         el.classList.add('fade-out');
         const done = ()=>{ el.removeEventListener('transitionend', done); if (el.parentNode) el.parentNode.removeChild(el); res(); };
         el.addEventListener('transitionend', done);
-        setTimeout(done, 700); // fallback safeguard
+        setTimeout(done, 700);
       });
     }
     function ensureCapacity(){
-      // Remove just enough to make room for ONE new item
       const count = footerEl.childElementCount;
-      // const toRemove = Math.max(0, count - (AGENTS_TARGET - 1));
       const toRemove = Math.max(0, count - (AGENTS_TARGET));
       let p = Promise.resolve();
       for (let i=0;i<toRemove;i++) p = p.then(()=>fadeOutOldest());
@@ -500,36 +383,67 @@
       if (facingLeft) img.classList.add('flip');
       item.appendChild(img);
       footerEl.appendChild(item);
-      // trigger pop-in on next frame
       requestAnimationFrame(()=>{ item.classList.add('pop-in'); });
     }
     function pushTrophy(url, facingLeft){
-      if (!url || !isLoadedImage(url)) return; // rule: no thumbnail when source is missing
+      if (!url || !isLoadedImage(url)) return;
       appendChain = appendChain
         .then(()=>appendThumb(url, facingLeft))
         .then(()=>ensureCapacity())
         .catch(()=>{});
-        // .then(()=>ensureCapacity())
-        // .then(()=>appendThumb(url, facingLeft))
-        // .catch(()=>{});
+    }
+
+    // ====================== Route helpers ======================
+    function beginRoute(route){
+      goalRoute = route.slice();
+      routeIdx = Math.min(1, goalRoute.length-1);
+      // keep current slide; do not reset here to avoid jitter if user clicked during movement
+    }
+    function cancelRoute(){ goalRoute = null; routeIdx = 0; }
+
+    function findNearestFreeCell(sx, sy){
+      if (grid[sy] && grid[sy][sx]===0) return {x:sx, y:sy};
+      const inBounds = (x,y)=> x>=0 && y>=0 && x<cols && y<rows;
+      const q = [{x:sx,y:sy}];
+      const seen = new Set([key(sx,sy)]);
+      const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      while(q.length){
+        const cur = q.shift();
+        for (const [dx,dy] of dirs){
+          const nx = cur.x+dx, ny = cur.y+dy;
+          if (!inBounds(nx,ny)) continue;
+          const k = key(nx,ny); if (seen.has(k)) continue; seen.add(k);
+          if (grid[ny][nx]===0) return {x:nx,y:ny};
+          q.push({x:nx,y:ny});
+        }
+      }
+      return null;
     }
 
     // ====================== Main Loop ======================
     let lastTs = null; let rafId = 0;
+    const COLLECT_RADIUS = collectRatio; // cell units
+
     function frame(ts){
       if (lastTs===null) lastTs=ts;
       const dt = Math.min(0.1, (ts-lastTs)/1000); lastTs=ts;
       const dpr = Math.max(1, window.devicePixelRatio||1);
 
-      // Handle sliding goal + smooth visual position
-      if (!sliding.active) {
-        if (!tryStartSlide()) {
-          const k = Math.min(1, 12 * dt);
-          goalVis.x += (goal.x - goalVis.x) * k;
-          goalVis.y += (goal.y - goalVis.y) * k;
+      // Advance goal by route or keyboard
+      if (!sliding.active){
+        if (goalRoute && routeIdx < goalRoute.length){
+          const next = goalRoute[routeIdx];
+          startSlide(goal, next);
+        } else {
+          // keyboard-controlled slide
+          if (!tryStartSlideKeyboard()){
+            const k = Math.min(1, 12 * dt);
+            goalVis.x += (goal.x - goalVis.x) * k;
+            goalVis.y += (goal.y - goalVis.y) * k;
+          }
         }
       } else {
-        const speed = GOAL_SLIDE_SPEED; // cells/s
+        const speed = GOAL_SLIDE_SPEED;
         sliding.t = Math.min(1, sliding.t + speed*dt);
         if (sliding.to){
           const from = sliding.from; const to = sliding.to;
@@ -540,12 +454,13 @@
           setGoal({x:sliding.to.x, y:sliding.to.y});
           goalVis = {x:sliding.to.x, y:sliding.to.y};
           sliding.active=false; sliding.to=null; sliding.t=0;
-          tryStartSlide();
+          collectAtCurrentCell();
+          if (goalRoute && routeIdx < goalRoute.length) routeIdx++;
         }
       }
 
       // Move agents
-      const alive = [];
+      const collectedIds = new Set();
       for (const a of agents){
         let arrived = false;
         if (a.path && a.idx < a.path.length){
@@ -555,74 +470,66 @@
           const step = AGENT_SPEED * dt;
           if (dist <= step || dist < 1e-6){
             a.pos.x = target.x; a.pos.y = target.y; a.idx++;
-            // update facing at step boundaries (left/right only)
             if (faceDir && a.idx < a.path.length){
-              const nextT = a.path[a.idx]; const sdx = nextT.x - a.pos.x; const sdy = nextT.y - a.pos.y;
+              const nextT = a.path[a.idx]; const sdx = nextT.x - a.pos.x;
               if (sdx > 0) a.facing='right'; else if (sdx < 0) a.facing='left';
             }
             if (a.idx >= a.path.length){ arrived = true; }
           } else {
-            // during interpolation, we can peek sign of dx to update facing gently
             if (faceDir){ if (dx > 0.001) a.facing='right'; else if (dx < -0.001) a.facing='left'; }
             a.pos.x += (dx/dist)*step; a.pos.y += (dy/dist)*step;
           }
+          if (arrived){ if (a.imgURL) pushTrophy(a.imgURL, a.facing==='left'); collectedIds.add(a.id); }
         } else if (a.path && a.idx >= a.path.length){
-          arrived = true;
+          if (a.imgURL) pushTrophy(a.imgURL, a.facing==='left'); collectedIds.add(a.id);
         } else {
-          // no path? try to recompute
           const s = { x: Math.round(a.pos.x), y: Math.round(a.pos.y) };
           const p = astar(grid, s, goal); a.path=p; a.idx=p?1:0;
         }
-        if (!arrived) {
-          alive.push(a);
-        } else {
-          // trophy: only if image exists & loaded
-          if (a.imgURL) pushTrophy(a.imgURL, a.facing==='left');
-        }
       }
-      agents.length = 0; agents.push(...alive);
 
-      // Respawn cycle: if all gone -> new goal + spawn N
+      // Encounter during movement
+      const gx = goalVis.x; const gy = goalVis.y;
+      for (const a of agents){
+        if (collectedIds.has(a.id)) continue;
+        const dx = a.pos.x - gx; const dy = a.pos.y - gy; const d = Math.hypot(dx,dy);
+        if (d <= COLLECT_RADIUS){ if (a.imgURL) pushTrophy(a.imgURL, a.facing==='left'); collectedIds.add(a.id); }
+      }
+
+      if (collectedIds.size){ for (let i=agents.length-1; i>=0; i--){ if (collectedIds.has(agents[i].id)) agents.splice(i,1); } }
+
       if (agents.length === 0){
         randomGoalRelocate();
         spawnAgents(AGENTS_TARGET);
         replanAll();
+        cancelRoute();
       }
 
-      // Draw (logical units scaled by setTransform)
+      // Draw
       ctx.setTransform(dpr*scale, 0, 0, dpr*scale, 0, 0);
       ctx.imageSmoothingEnabled = false;
-
-      // Background (walls)
       ctx.fillStyle = wallColor; ctx.fillRect(0,0, LOGICAL_W, LOGICAL_H);
-      // Paths
       ctx.fillStyle = pathColor;
       for (let y=0;y<rows;y++){
-        for (let x=0;x<cols;x++){
-          if (grid[y][x]===0){ ctx.fillRect(x*CELL, y*CELL, CELL, CELL); }
-        }
+        for (let x=0;x<cols;x++) if (grid[y][x]===0) ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
       }
 
-      // Goal visual (image or ring pulse)
-      const gx = goalVis.x*CELL + CELL/2; const gy = goalVis.y*CELL + CELL/2;
+      const gpx = gx*CELL + CELL/2; const gpy = gy*CELL + CELL/2;
       const pulse = 1 + 0.20 * Math.sin(ts*0.006);
       const gImg = getImage(goalImgURL);
       if (gImg){
         const maxSize = CELL*0.9;
         const r = Math.min(maxSize / gImg.width, maxSize / gImg.height);
-        const w = gImg.width*r*spriteScale, h = gImg.height*r*spriteScale; // spriteScale applies here
+        const w = gImg.width*r*spriteScale, h = gImg.height*r*spriteScale;
         if (faceDir && goalFacing === 'left'){
-          ctx.save(); ctx.translate(gx, gy); ctx.scale(-1,1); ctx.drawImage(gImg, -w/2, -h/2, w, h); ctx.restore();
-        } else {
-          ctx.drawImage(gImg, gx - w/2, gy - h/2, w, h);
-        }
+          ctx.save(); ctx.translate(gpx, gpy); ctx.scale(-1,1); ctx.drawImage(gImg, -w/2, -h/2, w, h); ctx.restore();
+        } else { ctx.drawImage(gImg, gpx - w/2, gpy - h/2, w, h); }
       } else {
-        // ctx.beginPath(); ctx.arc(gx, gy, CELL*0.36*pulse, 0, Math.PI*2);
-        // ctx.fillStyle = '#f59e0b'; ctx.fill();
-        // ctx.lineWidth = 3; ctx.strokeStyle = '#111827'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(gpx, gpy, CELL*0.36*pulse, 0, Math.PI*2);
+        ctx.fillStyle = '#f59e0b'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#111827'; ctx.stroke();
       }
 
-      // Agents
       for (let i=0;i<agents.length;i++){
         const a = agents[i];
         const ax = a.pos.x*CELL + CELL/2; const ay = a.pos.y*CELL + CELL/2;
@@ -630,79 +537,90 @@
         if (img){
           const maxSize = CELL*0.9;
           const r = Math.min(maxSize / img.width, maxSize / img.height);
-          const w = img.width*r*spriteScale, h = img.height*r*spriteScale; // spriteScale applies here
+          const w = img.width*r*spriteScale, h = img.height*r*spriteScale;
           if (faceDir && a.facing==='left'){
             ctx.save(); ctx.translate(ax, ay); ctx.scale(-1,1); ctx.drawImage(img, -w/2, -h/2, w, h); ctx.restore();
-          } else {
-            ctx.drawImage(img, ax - w/2, ay - h/2, w, h);
-          }
+          } else { ctx.drawImage(img, ax - w/2, ay - h/2, w, h); }
         } else {
-        //   ctx.save();
-        //   ctx.beginPath(); ctx.arc(ax, ay, CELL*0.38, 0, Math.PI*2);
-        //   ctx.shadowColor = a.color; ctx.shadowBlur = 12;
-        //   ctx.fillStyle = a.color; ctx.fill();
-        //   ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = '#111827'; ctx.stroke();
-        //   ctx.restore();
+          /*
+          ctx.save();
+          ctx.beginPath(); ctx.arc(ax, ay, CELL*0.38, 0, Math.PI*2);
+          ctx.shadowColor = a.color; ctx.shadowBlur = 10;
+          ctx.fillStyle = a.color; ctx.fill();
+          ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = '#111827'; ctx.stroke();
+          ctx.restore();
+          */
         }
       }
 
       rafId = requestAnimationFrame(frame);
     }
 
+    function collectAtCurrentCell(){
+      const gx = goal.x, gy = goal.y;
+      const toRemove = [];
+      for (const a of agents){
+        if (Math.round(a.pos.x)===gx && Math.round(a.pos.y)===gy){ if (a.imgURL) pushTrophy(a.imgURL, a.facing==='left'); toRemove.push(a.id); }
+      }
+      if (toRemove.length){ for (let i=agents.length-1;i>=0;i--){ if (toRemove.includes(agents[i].id)) agents.splice(i,1); } }
+    }
+
     function start(){ cancelAnimationFrame(rafId); lastTs=null; rafId=requestAnimationFrame(frame); }
 
-    // Visibility pause/resume
-    document.addEventListener('visibilitychange', ()=>{
-      if (document.hidden) cancelAnimationFrame(rafId); else start();
-    });
+    document.addEventListener('visibilitychange', ()=>{ if (document.hidden) cancelAnimationFrame(rafId); else start(); });
 
-    // ====================== Self Tests (console) ======================
+    // Goal image selection
+    const goalIdxParam = Q.get('goalIdx');
+    function selectGoalImageURL(){
+      if (goalIdxParam && goalPool){
+        const idx = parseInt(goalIdxParam, 10);
+        if (!Number.isNaN(idx)){
+          const base = goalPool.base || [];
+          if (idx>=1 && idx<=base.length){ const url = base[idx-1]; return url || goalPool.next(); }
+        }
+      }
+      return goalPool ? goalPool.next() : null;
+    }
+
+    // Self Tests
     function runSelfTests(){
       const logs = [];
       try {
-        // Test 1: Maze borders are walls
         let bordersOK = true;
         for (let x=0; x<cols; x++){ if (grid[0][x]!==1 || grid[rows-1][x]!==1){ bordersOK=false; break; } }
         for (let y=0; y<rows; y++){ if (grid[y][0]!==1 || grid[y][cols-1]!==1){ bordersOK=false; break; } }
         logs.push({ test: 'borders are walls', pass: bordersOK });
-
-        // Test 2: There exists at least one free cell
         let free=0; for (let y=1;y<rows-1;y++) for (let x=1;x<cols-1;x++) if (grid[y][x]===0) free++;
         logs.push({ test: 'has free cells', pass: free>0, free });
-
-        // Test 3: Goal is on a free cell
         logs.push({ test: 'goal on free', pass: grid[goal.y]?.[goal.x]===0 });
-
-        // Test 4: A* finds a path from random free cells to goal (3 trials)
         let allPaths = true; for (let i=0;i<3;i++){ const s=randomFreeCell(); const p=astar(grid,s,goal); if (!p||p.length<1){ allPaths=false; break; } }
         logs.push({ test: 'A* path to goal', pass: allPaths });
-
-        // Test 5: start==goal path length
         const pSame = astar(grid, goal, goal);
         logs.push({ test: 'start==goal length==1', pass: !!pSame && pSame.length===1, len: pSame? pSame.length: 0 });
-
-        // Test 6: unreachable scenario returns null
-        const blocked=[[0,0,0],[1,1,1],[0,0,0]]; const pBlocked=astar(blocked,{x:0,y:0},{x:2,y:2});
-        logs.push({ test: 'unreachable==null', pass: pBlocked===null });
-
-        // Test 7: Cycle pool behavior (deterministic with seed)
-        const tmpPool = (function(){ const base=['A','B','C']; const p=createCyclePool(base); const seq=[]; for(let i=0;i<7;i++) seq.push(p.next()); return seq; })();
-        logs.push({ test: 'cycle pool length & refill', pass: tmpPool.length===7 && tmpPool.filter(Boolean).length===7, seq: tmpPool });
-
-        // Test 8: faceDir default is 1
-        logs.push({ test: 'faceDir default==1?', pass: faceDir === (parseInt(def(Q.get('faceDir'),'1'),10)===1) });
-
-        // Test 9: spriteScale clamp
-        logs.push({ test: 'spriteScale clamp', pass: spriteScale>=0.2 && spriteScale<=3.0, value: spriteScale });
-      } catch (e){
-        logs.push({ test:'harness error', pass:false, error: String(e && e.message || e) });
-      }
-      try { console.table ? console.table(logs) : console.log(logs); } catch(_) { /* no-op */ }
+      } catch (e){ logs.push({ test:'harness error', pass:false, error: String(e && e.message || e) }); }
+      try { console.table ? console.table(logs) : console.log(logs); } catch(_) { }
     }
 
-    // Kick off
-    runSelfTests();
-    start();
+    // Bootstrap
+    async function bootstrap(){
+      const goalBaseFiles = parseList(goalFilesStr);
+      let agentBaseFiles = parseList(agentFilesStr);
+      if (agentBaseFiles.length === 0){
+        try { agentBaseFiles = await fetchAgentFilesFromTSV(TSV_URL); }
+        catch (e){ console.warn('[TSV] load failed:', e); agentBaseFiles = []; }
+      }
+      const goalURLBase = imgBase ? goalBaseFiles.map(fn => joinURL(imgBase, fn)).filter(Boolean) : [];
+      const agentURLBase = imgBase ? agentBaseFiles.map(fn => joinURL(imgBase, fn)).filter(Boolean) : [];
+      goalPool  = createCyclePool(goalURLBase);
+      agentPool = createCyclePool(agentURLBase);
+      goalImgURL = selectGoalImageURL();
+      spawnAgents(AGENTS_TARGET);
+      replanAll();
+      runSelfTests();
+      start();
+    }
+
+    bootstrap();
 
   })();
   </script>
