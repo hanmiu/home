@@ -863,7 +863,7 @@
           <span class="indicator" data-index="4"></span> -->
         </div>
       </div>
-      <div class="social social--lg social--center social--mt" role="group" aria-label="공식 채널">
+      <div class="social social--lg social--center social--mt" role="group" aria-label="공식 채널" data-no-carousel>
         <a href="https://www.youtube.com/hanmiu" target="_blank" rel="noreferrer" aria-label="YouTube" class="icon-link">
           <svg aria-hidden="true" focusable="false"><use href="#i-yt"></use></svg>
         </a>
@@ -1202,6 +1202,11 @@
         const slides = Array.from(track.querySelectorAll('.carousel-slide'));
         const section = container.closest('.carousel-section') || container;
 
+        // ⛳ 드래그/자동정지 예외(인디케이터 + 소셜 링크 + data-no-carousel 영역)
+        const EXEMPT = '.carousel-indicators, .carousel-indicators *,' +
+          ' .social a, .social button,' +
+          ' [data-no-carousel], [data-no-carousel] *';
+
         // 인디케이터 생성/연결
         let indicators = container.querySelector('.carousel-indicators');
         if (!indicators) {
@@ -1273,17 +1278,20 @@
 
         const downOn = (el) => {
           el.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('.carousel-indicators')) return;
+            if (e.target.closest(EXEMPT)) return;
             el.setPointerCapture?.(e.pointerId);
             dragStart(e.clientX, e.clientY);
           }, { passive: true });
 
           el.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.carousel-indicators')) return;
+            if (e.target.closest(EXEMPT)) return;
             const t = e.touches[0]; if (t) dragStart(t.clientX, t.clientY);
           }, { passive: true });
 
-          el.addEventListener('click', hardStopAuto, { capture: true, passive: true });
+          el.addEventListener('click', (e) => {
+            if (e.target.closest(EXEMPT)) return; // 링크/인디케이터 클릭은 그대로 통과
+            hardStopAuto();
+          }, { capture: true, passive: true });
           el.addEventListener('pointerdown', hardStopAuto, { capture: true, passive: true });
           el.addEventListener('touchstart', hardStopAuto, { capture: true, passive: true });
         };
