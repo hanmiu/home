@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-<title>한글 자모 창작 + 텍스트</title>
+<title>한글 자모 창작 (텍스트 입력)</title>
 <style>
     body {
-        margin: 0;
+        margin: 0px;
         overflow: hidden;
         font-family: sans-serif;
         touch-action: none;
@@ -12,10 +12,13 @@
         -webkit-user-select: none;
     }
 
-    /* 레이어: stage < ui-buttons < ui-top < ui-text < info */
+    /* 레이어 순서 */
     #stage {
         position: absolute;
-        inset: 0;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
         z-index: 0;
     }
 
@@ -37,6 +40,7 @@
         cursor: move;
     }
 
+    /* 최상단: 텍스트 입력, 그 아래 자모패널, 그 아래 버튼들 */
     #ui-text {
         position: absolute;
         left: 0;
@@ -77,7 +81,7 @@
         box-sizing: border-box;
         user-select: text;
         -webkit-user-select: text;
-        /* 입력창 텍스트 선택 허용 */
+        /* 입력창 선택/입력 허용 */
     }
 
     .ui-button {
@@ -100,7 +104,7 @@
         user-select: none;
         -webkit-user-select: none;
         background-size: contain;
-        transform-origin: center;
+        transform-origin: center center;
         transition: transform 0.2s;
     }
 
@@ -126,13 +130,14 @@
         cursor: pointer;
     }
 
+    /* 공지(#info)는 ui-text보다 높은 레이어 */
     #info {
         position: absolute;
         left: 0;
         top: 90px;
         padding-left: 30px;
         padding-right: 10px;
-        background: rgba(255,255,255,0.92);
+        background-color: rgba(255,255,255,0.95);
         z-index: 30;
     }
 
@@ -144,11 +149,52 @@
 
     .palette {
         border-radius: 3px;
-        border: 1px solid rgba(0,0,0,0.25);
+        border: 1px solid rgba(0, 0, 0, 0.25);
         width: 30px;
         height: 30px;
         margin-right: 5px;
         cursor: pointer;
+    }
+
+    /* 쓰레기 구역(세이프 존) 시각적 보조선 - 인쇄엔 숨김 */
+    #trash-guides {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    #trash-guides .edge {
+        position: absolute;
+        background: rgba(220,0,0,0.0);
+    }
+
+    #trash-guides .edge.top {
+        left: 0;
+        top: 0;
+        right: 0;
+        height: 50px;
+    }
+
+    #trash-guides .edge.bottom {
+        left: 0;
+        bottom: 0;
+        right: 0;
+        height: 50px;
+    }
+
+    #trash-guides .edge.left {
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 50px;
+    }
+
+    #trash-guides .edge.right {
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 50px;
     }
 
     @media print {
@@ -156,7 +202,7 @@
             margin: 0;
         }
 
-        #ui-text, #ui-top, #ui-buttons, #preview, #logotype {
+        #ui-text, #ui-top, #ui-buttons, #preview, #logotype, #trash-guides {
             display: none;
         }
 
@@ -169,25 +215,32 @@
 <body>
     <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
     <div id="stage"></div>
-    <!-- 최상단: 텍스트 입력 -->
+    <!-- 쓰레기 구역 가이드(시각화) -->
+    <div id="trash-guides" aria-hidden="true">
+        <div class="edge top"></div>
+        <div class="edge bottom"></div>
+        <div class="edge left"></div>
+        <div class="edge right"></div>
+    </div>
+    <!-- 텍스트 입력 영역 -->
     <div id="ui-text">
         <input id="txt-input" type="text" placeholder="한글과 공백만 입력"/>
-        <button id="bt-insert" class="ui-button" style="background-color:#e0e0e0;">입력</button>
+        <button id="bt-insert" class="ui-button" style="background-color:#e0e0e0;">넣기</button>
     </div>
     <!-- 자모 팔레트 -->
     <div id="ui-top"></div>
-    <!-- 기능 버튼 -->
+    <!-- 기능 버튼 줄 -->
     <div id="ui-buttons">
-        <button id="bt-clear" class="ui-button" style="background-color:red;">새로</button>
-        <button id="bt-undo" class="ui-button" style="background-color:orange;" disabled>취소</button>
-        <button id="bt-redo" class="ui-button" style="background-color:yellow;" disabled>다시</button>
-        <button id="bt-save" class="ui-button" style="background-color:rgb(173,238,44);">저장</button>
-        <button id="bt-print" class="ui-button" style="background-color:rgb(32,197,223);">인쇄</button>
-        <button id="bt-speak" class="ui-button" style="background-color:rgb(161,67,229);">읽기</button>
-        <input type="color" id="color-picker" value="#000000" style="margin-right:5px">
+        <button id="bt-clear" class="ui-button" style="background-color: red;">새로</button>
+        <button id="bt-undo" class="ui-button" style="background-color: orange;" disabled>취소</button>
+        <button id="bt-redo" class="ui-button" style="background-color: yellow;" disabled>다시</button>
+        <button id="bt-save" class="ui-button" style="background-color: rgb(173, 238, 44);">저장</button>
+        <button id="bt-print" class="ui-button" style="background-color: rgb(32, 197, 223);">인쇄</button>
+        <button id="bt-speak" class="ui-button" style="background-color: rgb(161, 67, 229);">읽기</button>
+        <input type="color" id="color-picker" value="#000000" style="margin-right: 5px">
         <span>
-            <button id="palette0" class="palette" style="background-color:#ffa500;">ㅤ</button>
-            <button id="palette1" class="palette" style="background-color:#a143e5;">ㅤ</button>
+            <button id="palette0" class="palette" style="background-color: #ffa500;">ㅤ</button>
+            <button id="palette1" class="palette" style="background-color: #a143e5;">ㅤ</button>
         </span>
     </div>
     <div id="preview"></div>
@@ -205,7 +258,7 @@
                 어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !
             </li>
         </ul>
-        <div style="text-align:right; font-size:0.8em; margin:20px 0 10px;">창작: 미디어아티스트 최승준</div>
+        <div style="text-align:right; font-size:0.8em; margin: 20px 0 10px;">창작: 미디어아티스트 최승준</div>
         <div style="text-align:right; padding-top:10px; border-top:1px solid gray;">
             <button id="close-info">놀이 방법 닫기</button>
         </div>
@@ -314,8 +367,9 @@
     const SPACE_ADV = ADVANCE * 0.5;
     // 공백 폭
     const LINE_H = Math.round(CELL * 1.38);
+    const SAFE_PAD = 50;
+    // 스테이지 안쪽 50px 쓰레기 구역(세이프 존)
 
-    /* ===== IME / 상태 ===== */
     let selectedMovable = null
       , lastMovable = null
       , [offsetX,offsetY] = [0, 0];
@@ -329,6 +383,7 @@
       , speak_time_ids = [];
     let frames = []
       , curr_frame_idx = 0;
+
     let utter = null;
     if (speechSynthesis) {
         utter = new SpeechSynthesisUtterance();
@@ -347,10 +402,10 @@
     }
 
     function init() {
-        // 자모 팔레트
+        // 자모 팔레트 만들기
         for (let jamo in jamoset) {
-            let inner_svg_string = `<path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width + 2}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50,50)"></path>
-      <path class="front" d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50,50)"></path>`;
+            let inner_svg_string = `<path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width + 2}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path>
+      <path class="front" d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50, 50)"></path>`;
             let bt_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             bt_svg.setAttribute('width', '100%');
             bt_svg.setAttribute('height', '100%');
@@ -485,7 +540,6 @@
         return g;
     }
 
-    // ⬇︎ 간격 조정 포인트 (겹침 완화)
     function placeSyllableAt(x0, y0, comp) {
         const W = CELL
           , H = CELL;
@@ -627,6 +681,12 @@
     function isInTextUI(target) {
         return target && target.closest && target.closest('#ui-text');
     }
+    function inTrashGutterRect(rect) {
+        const W = window.innerWidth
+          , H = window.innerHeight
+          , P = SAFE_PAD;
+        return (rect.left < P || rect.top < P || rect.right > (W - P) || rect.bottom > (H - P));
+    }
 
     function handleStart(event) {
         if (isInTextUI(event.target))
@@ -697,6 +757,16 @@
             selectedMovable.setAttribute('transform', `translate(${x}, ${y})`);
             selectedMovable.dataset.x = x;
             selectedMovable.dataset.y = y;
+            // 가이드: 쓰레기 구역에 들어오면 붉은 테두리
+            const r = selectedMovable.querySelector('.glyph').getBoundingClientRect();
+            const halo = selectedMovable.querySelector('.halo');
+            if (inTrashGutterRect(r)) {
+                halo.setAttribute('stroke', 'crimson');
+                halo.setAttribute('stroke-opacity', 0.7);
+            } else {
+                halo.setAttribute('stroke', selected_stroke_color);
+                halo.setAttribute('stroke-opacity', 0.5);
+            }
             judge();
         }
         if (start_handle_target) {
@@ -719,7 +789,9 @@
             return;
         if (selectedMovable) {
             let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
-            if (selectedMovable.dataset.y < ui_top_rect.bottom) {
+            const r = selectedMovable.querySelector('.glyph').getBoundingClientRect();
+            const inTrash = inTrashGutterRect(r);
+            if (inTrash || selectedMovable.dataset.y < ui_top_rect.bottom) {
                 if (lastMovable === selectedMovable) {
                     lastMovable = null;
                 }
@@ -929,6 +1001,7 @@
         const S = String(date.getSeconds()).padStart(2, '0');
         return `${y}${m}${d}_${H}${M}${S}`;
     }
+
     function save_svg() {
         const el_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         el_svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -992,7 +1065,7 @@
     });
 
     function judge() {
-        // 기존 미리보기 로직 유지
+        // 기존 미리보기 로직 그대로 유지
         let consonants = 'ᄀᄂᄃᄅᄆᄇᄉᄋᄌᄎᄏᄐᄑᄒ'.split('');
         let vowels = 'ᅡᅣᅥᅧᅩᅭᅮᅲᅳᅵ'.split('');
         let movables = Array.from(document.querySelectorAll('.movable'));
