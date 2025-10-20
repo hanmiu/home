@@ -225,7 +225,7 @@
     <!-- 텍스트 입력 영역 -->
     <div id="ui-text">
         <input id="txt-input" type="text" placeholder="한글과 공백만 입력"/>
-        <button id="bt-insert" class="ui-button" style="background-color:#e0e0e0;">넣기</button>
+        <button id="bt-insert" class="ui-button" style="background-color:#e0e0e0;">입력</button>
     </div>
     <!-- 자모 팔레트 -->
     <div id="ui-top"></div>
@@ -1338,6 +1338,25 @@
         document.querySelector('#bt-speak').disabled = false;
     }
     );
+    document.getElementById('bt-speak').addEventListener('click', () => {
+        if (!utter) return;
+        const text = document.getElementById('preview').textContent.trim();
+        if (!text) return;
+
+        // 대기 중인 타임아웃/발화 비우기
+        while (speak_time_ids.length) clearTimeout(speak_time_ids.shift());
+        speechSynthesis.cancel();
+
+        // 음절 단위로 천천히
+        const syllables = Array.from(text); // 한글 음절 단위 분해
+        syllables.forEach((syll, i) => {
+            const u = new SpeechSynthesisUtterance(syll);
+            u.lang = 'ko-KR';
+            u.rate = 0.65; // 또박또박
+            const id = setTimeout(() => speechSynthesis.speak(u), i * 350);
+            speak_time_ids.push(id);
+        });
+    });
     document.querySelector('#bt-clear').addEventListener('click', () => {
         svg.innerHTML = '';
         lastMovable = null;
