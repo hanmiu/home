@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+<title>한글 자모 창작 (텍스트 입력 확장 · 패치2 · 간격조정)</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: sans-serif;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    /* 레이어: stage < ui-buttons < ui-top < ui-text < info */
+    #stage {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+    }
+
+    #svg {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .scalerot {
+        transition: 0.2s;
+    }
+
+    .glyph {
+        cursor: move;
+    }
+
+    .touch-aid {
+        cursor: move;
+    }
+
+    #ui-text {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 30px;
+        box-sizing: border-box;
+        border-bottom: 1px solid black;
+        background: rgba(255,255,255,0.9);
+        z-index: 20;
+    }
+
+    #ui-top {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        padding: 30px;
+        box-sizing: border-box;
+        border-bottom: 1px solid black;
+        background: rgba(255,255,255,0.9);
+        z-index: 15;
+    }
+
+    #ui-buttons {
+        position: absolute;
+        left: 0;
+        padding: 30px;
+        z-index: 10;
+    }
+
+    #txt-input {
+        padding: 6px 10px;
+        font-size: 14px;
+        border: 1px solid rgba(0,0,0,0.25);
+        border-radius: 3px;
+        width: min(540px, calc(100% - 220px));
+        margin-right: 8px;
+        box-sizing: border-box;
+        user-select: text;
+        -webkit-user-select: text;
+        /* 입력창 텍스트 선택 허용 */
+    }
+
+    .ui-button {
+        padding: 5px;
+        border-radius: 3px;
+        font-size: 14px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        cursor: pointer;
+    }
+
+    .ui-button:disabled {
+        cursor: default;
+    }
+
+    .jamo-button {
+        display: inline-block;
+        margin: 5px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        background-size: contain;
+        transform-origin: center;
+        transition: transform 0.2s;
+    }
+
+    .jamo-button:hover {
+        transform: scale(1.25);
+    }
+
+    #logotype {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        height: 20px;
+        opacity: 0.5;
+        cursor: pointer;
+    }
+
+    #preview {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        height: 20px;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    #info {
+        position: absolute;
+        left: 0;
+        top: 90px;
+        padding-left: 30px;
+        padding-right: 10px;
+        background: rgba(255,255,255,0.92);
+        z-index: 30;
+    }
+
+    #info > ul > li {
+        margin-top: 0.3em;
+        line-height: 1.25em;
+        font-size: 0.8em;
+    }
+
+    .palette {
+        border-radius: 3px;
+        border: 1px solid rgba(0,0,0,0.25);
+        width: 30px;
+        height: 30px;
+        margin-right: 5px;
+        cursor: pointer;
+    }
+
+    @media print {
+        body {
+            margin: 0;
+        }
+
+        #ui-text, #ui-top, #ui-buttons, #preview, #logotype {
+            display: none;
+        }
+
+        #stage {
+            width: 210mm;
+            height: 297mm;
+        }
+    }
+</style>
+<body>
+    <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
+    <div id="stage"></div>
+    <!-- 최상단: 텍스트 입력 -->
+    <div id="ui-text">
+        <input id="txt-input" type="text" placeholder="한글과 공백만 입력"/>
+        <button id="bt-insert" class="ui-button" style="background-color:#e0e0e0;">넣기</button>
+    </div>
+    <!-- 자모 팔레트 -->
+    <div id="ui-top"></div>
+    <!-- 기능 버튼 -->
+    <div id="ui-buttons">
+        <button id="bt-clear" class="ui-button" style="background-color:red;">새로</button>
+        <button id="bt-undo" class="ui-button" style="background-color:orange;" disabled>취소</button>
+        <button id="bt-redo" class="ui-button" style="background-color:yellow;" disabled>다시</button>
+        <button id="bt-save" class="ui-button" style="background-color:rgb(173,238,44);">저장</button>
+        <button id="bt-print" class="ui-button" style="background-color:rgb(32,197,223);">인쇄</button>
+        <button id="bt-speak" class="ui-button" style="background-color:rgb(161,67,229);">읽기</button>
+        <input type="color" id="color-picker" value="#000000" style="margin-right:5px">
+        <span>
+            <button id="palette0" class="palette" style="background-color:#ffa500;">ㅤ</button>
+            <button id="palette1" class="palette" style="background-color:#a143e5;">ㅤ</button>
+        </span>
+    </div>
+    <div id="preview"></div>
+    <img id="logotype">
+    <div id="info" style="display:none;">
+        <h4>놀이 방법</h4>
+        <ul>
+            <li>위의 한글 자모를 끌어다가 아래쪽에 배치해 보세요.</li>
+            <li>선택한 자모를 선 위로 끌어 올리면 지워집니다.</li>
+            <li>빨간색 ~ 보라색 버튼의 기능도 활용해 보세요.</li>
+            <li>키보드가 있는 컴퓨터에서는 화살표(크기/회전), 스페이스(복제), 백스페이스(지우기) 기능을 사용할 수 있습니다.</li>
+            <li>'읽기'버튼은 또박또박 읽고, 우하단의 조합된 글을 클릭하면 연음으로 읽습니다.</li>
+            <li>
+                <a href="https://www.hanmiu.cc" target="_blank">한미유치원</a>
+                어린이들을 위해 만들었습니다. 재미있게 활용해 주세요 !
+            </li>
+        </ul>
+        <div style="text-align:right; font-size:0.8em; margin:20px 0 10px;">창작: 미디어아티스트 최승준</div>
+        <div style="text-align:right; padding-top:10px; border-top:1px solid gray;">
+            <button id="close-info">놀이 방법 닫기</button>
+        </div>
+    </div>
+</body>
+<script>
+    const stage = document.getElementById('stage');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    stage.appendChild(svg);
+
+    /* ===== 기본 자모 path ===== */
+    const jamoset = {
+        'ᄀ': 'm -25,-25 50,0 0,50',
+        'ᄂ': 'm -25,-25 0,50 50,0',
+        'ᄃ': 'm 25,-25 -50,0 0,50 50,0',
+        'ᄅ': 'm -25,-25 50,0 0,25 -50,0 0,25 50,0',
+        'ᄆ': 'm -25,-25 50,0 0,50 -50,0 z',
+        'ᄇ': 'm -25,0 50,0 m -50,-25 0,50 50,0 0,-50',
+        'ᄉ': 'M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄋ': 'M 25,0 A 25,25 0 1 1 -25,0 25,25 0 1 1 25,0 z',
+        'ᄌ': 'm -25,-25 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄎ': 'm 0,-40 0,10 m -25,5 50,0 M 0,0 25,25 M 0,-25 0,0 -25,25',
+        'ᄏ': 'm -25,0 50,0 m -50,-25 50,0 0,50',
+        'ᄐ': 'm -25,0 50,0 m 0,-25 -50,0 0,50 50,0',
+        'ᄑ': 'm 15,-25 0,50 m -30,-50 0,50 m -10,0 50,0 m -50,-50 50,0',
+        'ᄒ': 'm 20,5 c 0,11 -9,20 -20,20 -11,0 -20,-9 -20,-20 0,-11 9,-20 20,-20 11,0 20,9 20,20 z M 0,-40 0,-30 m -25,5 50,0',
+        'ᅡ': 'M 0,0 20,0 M 0,-40 0,40',
+        'ᅣ': 'm 0,15 20,0 M 0,-15 20,-15 M 0,-40 0,40',
+        'ᅥ': 'M -20,0 0,0 m 0,-40 0,80',
+        'ᅧ': 'm -20,15 20,0 m -20,-30 20,0 m 0,-25 0,80',
+        'ᅩ': 'M 0,-20 0,0 m -40,0 80,0',
+        'ᅭ': 'm 15,-20 0,20 m -30,-20 0,20 m -25,0 80,0',
+        'ᅮ': 'M 0,0 0,20 M -40,0 40,0',
+        'ᅲ': 'm 15,0 0,20 M -15,0 -15,20 M -40,0 40,0',
+        'ᅳ': 'M -40,0 40,0',
+        'ᅵ': 'M 0,-40 0,40'
+    };
+
+    /* ===== 배치 및 분해 상수 ===== */
+    const TYPE_V = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
+    const TYPE_H = 'ᅩᅭᅮᅲᅳ'.split('');
+    const TYPE_D = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
+
+    const L_TABLE = 'ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ'.split('');
+    const V_TABLE = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵ'.split('');
+    const T_TABLE = ['', 'ᆨ', 'ᆩ', 'ᆪ', 'ᆫ', 'ᆬ', 'ᆭ', 'ᆮ', 'ᆯ', 'ᆰ', 'ᆱ', 'ᆲ', 'ᆳ', 'ᆴ', 'ᆵ', 'ᆶ', 'ᆷ', 'ᆸ', 'ᆹ', 'ᆺ', 'ᆻ', 'ᆼ', 'ᆽ', 'ᆾ', 'ᆿ', 'ᇀ', 'ᇁ', 'ᇂ'];
+
+    const L_DOUBLE_EXPAND = {
+        'ᄁ': ['ᄀ', 'ᄀ'],
+        'ᄄ': ['ᄃ', 'ᄃ'],
+        'ᄈ': ['ᄇ', 'ᄇ'],
+        'ᄊ': ['ᄉ', 'ᄉ'],
+        'ᄍ': ['ᄌ', 'ᄌ']
+    };
+    const V_EXPAND = {
+        'ᅢ': ['ᅡ', 'ᅵ'],
+        'ᅤ': ['ᅣ', 'ᅵ'],
+        'ᅦ': ['ᅥ', 'ᅵ'],
+        'ᅨ': ['ᅧ', 'ᅵ'],
+        'ᅪ': ['ᅩ', 'ᅡ'],
+        'ᅫ': ['ᅩ', 'ᅢ'],
+        'ᅬ': ['ᅩ', 'ᅵ'],
+        'ᅯ': ['ᅮ', 'ᅥ'],
+        'ᅰ': ['ᅮ', 'ᅦ'],
+        'ᅱ': ['ᅮ', 'ᅵ'],
+        'ᅴ': ['ᅳ', 'ᅵ']
+    };
+    const T_TO_CHO = {
+        'ᆨ': ['ᄀ'],
+        'ᆩ': ['ᄀ', 'ᄀ'],
+        'ᆪ': ['ᄀ', 'ᄉ'],
+        'ᆫ': ['ᄂ'],
+        'ᆬ': ['ᄂ', 'ᄌ'],
+        'ᆭ': ['ᄂ', 'ᄒ'],
+        'ᆮ': ['ᄃ'],
+        'ᆯ': ['ᄅ'],
+        'ᆰ': ['ᄅ', 'ᄀ'],
+        'ᆱ': ['ᄅ', 'ᄆ'],
+        'ᆲ': ['ᄅ', 'ᄇ'],
+        'ᆳ': ['ᄅ', 'ᄉ'],
+        'ᆴ': ['ᄅ', 'ᄐ'],
+        'ᆵ': ['ᄅ', 'ᄑ'],
+        'ᆶ': ['ᄅ', 'ᄒ'],
+        'ᆷ': ['ᄆ'],
+        'ᆸ': ['ᄇ'],
+        'ᆹ': ['ᄇ', 'ᄉ'],
+        'ᆺ': ['ᄉ'],
+        'ᆻ': ['ᄉ', 'ᄉ'],
+        'ᆼ': ['ᄋ'],
+        'ᆽ': ['ᄌ'],
+        'ᆾ': ['ᄎ'],
+        'ᆿ': ['ᄏ'],
+        'ᇀ': ['ᄐ'],
+        'ᇁ': ['ᄑ'],
+        'ᇂ': ['ᄒ']
+    };
+
+    const CELL = 64;
+    // 글자 셀 크기
+    const ADVANCE = 120;
+    // 글자 전진폭 (겹침 완화)
+    const SPACE_ADV = ADVANCE * 0.5;
+    // 공백 폭
+    const LINE_H = Math.round(CELL * 1.38);
+
+    /* ===== IME / 상태 ===== */
+    let selectedMovable = null
+      , lastMovable = null
+      , [offsetX,offsetY] = [0, 0];
+    let action_history = []
+      , action_history_buffer = [];
+    let last_acted_time = 0;
+    let base_stroke_width = 10
+      , selected_stroke_color = 'blue'
+      , selected_stroke_width = 4;
+    let last_vaild_chars = null
+      , speak_time_ids = [];
+    let frames = []
+      , curr_frame_idx = 0;
+    let utter = null;
+    if (speechSynthesis) {
+        utter = new SpeechSynthesisUtterance();
+        utter.lang = 'ko';
+        utter.rate = 0.8;
+        utter.pitch = 1.0;
+        utter.volume = 1.0;
+    }
+
+    function setJamoButtonColor() {
+        let color = document.querySelector('#color-picker').value;
+        document.querySelectorAll('.jamo-button').forEach(el => {
+            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
+        }
+        );
+    }
+
+    function init() {
+        // 자모 팔레트
+        for (let jamo in jamoset) {
+            let inner_svg_string = `<path d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width + 2}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50,50)"></path>
+      <path class="front" d="${jamoset[jamo]}" stroke="black" stroke-width="${base_stroke_width}" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(50,50)"></path>`;
+            let bt_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            bt_svg.setAttribute('width', '100%');
+            bt_svg.setAttribute('height', '100%');
+            bt_svg.setAttribute('viewBox', '0 0 100 100');
+            bt_svg.innerHTML = inner_svg_string;
+            bt_svg.style['pointer-events'] = 'none';
+            const el = document.createElement('div');
+            el.classList.add('jamo-button');
+            el.appendChild(bt_svg);
+            let size = 45;
+            el.style['width'] = `${size}px`;
+            el.style['height'] = `${size}px`;
+            el.dataset.jamo = jamo;
+            document.querySelector('#ui-top').appendChild(el);
+        }
+        const el_logotype = document.querySelector('#logotype');
+        el_logotype.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 305 100'><g transform='matrix(0.132,0,0,0.132,-275.898,-181.837)'><path d='M2289.38,1553.11C2289.38,1553.11 2292.98,1574.84 2295.55,1603.89' style='fill:none;stroke:black;stroke-width:31.55px;'/></g></svg>`;
+    }
+
+    function resize() {
+        let jamo_size = Math.max(Math.min(Math.min(window.innerWidth, window.innerHeight) / 25, 45), 25);
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+        for (let jb of document.querySelectorAll('.jamo-button')) {
+            jb.style['width'] = `${jamo_size}px`;
+            jb.style['height'] = `${jamo_size}px`;
+        }
+        const uiTextRect = document.querySelector('#ui-text').getBoundingClientRect();
+        const uiTop = document.querySelector('#ui-top');
+        uiTop.style.top = `${uiTextRect.bottom}px`;
+        const uiTopRect = uiTop.getBoundingClientRect();
+        document.querySelector('#ui-buttons').style.top = `${uiTopRect.bottom}px`;
+    }
+
+    function add_movable(jamo) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.classList.add('movable');
+        svg.appendChild(group);
+        group.dataset.ojamo = jamo;
+        group.dataset.jamo = jamo;
+        group.dataset.rot = 0;
+        group.dataset.scale = 1;
+        group.dataset.color = document.querySelector('#color-picker').value;
+        group.dataset.type = 'jamo';
+        const scalerot = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        scalerot.classList.add('scalerot');
+        group.appendChild(scalerot);
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.classList.add('touch-aid');
+        circle.setAttribute('cx', '0');
+        circle.setAttribute('cy', '0');
+        circle.setAttribute('r', '25');
+        circle.setAttribute('stroke', 'none');
+        circle.setAttribute('fill', 'transparent');
+        scalerot.appendChild(circle);
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.classList.add('glyph');
+        path.setAttribute('d', jamoset[jamo]);
+        path.setAttribute('stroke', group.dataset.color);
+        path.setAttribute('stroke-width', base_stroke_width);
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('fill', 'none');
+        const halo = path.cloneNode();
+        halo.classList.remove('glyph');
+        halo.classList.add('halo');
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-width', base_stroke_width + 1);
+        scalerot.appendChild(halo);
+        scalerot.appendChild(path);
+        return group;
+    }
+
+    /* ===== 유틸 ===== */
+    function sanitizeHangulSpaces(s) {
+        return (s || '').replace(/[^\uAC00-\uD7A3\s]/g, '');
+    }
+    function expandLeading(L) {
+        return L_DOUBLE_EXPAND[L] ? [...L_DOUBLE_EXPAND[L]] : [L];
+    }
+    function expandVowel(V) {
+        const out = [];
+        const stack = [V];
+        while (stack.length) {
+            const v = stack.shift();
+            if (V_EXPAND[v])
+                stack.unshift(...V_EXPAND[v]);
+            else
+                out.push(v);
+        }
+        return out;
+    }
+    function expandTrailing(T) {
+        if (!T || T === '')
+            return [];
+        return T_TO_CHO[T] ? [...T_TO_CHO[T]] : [];
+    }
+    function decomposeSyllable(ch) {
+        const code = ch.charCodeAt(0);
+        if (code < 0xAC00 || code > 0xD7A3)
+            return null;
+        const S = code - 0xAC00;
+        const L = L_TABLE[Math.floor(S / 588)];
+        const V = V_TABLE[Math.floor((S % 588) / 28)];
+        const T = T_TABLE[S % 28];
+        const cho = expandLeading(L);
+        const jung = expandVowel(V);
+        const jong = expandTrailing(T);
+        const vType = TYPE_V.includes(V) ? 'V' : (TYPE_H.includes(V) ? 'H' : (TYPE_D.includes(V) ? 'D' : 'V'));
+        return {
+            cho,
+            jung,
+            jong,
+            V,
+            vType
+        };
+    }
+
+    function placeJamoAt(x, y, j) {
+        const g = add_movable(j);
+        const scalerot = g.querySelector('.scalerot');
+        const glyph = g.querySelector('.glyph');
+        const halo = g.querySelector('.halo');
+        g.dataset.x = x;
+        g.dataset.y = y;
+        g.setAttribute('transform', `translate(${x}, ${y})`);
+        scalerot.setAttribute('transform', 'rotate(0) scale(1)');
+        glyph.setAttribute('stroke', g.dataset.color);
+        glyph.setAttribute('stroke-width', base_stroke_width);
+        halo.setAttribute('stroke-width', base_stroke_width + selected_stroke_width);
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-opacity', 0.5);
+        return g;
+    }
+
+    // ⬇︎ 간격 조정 포인트 (겹침 완화)
+    function placeSyllableAt(x0, y0, comp) {
+        const W = CELL
+          , H = CELL;
+        const midX = x0 + W * 0.5
+          , midY = y0 + H * 1.25;
+        // 중앙 살짝 아래
+        const leftX = x0 + W * 0.24
+          , rightX = x0 + W * 1.0;
+        // 좌/우 더 벌림
+        const topY = y0 + H * 0.30
+          , bottomY = y0 + H * 1.90;
+        // 종성 더 아래로
+        const groups = [];
+
+        // 초성
+        if (comp.vType === 'V') {
+            if (comp.cho.length === 1) {
+                groups.push(placeJamoAt(leftX, midY, comp.cho[0]));
+            } else if (comp.cho.length === 2) {
+                // 쌍자음/이중 초성: 좌우 더 넓게
+                groups.push(placeJamoAt(x0 + W * 0.16, midY, comp.cho[0]));
+                groups.push(placeJamoAt(x0 + W * 0.36, midY, comp.cho[1]));
+            }
+        } else {
+            // H, D
+            if (comp.cho.length === 1) {
+                groups.push(placeJamoAt(midX, topY, comp.cho[0]));
+            } else if (comp.cho.length === 2) {
+                groups.push(placeJamoAt(x0 + W * 0.36, topY, comp.cho[0]));
+                groups.push(placeJamoAt(x0 + W * 0.64, topY, comp.cho[1]));
+            }
+        }
+
+        // 중성
+        if (comp.vType === 'V') {
+            if (comp.jung[0])
+                groups.push(placeJamoAt(rightX, midY, comp.jung[0]));
+            if (comp.jung[1])
+                groups.push(placeJamoAt(x0 + W * 0.88, midY, comp.jung[1]));
+            if (comp.jung[2])
+                groups.push(placeJamoAt(x0 + W * 0.96, midY, comp.jung[2]));
+        } else if (comp.vType === 'H') {
+            if (comp.jung[0])
+                groups.push(placeJamoAt(midX, midY, comp.jung[0]));
+            if (comp.jung[1])
+                groups.push(placeJamoAt(x0 + W * 0.80, midY, comp.jung[1]));
+            if (comp.jung[2])
+                groups.push(placeJamoAt(x0 + W * 0.94, midY, comp.jung[2]));
+        } else {
+            // D
+            const baseIdx = comp.jung.findIndex(v => ['ᅩ', 'ᅮ', 'ᅳ'].includes(v));
+            const base = baseIdx >= 0 ? comp.jung[baseIdx] : comp.jung[0];
+            groups.push(placeJamoAt(midX, midY, base));
+            const rest = comp.jung.filter( (_, i) => i !== baseIdx);
+            if (rest[0])
+                groups.push(placeJamoAt(x0 + W * 0.72, midY, rest[0]));
+            if (rest[1])
+                groups.push(placeJamoAt(x0 + W * 0.92, midY, rest[1]));
+        }
+
+        // 종성
+        if (comp.jong.length === 1) {
+            groups.push(placeJamoAt(midX, bottomY, comp.jong[0]));
+        } else if (comp.jong.length === 2) {
+            groups.push(placeJamoAt(x0 + W * 0.42, bottomY, comp.jong[0]));
+            groups.push(placeJamoAt(x0 + W * 0.66, bottomY, comp.jong[1]));
+        }
+
+        return groups;
+    }
+
+    function layoutTextToGlyphs(text) {
+        const created = [];
+        const PAD = 50;
+        const maxW = window.innerWidth - PAD * 2;
+        const tokens = text.split(/(\s+)/);
+        let x = PAD
+          , y = PAD;
+        const wordWidth = w => w.length * ADVANCE;
+        const spaceWidth = sp => sp.length * SPACE_ADV;
+
+        for (const tk of tokens) {
+            if (!tk)
+                continue;
+            if (/^\s+$/.test(tk)) {
+                x += spaceWidth(tk);
+                continue;
+            }
+            const w = wordWidth(tk);
+            if (x + w > PAD + maxW) {
+                x = PAD;
+                y += LINE_H;
+            }
+            for (const ch of tk) {
+                const comp = decomposeSyllable(ch);
+                if (!comp)
+                    continue;
+                const m = placeSyllableAt(x, y, comp);
+                created.push(...m);
+                x += ADVANCE;
+            }
+            x += SPACE_ADV;
+            // 단어 뒤 여백 하나
+        }
+
+        // 블록 중앙 정렬 (새로 만든 요소만)
+        if (created.length) {
+            let L = Infinity
+              , R = -Infinity
+              , T = Infinity
+              , B = -Infinity;
+            for (const g of created) {
+                const r = g.querySelector('.glyph').getBoundingClientRect();
+                L = Math.min(L, r.left);
+                R = Math.max(R, r.right);
+                T = Math.min(T, r.top);
+                B = Math.max(B, r.bottom);
+            }
+            const cx = (L + R) / 2
+              , cy = (T + B) / 2;
+            const tx = window.innerWidth / 2
+              , ty = window.innerHeight / 2;
+            const dx = tx - cx
+              , dy = ty - cy;
+            for (const g of created) {
+                const nx = parseFloat(g.dataset.x) + dx;
+                const ny = parseFloat(g.dataset.y) + dy;
+                g.dataset.x = nx;
+                g.dataset.y = ny;
+                g.setAttribute('transform', `translate(${nx}, ${ny})`);
+            }
+        }
+
+        action();
+    }
+
+    /* ===== 드래그/조작 ===== */
+    let start_handle_target = null;
+    function isInTextUI(target) {
+        return target && target.closest && target.closest('#ui-text');
+    }
+
+    function handleStart(event) {
+        if (isInTextUI(event.target))
+            return;
+        let target = event.target;
+        let movable = false;
+        start_handle_target = target;
+        svg.style.cursor = '';
+        document.querySelector('#color-picker').style.cursor = '';
+        document.querySelector('#ui-buttons').style.cursor = '';
+        document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
+        let pageX = 0
+          , pageY = 0;
+        if (event.type === 'mousedown') {
+            pageX = event.pageX;
+            pageY = event.pageY;
+        } else if (event.type === 'touchstart') {
+            pageX = event.touches[0].pageX;
+            pageY = event.touches[0].pageY;
+        }
+        if (target.classList && target.classList.contains('jamo-button')) {
+            movable = true;
+            let group = add_movable(target.dataset.jamo);
+            group.dataset.x = pageX;
+            group.dataset.y = pageY;
+            group.setAttribute('transform', `translate(${pageX}, ${pageY})`);
+            target = group;
+        }
+        if (target.parentElement) {
+            if (target.parentElement.id !== 'ui-buttons') {
+                document.querySelectorAll('.halo').forEach(el => el.setAttribute('stroke', 'transparent'));
+                lastMovable = null;
+            }
+        }
+        while (target.parentElement) {
+            if (target.classList && target.classList.contains('movable')) {
+                movable = true;
+                break;
+            }
+            target = target.parentElement;
+        }
+        if (movable) {
+            selectedMovable = target;
+            lastMovable = selectedMovable;
+            let scale = parseFloat(selectedMovable.dataset.scale);
+            let stroke_width = base_stroke_width / scale;
+            selectedMovable.querySelector('.halo').setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+            selectedMovable.querySelector('.halo').setAttribute('stroke', selected_stroke_color);
+            selectedMovable.querySelector('.halo').setAttribute('stroke-opacity', 0.5);
+            offsetX = pageX - parseFloat(target.dataset.x);
+            offsetY = pageY - parseFloat(target.dataset.y);
+            document.querySelector('#color-picker').value = selectedMovable.dataset.color;
+            setJamoButtonColor();
+        }
+    }
+    function handleMove(event) {
+        if (isInTextUI(event.target))
+            return;
+        if (selectedMovable) {
+            let x, y;
+            if (event.type === 'mousemove') {
+                x = event.pageX - offsetX;
+                y = event.pageY - offsetY;
+            } else if (event.type === 'touchmove') {
+                x = event.touches[0].pageX - offsetX;
+                y = event.touches[0].pageY - offsetY;
+            }
+            selectedMovable.setAttribute('transform', `translate(${x}, ${y})`);
+            selectedMovable.dataset.x = x;
+            selectedMovable.dataset.y = y;
+            judge();
+        }
+        if (start_handle_target) {
+            if (start_handle_target.id === 'color-picker') {
+                let mode = 'copy';
+                svg.style.cursor = mode;
+                document.querySelector('#color-picker').style.cursor = mode;
+                document.querySelector('#ui-buttons').style.cursor = mode;
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = mode);
+            } else {
+                svg.style.cursor = '';
+                document.querySelector('#color-picker').style.cursor = '';
+                document.querySelector('#ui-buttons').style.cursor = '';
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
+            }
+        }
+    }
+    function handleEnd(event) {
+        if (isInTextUI(event.target))
+            return;
+        if (selectedMovable) {
+            let ui_top_rect = document.querySelector('#ui-top').getBoundingClientRect();
+            if (selectedMovable.dataset.y < ui_top_rect.bottom) {
+                if (lastMovable === selectedMovable) {
+                    lastMovable = null;
+                }
+                selectedMovable.remove();
+            }
+            action();
+        }
+        selectedMovable = null;
+        if (start_handle_target) {
+            if (start_handle_target.id === 'color-picker') {
+                if (event.target.classList && event.target.classList.contains('palette')) {
+                    event.target.style['background-color'] = document.querySelector('#color-picker').value;
+                }
+                svg.style.cursor = '';
+                document.querySelector('#color-picker').style.cursor = '';
+                document.querySelector('#ui-buttons').style.cursor = '';
+                document.querySelectorAll('.palette').forEach(x => x.style.cursor = '');
+            }
+        }
+        start_handle_target = null;
+    }
+
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 100));
+
+    document.addEventListener('keyup', (event) => {
+        if (lastMovable) {
+            let scale = parseFloat(lastMovable.dataset.scale);
+            let rot = parseFloat(lastMovable.dataset.rot);
+            let stroke_width = base_stroke_width / scale;
+            let acted = false;
+            if (event.key === 'Enter') {
+                frames.push(svg.innerHTML);
+            }
+            if (event.keyCode === 32) {
+                lastMovable.querySelector('.halo').setAttribute('stroke', 'transparent');
+                let group = add_movable(lastMovable.dataset.jamo);
+                let scalerot = group.querySelector('.scalerot');
+                let halo = group.querySelector('.halo');
+                let glyph = group.querySelector('.glyph');
+                group.dataset.x = parseFloat(lastMovable.dataset.x) + 30;
+                group.dataset.y = parseFloat(lastMovable.dataset.y) + 30;
+                group.dataset.scale = scale;
+                group.dataset.rot = rot;
+                group.dataset.color = lastMovable.dataset.color;
+                group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+                scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+                glyph.setAttribute('stroke', group.dataset.color);
+                glyph.setAttribute('stroke-width', stroke_width);
+                halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+                halo.setAttribute('stroke', selected_stroke_color);
+                halo.setAttribute('stroke-opacity', 0.5);
+                lastMovable = group;
+                acted = true;
+            }
+            if (event.keyCode === 8) {
+                lastMovable.remove();
+                lastMovable = null;
+                acted = true;
+            }
+            if (acted)
+                action();
+        }
+        if (event.key === '<') {
+            curr_frame_idx = Math.max(0, curr_frame_idx - 1);
+            svg.innerHTML = frames[curr_frame_idx] || svg.innerHTML;
+        } else if (event.key === '>') {
+            curr_frame_idx = Math.min(frames.length - 1, curr_frame_idx + 1);
+            svg.innerHTML = frames[curr_frame_idx] || svg.innerHTML;
+        }
+    }
+    );
+
+    document.addEventListener('keydown', (event) => {
+        if (event.target && event.target.id === 'txt-input')
+            return;
+        // 입력창에서는 전역 키 핸들 막기
+        if (lastMovable) {
+            let scale = parseFloat(lastMovable.dataset.scale);
+            let rot = parseFloat(lastMovable.dataset.rot);
+            let scalerot = lastMovable.querySelector('.scalerot');
+            let halo = lastMovable.querySelector('.halo');
+            let glyph = lastMovable.querySelector('.glyph');
+            let stroke_width = base_stroke_width / scale;
+            let acted = false;
+            if (event.keyCode === 38) {
+                scale += 0.1;
+                if (scale > 2)
+                    scale = 2;
+                acted = true;
+            } else if (event.keyCode === 40) {
+                scale -= 0.1;
+                if (scale < 0.5)
+                    scale = 0.5;
+                acted = true;
+            } else if (event.keyCode === 37) {
+                rot -= 5;
+                acted = true;
+                jamo_rotation_applied(lastMovable);
+                judge();
+            } else if (event.keyCode === 39) {
+                rot += 5;
+                acted = true;
+                jamo_rotation_applied(lastMovable);
+                judge();
+            }
+            if (acted) {
+                lastMovable.dataset.scale = scale;
+                lastMovable.dataset.rot = rot;
+                scalerot.setAttribute('transform', `rotate(${lastMovable.dataset.rot}) scale(${lastMovable.dataset.scale})`);
+                halo.setAttribute('stroke-width', stroke_width + selected_stroke_width / scale);
+                halo.setAttribute('stroke-opacity', 0.5);
+                glyph.setAttribute('stroke-width', stroke_width);
+                action();
+            }
+        }
+    }
+    );
+
+    function state_svg_to_array() {
+        const state = [];
+        for (let el of svg.querySelectorAll('.movable')) {
+            state.push({
+                ...el.dataset
+            });
+        }
+        return state;
+    }
+    function dataset_to_movable(dataset) {
+        let group = add_movable(dataset.jamo);
+        let scalerot = group.querySelector('.scalerot');
+        let halo = group.querySelector('.halo');
+        let glyph = group.querySelector('.glyph');
+        for (let k in dataset) {
+            group.dataset[k] = dataset[k];
+        }
+        group.setAttribute('transform', `translate(${group.dataset.x}, ${group.dataset.y})`);
+        scalerot.setAttribute('transform', `rotate(${group.dataset.rot}) scale(${group.dataset.scale})`);
+        glyph.setAttribute('stroke', group.dataset.color);
+        glyph.setAttribute('stroke-width', base_stroke_width / group.dataset.scale);
+        halo.setAttribute('stroke-width', base_stroke_width / group.dataset.scale + selected_stroke_width / group.dataset.scale);
+        halo.setAttribute('stroke', 'transparent');
+        halo.setAttribute('stroke-opacity', 0.5);
+        return group;
+    }
+    function state_array_to_svg(state) {
+        if (state) {
+            svg.innerHTML = '';
+            for (let d of state) {
+                dataset_to_movable(d);
+            }
+        }
+    }
+    function action() {
+        const t = performance.now();
+        const elapsed = t - last_acted_time;
+        last_acted_time = t;
+        if (elapsed < 500) {
+            action_history.pop();
+        }
+        action_history.push(state_svg_to_array());
+        while (action_history_buffer.length > 0) {
+            action_history_buffer.pop();
+        }
+        check_buttons();
+        judge();
+    }
+    function undo() {
+        if (action_history.length > 0) {
+            const popped = action_history.pop();
+            action_history_buffer.push(popped);
+            if (action_history.length > 0) {
+                state_array_to_svg(action_history[action_history.length - 1]);
+            } else {
+                svg.innerHTML = '';
+            }
+            document.querySelectorAll('.halo').forEach(el => el.setAttribute('stroke', 'transparent'));
+            lastMovable = null;
+        }
+        check_buttons();
+    }
+    function redo() {
+        if (action_history_buffer.length > 0) {
+            const popped = action_history_buffer.pop();
+            action_history.push(popped);
+            state_array_to_svg(action_history[action_history.length - 1]);
+            document.querySelectorAll('.halo').forEach(el => el.setAttribute('stroke', 'transparent'));
+            lastMovable = null;
+        }
+        check_buttons();
+    }
+
+    function formatDateToString(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const H = String(date.getHours()).padStart(2, '0');
+        const M = String(date.getMinutes()).padStart(2, '0');
+        const S = String(date.getSeconds()).padStart(2, '0');
+        return `${y}${m}${d}_${H}${M}${S}`;
+    }
+    function save_svg() {
+        const el_svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        el_svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        el_svg.setAttribute('width', '100%');
+        el_svg.setAttribute('height', '100%');
+        el_svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+        el_svg.innerHTML = svg.innerHTML;
+        for (let el of el_svg.querySelectorAll('.touch-aid'))
+            el.remove();
+        for (let el of el_svg.querySelectorAll('.halo'))
+            el.remove();
+        let svg_xml = new XMLSerializer().serializeToString(el_svg);
+        let blob = new Blob([svg_xml],{
+            type: 'image/svg+xml'
+        });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `jamo_${formatDateToString(new Date())}.svg`;
+        a.click();
+    }
+
+    svg.addEventListener('dragover', e => e.preventDefault());
+    svg.addEventListener('drop', function(event) {
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        for (const file of files) {
+            if (file.type === 'image/svg+xml') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let div = document.createElement('div');
+                    div.innerHTML = e.target.result;
+                    let el_svg = div.querySelector('svg');
+                    for (let group of el_svg.querySelectorAll('.movable')) {
+                        const scalerot = group.querySelector('.scalerot');
+                        const glyph = group.querySelector('.glyph');
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.classList.add('touch-aid');
+                        circle.setAttribute('cx', '0');
+                        circle.setAttribute('cy', '0');
+                        circle.setAttribute('r', '25');
+                        circle.setAttribute('stroke', 'none');
+                        circle.setAttribute('fill', 'transparent');
+                        const halo = glyph.cloneNode();
+                        halo.classList.remove('glyph');
+                        halo.classList.add('halo');
+                        halo.setAttribute('stroke', 'transparent');
+                        scalerot.insertBefore(halo, scalerot.firstChild);
+                        scalerot.insertBefore(circle, scalerot.firstChild);
+                        if (!group.hasAttribute('color')) {
+                            group.dataset.color = '#000000';
+                        }
+                    }
+                    svg.innerHTML = el_svg.innerHTML;
+                    action();
+                }
+                ;
+                reader.readAsText(file);
+            }
+        }
+    });
+
+    function judge() {
+        // 기존 미리보기 로직 유지
+        let consonants = 'ᄀᄂᄃᄅᄆᄇᄉᄋᄌᄎᄏᄐᄑᄒ'.split('');
+        let vowels = 'ᅡᅣᅥᅧᅩᅭᅮᅲᅳᅵ'.split('');
+        let movables = Array.from(document.querySelectorAll('.movable'));
+        let vowel_movables = movables.filter(el => vowels.includes(el.dataset.jamo)).sort( (a, b) => parseFloat(a.dataset.x) - parseFloat(b.dataset.x));
+        let consonant_movables = movables.filter(el => consonants.includes(el.dataset.jamo)).sort( (a, b) => parseFloat(a.dataset.x) - parseFloat(b.dataset.x));
+
+        const type_v = 'ᅡᅢᅣᅤᅥᅦᅧᅨᅵ'.split('');
+        const type_h = 'ᅩᅭᅮᅲᅳ'.split('');
+        const type_d = 'ᅪᅫᅬᅯᅰᅱᅴ'.split('');
+
+        const combined_jung = {
+            'ᅡᅵ': 'ᅢ',
+            'ᅵᅥ': 'ᅢ',
+            'ᅣᅵ': 'ᅤ',
+            'ᅵᅧ': 'ᅤ',
+            'ᅥᅵ': 'ᅦ',
+            'ᅧᅵ': 'ᅨ',
+            'ᅩᅡ': 'ᅪ',
+            'ᅩᅢ': 'ᅫ',
+            'ᅩᅵ': 'ᅬ',
+            'ᅮᅥ': 'ᅯ',
+            'ᅮᅦ': 'ᅰ',
+            'ᅮᅵ': 'ᅱ',
+            'ᅳᅵ': 'ᅴ'
+        };
+        const combined_cho = {
+            'ᄀᄀ': 'ᄁ',
+            'ᄃᄃ': 'ᄄ',
+            'ᄇᄇ': 'ᄈ',
+            'ᄉᄉ': 'ᄊ',
+            'ᄌᄌ': 'ᄍ'
+        };
+        const combined_jong = {
+            'ᄀ': 'ᆨ',
+            'ᄀᄀ': 'ᆩ',
+            'ᄀᄉ': 'ᆪ',
+            'ᄂ': 'ᆫ',
+            'ᄂᄌ': 'ᆬ',
+            'ᄂᄒ': 'ᆭ',
+            'ᄃ': 'ᆮ',
+            'ᄅ': 'ᆯ',
+            'ᄅᄀ': 'ᆰ',
+            'ᄅᄆ': 'ᆱ',
+            'ᄅᄇ': 'ᆲ',
+            'ᄅᄉ': 'ᆳ',
+            'ᄅᄐ': 'ᆴ',
+            'ᄅᄒ': 'ᆶ',
+            'ᄆ': 'ᆷ',
+            'ᄇ': 'ᆸ',
+            'ᄇᄉ': 'ᆹ',
+            'ᄉ': 'ᆺ',
+            'ᄉᄉ': 'ᆻ',
+            'ᄋ': 'ᆼ',
+            'ᄌ': 'ᆽ',
+            'ᄎ': 'ᆾ',
+            'ᄏ': 'ᆿ',
+            'ᄐ': 'ᇀ',
+            'ᄑ': 'ᇁ',
+            'ᄒ': 'ᇂ'
+        };
+
+        let thres_x = 70
+          , thres_y = 80;
+        let chars = [];
+
+        for (let i = 0; i < vowel_movables.length; i++) {
+            let prev_i = i - 1;
+            let el_vowel = vowel_movables[i];
+            let char = {
+                cho: '',
+                jung: '',
+                jong: '',
+                cho_elements: [],
+                jung_elements: [],
+                jong_elements: []
+            };
+            if (prev_i > -1) {
+                let el_prev = vowel_movables[prev_i];
+                char.jung_elements = [el_prev, el_vowel];
+                let x0 = parseFloat(el_prev.dataset.x)
+                  , y0 = parseFloat(el_prev.dataset.y);
+                let x1 = parseFloat(el_vowel.dataset.x)
+                  , y1 = parseFloat(el_vowel.dataset.y);
+                let dx = x1 - x0
+                  , dy = y1 - y0;
+                if (Math.abs(dx) < thres_x && Math.abs(dy) < thres_y) {
+                    let key = el_prev.dataset.jamo + el_vowel.dataset.jamo;
+                    let combined = combined_jung[key];
+                    if (i > 1 && (combined == 'ᅢ' || combined == 'ᅦ')) {
+                        let el_prev2 = vowel_movables[i - 2];
+                        let x2 = parseFloat(el_prev2.dataset.x)
+                          , y2 = parseFloat(el_prev2.dataset.y);
+                        let dx2 = x2 - x0
+                          , dy2 = y2 - y0;
+                        if (Math.abs(dx2) < thres_x && Math.abs(dy2) < thres_y) {
+                            key = el_prev2.dataset.jamo + combined;
+                            char.jung_elements.unshift(el_prev2);
+                            chars.pop();
+                        }
+                    }
+                    if (combined_jung[key]) {
+                        char.jung = combined_jung[key];
+                        chars.push(char);
+                    }
+                } else {
+                    char.jung = el_vowel.dataset.jamo;
+                    char.jung_elements = [el_vowel];
+                    chars.push(char);
+                }
+            } else {
+                char.jung = el_vowel.dataset.jamo;
+                char.jung_elements = [el_vowel];
+                chars.push(char);
+            }
+        }
+
+        for (let i = 1; i < chars.length; i++) {
+            const cur = chars[i]
+              , prev = chars[i - 1];
+            const inter = cur.jung_elements.filter(el => prev.jung_elements.includes(el));
+            if (inter.length > 0) {
+                chars.splice(i - 1, 1);
+                i--;
+            }
+        }
+
+        document.querySelectorAll('.bound').forEach(el => el.remove());
+
+        for (let char of chars) {
+            let left = Infinity
+              , right = -Infinity
+              , top = Infinity
+              , bottom = -Infinity;
+            for (let el of char.jung_elements) {
+                let r = el.querySelector('.glyph').getBoundingClientRect();
+                left = Math.min(left, r.left);
+                right = Math.max(right, r.right);
+                top = Math.min(top, r.top);
+                bottom = Math.max(bottom, r.bottom);
+            }
+            if (type_v.includes(char.jung)) {
+                let min = Infinity
+                  , pick = null;
+                for (let el of consonant_movables) {
+                    let r = el.querySelector('.glyph').getBoundingClientRect();
+                    let cx = (r.left + r.right) / 2
+                      , cy = (r.top + r.bottom) / 2;
+                    if (top < cy && cy < bottom) {
+                        let dist = Math.abs(cx - left);
+                        if (dist < min && cx < left) {
+                            min = dist;
+                            pick = el;
+                        }
+                    }
+                }
+                if (pick) {
+                    char.cho = pick.dataset.jamo;
+                    char.cho_elements = [pick];
+                }
+            } else if (type_h.includes(char.jung) || type_d.includes(char.jung)) {
+                let min = Infinity
+                  , pick = null;
+                for (let el of consonant_movables) {
+                    let r = el.querySelector('.glyph').getBoundingClientRect();
+                    let cx = (r.left + r.right) / 2
+                      , cy = (r.top + r.bottom) / 2;
+                    if (left < cx && cx < right) {
+                        let dist = Math.abs(cy - bottom);
+                        if (dist < min && cy < bottom) {
+                            min = dist;
+                            pick = el;
+                        }
+                    }
+                }
+                if (pick) {
+                    char.cho = pick.dataset.jamo;
+                    char.cho_elements = [pick];
+                }
+            }
+            let min_cho_el = char.cho_elements[0];
+            for (let el of consonant_movables) {
+                let r = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (r.left + r.right) / 2
+                  , cy = (r.top + r.bottom) / 2;
+                if (char.cho_elements.length === 0)
+                    continue;
+                let rc = char.cho_elements[0].querySelector('.glyph').getBoundingClientRect();
+                let rcx = (rc.left + rc.right) / 2;
+                let dist = Math.abs(cx - rcx);
+                if (el !== min_cho_el) {
+                    let scale = Math.max(parseFloat(el.dataset.scale), 1);
+                    if (dist < 70 * 1.25 * scale && cy > rc.top && cy < rc.bottom) {
+                        char.cho_elements.unshift(el);
+                        char.cho_elements.sort( (a, b) => parseFloat(a.dataset.x) - parseFloat(b.dataset.x));
+                        let key = char.cho_elements.map(e => e.dataset.jamo).join('');
+                        if (combined_cho.hasOwnProperty(key)) {
+                            char.cho = combined_cho[key];
+                        } else {
+                            char.cho_elements.shift();
+                            char.cho = char.cho_elements[char.cho_elements.length - 1].dataset.jamo;
+                        }
+                    }
+                }
+            }
+            for (let el of char.cho_elements) {
+                let r = el.querySelector('.glyph').getBoundingClientRect();
+                left = Math.min(left, r.left);
+                right = Math.max(right, r.right);
+                top = Math.min(top, r.top);
+                bottom = Math.max(bottom, r.bottom);
+            }
+            for (let el of consonant_movables) {
+                let r = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (r.left + r.right) / 2
+                  , cy = (r.top + r.bottom) / 2;
+                if (left < cx && cx < right && cy > bottom) {
+                    let dist = Math.abs(cy - bottom);
+                    if (dist < 80) {
+                        char.jong = combined_jong[el.dataset.jamo];
+                        char.jong_elements = [el];
+                    }
+                }
+            }
+            let min_jong_el = char.jong_elements[0];
+            for (let el of consonant_movables) {
+                let r = el.querySelector('.glyph').getBoundingClientRect();
+                let cx = (r.left + r.right) / 2
+                  , cy = (r.top + r.bottom) / 2;
+                if (char.jong_elements.length === 0)
+                    continue;
+                let rj = char.jong_elements[0].querySelector('.glyph').getBoundingClientRect();
+                let rjx = (rj.left + rj.right) / 2;
+                let dist = Math.abs(cx - rjx);
+                if (el !== min_jong_el) {
+                    let scale = Math.max(parseFloat(el.dataset.scale), 1);
+                    if (dist < 70 * 1.25 * scale && cy > rj.top && cy < rj.bottom) {
+                        char.jong_elements.unshift(el);
+                        char.jong_elements.sort( (a, b) => parseFloat(a.dataset.x) - parseFloat(b.dataset.x));
+                        let key = char.jong_elements.map(e => e.dataset.jamo).join('');
+                        if (combined_jong.hasOwnProperty(key)) {
+                            char.jong = combined_jong[key];
+                        } else {
+                            char.jong_elements.shift();
+                            char.jong = char.jong_elements[char.jong_elements.length - 1].dataset.jamo;
+                        }
+                    }
+                }
+            }
+        }
+
+        let out = '';
+        for (let c of chars) {
+            out += (c.cho + c.jung + c.jong).normalize('NFC');
+        }
+        last_vaild_chars = chars;
+        document.querySelector('#preview').textContent = out;
+        return out;
+    }
+
+    document.querySelector('#preview').addEventListener('click', (e) => {
+        if (!utter)
+            return;
+        while (speak_time_ids.length > 0) {
+            clearTimeout(speak_time_ids.shift());
+        }
+        speechSynthesis.cancel();
+        utter.rate = 0.8;
+        utter.text = e.target.textContent;
+        speechSynthesis.speak(utter);
+        document.querySelector('#bt-speak').disabled = false;
+    }
+    );
+    document.querySelector('#bt-clear').addEventListener('click', () => {
+        svg.innerHTML = '';
+        lastMovable = null;
+        action();
+    }
+    );
+    document.querySelector('#bt-undo').addEventListener('click', () => undo());
+    document.querySelector('#bt-redo').addEventListener('click', () => redo());
+    document.querySelector('#bt-save').addEventListener('click', () => save_svg());
+    document.querySelector('#bt-print').addEventListener('click', () => {
+        document.querySelectorAll('.halo').forEach(el => el.setAttribute('stroke', 'transparent'));
+        let group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        let L = Infinity
+          , R = -Infinity
+          , T = Infinity
+          , B = -Infinity;
+        for (let el of document.querySelectorAll('.movable')) {
+            let r = el.querySelector('.glyph').getBoundingClientRect();
+            L = Math.min(L, r.left);
+            R = Math.max(R, r.right);
+            T = Math.min(T, r.top);
+            B = Math.max(B, r.bottom);
+        }
+        let inch2mm = 25.4
+          , a4w = 210 * 96 / inch2mm
+          , a4h = 297 * 96 / inch2mm;
+        let cx = (L + R) / 2
+          , cy = (T + B) / 2;
+        let w = R - L
+          , h = B - T;
+        let scale = 1
+          , rot = 0;
+        let len = Math.min(w, h);
+        if ((w / h) >= 1) {
+            scale = a4w * 0.9 / len;
+            rot = 90;
+            if (scale * w > a4h)
+                scale = a4h * 0.9 / w;
+        } else {
+            scale = a4h * 0.9 / len;
+            if (scale * h > a4h)
+                scale = a4h * 0.9 / h;
+        }
+        group.setAttribute('transform', `translate(${a4w / 2}, ${a4h / 2}) scale(${scale}) rotate(${rot}) translate(${-cx}, ${-cy})`);
+        for (let el of document.querySelectorAll('.movable'))
+            group.appendChild(el.cloneNode(true));
+        svg.innerHTML = '';
+        svg.appendChild(group);
+        svg.setAttribute('width', a4w);
+        svg.setAttribute('height', a4h);
+        svg.setAttribute('viewBox', `0 0 ${a4w} ${a4h}`);
+        window.print();
+        svg.innerHTML = '';
+        for (let el of group.querySelectorAll('.movable'))
+            svg.appendChild(el);
+        svg.setAttribute('width', window.innerWidth);
+        svg.setAttribute('height', window.innerHeight);
+        svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    }
+    );
+
+    document.querySelector('#color-picker').addEventListener('input', (e) => {
+        let color = e.target.value;
+        setJamoButtonColor();
+        if (lastMovable) {
+            if (lastMovable.dataset.color !== color) {
+                lastMovable.dataset.color = color;
+                lastMovable.querySelector('.glyph').setAttribute('stroke', color);
+                action();
+            }
+        }
+    }
+    );
+    function rgbToHex(rgb) {
+        let m = rgb.match(/\d+/g);
+        let r = parseInt(m[0]).toString(16).padStart(2, '0');
+        let g = parseInt(m[1]).toString(16).padStart(2, '0');
+        let b = parseInt(m[2]).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
+    }
+    document.querySelectorAll('.palette').forEach(x => x.addEventListener('click', (e) => {
+        let color = rgbToHex(getComputedStyle(e.target).backgroundColor);
+        document.querySelector('#color-picker').value = color;
+        document.querySelectorAll('.jamo-button').forEach(el => {
+            el.querySelector('svg').querySelector('.front').setAttribute('stroke', color);
+        }
+        );
+    }
+    ));
+    document.querySelector('#logotype').addEventListener('click', () => window.open('https://www.hanmiu.cc', '_blank'));
+    document.querySelector('#close-info').addEventListener('click', () => {
+        document.querySelector('#info').style.display = 'none';
+    }
+    );
+
+    function check_buttons() {
+        const any = svg.children.length > 0;
+        document.querySelector('#bt-undo').disabled = action_history.length === 0;
+        document.querySelector('#bt-redo').disabled = action_history_buffer.length === 0;
+        document.querySelector('#bt-clear').disabled = !any;
+        document.querySelector('#bt-save').disabled = !any;
+        document.querySelector('#bt-print').disabled = !any;
+        document.querySelector('#bt-speak').disabled = !any;
+        judge();
+    }
+
+    function pie4(str, f) {
+        let arr = str.split('');
+        if (arr.length !== 4)
+            return '';
+        if (f >= 0 && f < 0.125)
+            return arr[0];
+        else if (f < 0.375)
+            return arr[1];
+        else if (f < 0.625)
+            return arr[2];
+        else if (f < 0.875)
+            return arr[3];
+        else
+            return arr[0];
+    }
+    function jamo_rotation_applied(el) {
+        let rot = parseFloat(el.dataset.rot) % 360;
+        if (rot < 0)
+            rot += 360;
+        rot /= 360;
+        let oj = el.dataset.ojamo;
+        let j = oj;
+        if (oj === 'ᅡ')
+            j = pie4('ᅡᅮᅥᅩ', rot);
+        else if (oj === 'ᅣ')
+            j = pie4('ᅣᅲᅧᅭ', rot);
+        else if (oj === 'ᅥ')
+            j = pie4('ᅥᅩᅡᅮ', rot);
+        else if (oj === 'ᅧ')
+            j = pie4('ᅧᅭᅣᅲ', rot);
+        else if (oj === 'ᅩ')
+            j = pie4('ᅩᅡᅮᅥ', rot);
+        else if (oj === 'ᅭ')
+            j = pie4('ᅭᅣᅲᅧ', rot);
+        else if (oj === 'ᅮ')
+            j = pie4('ᅮᅥᅩᅡ', rot);
+        else if (oj === 'ᅲ')
+            j = pie4('ᅲᅧᅭᅣ', rot);
+        else if (oj === 'ᅳ')
+            j = pie4('ᅳᅵᅳᅵ', rot);
+        else if (oj === 'ᅵ')
+            j = pie4('ᅵᅳᅵᅳ', rot);
+        else if (oj === 'ᄀ')
+            j = pie4('ᄀᄀᄂᄂ', rot);
+        else if (oj === 'ᄂ')
+            j = pie4('ᄂᄂᄀᄀ', rot);
+        if (j)
+            el.dataset.jamo = j;
+        return j;
+    }
+
+    // ===== 텍스트 입력 제어 (IME 대응) =====
+    const txtInput = document.getElementById('txt-input');
+    const btInsert = document.getElementById('bt-insert');
+    let composing = false;
+    txtInput.addEventListener('compositionstart', () => composing = true);
+    txtInput.addEventListener('compositionend', () => {
+        composing = false;
+        txtInput.value = sanitizeHangulSpaces(txtInput.value);
+    }
+    );
+    txtInput.addEventListener('input', () => {
+        if (composing)
+            return;
+        const cur = txtInput.value;
+        const clean = sanitizeHangulSpaces(cur);
+        if (cur !== clean)
+            txtInput.value = clean;
+    }
+    );
+    txtInput.addEventListener('paste', () => setTimeout( () => {
+        txtInput.value = sanitizeHangulSpaces(txtInput.value);
+    }
+    , 0));
+    txtInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            const text = sanitizeHangulSpaces(txtInput.value);
+            if (text.trim().length === 0)
+                return;
+            layoutTextToGlyphs(text);
+        }
+    }
+    );
+    btInsert.addEventListener('click', () => {
+        const text = sanitizeHangulSpaces(txtInput.value);
+        if (text.trim().length === 0)
+            return;
+        layoutTextToGlyphs(text);
+    }
+    );
+
+    setTimeout( () => {
+        const rect_ui_text = document.querySelector('#ui-text').getBoundingClientRect();
+        if (!localStorage.jamo_visited_count) {
+            localStorage.jamo_visited_count = 1;
+            document.querySelector('#info').style.display = 'block';
+            document.querySelector('#info').style.top = `${rect_ui_text.bottom}px`;
+        } else {
+            let c = parseInt(localStorage.jamo_visited_count);
+            c += 1;
+            if (c <= 3) {
+                document.querySelector('#info').style.display = 'block';
+                document.querySelector('#info').style.top = `${rect_ui_text.bottom}px`;
+            }
+            localStorage.jamo_visited_count = c;
+        }
+    }
+    , 200);
+
+    // 초기화
+    (function() {
+        init();
+        resize();
+        check_buttons();
+    }
+    )();
+</script>
