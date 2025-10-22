@@ -714,28 +714,74 @@
       });
     }
 
-    // 효과음 재생 (톡톡 or 똑똑)
+    // 효과음 재생 (마림바 느낌의 따뜻한 소리)
     function playTickSound() {
       if (!soundContext) {
         soundContext = new (window.AudioContext || window.webkitAudioContext)();
       }
       
-      const oscillator = soundContext.createOscillator();
-      const gainNode = soundContext.createGain();
+      const now = soundContext.currentTime;
       
-      // 랜덤하게 톡톡(높은음) 또는 똑똑(낮은음)
-      const isTok = Math.random() > 0.5;
-      oscillator.frequency.value = isTok ? (600 + Math.random() * 200) : (300 + Math.random() * 100);
-      oscillator.type = 'sine';
+      // 마림바 음계 (중음역, 따뜻한 느낌)
+      const notes = [330, 370, 415, 440, 494, 523, 587]; // E4-D5
+      const baseFreq = notes[Math.floor(Math.random() * notes.length)];
       
-      gainNode.gain.setValueAtTime(0.3, soundContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, soundContext.currentTime + (isTok ? 0.05 : 0.08));
+      // 메인 오실레이터 (sine wave - 부드러운 소리)
+      const osc = soundContext.createOscillator();
+      const gain = soundContext.createGain();
+      osc.frequency.value = baseFreq;
+      osc.type = 'sine';
       
-      oscillator.connect(gainNode);
-      gainNode.connect(soundContext.destination);
+      // 약간의 배음 추가 (triangle wave로 목재 느낌)
+      const osc2 = soundContext.createOscillator();
+      const gain2 = soundContext.createGain();
+      osc2.frequency.value = baseFreq * 2;
+      osc2.type = 'triangle';
       
-      oscillator.start(soundContext.currentTime);
-      oscillator.stop(soundContext.currentTime + (isTok ? 0.05 : 0.08));
+      // 타격음을 위한 짧은 노이즈 (목재 타격감)
+      const noiseBuffer = soundContext.createBuffer(1, soundContext.sampleRate * 0.02, soundContext.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseData.length; i++) {
+        noiseData[i] = (Math.random() * 2 - 1) * 0.1;
+      }
+      const noise = soundContext.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const noiseGain = soundContext.createGain();
+      
+      // Lowpass 필터 (부드럽고 따뜻하게)
+      const filter = soundContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2000;
+      filter.Q.value = 1;
+      
+      // 마림바 특유의 엔벨로프 (빠른 어택, 중간 감쇠)
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      
+      gain2.gain.setValueAtTime(0.05, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      
+      noiseGain.gain.setValueAtTime(0.3, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+      
+      // 연결
+      osc.connect(gain);
+      osc2.connect(gain2);
+      noise.connect(noiseGain);
+      
+      gain.connect(filter);
+      gain2.connect(filter);
+      noiseGain.connect(filter);
+      
+      filter.connect(soundContext.destination);
+      
+      // 재생
+      osc.start(now);
+      osc2.start(now);
+      noise.start(now);
+      
+      osc.stop(now + 0.25);
+      osc2.stop(now + 0.2);
     }
 
     // 룰렛 돌리기
