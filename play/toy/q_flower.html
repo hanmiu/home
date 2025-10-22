@@ -168,6 +168,8 @@
       width: 100%;
       height: 100%;
       filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+      /* 🔧 회전 중심 명시 */
+      transform-origin: 50% 50%;
     }
 
     /* 숫자가 자기 중심을 기준으로 회전하도록 */
@@ -576,6 +578,10 @@
     const durationDisplay = document.getElementById('durationDisplay');
     const playBtn = document.getElementById('playBtn');
 
+    // 🔧 화살표는 12시, SVG 좌표계에서 270°
+    const ARROW_ANGLE = 270;
+    const mod = (n, m) => ((n % m) + m) % m;
+
     // 초기화
     window.addEventListener('load', () => {
       loadQuestions();
@@ -804,78 +810,46 @@
       const availableIndices = questions.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
       const targetIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
       
-      console.log('=== 룰렛 회전 시작 ===');
-      console.log('타겟 인덱스:', targetIndex);
-      console.log('타겟 질문:', questions[targetIndex]);
-      console.log('이미 나온 질문들:', usedQuestionIndices);
-      
-      // 2단계: 타겟 질문이 화살표(위쪽)에 오도록 목표 각도 계산
+      // 2단계: 타겟 질문이 화살표(12시=270°)에 오도록 목표 각도 계산
       const segmentAngle = 360 / questions.length;
-      // 룰렛이 시계방향 회전 시, 화살표 위치 = (360 - rotation) / segmentAngle
-      // 따라서 타겟을 화살표에 맞추려면: targetAngle = 360 - (targetIndex * segmentAngle)
-      let targetAngle = 360 - (targetIndex * segmentAngle);
-      if (targetAngle >= 360) targetAngle -= 360;
-      if (targetAngle < 0) targetAngle += 360;
-      
-      console.log('세그먼트 각도:', segmentAngle);
-      console.log('타겟 각도:', targetAngle);
-      
+      const targetSegmentAngle = targetIndex * segmentAngle;
+
+      // rotation ≡ ARROW_ANGLE - targetSegmentAngle (mod 360)
+      const targetAngle = mod(ARROW_ANGLE - targetSegmentAngle, 360);
+
       // 3단계: 회전 속도 랜덤 (2초~3.5초)
       const duration = 2000 + Math.random() * 1500;
       
-      // 4단계: 속도에 따라 회전 수 조절 (빠르면 많이, 느리면 적게)
+      // 4단계: 속도에 따라 회전 수 조절
       const speedFactor = (3500 - duration) / 1500; // 0~1
       const minSpins = 4;
       const maxSpins = 10;
-      const spins = Math.floor(minSpins + speedFactor * (maxSpins - minSpins)); // 정수로 변환!
-      
-      // 5단계: 현재 각도에서 타겟까지의 최종 회전 각도 계산
-      const currentNormalized = rotation % 360;
-      let degreesToTarget = targetAngle - currentNormalized;
-      
-      console.log('현재 각도 (normalized):', currentNormalized);
-      console.log('타겟까지 필요한 각도:', degreesToTarget);
-      
-      // 항상 시계방향으로 회전하도록
-      if (degreesToTarget < 0) {
-        degreesToTarget += 360;
-      }
-      
-      console.log('조정된 타겟까지 각도:', degreesToTarget);
-      console.log('회전 바퀴 수:', spins);
-      
-      // 여러 바퀴 + 타겟 각도
+      const spins = Math.floor(minSpins + speedFactor * (maxSpins - minSpins));
+
+      // 5단계: 현재 각도에서 타겟까지의 최종 회전 각도 계산 (시계방향)
+      const currentNormalized = mod(rotation, 360);
+      const degreesToTarget = mod(targetAngle - currentNormalized, 360);
+
       const newRotation = rotation + (360 * spins) + degreesToTarget;
-      
-      console.log('이전 rotation:', rotation);
-      console.log('새 rotation:', newRotation);
-      console.log('최종 각도 (normalized):', newRotation % 360);
-      
+
       // 회전 시작 - 효과음 재생
       const totalTicks = Math.floor(spins * questions.length);
       let tickCount = 0;
       let tickTimeoutId = null;
       
       function playNextTick() {
-        if (tickCount >= totalTicks) {
-          return;
-        }
-        
+        if (tickCount >= totalTicks) return;
         playTickSound();
         tickCount++;
-        
         if (tickCount < totalTicks) {
-          // 점진적으로 느려지는 간격 계산
           const progress = tickCount / totalTicks;
-          const easedProgress = progress * progress; // 이징 적용
+          const easedProgress = progress * progress;
           const minInterval = 30;
           const maxInterval = 200;
           const nextDelay = minInterval + easedProgress * (maxInterval - minInterval);
-          
           tickTimeoutId = setTimeout(playNextTick, nextDelay);
         }
       }
-      
       playNextTick();
       
       rotation = newRotation;
@@ -892,27 +866,26 @@
       });
 
       setTimeout(() => {
-        if (tickTimeoutId) {
-          clearTimeout(tickTimeoutId);
-        }
+        if (tickTimeoutId) clearTimeout(tickTimeoutId);
         
-        // 타겟 인덱스를 그대로 사용 (이미 정확히 계산됨)
         selectedQuestionIndex = targetIndex;
         selectedQuestion = questions[selectedQuestionIndex];
         usedQuestionIndices.push(selectedQuestionIndex);
-        
+
+        // ✅ 검증: 270° 기준으로 화살표 아래 인덱스 계산
+        const finalNormalized = mod(rotation, 360);
+        const angleAtArrow = mod(ARROW_ANGLE - finalNormalized, 360);
+        const segmentAngle = 360 / questions.length;
+        const calculatedIndex = mod(Math.round(angleAtArrow / segmentAngle), questions.length);
+
         console.log('=== 룰렛 정지 ===');
         console.log('최종 rotation:', rotation);
-        console.log('최종 각도 (normalized):', rotation % 360);
+        console.log('최종 각도 (normalized):', finalNormalized);
         console.log('선택된 인덱스:', selectedQuestionIndex);
-        console.log('선택된 질문:', selectedQuestion);
-        
-        // 검증: 실제로 화살표가 가리키는 인덱스 계산
-        const finalNormalized = rotation % 360;
-        const calculatedIndex = Math.floor((360 - finalNormalized) / segmentAngle) % questions.length;
-        console.log('실제 화살표가 가리키는 인덱스 (계산):', calculatedIndex);
+        console.log('화살표 위치 각도:', angleAtArrow);
+        console.log('실제 화살표 인덱스(계산):', calculatedIndex);
         console.log('일치 여부:', calculatedIndex === selectedQuestionIndex ? '✅ 일치!' : '❌ 불일치!');
-        
+
         resultQuestion.textContent = selectedQuestion;
         resultBox.classList.add('active');
         isSpinning = false;
@@ -923,7 +896,10 @@
           spinBtn.textContent = '기회 종료 😢';
         } else {
           spinBtn.textContent = '🎯 룰렛 돌리기!';
-          spinBtn.disabled = false;
+          // 녹음 중이 아닐 때만 버튼 활성화
+          if (!recordingTimer && !isPlaying) {
+            spinBtn.disabled = false;
+          }
         }
       }, duration);
     }
@@ -961,7 +937,7 @@
         number.style.transform = 'rotate(0deg)';
       });
       
-      // 다음 회전을 위해 transition 복원 (약간의 지연 후)
+      // 다음 회전을 위해 transition 복원
       setTimeout(() => {
         rouletteSvg.style.transition = '';
         numbers.forEach(number => {
