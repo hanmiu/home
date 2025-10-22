@@ -535,6 +535,7 @@
     let selectedQuestionIndex = -1;
     let remainingSpins = 3;
     let isReading = false;
+    let usedQuestionIndices = []; // 이미 나온 질문 인덱스 추적
 
     // 녹음 관련
     let mediaRecorder = null;
@@ -636,7 +637,7 @@
         const centerX = 100;
         const centerY = 100;
         const petalRadius = 28;
-        const distanceFromCenter = 55;
+        const distanceFromCenter = 50;
         
         const petalCenterX = centerX + distanceFromCenter * Math.cos(angleRad);
         const petalCenterY = centerY + distanceFromCenter * Math.sin(angleRad);
@@ -784,8 +785,18 @@
         
         const normalizedRotation = rotation % 360;
         const segmentAngle = 360 / questions.length;
-        selectedQuestionIndex = Math.floor((360 - normalizedRotation) / segmentAngle) % questions.length;
+        let calculatedIndex = Math.floor((360 - normalizedRotation) / segmentAngle) % questions.length;
+        
+        // 중복 방지: 이미 나온 질문이면 다음 질문으로
+        if (questions.length > remainingSpins) {
+          while (usedQuestionIndices.includes(calculatedIndex)) {
+            calculatedIndex = (calculatedIndex + 1) % questions.length;
+          }
+        }
+        
+        selectedQuestionIndex = calculatedIndex;
         selectedQuestion = questions[selectedQuestionIndex];
+        usedQuestionIndices.push(selectedQuestionIndex);
         
         resultQuestion.textContent = selectedQuestion;
         resultBox.classList.add('active');
@@ -829,6 +840,7 @@
       selectedQuestion = null;
       remainingSpins = 3;
       isSpinning = false;
+      usedQuestionIndices = []; // 사용된 질문 초기화
       resultBox.classList.remove('active');
       spinBtn.disabled = false;
       spinBtn.textContent = '🎯 룰렛 돌리기!';
