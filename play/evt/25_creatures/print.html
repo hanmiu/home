@@ -48,22 +48,10 @@
   </div>
   <div class="border-controls">
     <span style="font-weight:600">보더 표시:</span>
-    <label>
-      <input type="checkbox" id="borderTop" checked />
-      상단
-    </label>
-    <label>
-      <input type="checkbox" id="borderRight" checked />
-      우측
-    </label>
-    <label>
-      <input type="checkbox" id="borderBottom" checked />
-      하단
-    </label>
-    <label>
-      <input type="checkbox" id="borderLeft" checked />
-      좌측
-    </label>
+    <label><input type="checkbox" id="borderTop" checked /> 상단</label>
+    <label><input type="checkbox" id="borderRight" checked /> 우측</label>
+    <label><input type="checkbox" id="borderBottom" checked /> 하단</label>
+    <label><input type="checkbox" id="borderLeft" checked /> 좌측</label>
   </div>
   <div class="slider-container">
     <span style="font-weight:600;min-width:60px">탐색:</span>
@@ -77,7 +65,7 @@
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-import { CONFIG, parseTSV, shortCode, fromShortCode, drawCard } from './layout.js';
+import { CONFIG, parseTSVRecords, shortCode, fromShortCode, drawCard, computeFilename } from './layout.js';
 
 const $ = (s)=>document.querySelector(s);
 const baseInput = $('#base');
@@ -97,47 +85,45 @@ const sliderInfo = $('#sliderInfo');
 
 // TSV 로드
 const tsv = await (await fetch(CONFIG.TSV_URL, {cache:'reload'})).text();
-const bases = parseTSV(tsv);
+const { bases, records, byBase } = parseTSVRecords(tsv);
 let currentIndex = 0;
 
 // 슬라이더 초기화
-slider.max = bases.length - 1;
+slider.max = Math.max(0, bases.length - 1);
 slider.value = 0;
-sliderInfo.textContent = `1 / ${bases.length}`;
+sliderInfo.textContent = `1 / ${bases.length||1}`;
 
 // 초기 값
 baseInput.value = bases[currentIndex] || '';
 codeInput.value = baseInput.value ? await shortCode(baseInput.value) : '';
 
-async function render(){
+// 렌더 동기화용 Promise
+let renderTask = Promise.resolve();
+
+function getBorderSides(){
+  return { top: borderTop.checked, right: borderRight.checked, bottom: borderBottom.checked, left: borderLeft.checked };
+}
+
+async function doRender(){
   const basename = baseInput.value.trim();
   CONFIG.CELL_S = Math.max(80, Math.min(220, parseInt(cellInput.value||150,10)));
-  
-  // 보더 사이드 설정
-  const borderSides = {
-    top: borderTop.checked,
-    right: borderRight.checked,
-    bottom: borderBottom.checked,
-    left: borderLeft.checked
-  };
-  
-  // QR 코드는 항상 배포된 URL을 사용
   const defaultQrBase = 'https://www.hanmiu.cc/play/evt/25_creatures/card.html';
   const inputBase = (document.getElementById('qrbase').value || '').trim();
   const qrBase = inputBase || defaultQrBase;
   const code = await shortCode(basename);
   const url = qrBase + '?code=' + code;
-  
   await drawCard({
-    canvas, 
-    basename, 
-    allBasenames:bases, 
-    drawQR:true, 
-    qrUrl:url, 
-    drawBorders:true,
-    borderSides
+    canvas,
+    basename,
+    allBasenames: bases,
+    record: byBase.get(basename) || null,
+    drawQR: true,
+    qrUrl: url,
+    drawBorders: true,
+    borderSides: getBorderSides()
   });
 }
+function render(){ renderTask = doRender(); return renderTask; }
 
 async function loadByIndex(index){
   if(index < 0 || index >= bases.length) return;
@@ -146,34 +132,21 @@ async function loadByIndex(index){
   codeInput.value = await shortCode(baseInput.value);
   slider.value = currentIndex;
   sliderInfo.textContent = `${currentIndex + 1} / ${bases.length}`;
-  await render();
+  return render();
 }
 
 // 네비게이션
 $('#prev').addEventListener('click', ()=>loadByIndex(currentIndex - 1));
 $('#next').addEventListener('click', ()=>loadByIndex(currentIndex + 1));
 
-// 키보드 화살표키 네비게이션
 document.addEventListener('keydown', (e)=>{
-  if(e.key === 'ArrowLeft'){
-    e.preventDefault();
-    loadByIndex(currentIndex - 1);
-  } else if(e.key === 'ArrowRight'){
-    e.preventDefault();
-    loadByIndex(currentIndex + 1);
-  }
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); loadByIndex(currentIndex - 1); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); loadByIndex(currentIndex + 1); }
 });
 
 // 슬라이더 이벤트
-slider.addEventListener('input', ()=>{
-  const index = parseInt(slider.value, 10);
-  sliderInfo.textContent = `${index + 1} / ${bases.length}`;
-});
-
-slider.addEventListener('change', ()=>{
-  const index = parseInt(slider.value, 10);
-  loadByIndex(index);
-});
+slider.addEventListener('input', ()=>{ const index = parseInt(slider.value, 10); sliderInfo.textContent = `${index + 1} / ${bases.length}`; });
+slider.addEventListener('change', ()=>{ const index = parseInt(slider.value, 10); loadByIndex(index); });
 
 // 수동 렌더
 $('#render').addEventListener('click', render);
@@ -187,13 +160,8 @@ borderLeft.addEventListener('change', render);
 // basename↔code 동기화
 baseInput.addEventListener('input', async ()=>{ 
   codeInput.value = await shortCode(baseInput.value);
-  // 현재 인덱스 업데이트
   const idx = bases.indexOf(baseInput.value.trim());
-  if(idx !== -1) {
-    currentIndex = idx;
-    slider.value = idx;
-    sliderInfo.textContent = `${idx + 1} / ${bases.length}`;
-  }
+  if(idx !== -1) { currentIndex = idx; slider.value = idx; sliderInfo.textContent = `${idx + 1} / ${bases.length}`; }
 });
 codeInput.addEventListener('input', async ()=>{ 
   try{ 
@@ -202,23 +170,22 @@ codeInput.addEventListener('input', async ()=>{
     if(basename) {
       baseInput.value = basename;
       const idx = bases.indexOf(basename);
-      if(idx !== -1) {
-        currentIndex = idx;
-        slider.value = idx;
-        sliderInfo.textContent = `${idx + 1} / ${bases.length}`;
-      }
+      if(idx !== -1) { currentIndex = idx; slider.value = idx; sliderInfo.textContent = `${idx + 1} / ${bases.length}`; }
     }
   }catch{}
 });
 
+// 초기 렌더
 await render();
 
 // 단일 저장(JPEG)
 $('#save').addEventListener('click', async ()=>{
+  await renderTask;
   canvas.toBlob((blob)=>{
     const a=document.createElement('a');
-    const basename = baseInput.value.trim() || 'card';
-    a.download = `${basename}.jpg`;
+    const rec = records[currentIndex] || byBase.get(baseInput.value.trim());
+    const filename = computeFilename(currentIndex, rec, 'jpg');
+    a.download = filename;
     a.href = URL.createObjectURL(blob);
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
@@ -230,34 +197,24 @@ $('#batchSave').addEventListener('click', async ()=>{
   const btn = $('#batchSave');
   const originalText = btn.textContent;
   btn.disabled = true;
-  
   try {
     for(let i = 0; i < bases.length; i++){
       btn.textContent = `저장 중... ${i+1}/${bases.length}`;
-      
-      // 각 basename으로 렌더
       await loadByIndex(i);
-      
-      // blob 생성 및 다운로드
+      await renderTask;
       await new Promise((resolve) => {
         canvas.toBlob((blob)=>{
           const a = document.createElement('a');
-          a.download = `${bases[i]}.jpg`;
+          const filename = computeFilename(i, records[i], 'jpg');
+          a.download = filename;
           a.href = URL.createObjectURL(blob);
           a.click();
-          setTimeout(()=>{
-            URL.revokeObjectURL(a.href);
-            resolve();
-          }, 300); // 각 다운로드 사이에 약간의 딜레이
+          setTimeout(()=>{ URL.revokeObjectURL(a.href); resolve(); }, 250);
         }, 'image/jpeg', 0.95);
       });
     }
-    
     btn.textContent = '✅ 완료!';
-    setTimeout(()=>{
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 2000);
+    setTimeout(()=>{ btn.textContent = originalText; btn.disabled = false; }, 1200);
   } catch(e) {
     alert('배치 저장 중 오류: ' + e.message);
     btn.textContent = originalText;

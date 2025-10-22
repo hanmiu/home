@@ -24,7 +24,7 @@
   <div id="msg" class="err" hidden></div>
 </div>
 <script type="module">
-import { CONFIG, parseTSV, fromShortCode, drawCard } from './layout.js';
+import { CONFIG, parseTSVRecords, fromShortCode, drawCard } from './layout.js';
 
 // 설정(필요시 쿼리로 오버라이드)
 const params = new URLSearchParams(location.search);
@@ -37,25 +37,26 @@ function fail(e){ msg.hidden=false; msg.textContent = e instanceof Error? e.mess
 if(!code) fail('code 파라미터가 필요합니다.');
 
 try{
-  // TSV 로드 → basename 리스트
+  // TSV 로드 → records/byBase
   const tsv = await (await fetch(dataUrl, {cache:'reload'})).text();
-  const bases = parseTSV(tsv);
-  
+  const { bases, byBase } = parseTSVRecords(tsv);
+
   // shortCode로부터 basename 복원
   const basename = await fromShortCode(code, bases);
   if(!basename) fail('유효하지 않은 코드입니다.');
 
-  // 캔버스 렌더 (보더 이미지 및 QR 코드 제외)
+  // 캔버스 렌더 (보더/QR 제외, klass는 표시)
   const canvas = document.getElementById('card');
   await drawCard({
-    canvas, 
-    basename, 
-    allBasenames:bases, 
-    assetsBase, 
-    drawQR:false, 
+    canvas,
+    basename,
+    allBasenames: bases,
+    record: byBase.get(basename) || null,
+    assetsBase,
+    drawQR:false,
     drawBorders:false
   });
-  
+
   // 구글 폼 버튼 이벤트 (나중에 prefill URL 연결 예정)
   document.getElementById('formBtn').addEventListener('click', ()=>{
     // TODO: 구글 폼 URL + prefill 파라미터
