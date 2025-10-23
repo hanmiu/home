@@ -3,50 +3,60 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Creatures Card</title>
+<title>신기한 생물 행정복지센터</title>
 <style>
-  body{margin:0;background:#f2f2f2;font-family:"Noto Sans KR",system-ui,sans-serif}
+  :root { --accent:#4a90e2; }
+  * { box-sizing: border-box; }
+  body{margin:0;background:#f2f2f2;font-family:"Noto Sans KR",system-ui,sans-serif;color:#0f172a}
   .wrap{max-width:560px;margin:0 auto;padding:16px}
+  h1{margin:4px 4px 12px;font-size:22px;line-height:1.2;font-weight:900}
   canvas{width:100%;height:auto;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.12);border-radius:12px}
+
+  /* 패널 및 입력 UI */
   .panel{background:#fff;margin-top:16px;padding:16px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
-  .title{font-weight:800;font-size:20px;margin:0 0 6px}
-  .meta{color:#475569;font-size:14px;margin-bottom:10px}
-  .logos{display:flex;gap:8px;align-items:center;margin:8px 0 6px}
-  .logos img{height:24px}
-  .desc{white-space:pre-wrap;line-height:1.5;color:#0f172a;margin:8px 0 0}
+  .panel label{ display:block; margin-bottom:6px; }
+  textarea.desc-input{
+    width:100%; max-width:100%;
+    height:60px; min-height:60px; resize:vertical;
+    padding:12px 14px; border:1px solid #e2e8f0; border-radius:10px;
+    font:inherit; background:#fff; color:#0f172a;
+  }
+  .hint{color:#64748b;font-size:12px;margin-top:6px}
   .form-section{margin-top:14px;border-top:1px solid #eef2f7;padding-top:12px}
   .row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0 4px}
-  label{font-weight:700}
   .slider-wrap{padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
   input[type="range"]{width:100%}
   .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px}
+
+  /* 제출 버튼: 반/연령 색상 적용 */
   .btn-wrap{margin-top:16px;text-align:center}
-  .form-btn{display:inline-block;padding:14px 22px;background:#4a90e2;color:#fff;text-decoration:none;border-radius:10px;font-weight:800;font-size:16px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(74,144,226,.30);transition:all .25s}
-  .form-btn:hover{background:#357abd;box-shadow:0 6px 16px rgba(74,144,226,.40);transform:translateY(-2px)}
+  .form-btn{
+    display:inline-block;padding:14px 22px;background:var(--accent);color:#fff;text-decoration:none;
+    border-radius:10px;font-weight:800;font-size:16px;border:none;cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+    transition:transform .25s, box-shadow .25s, filter .25s
+  }
+  .form-btn:hover{filter:brightness(0.93);transform:translateY(-2px)}
   .form-btn:active{transform:translateY(0)}
   .err{color:#c00;padding:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <h1>신기한 생물 행정복지센터</h1>
   <canvas id="card"></canvas>
 
-  <!-- 정보 + desc + 슬라이더 + 버튼 -->
+  <!-- desc 입력 + 슬라이더 + 제출 버튼 -->
   <section class="panel" id="infoPanel" hidden>
-    <h2 class="title" id="titleTxt"></h2>
-    <div class="meta"><span id="authorTxt"></span> · <span id="klassTxt"></span></div>
-
-    <div class="logos">
-      <!-- 한미유치원 로고는 캔버스(Path2D)로 표시됩니다 -->
-      <img id="creatureLogo" alt="신기한 생물 사전 로고" />
-      <span style="font-size:12px;color:#64748b">로고 아래 소개</span>
+    <div>
+      <label for="descInput">신기한 생물 소개를 적어주세요.</label>
+      <textarea id="descInput" class="desc-input" placeholder=""></textarea>
+      <div class="hint">앞으로 등록한 소개가 나타나게 됩니다. 재등록하는 것도 가능합니다. 아래 속성도 조정해 주세요. 속성은 정규화 됩니다. 모두 9로 입력하면 실제 값은 각각 3이 됩니다. 총합 12로 재분배됩니다.</div>
     </div>
-
-    <p class="desc" id="descTxt"></p>
 
     <div class="form-section">
       <div class="row">
-        <label for="curiosity">호기심 (1–9)</label>
+        <label for="curiosity">호기심</label>
         <output id="curiosityOut" for="curiosity">5</output>
       </div>
       <div class="slider-wrap">
@@ -55,7 +65,7 @@
       </div>
 
       <div class="row">
-        <label for="kindness">상냥함 (1–9)</label>
+        <label for="kindness">상냥함</label>
         <output id="kindnessOut" for="kindness">5</output>
       </div>
       <div class="slider-wrap">
@@ -64,7 +74,7 @@
       </div>
 
       <div class="row">
-        <label for="bravery">용감함 (1–9)</label>
+        <label for="bravery">용감함</label>
         <output id="braveryOut" for="bravery">5</output>
       </div>
       <div class="slider-wrap">
@@ -73,7 +83,7 @@
       </div>
 
       <div class="row">
-        <label for="imagination">상상력 (1–9)</label>
+        <label for="imagination">상상력</label>
         <output id="imaginationOut" for="imagination">5</output>
       </div>
       <div class="slider-wrap">
@@ -82,20 +92,16 @@
       </div>
 
       <div class="btn-wrap">
+        <div class="hint" style="margin-bottom: 5px">아래 버튼을 누르고 채워진 내용대로 양식을 보내주세요.</div>
         <button class="form-btn" id="prefillBtn">신기한 생물 등록/갱신</button>
       </div>
     </div>
   </section>
 
-  <div class="btn-wrap">
-    <!-- 기존 버튼은 유지/대체 가능 -->
-    <button class="form-btn" id="formBtn">설문 참여하기(테스트)</button>
-  </div>
-
   <div id="msg" class="err" hidden></div>
 </div>
 
-<!-- 공통 티크 -->
+<!-- 슬라이더 공통 티크 -->
 <datalist id="tick-1-9">
   <option value="1"></option><option value="2"></option><option value="3"></option>
   <option value="4"></option><option value="5"></option><option value="6"></option>
@@ -103,17 +109,17 @@
 </datalist>
 
 <script type="module">
-import { CONFIG, parseTSVRecords, fromShortCode, drawCard, splitBase } from './layout.js';
+import { CONFIG, parseTSVRecords, fromShortCode, drawCard, colorForAge, hexToRgb } from './layout.js';
 
-/** === (1) 구글폼 프리필 설정 === */
+/** === 구글폼 프리필 설정 === */
 const FORM_BASE = 'https://docs.google.com/forms/d/e/1FAIpQLScAtvL_ye7DZL5U5tSbSFJ_biHYMof6B8KF8ryoKEz-7a9iVw/viewform?usp=pp_url';
 const ENTRY = {
-  A: 'entry.1494415517',             // 짧은 한글 ← TSV file (예: 김제나_제나와친구.png)
-  B: 'entry.460445458',              // 긴 한글 ← TSV desc
-  curiosity: 'entry.1118185306',     // 1~9
-  kindness: 'entry.1024942876',      // 1~9
-  bravery: 'entry.673342022',        // 1~9
-  imagination: 'entry.250048401'     // 1~9
+  A: 'entry.1494415517',             // 짧은 한글 ← TSV file (확장자 포함)
+  B: 'entry.460445458',              // 긴 한글 ← textarea 값(없으면 placeholder=기존 desc)
+  curiosity: 'entry.1118185306',
+  kindness: 'entry.1024942876',
+  bravery: 'entry.673342022',
+  imagination: 'entry.250048401'
 };
 function buildPrefillURL(values) {
   const qs = new URLSearchParams();
@@ -125,25 +131,19 @@ function buildPrefillURL(values) {
   return FORM_BASE + '&' + qs.toString();
 }
 
-/** === (2) 쿼리/경로 파라미터 === */
+/** === 파라미터 === */
 const params = new URLSearchParams(location.search);
 const code = params.get('code');
 const dataUrl = params.get('data') || CONFIG.TSV_URL;
 const assetsBase = params.get('assets') || CONFIG.ASSETS_BASE;
 
+/** === UI 참조 === */
 const msg = document.getElementById('msg');
-function fail(e){ msg.hidden=false; msg.textContent = e instanceof Error? e.message : e; throw e; }
-if(!code) fail('code 파라미터가 필요합니다.');
-
-/** === (3) UI 참조 === */
 const infoPanel = document.getElementById('infoPanel');
-const titleTxt = document.getElementById('titleTxt');
-const authorTxt = document.getElementById('authorTxt');
-const klassTxt = document.getElementById('klassTxt');
-const descTxt = document.getElementById('descTxt');
+const descInput = document.getElementById('descInput');
 const prefillBtn = document.getElementById('prefillBtn');
-const testBtn = document.getElementById('formBtn');
-const creatureLogo = document.getElementById('creatureLogo');
+
+function fail(e){ msg.hidden=false; msg.textContent = e instanceof Error? e.message : e; throw e; }
 
 const sliders = [
   ['curiosity','curiosityOut'],
@@ -159,72 +159,66 @@ sliders.forEach(([id,outId])=>{
   sync();
 });
 
-/** === (4) 데이터 로드 & 렌더 === */
+if(!code) fail('code 파라미터가 필요합니다.');
+
 try{
-  // TSV 로드 → records/byBase
+  // TSV 로드
   const tsv = await (await fetch(dataUrl, {cache:'reload'})).text();
   const { bases, byBase } = parseTSVRecords(tsv);
 
-  // shortCode로부터 basename 복원
+  // code → basename
   const basename = await fromShortCode(code, bases);
   if(!basename) fail('유효하지 않은 코드입니다.');
 
-  // 캔버스(이미지+Path2D 로고/텍스트/배지) 렌더
+  // 캔버스 렌더 (보더/QR 제외)
   const canvas = document.getElementById('card');
+  const record = byBase.get(basename) || null;
   await drawCard({
     canvas,
     basename,
     allBasenames: bases,
-    record: byBase.get(basename) || null,
+    record,
     assetsBase,
     drawQR:false,
     drawBorders:false
   });
 
-  // DOM 정보 패널 채우기
-  const record = byBase.get(basename) || {};
-  const [author, title] = splitBase(basename);
+  // desc 입력창: placeholder에 기존 desc 세팅 (값은 비워둠)
+  const descFromData = record?.desc || '';
+  // descInput.placeholder = descFromData;
+  descInput.value = ''; // 미입력 시 placeholder 사용
 
-  titleTxt.textContent = title || basename;
-  authorTxt.textContent = author || '';
-  klassTxt.textContent = record.klass || '';
-  descTxt.textContent = record.desc || '';
-  creatureLogo.src = CONFIG.CREATURES_SVG_URL;
-  creatureLogo.decoding = 'async';
-  creatureLogo.loading = 'lazy';
+  // 버튼 컬러를 반/연령 색으로 동적 적용
+  const ageColor = colorForAge(record?.age);
+  document.documentElement.style.setProperty('--accent', ageColor);
+  prefillBtn.style.background = ageColor;
+  prefillBtn.style.color = '#fff';
+  try{
+    const {r,g,b} = hexToRgb(ageColor);
+    prefillBtn.style.boxShadow = `0 4px 12px rgba(${r},${g},${b},.30)`;
+  }catch{}
 
-  infoPanel.hidden = false;
-
-  /** === (5) 프리필 버튼 동작 ===
-   * A ← TSV file (확장자 포함)
-   * B ← TSV desc
-   * 4개 슬라이더 값
-   */
+  // 제출: 프리필 URL 열기
+  const fileForA = (record?.file) || (basename + '.png');
   function readSlider(id){ return document.getElementById(id).value; }
-
   function buildCurrentPrefillURL(){
+    const descToUse = (descInput.value && descInput.value.trim()) ? descInput.value : descFromData;
     return buildPrefillURL({
-      A: record.file || basename + '.png',
-      B: record.desc || '',
+      A: fileForA,
+      B: descToUse,
       curiosity: readSlider('curiosity'),
       kindness:  readSlider('kindness'),
       bravery:   readSlider('bravery'),
       imagination: readSlider('imagination'),
     });
   }
-
   prefillBtn.addEventListener('click', ()=>{
     const url = buildCurrentPrefillURL();
     window.open(url, '_blank', 'noopener');
   });
 
-  // (선택) 기존 테스트 버튼도 동일 프리필로 연결
-  testBtn.addEventListener('click', ()=>{
-    const url = buildCurrentPrefillURL();
-    window.open(url, '_blank', 'noopener');
-  });
-
-} catch(e){ fail(e); }
+  infoPanel.hidden = false;
+}catch(e){ fail(e); }
 </script>
 </body>
 </html>
