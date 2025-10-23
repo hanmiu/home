@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChirpChord (삐약화음)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #fff; overflow: hidden; }
+
+    #header { position: fixed; top: 0; left: 0; right: 0; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(10px); padding: 12px 20px; z-index: 100; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; background: rgba(255, 255, 255, 0.1); color: #fff; }
+    .btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn.primary { background: #e74c3c; }
+    .btn.primary:hover { background: #c0392b; }
+    .btn.primary.recording { animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+    .btn.play { background: #27ae60; }
+    .btn.play:hover { background: #229954; }
+    .btn.play.playing { background: #f39c12; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #timer { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 60px; }
+    #timer.warning { color: #f39c12; }
+    #timer.danger { color: #e74c3c; }
+
+    label { display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: 0.9; }
+    select { padding: 6px 10px; border-radius: 4px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; font-size: 13px; }
+
+    .toggle { cursor: pointer; user-select: none; font-size: 20px; }
+    #debugToggle { margin-left: auto; opacity: 0.6; font-size: 13px; }
+
+    #timeline { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; overflow-x: auto; overflow-y: hidden; background: #0a0a0a; }
+    #timelineContainer { position: relative; height: 100%; min-width: 100%; }
+    #grid { position: absolute; top: 0; left: 0; pointer-events: none; }
+    #notes { position: absolute; top: 0; left: 0; }
+
+    .grid-line { stroke: rgba(255, 255, 255, 0.1); stroke-width: 1; }
+    .grid-line.major { stroke: rgba(255, 255, 255, 0.2); stroke-width: 2; }
+    .grid-label { fill: rgba(255, 255, 255, 0.4); font-size: 11px; font-family: monospace; }
+
+    #playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: #3498db; pointer-events: none; z-index: 50; display: none; }
+    #playhead.active { display: block; box-shadow: 0 0 10px rgba(52, 152, 219, 0.8); }
+
+    #debug { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); padding: 12px 20px; max-height: 150px; overflow-y: auto; border-top: 1px solid rgba(255, 255, 255, 0.1); display: block; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; }
+    #debug.visible { display: block; }
+    #debug.hidden { display: none; }
+    #debugContent { white-space: pre-wrap; opacity: 0.8; }
+
+    .note-visual { animation: noteAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center; }
+    @keyframes noteAppear { 0% { transform: scale(0) rotate(0deg); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1) rotate(var(--rotate)); opacity: var(--opacity); } }
+    .note-visual.replay { animation: noteReplay 0.3s ease-out; }
+    @keyframes noteReplay { 0% { transform: scale(var(--scale)) rotate(var(--rotate)); filter: brightness(2) drop-shadow(0 0 10px currentColor); } 100% { transform: scale(var(--scale)) rotate(var(--rotate)); filter: brightness(1) drop-shadow(0 0 0px currentColor); } }
+
+    .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <button id="recordBtn" class="btn primary" disabled>⏺ 녹음</button>
+    <button id="playBtn" class="btn play" disabled>▶ 재생</button>
+    <button id="stopBtn" class="btn" disabled>⏹ 정지</button>
+    <div id="timer">0:00</div>
+
+    <label>
+      MIDI
+      <select id="midiInput">
+        <option value="">장치 선택...</option>
+      </select>
+    </label>
+
+    <label class="toggle">
+      <input type="checkbox" id="toneToggle" checked>
+      <span id="toneIcon">🔊</span>
+    </label>
+
+    <button id="saveBtn" class="btn" disabled>💾 저장</button>
+    <button id="loadBtn" class="btn">📂 불러오기</button>
+    <input type="file" id="fileInput" accept=".svg" style="display: none;">
+
+    <button id="clearBtn" class="btn" disabled>🗑️ 지우기</button>
+
+    <button id="debugToggle" class="btn">🐛 디버그</button>
+  </div>
+
+  <div id="timeline">
+    <div id="timelineContainer">
+      <svg id="grid"></svg>
+      <svg id="notes"></svg>
+      <div id="playhead"></div>
+    </div>
+  </div>
+
+  <div id="debug">
+    <div id="debugContent">디버그 모드 활성화</div>
+  </div>
+
+  <div class="loading" id="loading">MIDI 초기화 중...</div>
+
+  <!-- Tone.js -->
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+
+  <script type="module">
+    import { WebMidi } from "https://cdn.jsdelivr.net/npm/webmidi@3/dist/esm/webmidi.esm.min.js";
+
+    // ===== 전역 상태 =====
+    const state = {
+      transport: 'idle', // idle, recording, playing
+      midiInput: null,
+      midiOutput: null,
+
+      // 녹음
+      recordStartTime: 0,
+      maxDuration: 180, // 3분 = 180초
+      recordedNotes: [], // { time, midiNote, velocity, duration?, layer }
+
+      // 재생
+      playStartTime: 0,
+      playScheduledNotes: [],
+
+      // 타이머
+      timerInterval: null,
+
+      // Tone.js
+      toneEnabled: true,
+      sampler: null,
+
+      // 설정
+      pixelsPerSecond: 100,
+      gridSeconds: 1,
+      timelineWidth: 0,
+
+      // 디버그
+      debugLog: [],
+
+      // === PC 키보드 입력 상태 ===
+      pc: {
+        octave: 4, // 기본 C4
+        velocity: 100,
+        pressed: new Set(),
+        // monitor: false // 요청사항: "녹음할 때만" 반응하므로 모니터 기능은 비활성
+      }
+    };
+
+    // ===== DOM 요소 =====
+    const recordBtn = document.getElementById('recordBtn');
+    const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const timer = document.getElementById('timer');
+    const midiInput = document.getElementById('midiInput');
+    const toneToggle = document.getElementById('toneToggle');
+    const toneIcon = document.getElementById('toneIcon');
+    const saveBtn = document.getElementById('saveBtn');
+    const loadBtn = document.getElementById('loadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const clearBtn = document.getElementById('clearBtn');
+    const debugToggle = document.getElementById('debugToggle');
+    const debug = document.getElementById('debug');
+    const debugContent = document.getElementById('debugContent');
+    const loading = document.getElementById('loading');
+    const timeline = document.getElementById('timeline');
+    const timelineContainer = document.getElementById('timelineContainer');
+    const gridSvg = document.getElementById('grid');
+    const notesSvg = document.getElementById('notes');
+    const playhead = document.getElementById('playhead');
+
+    // ===== 유틸리티 =====
+    function log(...args) {
+      console.log('[MIDI Visual]', ...args);
+      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+      state.debugLog.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+      if (state.debugLog.length > 100) state.debugLog.shift();
+      if (!debug.classList.contains('hidden')) {
+        debugContent.textContent = state.debugLog.join('\n');
+        debugContent.scrollTop = debugContent.scrollHeight;
+      }
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // === Pitch → Y 매핑 ===
+    function getYByPitch(midi){
+      const H = timeline.clientHeight; // 전체 높이
+      const M = 40;                    // 상하 여백
+      const lo = 36;                   // C2
+      const hi = 84;                   // C6
+      const t = Math.min(1, Math.max(0, (midi - lo) / (hi - lo)));
+      return H - (M + t * (H - 2 * M));
+    }
+
+    // ===== 33가지 비주얼 패턴 (25 건반 + 8 패드) =====
+    const visualPatterns = [
+      // 건반 0-24 (MIDI 36-60, C1-C3)
+      { type: 'circle', color: '#e74c3c', radius: 30 },
+      { type: 'square', color: '#e67e22', size: 50 },
+      { type: 'star', color: '#f39c12', points: 5, radius: 35 },
+      { type: 'hexagon', color: '#f1c40f', radius: 30 },
+      { type: 'triangle', color: '#2ecc71', size: 50 },
+      { type: 'circle', color: '#16a085', radius: 35 },
+      { type: 'square', color: '#3498db', size: 45 },
+      { type: 'star', color: '#2980b9', points: 6, radius: 30 },
+      { type: 'hexagon', color: '#9b59b6', radius: 35 },
+      { type: 'triangle', color: '#8e44ad', size: 55 },
+      { type: 'circle', color: '#e91e63', radius: 32 },
+      { type: 'square', color: '#ff5722', size: 48 },
+      { type: 'star', color: '#ff9800', points: 8, radius: 28 },
+      { type: 'hexagon', color: '#ffc107', radius: 32 },
+      { type: 'triangle', color: '#cddc39', size: 52 },
+      { type: 'circle', color: '#8bc34a', radius: 34 },
+      { type: 'square', color: '#4caf50', size: 46 },
+      { type: 'star', color: '#009688', points: 5, radius: 36 },
+      { type: 'hexagon', color: '#00bcd4', radius: 33 },
+      { type: 'triangle', color: '#03a9f4', size: 49 },
+      { type: 'circle', color: '#2196f3', radius: 31 },
+      { type: 'square', color: '#3f51b5', size: 51 },
+      { type: 'star', color: '#673ab7', points: 7, radius: 34 },
+      { type: 'hexagon', color: '#9c27b0', radius: 36 },
+      { type: 'triangle', color: '#e91e63', size: 47 },
+      // 드럼 패드 0-7 (MIDI 강렬한 효과)
+      { type: 'burst', color: '#ff0000', rays: 12, radius: 50 },
+      { type: 'ring', color: '#ff00ff', radius: 45, thickness: 8 },
+      { type: 'polygon', color: '#00ffff', sides: 8, radius: 40 },
+      { type: 'burst', color: '#ffff00', rays: 16, radius: 55 },
+      { type: 'ring', color: '#ff6600', radius: 50, thickness: 10 },
+      { type: 'polygon', color: '#00ff00', sides: 6, radius: 45 },
+      { type: 'burst', color: '#0099ff', rays: 20, radius: 48 },
+      { type: 'ring', color: '#ff0099', radius: 42, thickness: 6 }
+    ];
+
+    function getVisualPattern(midiNote, isDrumPad = false) {
+      log(`getVisualPattern: note=${midiNote}, isDrumPad=${isDrumPad}`);
+      if (isDrumPad) {
+        const padIndex = (midiNote % 8);
+        const pattern = visualPatterns[25 + padIndex];
+        log(`Drum pad pattern: index=${25 + padIndex}, type=${pattern?.type}`);
+        return pattern;
+      } else {
+        const keyIndex = midiNote % 25; // 25개 건반에 순환 매핑
+        const pattern = visualPatterns[keyIndex];
+        log(`Keyboard pattern: note=${midiNote}, index=${keyIndex}, type=${pattern?.type}`);
+        return pattern;
+      }
+    }
+
+    function createSVGElement(pattern, x, y, velocity, isReplay = false) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.classList.add('note-visual');
+      if (isReplay) g.classList.add('replay');
+
+      // velocity 영향 (0.7 - 1.3 범위)
+      const velScale = 0.7 + (velocity / 127) * 0.6;
+      const baseOpacity = 0.6 + (velocity / 127) * 0.3;
+
+      // 무작위 요소 (지터 축소)
+      const randomRotate = (Math.random() - 0.5) * 60;
+      const randomHue = (Math.random() - 0.5) * 40;
+      const randomY = (Math.random() - 0.5) * 16; // 기존 40 → 16으로 축소
+
+      g.style.setProperty('--rotate', `${randomRotate}deg`);
+      g.style.setProperty('--opacity', baseOpacity);
+      g.style.setProperty('--scale', velScale);
+
+      let element;
+      const actualY = y + randomY;
+
+      switch (pattern.type) {
+        case 'circle': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          element.setAttribute('cx', x);
+          element.setAttribute('cy', actualY);
+          element.setAttribute('r', pattern.radius * velScale);
+          break; }
+        case 'square': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          const size = pattern.size * velScale;
+          element.setAttribute('x', x - size/2);
+          element.setAttribute('y', actualY - size/2);
+          element.setAttribute('width', size);
+          element.setAttribute('height', size);
+          break; }
+        case 'star': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          element.setAttribute('d', createStarPath(x, actualY, pattern.points, pattern.radius * velScale));
+          break; }
+        case 'hexagon': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          element.setAttribute('d', createPolygonPath(x, actualY, 6, pattern.radius * velScale));
+          break; }
+        case 'triangle': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          element.setAttribute('d', createPolygonPath(x, actualY, 3, pattern.size * velScale / 2));
+          break; }
+        case 'burst': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          for (let i = 0; i < pattern.rays; i++) {
+            const angle = (i / pattern.rays) * Math.PI * 2;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x);
+            line.setAttribute('y1', actualY);
+            line.setAttribute('x2', x + Math.cos(angle) * pattern.radius * velScale);
+            line.setAttribute('y2', actualY + Math.sin(angle) * pattern.radius * velScale);
+            line.setAttribute('stroke-width', 3);
+            element.appendChild(line);
+          }
+          break; }
+        case 'ring': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          element.setAttribute('cx', x);
+          element.setAttribute('cy', actualY);
+          element.setAttribute('r', pattern.radius * velScale);
+          element.setAttribute('fill', 'none');
+          element.setAttribute('stroke-width', pattern.thickness);
+          break; }
+        case 'polygon': {
+          element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          element.setAttribute('d', createPolygonPath(x, actualY, pattern.sides, pattern.radius * velScale));
+          break; }
+      }
+
+      const color = pattern.color;
+      element.setAttribute('fill', pattern.type === 'ring' ? 'none' : color);
+      element.setAttribute('stroke', color);
+      element.setAttribute('data-shape', pattern.type);
+      element.style.filter = `hue-rotate(${randomHue}deg)`;
+
+      g.appendChild(element);
+      return g;
+    }
+
+    function createStarPath(cx, cy, points, radius) {
+      const innerRadius = radius * 0.4;
+      let path = '';
+      for (let i = 0; i < points * 2; i++) {
+        const angle = (i * Math.PI) / points - Math.PI / 2;
+        const r = i % 2 === 0 ? radius : innerRadius;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+      }
+      return path + 'Z';
+    }
+
+    function createPolygonPath(cx, cy, sides, radius) {
+      let path = '';
+      for (let i = 0; i < sides; i++) {
+        const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+      }
+      return path + 'Z';
+    }
+
+    // ===== 타임라인 그리드 =====
+    function updateTimeline() {
+      const duration = state.transport === 'idle' 
+        ? Math.max(10, state.recordedNotes.length > 0 
+            ? Math.max(...state.recordedNotes.map(n => n.time)) + 5 
+            : 10)
+        : state.maxDuration;
+
+      state.timelineWidth = duration * state.pixelsPerSecond;
+      timelineContainer.style.width = state.timelineWidth + 'px';
+
+      const height = timeline.clientHeight;
+      gridSvg.setAttribute('width', state.timelineWidth);
+      gridSvg.setAttribute('height', height);
+      notesSvg.setAttribute('width', state.timelineWidth);
+      notesSvg.setAttribute('height', height);
+
+      // 그리드 그리기
+      gridSvg.innerHTML = '';
+      for (let sec = 0; sec <= duration; sec += state.gridSeconds) {
+        const x = sec * state.pixelsPerSecond;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', 0);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', height);
+        line.classList.add('grid-line');
+        if (sec % 5 === 0) line.classList.add('major');
+        gridSvg.appendChild(line);
+
+        if (sec % 5 === 0) {
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', x + 4);
+          text.setAttribute('y', 20);
+          text.classList.add('grid-label');
+          text.textContent = `${sec}s`;
+          gridSvg.appendChild(text);
+        }
+      }
+    }
+
+    // ===== 노트 렌더링 =====
+    function renderNotes() {
+      notesSvg.innerHTML = '';
+      const height = timeline.clientHeight; // eslint-disable-line no-unused-vars
+
+      for (const note of state.recordedNotes) {
+        const x = note.time * state.pixelsPerSecond;
+        const y = getYByPitch(note.midiNote);
+        const pattern = getVisualPattern(note.midiNote, note.layer === 'drumpad');
+        const element = createSVGElement(pattern, x, y, note.velocity);
+
+        element.setAttribute('data-midi', note.midiNote);
+        element.setAttribute('data-time', note.time);
+        element.setAttribute('data-velocity', note.velocity);
+        element.setAttribute('data-layer', note.layer);
+        element.classList.add('note');
+
+        notesSvg.appendChild(element);
+      }
+    }
+
+    // ===== MIDI 입력 처리 =====
+    function handleNoteOn(note) {
+      log(`MIDI Note Object:`, note);
+      log(`Note properties: number=${note.number}, identifier=${note.identifier}, attack=${note.attack}, rawAttack=${note.rawAttack}`);
+
+      if (state.transport !== 'recording') return;
+
+      const currentTime = (performance.now() - state.recordStartTime) / 1000;
+      if (currentTime > state.maxDuration) {
+        stopRecording();
+        return;
+      }
+
+      const midiNote = note.number || note.identifier || note.rawValue || 60;
+      const velocity = Math.round((note.attack || note.rawAttack || 0.5) * 127);
+
+      log(`Parsed: midiNote=${midiNote}, velocity=${velocity}`);
+
+      const isDrumPad = midiNote >= 36 && midiNote <= 43;
+      const layer = isDrumPad ? 'drumpad' : 'keyboard';
+
+      const noteData = { time: currentTime, midiNote, velocity, layer };
+      state.recordedNotes.push(noteData);
+      log(`Recorded: midiNote=${midiNote} vel:${velocity} layer:${layer}`);
+
+      // 실시간 시각화
+      const x = currentTime * state.pixelsPerSecond;
+      const y = getYByPitch(midiNote);
+      const pattern = getVisualPattern(midiNote, isDrumPad);
+
+      if (!pattern) { log(`ERROR: No pattern found for note ${midiNote}`); return; }
+
+      const element = createSVGElement(pattern, x, y, velocity);
+      element.setAttribute('data-midi', noteData.midiNote);
+      element.setAttribute('data-time', noteData.time);
+      element.setAttribute('data-velocity', noteData.velocity);
+      element.setAttribute('data-layer', noteData.layer);
+      element.classList.add('note');
+      notesSvg.appendChild(element);
+
+      // 자동 스크롤
+      timeline.scrollLeft = Math.max(0, x - timeline.clientWidth / 2);
+
+      // Tone.js 재생
+      if (state.toneEnabled && state.sampler) {
+        const octave = Math.floor(midiNote / 12) - 1;
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const noteName = noteNames[midiNote % 12] + octave;
+        state.sampler.triggerAttackRelease(noteName, '8n', undefined, velocity / 127);
+      }
+    }
+
+    function handleControlChange(e) { log(`CC ${e.controller.number}: ${e.rawValue} (${e.value.toFixed(2)})`); }
+
+    // ======= PC 키보드 매핑 =======
+    const PC_PIANO = {
+      KeyA:60, KeyW:61, KeyS:62, KeyE:63, KeyD:64, KeyF:65, KeyT:66, KeyG:67,
+      KeyY:68, KeyH:69, KeyU:70, KeyJ:71, KeyK:72, KeyO:73, KeyL:74, KeyP:75,
+      Semicolon:76, Quote:77
+    };
+    const PC_DRUMS = { Digit1:36, Digit2:37, Digit3:38, Digit4:39, Digit5:40, Digit6:41, Digit7:42, Digit8:43 };
+
+    function isTypingTarget(el){ return ['INPUT','SELECT','TEXTAREA'].includes(el.tagName); }
+
+    window.addEventListener('keydown', (e) => {
+      if (isTypingTarget(e.target)) return;
+      if (e.repeat) return;
+
+      // 컨트롤 키 (옥타브/벨로시티)
+      if (e.code === 'KeyZ') { state.pc.octave = Math.max(1, state.pc.octave - 1); log('PC Octave ↓', state.pc.octave); e.preventDefault(); return; }
+      if (e.code === 'KeyX') { state.pc.octave = Math.min(7, state.pc.octave + 1); log('PC Octave ↑', state.pc.octave); e.preventDefault(); return; }
+      if (e.code === 'Minus') { state.pc.velocity = Math.max(1, state.pc.velocity - 8); log('PC Velocity', state.pc.velocity); e.preventDefault(); return; }
+      if (e.code === 'Equal') { state.pc.velocity = Math.min(127, state.pc.velocity + 8); log('PC Velocity', state.pc.velocity); e.preventDefault(); return; }
+
+      let midi = null;
+      if (PC_PIANO[e.code] != null) midi = PC_PIANO[e.code] + (state.pc.octave - 4) * 12;
+      else if (PC_DRUMS[e.code] != null) midi = PC_DRUMS[e.code];
+
+      if (midi == null) return;
+
+      // 요청사항: 녹음 중에만 PC 키보드 입력 반응
+      if (state.transport !== 'recording') return;
+
+      const vel = e.shiftKey ? 120 : (e.altKey ? 80 : state.pc.velocity);
+      state.pc.pressed.add(e.code);
+
+      // WebMIDI note 객체 형태로 흉내
+      handleNoteOn({ number: midi, identifier: midi, attack: vel/127, rawAttack: vel/127 });
+      e.preventDefault();
+    });
+
+    window.addEventListener('keyup', (e) => { state.pc.pressed.delete(e.code); });
+
+    // ===== 녹음 =====
+    async function startRecording() {
+      if (state.transport !== 'idle') return;
+
+      state.transport = 'recording';
+      state.recordStartTime = performance.now();
+      state.recordedNotes = [];
+      notesSvg.innerHTML = '';
+
+      recordBtn.textContent = '⏹ 녹음 중지';
+      recordBtn.classList.add('recording');
+      playBtn.disabled = true;
+      saveBtn.disabled = true;
+      clearBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      updateTimeline();
+
+      state.timerInterval = setInterval(() => {
+        const elapsed = (performance.now() - state.recordStartTime) / 1000;
+        const remaining = state.maxDuration - elapsed;
+        timer.textContent = formatTime(remaining);
+
+        if (remaining <= 30) timer.classList.add('warning');
+        if (remaining <= 10) { timer.classList.remove('warning'); timer.classList.add('danger'); }
+        if (remaining <= 0) { stopRecording(); }
+      }, 100);
+
+      log('녹음 시작');
+    }
+
+    function stopRecording() {
+      if (state.transport !== 'recording') return;
+
+      state.transport = 'idle';
+      clearInterval(state.timerInterval);
+
+      recordBtn.textContent = '⏺ 녹음';
+      recordBtn.classList.remove('recording');
+      playBtn.disabled = state.recordedNotes.length === 0;
+      saveBtn.disabled = state.recordedNotes.length === 0;
+      clearBtn.disabled = state.recordedNotes.length === 0;
+      stopBtn.disabled = true;
+      timer.textContent = '0:00';
+      timer.classList.remove('warning', 'danger');
+
+      updateTimeline();
+      renderNotes();
+
+      log(`녹음 완료: ${state.recordedNotes.length} 노트`);
+    }
+
+    // ===== 재생 =====
+    async function startPlayback() {
+      if (state.transport !== 'idle' || state.recordedNotes.length === 0) return;
+
+      state.transport = 'playing';
+      state.playStartTime = performance.now();
+
+      playBtn.textContent = '⏸ 일시정지';
+      playBtn.classList.add('playing');
+      recordBtn.disabled = true;
+      saveBtn.disabled = true;
+      clearBtn.disabled = true;
+      stopBtn.disabled = false;
+      playhead.classList.add('active');
+
+      const sortedNotes = [...state.recordedNotes].sort((a, b) => a.time - b.time);
+
+      for (const note of sortedNotes) {
+        const delay = note.time * 1000;
+        const timeoutId = setTimeout(() => {
+          if (state.transport !== 'playing') return;
+
+          const elements = notesSvg.querySelectorAll(`[data-time="${note.time}"]`);
+          elements.forEach(el => { el.classList.add('replay'); setTimeout(() => el.classList.remove('replay'), 300); });
+
+          if (state.toneEnabled && state.sampler) {
+            const midiNote = note.midiNote;
+            const octave = Math.floor(midiNote / 12) - 1;
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const noteName = noteNames[midiNote % 12] + octave;
+            state.sampler.triggerAttackRelease(noteName, '8n', undefined, note.velocity / 127);
+          }
+
+          if (state.midiOutput) {
+            try {
+              state.midiOutput.playNote(note.midiNote, 'all', { attack: note.velocity / 127, duration: 200 });
+              log(`MIDI Out: ${note.midiNote} vel:${note.velocity}`);
+            } catch (e) { log(`MIDI Out 실패: ${e.message}`); }
+          }
+        }, delay);
+        state.playScheduledNotes.push(timeoutId);
+      }
+
+      function animatePlayhead() {
+        if (state.transport !== 'playing') return;
+        const elapsed = (performance.now() - state.playStartTime) / 1000;
+        const x = elapsed * state.pixelsPerSecond;
+        playhead.style.left = x + 'px';
+        timeline.scrollLeft = Math.max(0, x - timeline.clientWidth / 2);
+        if (elapsed < Math.max(...sortedNotes.map(n => n.time)) + 1) {
+          requestAnimationFrame(animatePlayhead);
+        } else { stopPlayback(); }
+      }
+      requestAnimationFrame(animatePlayhead);
+      log('재생 시작');
+    }
+
+    function stopPlayback() {
+      if (state.transport !== 'playing') return;
+      state.transport = 'idle';
+      state.playScheduledNotes.forEach(id => clearTimeout(id));
+      state.playScheduledNotes = [];
+      playBtn.textContent = '▶ 재생';
+      playBtn.classList.remove('playing');
+      recordBtn.disabled = false;
+      saveBtn.disabled = false;
+      clearBtn.disabled = false;
+      stopBtn.disabled = true;
+      playhead.classList.remove('active');
+      log('재생 중지');
+    }
+
+    // ===== 저장/불러오기 =====
+    function saveToSVG() {
+      const svgData = notesSvg.cloneNode(true);
+      svgData.setAttribute('data-bpm', '120');
+      svgData.setAttribute('data-duration', Math.max(0, ...state.recordedNotes.map(n => n.time)));
+      svgData.setAttribute('data-pixels-per-second', state.pixelsPerSecond);
+      const svgString = new XMLSerializer().serializeToString(svgData);
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `midi-visual-${Date.now()}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      log('저장 완료');
+    }
+
+    function loadFromSVG(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(e.target.result, 'image/svg+xml');
+          const svg = doc.documentElement;
+          state.recordedNotes = [];
+          const notes = svg.querySelectorAll('.note');
+          notes.forEach(note => {
+            state.recordedNotes.push({
+              time: parseFloat(note.getAttribute('data-time')),
+              midiNote: parseInt(note.getAttribute('data-midi')),
+              velocity: parseInt(note.getAttribute('data-velocity')),
+              layer: note.getAttribute('data-layer')
+            });
+          });
+          updateTimeline();
+          renderNotes();
+          playBtn.disabled = false;
+          saveBtn.disabled = false;
+          clearBtn.disabled = false;
+          log(`불러오기 완료: ${state.recordedNotes.length} 노트`);
+        } catch (e) { log(`불러오기 실패: ${e.message}`); }
+      };
+      reader.readAsText(file);
+    }
+
+    // ===== 초기화 =====
+    async function init() {
+      try {
+        await WebMidi.enable();
+        log('WebMIDI 활성화 완료');
+
+        // MIDI 입력 장치 목록
+        WebMidi.inputs.forEach(input => {
+          const option = document.createElement('option');
+          option.value = input.id;
+          option.textContent = input.name;
+          midiInput.appendChild(option);
+        });
+
+        // 첫 번째 입력 장치 자동 선택
+        if (WebMidi.inputs.length > 0) {
+          const firstInput = WebMidi.inputs[0];
+          midiInput.value = firstInput.id;
+          state.midiInput = firstInput;
+          state.midiInput.addListener('noteon', e => handleNoteOn(e.note));
+          state.midiInput.addListener('controlchange', handleControlChange);
+          log(`MIDI Input 자동 선택: ${firstInput.name}`);
+        }
+
+        // MIDI 출력 장치 (있다면)
+        if (WebMidi.outputs.length > 0) {
+          state.midiOutput = WebMidi.outputs[0];
+          log(`MIDI Output: ${state.midiOutput.name}`);
+        }
+
+        // Tone.js Sampler 초기화
+        state.sampler = new Tone.Sampler({
+          urls: {
+            A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
+            A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3",
+            A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3",
+            A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3",
+            A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3",
+            A5: "A5.mp3", C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3",
+            A6: "A6.mp3", C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3",
+            A7: "A7.mp3", C8: "C8.mp3"
+          },
+          baseUrl: "https://tonejs.github.io/audio/salamander/"
+        }).toDestination();
+
+        log('Tone.js Sampler 로딩 중...');
+        await Tone.loaded();
+        log('Tone.js 준비 완료');
+
+        loading.style.display = 'none';
+        recordBtn.disabled = true; // WebMidi 준비 후, 톤도 불려오고 나서 활성
+        recordBtn.disabled = false;
+
+        updateTimeline();
+      } catch (e) {
+        log(`초기화 실패: ${e.message}`);
+        loading.textContent = '초기화 실패. MIDI 장치를 확인하세요.';
+      }
+    }
+
+    // ===== 이벤트 리스너 =====
+    recordBtn.addEventListener('click', () => { if (state.transport === 'recording') { stopRecording(); } else { startRecording(); } });
+    playBtn.addEventListener('click', () => { if (state.transport === 'playing') { stopPlayback(); } else { startPlayback(); } });
+    stopBtn.addEventListener('click', () => { if (state.transport === 'recording') { stopRecording(); } else if (state.transport === 'playing') { stopPlayback(); } });
+
+    midiInput.addEventListener('change', () => {
+      const inputId = midiInput.value; if (!inputId) return;
+      if (state.midiInput) { state.midiInput.removeListener(); }
+      state.midiInput = WebMidi.getInputById(inputId);
+      state.midiInput.addListener('noteon', e => handleNoteOn(e.note));
+      state.midiInput.addListener('controlchange', handleControlChange);
+      log(`MIDI Input 선택: ${state.midiInput.name}`);
+    });
+
+    toneToggle.addEventListener('change', () => { state.toneEnabled = toneToggle.checked; toneIcon.textContent = state.toneEnabled ? '🔊' : '🔇'; log(`Tone.js: ${state.toneEnabled ? 'ON' : 'OFF'}`); });
+    saveBtn.addEventListener('click', saveToSVG);
+    loadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { loadFromSVG(e.target.files[0]); } });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('모든 녹음을 지우시겠습니까?')) {
+        state.recordedNotes = [];
+        notesSvg.innerHTML = '';
+        playBtn.disabled = true;
+        saveBtn.disabled = true;
+        clearBtn.disabled = true;
+        updateTimeline();
+        log('전체 삭제');
+      }
+    });
+
+    debugToggle.addEventListener('click', () => {
+      if (debug.classList.contains('hidden')) { debug.classList.remove('hidden'); debug.classList.add('visible'); }
+      else { debug.classList.remove('visible'); debug.classList.add('hidden'); }
+      if (debug.classList.contains('visible')) { debugContent.textContent = state.debugLog.join('\n'); debugContent.scrollTop = debugContent.scrollHeight; }
+    });
+
+    // 시작
+    init();
+  </script>
+</body>
+</html>
