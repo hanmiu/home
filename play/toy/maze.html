@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Maze Game with Webcam Capture</title>
+  <style>
+    :root { 
+      --footer-h: 64px; 
+      --thumb: 64px;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+    }
+    body { 
+      display: flex; 
+      flex-direction: column; 
+      background: #F0EEE7; 
+      color: #111; 
+    }
+
+    /* Tab Navigation */
+    #tab-nav {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 0;
+      margin: 0;
+      flex-shrink: 0;
+    }
+    .tab-button {
+      flex: 1;
+      padding: 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      color: #6b7280;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-button:hover {
+      background: #f9fafb;
+      color: #111;
+    }
+    .tab-button.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    /* Tab Contents */
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow: auto;
+    }
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Play Tab */
+    #play-tab {
+      align-items: center;
+    }
+    #main { 
+      flex: 1;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      width: 100%; 
+    }
+    canvas { 
+      display: block; 
+      outline: none; 
+      touch-action: manipulation; 
+      image-rendering: auto; 
+    }
+    #footer {
+      height: var(--footer-h);
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      gap: 12px; 
+      padding: 0 12px; 
+      overflow: hidden; 
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .footer-item {
+      width: var(--thumb); 
+      height: var(--thumb); 
+      flex: 0 0 auto; 
+      border-radius: 50%;
+      position: relative; 
+      opacity: 0; 
+      transform: scale(0.85);
+      transition: opacity .5s ease, transform .5s ease;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      background: transparent;
+    }
+    .footer-item.pop-in { opacity: 1; transform: scale(1); }
+    .footer-item.fade-out { opacity: 0; transform: scale(0.95); }
+    .footer-item img.thumb { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .footer-item img.thumb.flip { transform: scaleX(-1); }
+
+    /* Capture Tab */
+    #capture-tab {
+      padding: 20px;
+      align-items: center;
+      gap: 20px;
+    }
+    #webcam-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    #webcam-video {
+      max-width: 640px;
+      max-height: 480px;
+      border: 3px solid var(--border);
+      border-radius: 8px;
+      background: black;
+    }
+    #webcam-canvas {
+      display: none;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 200px;
+    }
+    .control-group label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background: var(--primary);
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: var(--primary-hover);
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    button.secondary {
+      background: #6b7280;
+    }
+    button.secondary:hover {
+      background: #4b5563;
+    }
+
+    /* Edit Tab */
+    #edit-tab {
+      padding: 20px;
+      align-items: center;
+      gap: 20px;
+      overflow: auto;
+    }
+    #grid-editor-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      max-width: 100%;
+    }
+    #grid-canvas {
+      border: 2px solid #333;
+      cursor: crosshair;
+      background: white;
+    }
+    .tool-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tool-btn {
+      padding: 8px 16px;
+      border: 2px solid var(--border);
+      background: white;
+      color: #374151;
+    }
+    .tool-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .size-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .size-preset-btn {
+      padding: 12px 24px;
+      border: 2px solid var(--border);
+      background: white;
+      color: #374151;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .size-preset-btn:hover {
+      background: #f9fafb;
+      border-color: var(--primary);
+    }
+    .size-preset-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    #message-box {
+      padding: 12px 24px;
+      background: #10b981;
+      color: white;
+      border-radius: 6px;
+      font-weight: 500;
+      display: none;
+    }
+    #message-box.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Tab Navigation -->
+  <nav id="tab-nav">
+    <button class="tab-button active" data-tab="play">🎮 플레이</button>
+    <button class="tab-button" data-tab="capture">📷 웹캠 캡처</button>
+    <button class="tab-button" data-tab="edit">✏️ 미로 편집</button>
+  </nav>
+
+  <!-- Play Tab -->
+  <div id="play-tab" class="tab-content active">
+    <div id="main">
+      <canvas id="maze" aria-label="interactive maze canvas" role="img"></canvas>
+    </div>
+    <div id="footer" aria-label="agents that passed the goal"></div>
+  </div>
+
+  <!-- Capture Tab -->
+  <div id="capture-tab" class="tab-content">
+    <div id="webcam-container">
+      <video id="webcam-video" autoplay playsinline></video>
+      <canvas id="webcam-canvas"></canvas>
+      <button id="start-webcam">웹캠 시작</button>
+      <button id="capture-btn" disabled>미로 캡처</button>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>밝기: <span id="brightness-val">0</span></label>
+        <input type="range" id="brightness" min="-100" max="100" value="0" step="1">
+      </div>
+      <div class="control-group">
+        <label>대비: <span id="contrast-val">1.0</span></label>
+        <input type="range" id="contrast" min="0.5" max="2.0" value="1.0" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>임계값: <span id="threshold-val">auto</span></label>
+        <input type="range" id="threshold" min="0" max="255" value="128" step="1">
+        <button id="auto-threshold" class="secondary">자동 임계값</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="save-settings">설정 저장</button>
+      <button id="load-settings" class="secondary">설정 불러오기</button>
+    </div>
+  </div>
+
+  <!-- Edit Tab -->
+  <div id="edit-tab" class="tab-content">
+    <div id="message-box"></div>
+    
+    <div id="grid-editor-container">
+      <canvas id="grid-canvas"></canvas>
+      
+      <div class="tool-bar">
+        <button class="tool-btn active" data-tool="draw">✏️ 그리기</button>
+        <button class="tool-btn" data-tool="erase">🧹 지우기</button>
+        <button class="tool-btn" data-tool="fill">🪣 채우기</button>
+      </div>
+
+      <div class="size-controls">
+        <label style="font-weight: 600;">그리드 크기:</label>
+        <button class="size-preset-btn" data-cols="21" data-rows="15">Small (21×15)</button>
+        <button class="size-preset-btn active" data-cols="27" data-rows="21">Medium (27×21)</button>
+        <button class="size-preset-btn" data-cols="41" data-rows="31">Large (41×31)</button>
+      </div>
+
+      <div class="controls">
+        <button id="clear-grid" class="secondary">전체 초기화</button>
+        <button id="random-maze" class="secondary">랜덤 미로</button>
+        <button id="apply-to-game">게임에 적용</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    'use strict';
+
+    // ====================== Global State ======================
+    let currentTab = 'play';
+    let webcamStream = null;
+    let capturedGrid = null;
+    let editGrid = null;
+    let currentTool = 'draw';
+    let isDrawing = false;
+    
+    // Settings
+    let settings = {
+      brightness: 0,
+      contrast: 1.0,
+      threshold: 128,
+      autoThreshold: true,
+      cols: 27,
+      rows: 21
+    };
+
+    // ====================== Tab System ======================
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+        switchTab(targetTab);
+      });
+    });
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      
+      tabButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      
+      tabContents.forEach(content => {
+        content.classList.toggle('active', content.id === `${tabName}-tab`);
+      });
+
+      if (tabName === 'play') {
+        resizeGameCanvas();
+        if (!rafId) start();
+      } else if (tabName === 'edit') {
+        drawGridEditor();
+      }
+    }
+
+    // ====================== Webcam Capture ======================
+    const webcamVideo = document.getElementById('webcam-video');
+    const webcamCanvas = document.getElementById('webcam-canvas');
+    const webcamCtx = webcamCanvas.getContext('2d');
+    const startWebcamBtn = document.getElementById('start-webcam');
+    const capturBtn = document.getElementById('capture-btn');
+
+    startWebcamBtn.addEventListener('click', async () => {
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            aspectRatio: { ideal: 4/3 },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: "environment"
+          }
+        });
+        
+        webcamVideo.srcObject = webcamStream;
+        startWebcamBtn.disabled = true;
+        capturBtn.disabled = false;
+        showMessage('웹캠이 시작되었습니다', 'success');
+      } catch (err) {
+        console.error('Webcam error:', err);
+        showMessage('웹캠을 시작할 수 없습니다: ' + err.message, 'error');
+      }
+    });
+
+    capturBtn.addEventListener('click', () => {
+      captureAndProcessImage();
+    });
+
+    // Settings controls
+    const brightnessSlider = document.getElementById('brightness');
+    const contrastSlider = document.getElementById('contrast');
+    const thresholdSlider = document.getElementById('threshold');
+    const brightnessVal = document.getElementById('brightness-val');
+    const contrastVal = document.getElementById('contrast-val');
+    const thresholdVal = document.getElementById('threshold-val');
+
+    brightnessSlider.addEventListener('input', (e) => {
+      settings.brightness = parseInt(e.target.value);
+      brightnessVal.textContent = settings.brightness;
+    });
+
+    contrastSlider.addEventListener('input', (e) => {
+      settings.contrast = parseFloat(e.target.value);
+      contrastVal.textContent = settings.contrast.toFixed(1);
+    });
+
+    thresholdSlider.addEventListener('input', (e) => {
+      settings.threshold = parseInt(e.target.value);
+      settings.autoThreshold = false;
+      thresholdVal.textContent = settings.threshold;
+    });
+
+    document.getElementById('auto-threshold').addEventListener('click', () => {
+      settings.autoThreshold = true;
+      thresholdVal.textContent = 'auto';
+      showMessage('자동 임계값 모드로 전환되었습니다', 'success');
+    });
+
+    document.getElementById('save-settings').addEventListener('click', () => {
+      localStorage.setItem('maze_capture_settings', JSON.stringify(settings));
+      showMessage('설정이 저장되었습니다', 'success');
+    });
+
+    document.getElementById('load-settings').addEventListener('click', () => {
+      const saved = localStorage.getItem('maze_capture_settings');
+      if (saved) {
+        settings = JSON.parse(saved);
+        brightnessSlider.value = settings.brightness;
+        contrastSlider.value = settings.contrast;
+        thresholdSlider.value = settings.threshold;
+        brightnessVal.textContent = settings.brightness;
+        contrastVal.textContent = settings.contrast.toFixed(1);
+        thresholdVal.textContent = settings.autoThreshold ? 'auto' : settings.threshold;
+        showMessage('설정을 불러왔습니다', 'success');
+      } else {
+        showMessage('저장된 설정이 없습니다', 'error');
+      }
+    });
+
+    function captureAndProcessImage() {
+      webcamCanvas.width = webcamVideo.videoWidth;
+      webcamCanvas.height = webcamVideo.videoHeight;
+      
+      webcamCtx.drawImage(webcamVideo, 0, 0);
+      let imageData = webcamCtx.getImageData(0, 0, webcamCanvas.width, webcamCanvas.height);
+      
+      // Apply brightness and contrast
+      imageData = adjustBrightnessContrast(imageData, settings.brightness, settings.contrast);
+      
+      // Convert to grayscale
+      const grayData = toGrayscale(imageData);
+      
+      // Calculate threshold
+      let threshold = settings.threshold;
+      if (settings.autoThreshold) {
+        threshold = otsuThreshold(grayData);
+        thresholdVal.textContent = `auto (${threshold})`;
+      }
+      
+      // Binarize
+      const binaryData = binarize(grayData, threshold);
+      
+      // Convert to grid
+      const gridSize = Math.max(settings.cols, settings.rows);
+      capturedGrid = imageToGrid(binaryData, webcamCanvas.width, webcamCanvas.height, settings.cols, settings.rows);
+      
+      // Set as edit grid
+      editGrid = capturedGrid.map(row => [...row]);
+      
+      showMessage('미로를 캡처했습니다! 편집 탭으로 이동하세요.', 'success');
+      
+      // Switch to edit tab
+      setTimeout(() => switchTab('edit'), 1500);
+    }
+
+    function adjustBrightnessContrast(imageData, brightness, contrast) {
+      const data = imageData.data;
+      const factor = (259 * (contrast * 100 + 255)) / (255 * (259 - contrast * 100));
+      
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = clamp(factor * (data[i] - 128) + 128 + brightness, 0, 255);
+        data[i + 1] = clamp(factor * (data[i + 1] - 128) + 128 + brightness, 0, 255);
+        data[i + 2] = clamp(factor * (data[i + 2] - 128) + 128 + brightness, 0, 255);
+      }
+      
+      return imageData;
+    }
+
+    function toGrayscale(imageData) {
+      const data = imageData.data;
+      const gray = new Uint8Array(imageData.width * imageData.height);
+      
+      for (let i = 0; i < data.length; i += 4) {
+        gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      }
+      
+      return gray;
+    }
+
+    function otsuThreshold(grayData) {
+      // Calculate histogram
+      const histogram = new Array(256).fill(0);
+      for (let i = 0; i < grayData.length; i++) {
+        histogram[grayData[i]]++;
+      }
+      
+      const total = grayData.length;
+      let sum = 0;
+      for (let i = 0; i < 256; i++) {
+        sum += i * histogram[i];
+      }
+      
+      let sumB = 0;
+      let wB = 0;
+      let wF = 0;
+      let maxVariance = 0;
+      let threshold = 0;
+      
+      for (let i = 0; i < 256; i++) {
+        wB += histogram[i];
+        if (wB === 0) continue;
+        
+        wF = total - wB;
+        if (wF === 0) break;
+        
+        sumB += i * histogram[i];
+        const mB = sumB / wB;
+        const mF = (sum - sumB) / wF;
+        const variance = wB * wF * (mB - mF) * (mB - mF);
+        
+        if (variance > maxVariance) {
+          maxVariance = variance;
+          threshold = i;
+        }
+      }
+      
+      return threshold;
+    }
+
+    function binarize(grayData, threshold) {
+      const binary = new Uint8Array(grayData.length);
+      for (let i = 0; i < grayData.length; i++) {
+        binary[i] = grayData[i] > threshold ? 0 : 1; // black (path) = 1, white (wall) = 0
+      }
+      return binary;
+    }
+
+    function imageToGrid(binaryData, width, height, cols, rows) {
+      const grid = Array.from({ length: rows }, () => Array(cols).fill(1));
+      const cellWidth = width / cols;
+      const cellHeight = height / rows;
+      
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          let sum = 0;
+          let count = 0;
+          
+          const startX = Math.floor(c * cellWidth);
+          const endX = Math.floor((c + 1) * cellWidth);
+          const startY = Math.floor(r * cellHeight);
+          const endY = Math.floor((r + 1) * cellHeight);
+          
+          for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+              if (x < width && y < height) {
+                sum += binaryData[y * width + x];
+                count++;
+              }
+            }
+          }
+          
+          // If more than 30% of pixels are black (path), mark as path
+          grid[r][c] = (sum / count) > 0.3 ? 0 : 1;
+        }
+      }
+      
+      return grid;
+    }
+
+    // ====================== Grid Editor ======================
+    const gridCanvas = document.getElementById('grid-canvas');
+    const gridCtx = gridCanvas.getContext('2d');
+    const toolBtns = document.querySelectorAll('.tool-btn');
+    
+    const sizePresetBtns = document.querySelectorAll('.size-preset-btn');
+
+    sizePresetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newCols = parseInt(btn.dataset.cols);
+        const newRows = parseInt(btn.dataset.rows);
+        
+        // Update active state
+        sizePresetBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Create new grid
+        const newGrid = Array.from({ length: newRows }, () => Array(newCols).fill(1));
+        
+        // Copy old grid data if exists
+        if (editGrid) {
+          const minRows = Math.min(newRows, editGrid.length);
+          const minCols = Math.min(newCols, editGrid[0].length);
+          for (let r = 0; r < minRows; r++) {
+            for (let c = 0; c < minCols; c++) {
+              newGrid[r][c] = editGrid[r][c];
+            }
+          }
+        }
+        
+        editGrid = newGrid;
+        settings.cols = newCols;
+        settings.rows = newRows;
+        
+        drawGridEditor();
+        showMessage(`그리드 크기가 ${newCols}×${newRows}로 변경되었습니다`, 'success');
+      });
+    });
+
+    toolBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentTool = btn.dataset.tool;
+        toolBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    document.getElementById('clear-grid').addEventListener('click', () => {
+      if (confirm('전체 그리드를 초기화하시겠습니까?')) {
+        editGrid = Array.from({ length: settings.rows }, () => Array(settings.cols).fill(1));
+        drawGridEditor();
+        showMessage('그리드가 초기화되었습니다', 'success');
+      }
+    });
+
+    document.getElementById('random-maze').addEventListener('click', () => {
+      editGrid = generateMaze(settings.cols, settings.rows);
+      drawGridEditor();
+      showMessage('랜덤 미로가 생성되었습니다', 'success');
+    });
+
+    document.getElementById('apply-to-game').addEventListener('click', () => {
+      if (!editGrid) {
+        showMessage('편집할 그리드가 없습니다', 'error');
+        return;
+      }
+      
+      // Apply to game
+      grid = editGrid.map(row => [...row]);
+      cols = settings.cols;
+      rows = settings.rows;
+      
+      // Update canvas size
+      LOGICAL_W = cols * CELL;
+      LOGICAL_H = rows * CELL;
+      
+      // Clear footer
+      const footer = document.getElementById('footer');
+      footer.innerHTML = '';
+      
+      // Reset trophy queue
+      trophyQueue.length = 0;
+      
+      // Relocate goal to a free cell
+      randomGoalRelocate();
+      
+      // Spawn agents on free cells
+      agents = [];
+      agentIdCounter = 0;
+      for (let i = 0; i < AGENTS_TARGET; i++) {
+        const pos = randomFreeCell();
+        const imgURL = agentPool ? agentPool.next() : null;
+        if (imgURL) preloadImage(imgURL);
+        agents.push({
+          id: agentIdCounter++,
+          pos: { x: pos.x, y: pos.y },
+          path: null,
+          idx: 0,
+          imgURL,
+          facing: 'right'
+        });
+      }
+      
+      // Replan all paths
+      replanAll();
+      
+      // Resize canvas
+      resizeGameCanvas();
+      
+      // Switch to play tab
+      switchTab('play');
+      showMessage('미로가 게임에 적용되었습니다!', 'success');
+    });
+
+    function drawGridEditor() {
+      if (!editGrid) {
+        editGrid = Array.from({ length: settings.rows }, () => Array(settings.cols).fill(1));
+      }
+
+      const maxWidth = window.innerWidth - 100;
+      const maxHeight = window.innerHeight - 300;
+      
+      const cellSize = Math.min(
+        Math.floor(maxWidth / settings.cols),
+        Math.floor(maxHeight / settings.rows),
+        30
+      );
+      
+      gridCanvas.width = settings.cols * cellSize;
+      gridCanvas.height = settings.rows * cellSize;
+      
+      gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+      
+      // Draw cells
+      for (let r = 0; r < settings.rows; r++) {
+        for (let c = 0; c < settings.cols; c++) {
+          const x = c * cellSize;
+          const y = r * cellSize;
+          
+          gridCtx.fillStyle = editGrid[r][c] === 1 ? '#333' : '#fff';
+          gridCtx.fillRect(x, y, cellSize, cellSize);
+          
+          gridCtx.strokeStyle = '#ddd';
+          gridCtx.strokeRect(x, y, cellSize, cellSize);
+        }
+      }
+    }
+
+    // Grid editor interaction
+    gridCanvas.addEventListener('mousedown', (e) => {
+      isDrawing = true;
+      handleGridClick(e);
+    });
+
+    gridCanvas.addEventListener('mousemove', (e) => {
+      if (isDrawing) {
+        handleGridClick(e);
+      }
+    });
+
+    gridCanvas.addEventListener('mouseup', () => {
+      isDrawing = false;
+    });
+
+    gridCanvas.addEventListener('mouseleave', () => {
+      isDrawing = false;
+    });
+
+    function handleGridClick(e) {
+      if (!editGrid) return;
+      
+      const rect = gridCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const cellSize = gridCanvas.width / settings.cols;
+      const col = Math.floor(x / cellSize);
+      const row = Math.floor(y / cellSize);
+      
+      if (row >= 0 && row < settings.rows && col >= 0 && col < settings.cols) {
+        if (currentTool === 'draw') {
+          editGrid[row][col] = 1; // wall
+        } else if (currentTool === 'erase') {
+          editGrid[row][col] = 0; // path
+        } else if (currentTool === 'fill') {
+          floodFill(row, col, editGrid[row][col]);
+        }
+        
+        drawGridEditor();
+      }
+    }
+
+    function floodFill(startRow, startCol, targetValue) {
+      const fillValue = targetValue === 0 ? 1 : 0;
+      const stack = [[startRow, startCol]];
+      
+      while (stack.length > 0) {
+        const [r, c] = stack.pop();
+        
+        if (r < 0 || r >= settings.rows || c < 0 || c >= settings.cols) continue;
+        if (editGrid[r][c] !== targetValue) continue;
+        
+        editGrid[r][c] = fillValue;
+        
+        stack.push([r - 1, c]);
+        stack.push([r + 1, c]);
+        stack.push([r, c - 1]);
+        stack.push([r, c + 1]);
+      }
+    }
+
+    // ====================== Utility Functions ======================
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    function showMessage(text, type = 'success') {
+      const msgBox = document.getElementById('message-box');
+      msgBox.textContent = text;
+      msgBox.style.background = type === 'success' ? '#10b981' : '#ef4444';
+      msgBox.classList.add('show');
+      
+      setTimeout(() => {
+        msgBox.classList.remove('show');
+      }, 3000);
+    }
+
+    // ====================== Maze Game (from original maze.html) ======================
+    let cols = 27;
+    let rows = 21;
+    const AGENTS_TARGET = 4;
+    const AGENT_SPEED = 3;
+    const wallColor = '#F0EEE7';
+    const pathColor = '#FFFFFF';
+    
+    const imgBase = 'https://www.hanmiu.cc/play/evt/25_creatures/assets/';
+    const TSV_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/data/data.tsv';
+    const goalFilesStr = 'hanmi_runner.png';
+    const faceDir = true;
+    const spriteScale = 1.8;
+    const collectRatio = 0.4;
+
+    document.body.style.background = wallColor;
+    
+    let CELL = 32;
+    let LOGICAL_W = cols * CELL;
+    let LOGICAL_H = rows * CELL;
+
+    // RNG
+    let rand = Math.random;
+    const randInt = (min, max) => Math.floor(rand() * (max - min + 1)) + min;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function parseList(str) {
+      return str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+
+    async function fetchAgentFilesFromTSV(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to fetch TSV');
+      const text = (await res.text()).replace(/^\uFEFF/, '');
+      const lines = text.split(/\r?\n/).filter(l => l.trim() && !/^#/.test(l));
+      if (!lines.length) return [];
+      const header = lines[0].split('\t').map(h => h.trim());
+      const fileIdx = header.findIndex(h => h.toLowerCase() === 'file');
+      if (fileIdx < 0) throw new Error('TSV missing "file" column');
+      const files = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split('\t');
+        const f = (cols[fileIdx] || '').trim();
+        if (f) files.push(f.normalize('NFC'));
+      }
+      return files;
+    }
+
+    function generateMaze(cols, rows) {
+      const grid = Array.from({ length: rows }, () => Array(cols).fill(1));
+      const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+      const sx = ((randInt(1, cols - 2) / 2) | 0) * 2 + 1;
+      const sy = ((randInt(1, rows - 2) / 2) | 0) * 2 + 1;
+      const stack = [[sx, sy]];
+      visited[sy][sx] = true;
+      grid[sy][sx] = 0;
+      const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]];
+      
+      while (stack.length) {
+        const [cx, cy] = stack[stack.length - 1];
+        const choices = shuffle(dirs.slice());
+        let carved = false;
+        
+        for (const [dx, dy] of choices) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx <= 0 || ny <= 0 || nx >= cols - 1 || ny >= rows - 1) continue;
+          if (!visited[ny][nx]) {
+            visited[ny][nx] = true;
+            grid[ny][nx] = 0;
+            grid[cy + dy / 2][cx + dx / 2] = 0;
+            stack.push([nx, ny]);
+            carved = true;
+            break;
+          }
+        }
+        
+        if (!carved) stack.pop();
+      }
+      
+      return grid;
+    }
+
+    let grid = generateMaze(cols, rows);
+
+    // A* pathfinding
+    function manhattan(ax, ay, bx, by) {
+      return Math.abs(ax - bx) + Math.abs(ay - by);
+    }
+
+    function key(x, y) {
+      return x + ',' + y;
+    }
+
+    function astar(grid, start, goal) {
+      const rows = grid.length, cols = grid[0].length;
+      const inBounds = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows;
+      const passable = (x, y) => inBounds(x, y) && grid[y][x] === 0;
+      
+      if (!passable(start.x, start.y) || !passable(goal.x, goal.y)) return null;
+      
+      const heap = [];
+      const push = (n) => {
+        heap.push(n);
+        bubbleUp(heap.length - 1);
+      };
+      const pop = () => {
+        if (!heap.length) return undefined;
+        const top = heap[0];
+        const end = heap.pop();
+        if (heap.length) {
+          heap[0] = end;
+          sinkDown(0);
+        }
+        return top;
+      };
+      const score = (n) => n[0];
+      
+      function bubbleUp(n) {
+        const e = heap[n];
+        while (n > 0) {
+          const p = (n - 1) >> 1;
+          if (score(e) >= score(heap[p])) break;
+          heap[n] = heap[p];
+          heap[p] = e;
+          n = p;
+        }
+      }
+      
+      function sinkDown(n) {
+        const e = heap[n];
+        const len = heap.length;
+        while (true) {
+          let child = (n << 1) + 1;
+          if (child >= len) break;
+          const right = child + 1;
+          if (right < len && score(heap[right]) < score(heap[child])) child = right;
+          if (score(e) <= score(heap[child])) break;
+          heap[n] = heap[child];
+          heap[child] = e;
+          n = child;
+        }
+      }
+      
+      const gScore = {};
+      const fScore = {};
+      const cameFrom = {};
+      const openSet = {};
+      
+      const sk = key(start.x, start.y);
+      gScore[sk] = 0;
+      fScore[sk] = manhattan(start.x, start.y, goal.x, goal.y);
+      push([fScore[sk], start.x, start.y]);
+      openSet[sk] = true;
+      
+      while (heap.length) {
+        const [_, cx, cy] = pop();
+        const ck = key(cx, cy);
+        delete openSet[ck];
+        
+        if (cx === goal.x && cy === goal.y) {
+          const path = [];
+          let curr = ck;
+          while (curr) {
+            const [x, y] = curr.split(',').map(Number);
+            path.push({ x, y });
+            curr = cameFrom[curr];
+          }
+          return path.reverse();
+        }
+        
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        for (const [dx, dy] of dirs) {
+          const nx = cx + dx, ny = cy + dy;
+          if (!passable(nx, ny)) continue;
+          
+          const nk = key(nx, ny);
+          const tentG = gScore[ck] + 1;
+          
+          if (!(nk in gScore) || tentG < gScore[nk]) {
+            cameFrom[nk] = ck;
+            gScore[nk] = tentG;
+            fScore[nk] = tentG + manhattan(nx, ny, goal.x, goal.y);
+            
+            if (!openSet[nk]) {
+              push([fScore[nk], nx, ny]);
+              openSet[nk] = true;
+            }
+          }
+        }
+      }
+      
+      return null;
+    }
+
+    // Game state
+    let goal = { x: 0, y: 0 };
+    let goalVis = { x: 0, y: 0 };
+    let agents = [];
+    let agentIdCounter = 0;
+    const COLLECT_RADIUS = collectRatio;
+
+    let goalPool = null;
+    let agentPool = null;
+    let goalImgURL = null;
+    let goalFacing = 'right';
+
+    const imageCache = {};
+
+    // Sliding animation for goal
+    let sliding = { active: false, to: null, t: 0 };
+    const SLIDE_DURATION = 0.15;
+
+    // Route system (for multi-step navigation)
+    let goalRoute = null;
+    let routeIdx = 0;
+
+    function cancelRoute() {
+      goalRoute = null;
+      routeIdx = 0;
+    }
+
+    function joinURL(base, name) {
+      if (!base) return null;
+      let b = base;
+      if (!/\/$/.test(b)) b += '/';
+      let n = (name || '').replace(/^\/+/, '');
+      if (!n) return null;
+      return b + n;
+    }
+
+    function createCyclePool(urls) {
+      const base = urls.slice();
+      let arr = shuffle(urls.slice());
+      let idx = 0;
+      return {
+        base,
+        next() {
+          if (!arr.length) return null;
+          if (idx >= arr.length) {
+            arr = shuffle(base.slice());
+            idx = 0;
+          }
+          return arr[idx++];
+        }
+      };
+    }
+
+    function preloadImage(url) {
+      if (!url || imageCache[url]) return;
+      const img = new Image();
+      img.onload = () => { imageCache[url] = img; };
+      img.onerror = () => { imageCache[url] = null; };
+      img.src = url;
+    }
+
+    function getImage(url) {
+      return url ? imageCache[url] : null;
+    }
+
+    function randomFreeCell() {
+      const free = [];
+      for (let y = 1; y < rows - 1; y++) {
+        for (let x = 1; x < cols - 1; x++) {
+          if (grid[y][x] === 0) free.push({ x, y });
+        }
+      }
+      return free.length ? free[randInt(0, free.length - 1)] : { x: 1, y: 1 };
+    }
+
+    function randomGoalRelocate() {
+      const cell = randomFreeCell();
+      goal.x = cell.x;
+      goal.y = cell.y;
+      goalVis.x = cell.x;
+      goalVis.y = cell.y;
+    }
+
+    function setGoal(pos) {
+      goal.x = pos.x;
+      goal.y = pos.y;
+    }
+
+    function spawnAgents(count) {
+      agents = [];
+      agentIdCounter = 0;
+      for (let i = 0; i < count; i++) {
+        const pos = randomFreeCell();
+        const imgURL = agentPool ? agentPool.next() : null;
+        if (imgURL) preloadImage(imgURL);
+        agents.push({
+          id: agentIdCounter++,
+          pos: { x: pos.x, y: pos.y },
+          path: null,
+          idx: 0,
+          imgURL,
+          facing: 'right'
+        });
+      }
+    }
+
+    function replanAll() {
+      for (const a of agents) {
+        const s = { x: Math.round(a.pos.x), y: Math.round(a.pos.y) };
+        const p = astar(grid, s, goal);
+        a.path = p;
+        a.idx = p ? 1 : 0;
+      }
+    }
+
+    // Trophy system
+    const trophyQueue = [];
+    const TROPHY_POP_DELAY = 300;
+    let nextTrophyTime = 0;
+
+    function pushTrophy(imgURL, flip) {
+      trophyQueue.push({ imgURL, flip });
+    }
+
+    function popTrophyIfReady(ts) {
+      if (trophyQueue.length && ts >= nextTrophyTime) {
+        const { imgURL, flip } = trophyQueue.shift();
+        nextTrophyTime = ts + TROPHY_POP_DELAY;
+        
+        const footer = document.getElementById('footer');
+        const item = document.createElement('div');
+        item.className = 'footer-item';
+        
+        const img = document.createElement('img');
+        img.className = 'thumb' + (flip ? ' flip' : '');
+        img.src = imgURL;
+        item.appendChild(img);
+        
+        footer.appendChild(item);
+        
+        requestAnimationFrame(() => {
+          item.classList.add('pop-in');
+        });
+        
+        if (footer.children.length > 20) {
+          const first = footer.children[0];
+          first.classList.add('fade-out');
+          setTimeout(() => first.remove(), 500);
+        }
+      }
+    }
+
+    // Canvas and rendering
+    const canvas = document.getElementById('maze');
+    const ctx = canvas.getContext('2d');
+    let dpr = window.devicePixelRatio || 1;
+    let scale = 1;
+    let rafId = null;
+    let lastTs = null;
+
+    function resizeGameCanvas() {
+      const container = document.getElementById('main');
+      const maxW = container.clientWidth - 40;
+      const maxH = container.clientHeight - 40;
+      
+      CELL = Math.min(
+        Math.floor(maxW / cols),
+        Math.floor(maxH / rows),
+        32
+      );
+      
+      LOGICAL_W = cols * CELL;
+      LOGICAL_H = rows * CELL;
+      
+      scale = Math.min(maxW / LOGICAL_W, maxH / LOGICAL_H, 1);
+      
+      canvas.width = LOGICAL_W * dpr * scale;
+      canvas.height = LOGICAL_H * dpr * scale;
+      canvas.style.width = LOGICAL_W * scale + 'px';
+      canvas.style.height = LOGICAL_H * scale + 'px';
+    }
+
+    // Keyboard controls
+    const pressedKeys = new Set();
+
+    document.addEventListener('keydown', (e) => {
+      if (currentTab !== 'play') return;
+      pressedKeys.add(e.code);
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (currentTab !== 'play') return;
+      pressedKeys.delete(e.code);
+    });
+
+    function tryMoveGoalByKeys() {
+      if (sliding.active) return false;
+      
+      let dx = 0, dy = 0;
+      
+      if (pressedKeys.has('KeyW') || pressedKeys.has('ArrowUp')) dy = -1;
+      if (pressedKeys.has('KeyS') || pressedKeys.has('ArrowDown')) dy = 1;
+      if (pressedKeys.has('KeyA') || pressedKeys.has('ArrowLeft')) dx = -1;
+      if (pressedKeys.has('KeyD') || pressedKeys.has('ArrowRight')) dx = 1;
+      
+      if (dx === 0 && dy === 0) return false;
+      
+      const nx = goal.x + dx;
+      const ny = goal.y + dy;
+      
+      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && grid[ny][nx] === 0) {
+        startSlide(nx, ny);
+        if (dx > 0) goalFacing = 'right';
+        else if (dx < 0) goalFacing = 'left';
+        cancelRoute();
+        return true;
+      }
+      
+      return false;
+    }
+
+    // Mouse controls
+    canvas.addEventListener('click', (e) => {
+      if (currentTab !== 'play') return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / (rect.width / LOGICAL_W);
+      const y = (e.clientY - rect.top) / (rect.height / LOGICAL_H);
+      
+      const cellX = Math.floor(x / CELL);
+      const cellY = Math.floor(y / CELL);
+      
+      if (cellX >= 0 && cellX < cols && cellY >= 0 && cellY < rows && grid[cellY][cellX] === 0) {
+        const path = astar(grid, goal, { x: cellX, y: cellY });
+        if (path && path.length > 1) {
+          goalRoute = path;
+          routeIdx = 1;
+        }
+      }
+    });
+
+    function startSlide(nx, ny) {
+      sliding.active = true;
+      sliding.to = { x: nx, y: ny };
+      sliding.t = 0;
+    }
+
+    function collectAtCurrentCell() {
+      const gx = goal.x, gy = goal.y;
+      const toRemove = [];
+      for (const a of agents) {
+        if (Math.round(a.pos.x) === gx && Math.round(a.pos.y) === gy) {
+          if (a.imgURL) pushTrophy(a.imgURL, a.facing === 'left');
+          toRemove.push(a.id);
+        }
+      }
+      if (toRemove.length) {
+        for (let i = agents.length - 1; i >= 0; i--) {
+          if (toRemove.includes(agents[i].id)) agents.splice(i, 1);
+        }
+      }
+    }
+
+    function frame(ts) {
+      if (!lastTs) lastTs = ts;
+      const dt = Math.min((ts - lastTs) / 1000, 0.1);
+      lastTs = ts;
+      
+      popTrophyIfReady(ts);
+      
+      // Keyboard input
+      tryMoveGoalByKeys();
+      
+      // Route navigation
+      if (goalRoute && routeIdx < goalRoute.length && !sliding.active) {
+        const nextCell = goalRoute[routeIdx];
+        startSlide(nextCell.x, nextCell.y);
+        const dx = nextCell.x - goal.x;
+        if (dx > 0) goalFacing = 'right';
+        else if (dx < 0) goalFacing = 'left';
+      }
+      
+      // Sliding animation
+      if (sliding.active) {
+        sliding.t += dt;
+        const progress = Math.min(sliding.t / SLIDE_DURATION, 1);
+        const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+        goalVis.x = goal.x + (sliding.to.x - goal.x) * eased;
+        goalVis.y = goal.y + (sliding.to.y - goal.y) * eased;
+        
+        if (progress >= 1) {
+          setGoal({ x: sliding.to.x, y: sliding.to.y });
+          goalVis = { x: sliding.to.x, y: sliding.to.y };
+          sliding.active = false;
+          sliding.to = null;
+          sliding.t = 0;
+          collectAtCurrentCell();
+          if (goalRoute && routeIdx < goalRoute.length) routeIdx++;
+        }
+      }
+      
+      // Move agents
+      const collectedIds = new Set();
+      for (const a of agents) {
+        let arrived = false;
+        if (a.path && a.idx < a.path.length) {
+          const target = a.path[a.idx];
+          const dx = target.x - a.pos.x;
+          const dy = target.y - a.pos.y;
+          const dist = Math.hypot(dx, dy);
+          const step = AGENT_SPEED * dt;
+          
+          if (dist <= step || dist < 1e-6) {
+            a.pos.x = target.x;
+            a.pos.y = target.y;
+            a.idx++;
+            
+            if (faceDir && a.idx < a.path.length) {
+              const nextT = a.path[a.idx];
+              const sdx = nextT.x - a.pos.x;
+              if (sdx > 0) a.facing = 'right';
+              else if (sdx < 0) a.facing = 'left';
+            }
+            
+            if (a.idx >= a.path.length) arrived = true;
+          } else {
+            if (faceDir) {
+              if (dx > 0.001) a.facing = 'right';
+              else if (dx < -0.001) a.facing = 'left';
+            }
+            a.pos.x += (dx / dist) * step;
+            a.pos.y += (dy / dist) * step;
+          }
+          
+          if (arrived) {
+            if (a.imgURL) pushTrophy(a.imgURL, a.facing === 'left');
+            collectedIds.add(a.id);
+          }
+        } else if (a.path && a.idx >= a.path.length) {
+          if (a.imgURL) pushTrophy(a.imgURL, a.facing === 'left');
+          collectedIds.add(a.id);
+        } else {
+          const s = { x: Math.round(a.pos.x), y: Math.round(a.pos.y) };
+          const p = astar(grid, s, goal);
+          a.path = p;
+          a.idx = p ? 1 : 0;
+        }
+      }
+      
+      // Check encounters
+      const gx = goalVis.x, gy = goalVis.y;
+      for (const a of agents) {
+        if (collectedIds.has(a.id)) continue;
+        const dx = a.pos.x - gx;
+        const dy = a.pos.y - gy;
+        const d = Math.hypot(dx, dy);
+        if (d <= COLLECT_RADIUS) {
+          if (a.imgURL) pushTrophy(a.imgURL, a.facing === 'left');
+          collectedIds.add(a.id);
+        }
+      }
+      
+      if (collectedIds.size) {
+        for (let i = agents.length - 1; i >= 0; i--) {
+          if (collectedIds.has(agents[i].id)) agents.splice(i, 1);
+        }
+      }
+      
+      if (agents.length === 0) {
+        randomGoalRelocate();
+        spawnAgents(AGENTS_TARGET);
+        replanAll();
+        cancelRoute();
+      }
+      
+      // Draw
+      ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = wallColor;
+      ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+      ctx.fillStyle = pathColor;
+      
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (grid[y][x] === 0) {
+            ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+          }
+        }
+      }
+      
+      // Draw goal
+      const gpx = gx * CELL + CELL / 2;
+      const gpy = gy * CELL + CELL / 2;
+      const pulse = 1 + 0.20 * Math.sin(ts * 0.006);
+      const gImg = getImage(goalImgURL);
+      
+      if (gImg) {
+        const maxSize = CELL * 0.9;
+        const r = Math.min(maxSize / gImg.width, maxSize / gImg.height);
+        const w = gImg.width * r * spriteScale;
+        const h = gImg.height * r * spriteScale;
+        
+        if (faceDir && goalFacing === 'left') {
+          ctx.save();
+          ctx.translate(gpx, gpy);
+          ctx.scale(-1, 1);
+          ctx.drawImage(gImg, -w / 2, -h / 2, w, h);
+          ctx.restore();
+        } else {
+          ctx.drawImage(gImg, gpx - w / 2, gpy - h / 2, w, h);
+        }
+      } else {
+        ctx.beginPath();
+        ctx.arc(gpx, gpy, CELL * 0.36 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#111827';
+        ctx.stroke();
+      }
+      
+      // Draw agents
+      for (const a of agents) {
+        const ax = a.pos.x * CELL + CELL / 2;
+        const ay = a.pos.y * CELL + CELL / 2;
+        const img = getImage(a.imgURL);
+        
+        if (img) {
+          const maxSize = CELL * 0.9;
+          const r = Math.min(maxSize / img.width, maxSize / img.height);
+          const w = img.width * r * spriteScale;
+          const h = img.height * r * spriteScale;
+          
+          if (faceDir && a.facing === 'left') {
+            ctx.save();
+            ctx.translate(ax, ay);
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, -w / 2, -h / 2, w, h);
+            ctx.restore();
+          } else {
+            ctx.drawImage(img, ax - w / 2, ay - h / 2, w, h);
+          }
+        }
+      }
+      
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      cancelAnimationFrame(rafId);
+      lastTs = null;
+      rafId = requestAnimationFrame(frame);
+    }
+
+    // Bootstrap
+    async function bootstrap() {
+      const goalBaseFiles = parseList(goalFilesStr);
+      let agentBaseFiles = [];
+      
+      try {
+        agentBaseFiles = await fetchAgentFilesFromTSV(TSV_URL);
+      } catch (e) {
+        console.warn('[TSV] load failed:', e);
+      }
+      
+      const goalURLBase = imgBase ? goalBaseFiles.map(fn => joinURL(imgBase, fn)).filter(Boolean) : [];
+      const agentURLBase = imgBase ? agentBaseFiles.map(fn => joinURL(imgBase, fn)).filter(Boolean) : [];
+      
+      goalPool = createCyclePool(goalURLBase);
+      agentPool = createCyclePool(agentURLBase);
+      goalImgURL = goalPool ? goalPool.next() : null;
+      
+      if (goalImgURL) preloadImage(goalImgURL);
+      
+      randomGoalRelocate();
+      spawnAgents(AGENTS_TARGET);
+      replanAll();
+      
+      resizeGameCanvas();
+      start();
+    }
+
+    window.addEventListener('resize', () => {
+      if (currentTab === 'play') {
+        resizeGameCanvas();
+      }
+    });
+
+    // Initialize
+    bootstrap();
+    
+    // Load saved settings on startup
+    const saved = localStorage.getItem('maze_capture_settings');
+    if (saved) {
+      try {
+        const loaded = JSON.parse(saved);
+        settings = { ...settings, ...loaded };
+        brightnessSlider.value = settings.brightness;
+        contrastSlider.value = settings.contrast;
+        thresholdSlider.value = settings.threshold;
+        brightnessVal.textContent = settings.brightness;
+        contrastVal.textContent = settings.contrast.toFixed(1);
+        thresholdVal.textContent = settings.autoThreshold ? 'auto' : settings.threshold;
+      } catch (e) {
+        console.error('Failed to load settings:', e);
+      }
+    }
+
+  })();
+  </script>
+</body>
+</html>
