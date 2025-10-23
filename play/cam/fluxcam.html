@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Flux cam</title>
+        <style>
+            :root {
+                --bg: #0b0b0b;
+                --fg: #eaeaea;
+                --muted: #9aa0a6;
+                --accent: #6ab0ff;
+                --border: #2a2a2a;
+                --panel: #161616;
+                --panel2: #1e1e1e;
+            }
+
+            html,body {
+                height: 100%
+            }
+
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--fg);
+                font: 14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+            }
+
+            .app {
+                display: flex;
+                flex-direction: column;
+                height: 100%
+            }
+
+            .toolbar {
+                display: flex;
+                gap: .5rem;
+                align-items: center;
+                padding: .5rem .75rem;
+                background: var(--panel);
+                border-bottom: 1px solid var(--border);
+            }
+
+            .toolbar .spacer {
+                flex: 1
+            }
+
+            .toolbar select,.toolbar button {
+                background: var(--panel2);
+                color: var(--fg);
+                border: 1px solid var(--border);
+                border-radius: .5rem;
+                padding: .4rem .6rem;
+                outline: none;
+            }
+
+            .toolbar .mode-chip {
+                background: #222;
+                border: 1px solid var(--border);
+                padding: .25rem .6rem;
+                border-radius: 999px;
+                font-weight: 600;
+            }
+
+            .stage {
+                position: relative;
+                flex: 1;
+                background: black;
+                overflow: hidden;
+            }
+
+            .stage .mounted {
+                position: absolute;
+                inset: 0;
+            }
+
+            body.fullscreen .toolbar, body.fullscreen .settings-panel {
+                display: none!important
+            }
+
+            body.fullscreen.cursor-hidden .stage {
+                cursor: none
+            }
+
+            #scannerInput {
+                position: fixed;
+                left: -10000px;
+                top: -10000px;
+                width: 1px;
+                height: 1px;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .toast-wrap {
+                position: fixed;
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                z-index: 30;
+            }
+
+            .toast {
+                background: rgba(30,30,30,.95);
+                border: 1px solid var(--border);
+                color: var(--fg);
+                padding: .6rem .8rem;
+                border-radius: .6rem;
+                box-shadow: 0 6px 24px rgba(0,0,0,.35)
+            }
+
+            .settings-panel {
+                position: fixed;
+                right: 12px;
+                bottom: 12px;
+                width: min(560px,calc(100% - 24px));
+                height: min(60vh,520px);
+                background: var(--panel);
+                border: 1px solid var(--border);
+                border-radius: .8rem;
+                overflow: hidden;
+                display: none;
+                z-index: 20;
+                box-shadow: 0 10px 36px rgba(0,0,0,.5)
+            }
+
+            .settings-panel.active {
+                display: flex
+            }
+
+            .settings-panel aside {
+                width: 200px;
+                border-right: 1px solid var(--border);
+                background: var(--panel2)
+            }
+
+            .settings-panel aside .sec {
+                padding: .75rem;
+                border-bottom: 1px solid var(--border);
+                font-weight: 600;
+                color: var(--muted)
+            }
+
+            .settings-panel aside .row {
+                display: flex;
+                flex-direction: column;
+                gap: .25rem;
+                padding: .75rem
+            }
+
+            .settings-panel aside label {
+                font-size: 12px;
+                color: var(--muted)
+            }
+
+            .settings-panel aside select,.settings-panel aside button {
+                background: var(--panel);
+                color: var(--fg);
+                border: 1px solid var(--border);
+                border-radius: .5rem;
+                padding: .4rem .5rem
+            }
+
+            .settings-panel main {
+                flex: 1;
+                display: flex;
+                flex-direction: column
+            }
+
+            .settings-panel header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: .5rem .75rem;
+                border-bottom: 1px solid var(--border)
+            }
+
+            .settings-panel header .btns {
+                display: flex;
+                gap: .5rem
+            }
+
+            .settings-panel .editor {
+                flex: 1;
+                padding: .5rem
+            }
+
+            .settings-panel textarea {
+                width: 100%;
+                height: 100%;
+                resize: none;
+                background: #0f0f0f;
+                color: #e6e6e6;
+                border: 1px solid var(--border);
+                border-radius: .5rem;
+                padding: .6rem;
+                font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+                font-size: 12px
+            }
+
+            .muted {
+                color: var(--muted)
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app">
+            <div class="toolbar" id="toolbar" data-scan-guard>
+                <label for="selMode" class="muted">Mode</label>
+                <select id="selMode" data-scan-guard></select>
+                <span class="mode-chip" id="modeChip">—</span>
+                <div class="spacer"></div>
+                <label class="muted">Resolution</label>
+                <select id="selResolution" data-scan-guard>
+                    <option value="1280x720">1280×720 (default)</option>
+                    <option value="1920x1080">1920×1080</option>
+                </select>
+                <label class="muted">Camera</label>
+                <select id="selCamera" data-scan-guard></select>
+                <button id="btnCamToggle" data-scan-guard>Start Camera</button>
+                <button id="btnFullscreen" data-scan-guard>전체화면</button>
+                <button id="btnSettings" data-scan-guard>Settings</button>
+            </div>
+            <div class="stage" id="stage">
+                <div class="mounted" id="mount"></div>
+            </div>
+        </div>
+        <input id="scannerInput" lang="en" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <div class="toast-wrap" id="toastWrap"></div>
+        <div class="settings-panel" id="settingsPanel" aria-modal="true" role="dialog" data-scan-guard>
+            <aside>
+                <div class="sec">Quick</div>
+                <div class="row">
+                    <label for="sideResolution">Resolution</label>
+                    <select id="sideResolution">
+                        <option value="1280x720">1280×720</option>
+                        <option value="1920x1080">1920×1080</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label for="sideCursorDelay">Cursor hide delay (ms)</label>
+                    <select id="sideCursorDelay">
+                        <option value="1000">1000</option>
+                        <option value="1500" selected>1500</option>
+                        <option value="2000">2000</option>
+                        <option value="2500">2500</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label for="sideFocusDelay">Focus-back delay (ms)</label>
+                    <select id="sideFocusDelay">
+                        <option value="150">150</option>
+                        <option value="200" selected>200</option>
+                        <option value="300">300</option>
+                        <option value="400">400</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <button id="btnApplyQuick">Apply quick</button>
+                </div>
+            </aside>
+            <main>
+                <header>
+                    <div class="title">Settings (JSON)</div>
+                    <div class="btns">
+                        <button id="btnExport">Export</button>
+                        <button id="btnImport">Import</button>
+                        <button id="btnSaveJson">Save</button>
+                        <button id="btnCloseSettings">Close</button>
+                    </div>
+                </header>
+                <div class="editor">
+                    <textarea id="jsonEditor" spellcheck="false"></textarea>
+                </div>
+            </main>
+        </div>
+        <script>
+            (function() {
+                const $ = (s, el=document) => el.querySelector(s);
+                const Toast = {
+                    wrap: $('#toastWrap'),
+                    show(msg, ms=2200) {
+                        const el = document.createElement('div');
+                        el.className = 'toast';
+                        el.textContent = msg;
+                        this.wrap.appendChild(el);
+                        setTimeout( () => {
+                            el.style.opacity = '0';
+                            el.style.transition = 'opacity .25s';
+                            setTimeout( () => el.remove(), 260);
+                        }
+                        , ms);
+                    }
+                };
+
+                // --- Settings (clean & used-only) ---
+                const LS_KEY = 'app.settings.v1';
+                const DEFAULTS = {
+                    lastMode: 'slit-scan',
+                    video: {
+                        resolution: '1280x720',
+                        deviceId: null,
+                        mirror: true
+                    },
+                    ui: {
+                        cursorHideDelayMs: 1500,
+                        focusBackDelayMs: 200,
+                        language: 'en'
+                    },
+                    scanner: {
+                        trim: true,
+                        toLowerCase: true,
+                        acceptEnterOnly: true
+                    },
+                    slitScan: {
+                        slitWidth: 2
+                    },
+                    delayedV: {
+                        bufferFrames: 120
+                    },
+                    vArray: {
+                        nw: 10,
+                        nh: 5
+                    },
+                    kaleidoscope: {
+                        slices: 8,
+                        pairSplit: true,
+                        mirror: true,
+                        angleOffset: 0.0,
+                        zoom: 1.0,
+                        offsetX: 0.0,
+                        offsetY: 0.0,
+                        maskCircle: true
+                    },
+                    mosaic: {
+                        blockSize: 8
+                    }
+                };
+                const SettingsService = {
+                    state: null,
+                    deepMerge(base, src) {
+                        const out = structuredClone(base);
+                        for (const k in base) {
+                            const bv = base[k]
+                              , sv = src ? src[k] : undefined;
+                            if (bv && typeof bv === 'object' && !Array.isArray(bv)) {
+                                out[k] = this.deepMerge(bv, (sv && typeof sv === 'object') ? sv : {});
+                            } else {
+                                out[k] = (sv !== undefined) ? sv : bv;
+                            }
+                        }
+                        return out;
+                    },
+                    load() {
+                        try {
+                            const raw = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+                            this.state = this.deepMerge(DEFAULTS, raw);
+                        } catch (e) {
+                            this.state = structuredClone(DEFAULTS);
+                        }
+                        return this.state;
+                    },
+                    save() {
+                        localStorage.setItem(LS_KEY, JSON.stringify(this.state));
+                    },
+                    export() {
+                        return JSON.stringify(this.state, null, 2);
+                    },
+                    import(json) {
+                        const obj = JSON.parse(json);
+                        this.state = this.deepMerge(DEFAULTS, obj);
+                        this.save();
+                        return this.state;
+                    }
+                };
+                SettingsService.load();
+
+                // --- Focus guard ---
+                const FocusService = (function() {
+                    const input = $('#scannerInput');
+                    let timer = null
+                      , hold = 0;
+                    function focus() {
+                        if (hold > 0)
+                            return;
+                        try {
+                            input.focus({
+                                preventScroll: true
+                            });
+                            input.select();
+                        } catch (e) {}
+                    }
+                    function schedule(ms) {
+                        if (hold > 0)
+                            return;
+                        clearTimeout(timer);
+                        timer = setTimeout(focus, ms);
+                    }
+                    function holdOn() {
+                        hold++;
+                    }
+                    function holdOff() {
+                        hold = Math.max(0, hold - 1);
+                        if (hold === 0)
+                            schedule(SettingsService.state.ui.focusBackDelayMs);
+                    }
+                    function reset() {
+                        hold = 0;
+                        schedule(10);
+                    }
+                    document.querySelectorAll('[data-scan-guard]').forEach(el => {
+                        el.addEventListener('pointerdown', holdOn);
+                        el.addEventListener('pointerup', () => setTimeout(holdOff, 250));
+                        el.addEventListener('focusin', holdOn);
+                        el.addEventListener('focusout', () => setTimeout(holdOff, 250));
+                        el.addEventListener('change', () => setTimeout(holdOff, 200));
+                    }
+                    );
+                    return {
+                        input,
+                        schedule,
+                        holdOn,
+                        holdOff,
+                        reset
+                    };
+                }
+                )();
+
+                // --- Cursor hide (fullscreen) ---
+                const CursorService = (function() {
+                    let timer = null
+                      , delay = SettingsService.state.ui.cursorHideDelayMs;
+                    function setDelay(ms) {
+                        delay = ms;
+                    }
+                    function kick() {
+                        if (!document.fullscreenElement)
+                            return;
+                        document.body.classList.remove('cursor-hidden');
+                        clearTimeout(timer);
+                        timer = setTimeout( () => document.body.classList.add('cursor-hidden'), delay);
+                    }
+                    window.addEventListener('mousemove', kick);
+                    window.addEventListener('keydown', kick);
+                    return {
+                        setDelay,
+                        kick
+                    };
+                }
+                )();
+
+                // --- Video ---
+                const VideoService = (function() {
+                    let stream = null
+                      , videoEl = document.createElement('video');
+                    videoEl.playsInline = true;
+                    videoEl.muted = true;
+                    const videoCtx = document.createElement('canvas').getContext('2d');
+                    function prefWH() {
+                        const [w,h] = SettingsService.state.video.resolution.split('x').map(Number);
+                        return {
+                            w,
+                            h
+                        };
+                    }
+                    async function start() {
+                        const s = SettingsService.state;
+                        const {w, h} = prefWH();
+                        const cons = {
+                            audio: false,
+                            video: {
+                                width: {
+                                    ideal: w
+                                },
+                                height: {
+                                    ideal: h
+                                },
+                                aspectRatio: w / h,
+                                deviceId: s.video.deviceId || undefined
+                            }
+                        };
+                        stream = await navigator.mediaDevices.getUserMedia(cons);
+                        videoEl.srcObject = stream;
+                        await videoEl.play();
+                        const tr = stream.getVideoTracks()[0];
+                        const st = tr.getSettings();
+                        videoCtx.canvas.width = st.width || w;
+                        videoCtx.canvas.height = st.height || h;
+                        return st;
+                    }
+                    function stop() {
+                        if (stream) {
+                            stream.getTracks().forEach(t => t.stop());
+                            stream = null;
+                        }
+                    }
+                    function isRunning() {
+                        return !!(stream && videoEl.readyState >= 2);
+                    }
+                    function drawFrame() {
+                        if (!isRunning())
+                            return;
+                        const w = videoCtx.canvas.width
+                          , h = videoCtx.canvas.height;
+                        videoCtx.save();
+                        if (SettingsService.state.video.mirror) {
+                            videoCtx.scale(-1, 1);
+                            videoCtx.translate(-w, 0);
+                        }
+                        videoCtx.drawImage(videoEl, 0, 0, w, h);
+                        videoCtx.restore();
+                    }
+                    return {
+                        start,
+                        stop,
+                        isRunning,
+                        drawFrame,
+                        videoEl,
+                        videoCtx
+                    };
+                }
+                )();
+
+                // --- Task Manager ---
+                const TaskManager = (function() {
+                    const mount = $('#mount');
+                    let current = null;
+                    const registry = new Map();
+                    function register(t) {
+                        registry.set(t.id, t);
+                    }
+                    function list() {
+                        return [...registry.keys()];
+                    }
+                    async function start(id) {
+                        const task = registry.get(id);
+                        if (!task) {
+                            if (!document.fullscreenElement)
+                                Toast.show(`Unknown task: ${id}`);
+                            return;
+                        }
+                        await stop();
+                        SettingsService.state.lastMode = id;
+                        SettingsService.save();
+                        $('#modeChip').textContent = id;
+                        const sel = $('#selMode');
+                        if (sel && sel.value !== id)
+                            sel.value = id;
+                        mount.innerHTML = '';
+                        const host = document.createElement('div');
+                        host.className = 'mounted';
+                        mount.appendChild(host);
+                        const ctx = {
+                            stage: mount,
+                            video: VideoService.videoEl,
+                            videoG: VideoService.videoCtx,
+                            settings: SettingsService.state
+                        };
+                        task._dispose = task.start ? task.start(ctx, host) : null;
+                        current = task;
+                    }
+                    async function stop() {
+                        if (current && current.stop) {
+                            try {
+                                current.stop();
+                            } catch (e) {}
+                        }
+                        if (current && current._dispose) {
+                            try {
+                                current._dispose();
+                            } catch (e) {}
+                        }
+                        mount.innerHTML = '';
+                        current = null;
+                    }
+                    function restart() {
+                        start(SettingsService.state.lastMode || 'slit-scan');
+                    }
+                    return {
+                        register,
+                        list,
+                        start,
+                        stop,
+                        restart
+                    };
+                }
+                )();
+
+                // --- Helpers ---
+                function makeFullCanvas(container) {
+                    const c = document.createElement('canvas');
+                    const g = c.getContext('2d');
+                    Object.assign(c.style, {
+                        position: 'absolute',
+                        inset: 0
+                    });
+                    container.appendChild(c);
+                    function layout() {
+                        c.width = container.clientWidth;
+                        c.height = container.clientHeight;
+                    }
+                    const ro = new ResizeObserver(layout);
+                    ro.observe(container);
+                    layout();
+                    return {
+                        canvas: c,
+                        g,
+                        dispose() {
+                            ro.disconnect();
+                            c.remove();
+                        }
+                    };
+                }
+                function taskLoop(draw) {
+                    let id = null;
+                    function frame() {
+                        VideoService.drawFrame();
+                        draw();
+                        id = requestAnimationFrame(frame);
+                    }
+                    id = requestAnimationFrame(frame);
+                    return () => cancelAnimationFrame(id);
+                }
+                function coverSrc(vw, vh, W, H) {
+                    const scale = Math.max(W / vw, H / vh);
+                    const sW = W / scale
+                      , sH = H / scale;
+                    const sx = (vw - sW) / 2
+                      , sy = (vh - sH) / 2;
+                    return {
+                        sx,
+                        sy,
+                        sW,
+                        sH
+                    };
+                }
+
+                // --- Tasks ---
+                TaskManager.register({
+                    id: 'slit-scan',
+                    start(ctx, root) {
+                        const {canvas, g, dispose} = makeFullCanvas(root);
+                        const videoG = ctx.videoG;
+                        let frame_count = 0
+                          , slits = []
+                          , s_width = ctx.settings.slitScan.slitWidth || 2;
+                        function layout() {
+                            const H = canvas.height
+                              , W = canvas.width
+                              , scale = H / 720;
+                            const w = (W - 280 * scale) | 0;
+                            const n = (w / s_width | 0) + 1;
+                            slits = [];
+                            for (let i = 0; i < n; i++) {
+                                const sg = document.createElement('canvas').getContext('2d');
+                                sg.canvas.width = s_width;
+                                sg.canvas.height = H;
+                                const v = (256 * Math.random()) | 0;
+                                sg.fillStyle = `rgb(${v},${v},${v})`;
+                                sg.fillRect(0, 0, sg.canvas.width, sg.canvas.height);
+                                slits.push(sg);
+                            }
+                        }
+                        function draw() {
+                            const H = canvas.height
+                              , W = canvas.width
+                              , scale = H / 720;
+                            g.save();
+                            g.translate(W - scale * 280, 0);
+                            g.scale(scale, scale);
+                            const vw = videoG.canvas.width
+                              , vh = videoG.canvas.height;
+                            const srcW = 280 * (vw / 1280);
+                            g.drawImage(videoG.canvas, vw - (vw / 1280) * 640, 0, srcW, vh, 0, 0, 280, 720);
+                            g.restore();
+                            const w = (W - 280 * scale) | 0;
+                            const idx = frame_count % slits.length;
+                            let sg = slits[idx];
+                            sg.save();
+                            sg.scale(scale, scale);
+                            const stripeW = s_width * (videoG.canvas.width / 1280);
+                            sg.drawImage(videoG.canvas, videoG.canvas.width - (videoG.canvas.width / 1280) * 640, 0, stripeW, videoG.canvas.height, 0, 0, s_width, 720);
+                            sg.restore();
+                            for (let i = 0; i < slits.length; i++) {
+                                const j = (idx + slits.length - 1 - i) % slits.length;
+                                sg = slits[j];
+                                g.drawImage(sg.canvas, w - i * s_width, 0);
+                            }
+                            frame_count++;
+                        }
+                        layout();
+                        const onR = () => layout();
+                        window.addEventListener('resize', onR);
+                        const cancel = taskLoop(draw);
+                        this.stop = () => {
+                            window.removeEventListener('resize', onR);
+                            cancel();
+                            dispose();
+                        }
+                        ;
+                    }
+                });
+
+                TaskManager.register({
+                    id: 'delayed_v',
+                    start(ctx, root) {
+                        const {canvas, g, dispose} = makeFullCanvas(root);
+                        const videoG = ctx.videoG;
+                        let frame_count = 0;
+                        const maxFrames = Math.max(30, ctx.settings.delayedV.bufferFrames | 0 || 120);
+                        const frames = [];
+                        for (let i = 0; i < maxFrames; i++) {
+                            const c = document.createElement('canvas');
+                            c.width = videoG.canvas.width;
+                            c.height = videoG.canvas.height;
+                            frames.push(c.getContext('2d'));
+                        }
+                        function draw() {
+                            const idx = frame_count % frames.length;
+                            frames[idx].drawImage(videoG.canvas, 0, 0);
+                            const H = canvas.height
+                              , s = H / 720;
+                            const n = frames.length
+                              , nh = (720 / n) | 0;
+                            g.save();
+                            g.setTransform(s, 0, 0, s, 0, 0);
+                            for (let i = 0; i < n; i++) {
+                                const j = (idx + n - 1 - i) % n
+                                  , y = i * nh;
+                                g.drawImage(frames[j].canvas, 0, y, videoG.canvas.width, nh, 0, y, 1280, nh);
+                            }
+                            g.restore();
+                            frame_count++;
+                        }
+                        const cancel = taskLoop(draw);
+                        this.stop = () => {
+                            cancel();
+                            frames.length = 0;
+                            dispose();
+                        }
+                        ;
+                    }
+                });
+
+                TaskManager.register({
+                    id: 'v_array',
+                    start(ctx, root) {
+                        const {canvas, g, dispose} = makeFullCanvas(root);
+                        const videoG = ctx.videoG;
+                        let frame_count = 0;
+                        let {nw, nh} = ctx.settings.vArray;
+                        nw = Math.max(2, nw | 0);
+                        nh = Math.max(2, nh | 0);
+                        const total = nw * nh;
+                        const frames = [];
+                        for (let i = 0; i < total; i++) {
+                            const c = document.createElement('canvas');
+                            c.width = 720;
+                            c.height = 720;
+                            frames.push(c.getContext('2d'));
+                        }
+                        function draw() {
+                            const idx = frame_count % frames.length;
+                            const vw = videoG.canvas.width
+                              , vh = videoG.canvas.height;
+                            const side = Math.min(vw, vh);
+                            const sx = ((vw - side) / 2) | 0
+                              , sy = ((vh - side) / 2) | 0;
+                            frames[idx].drawImage(videoG.canvas, sx, sy, side, side, 0, 0, 720, 720);
+                            const cell = (canvas.height / nh) | 0
+                              , scale = cell / 720;
+                            for (let y = 0; y < nh; y++)
+                                for (let x = 0; x < nw; x++) {
+                                    const i = y * nw + x;
+                                    const j = (idx + frames.length - 1 - i) % frames.length;
+                                    const destY = y * cell
+                                      , destX = x * cell;
+                                    g.save();
+                                    g.translate(destX, destY);
+                                    g.scale(scale, scale);
+                                    if (x % 2 === 0 && ((frame_count / 2000 | 0) % 2 === 0)) {
+                                        g.scale(-1, 1);
+                                        g.translate(-720, 0);
+                                    }
+                                    if (y % 2 === 0 && ((frame_count / 1000 | 0) % 2 === 0)) {
+                                        g.scale(1, -1);
+                                        g.translate(0, -720);
+                                    }
+                                    g.drawImage(frames[j].canvas, 0, 0);
+                                    g.restore();
+                                }
+                            frame_count++;
+                        }
+                        const cancel = taskLoop(draw);
+                        this.stop = () => {
+                            cancel();
+                            frames.length = 0;
+                            dispose();
+                        }
+                        ;
+                    }
+                });
+
+                // Kaleidoscope with pairSplit: segments = slices * 2; mirror odd segments; optional circle mask
+                TaskManager.register({
+                    id: 'kaleidoscope',
+                    start(ctx, root) {
+                        const {canvas, g, dispose} = makeFullCanvas(root);
+                        const videoG = ctx.videoG;
+                        const opt = ctx.settings.kaleidoscope || {};
+                        const slices = Math.max(2, (opt.slices | 0) || 8);
+                        const segments = (opt.pairSplit === false) ? slices : slices * 2;
+                        const mirror = (opt.mirror !== false);
+                        const angleOffset = Number(opt.angleOffset || 0);
+                        const zoom = Math.max(0.1, Number(opt.zoom || 1));
+                        const offX = Number(opt.offsetX || 0)
+                          , offY = Number(opt.offsetY || 0);
+                        const maskCircle = (opt.maskCircle !== false);
+                        function draw() {
+                            const W = canvas.width
+                              , H = canvas.height;
+                            const cx = W / 2
+                              , cy = H / 2;
+                            const R = Math.min(W, H) / 2;
+                            const vw = videoG.canvas.width
+                              , vh = videoG.canvas.height;
+                            const baseScale = Math.max(W / vw, H / vh) * zoom;
+                            const half = Math.PI / segments;
+                            g.clearRect(0, 0, W, H);
+                            if (maskCircle) {
+                                g.save();
+                                g.beginPath();
+                                g.arc(cx, cy, R, 0, Math.PI * 2);
+                                g.clip();
+                            }
+                            for (let i = 0; i < segments; i++) {
+                                g.save();
+                                g.translate(cx, cy);
+                                g.rotate(i * 2 * half + angleOffset);
+                                g.beginPath();
+                                g.moveTo(0, 0);
+                                g.arc(0, 0, R * 1.5, -half, +half, false);
+                                g.closePath();
+                                g.clip();
+                                if (mirror && (i % 2 === 1)) {
+                                    g.scale(-1, 1);
+                                }
+                                const w = vw * baseScale
+                                  , h = vh * baseScale;
+                                const dx = offX * w * 0.25
+                                  , dy = offY * h * 0.25;
+                                g.drawImage(videoG.canvas, -w / 2 + dx, -h / 2 + dy, w, h);
+                                g.restore();
+                            }
+                            if (maskCircle) {
+                                g.restore();
+                            }
+                        }
+                        const cancel = taskLoop(draw);
+                        this.stop = () => {
+                            cancel();
+                            dispose();
+                        }
+                        ;
+                    }
+                });
+
+                TaskManager.register({
+                    id: 'mosaic',
+                    start(ctx, root) {
+                        const {canvas, g, dispose} = makeFullCanvas(root);
+                        const videoG = ctx.videoG;
+                        const tmp = document.createElement('canvas');
+                        const tctx = tmp.getContext('2d');
+                        function draw() {
+                            const W = canvas.width
+                              , H = canvas.height;
+                            const vw = videoG.canvas.width
+                              , vh = videoG.canvas.height;
+                            const bs = Math.max(2, ctx.settings.mosaic.blockSize | 0 || 8);
+                            const sw = Math.max(1, Math.ceil(W / bs))
+                              , sh = Math.max(1, Math.ceil(H / bs));
+                            tmp.width = sw;
+                            tmp.height = sh;
+                            const scale = Math.max(W / vw, H / vh);
+                            const sW = W / scale
+                              , sH = H / scale;
+                            const sx = (vw - sW) / 2
+                              , sy = (vh - sH) / 2;
+                            tctx.imageSmoothingEnabled = true;
+                            tctx.clearRect(0, 0, sw, sh);
+                            tctx.drawImage(videoG.canvas, sx, sy, sW, sH, 0, 0, sw, sh);
+                            g.imageSmoothingEnabled = false;
+                            g.clearRect(0, 0, W, H);
+                            g.drawImage(tmp, 0, 0, W, H);
+                            g.imageSmoothingEnabled = true;
+                        }
+                        const cancel = taskLoop(draw);
+                        this.stop = () => {
+                            cancel();
+                            dispose();
+                        }
+                        ;
+                    }
+                });
+
+                // --- Mode select population ---
+                function populateModeSelect() {
+                    const sel = $('#selMode');
+                    sel.innerHTML = '';
+                    TaskManager.list().forEach(id => {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = id;
+                        sel.appendChild(opt);
+                    }
+                    );
+                    const cur = SettingsService.state.lastMode || 'slit-scan';
+                    sel.value = cur;
+                    $('#modeChip').textContent = cur;
+                    sel.addEventListener('change', () => TaskManager.start(sel.value));
+                }
+
+                // --- Scanner routing (with alias) ---
+                function setupScanner() {
+                    const s = SettingsService.state;
+                    const input = FocusService.input;
+                    const alias = {
+                        'pixelate': 'mosaic'
+                    };
+                    function process() {
+                        let v = input.value;
+                        if (s.scanner.trim)
+                            v = v.replace(/[\r\n]/g, '').trim();
+                        if (s.scanner.toLowerCase)
+                            v = v.toLowerCase();
+                        input.value = '';
+                        if (!v)
+                            return;
+                        v = alias[v] || v;
+                        const t = v;
+                        if (TaskManager.start)
+                            TaskManager.start(t);
+                        FocusService.schedule(s.ui.focusBackDelayMs);
+                    }
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            process();
+                        }
+                    }
+                    );
+                    input.addEventListener('blur', () => FocusService.schedule(SettingsService.state.ui.focusBackDelayMs));
+                    setTimeout( () => FocusService.reset(), 50);
+                }
+
+                // --- Fullscreen ---
+                function setFsClass() {
+                    document.body.classList.toggle('fullscreen', !!document.fullscreenElement);
+                    CursorService.kick();
+                }
+                $('#btnFullscreen').addEventListener('click', async () => {
+                    try {
+                        await document.body.requestFullscreen();
+                        setFsClass();
+                        CursorService.kick();
+                        if (!VideoService.isRunning()) {
+                            try {
+                                await VideoService.start();
+                                $('#btnCamToggle').textContent = 'Stop Camera';
+                            } catch (e) {
+                                if (!document.fullscreenElement)
+                                    Toast.show('Camera start failed');
+                            }
+                        }
+                        FocusService.schedule(SettingsService.state.ui.focusBackDelayMs);
+                    } catch (e) {
+                        Toast.show('Fullscreen failed');
+                    }
+                }
+                );
+                document.addEventListener('fullscreenchange', () => {
+                    setFsClass();
+                    FocusService.schedule(SettingsService.state.ui.focusBackDelayMs);
+                }
+                );
+
+                // --- Camera controls ---
+                async function refreshDevices(selected) {
+                    try {
+                        const devs = await navigator.mediaDevices.enumerateDevices();
+                        const cams = devs.filter(d => d.kind === 'videoinput');
+                        const sel = $('#selCamera');
+                        sel.innerHTML = '';
+                        cams.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d.deviceId;
+                            opt.textContent = d.label || 'Camera';
+                            sel.appendChild(opt);
+                        }
+                        );
+                        if (selected) {
+                            sel.value = selected;
+                        }
+                    } catch (e) {}
+                }
+                $('#btnCamToggle').addEventListener('click', async () => {
+                    if (VideoService.isRunning()) {
+                        VideoService.stop();
+                        $('#btnCamToggle').textContent = 'Start Camera';
+                        return;
+                    }
+                    try {
+                        const st = await VideoService.start();
+                        $('#btnCamToggle').textContent = 'Stop Camera';
+                        const pref = SettingsService.state.video.resolution;
+                        if (st && `${st.width}x${st.height}` !== pref && !document.fullscreenElement)
+                            Toast.show(`Actual ${st.width}x${st.height}, not ${pref}`);
+                        FocusService.schedule(SettingsService.state.ui.focusBackDelayMs);
+                    } catch (e) {
+                        if (!document.fullscreenElement)
+                            Toast.show('Camera permission denied');
+                    }
+                }
+                );
+                $('#selResolution').addEventListener('change', async (e) => {
+                    const before = SettingsService.state.video.resolution;
+                    SettingsService.state.video.resolution = e.target.value;
+                    SettingsService.save();
+                    if (VideoService.isRunning() && before !== e.target.value) {
+                        VideoService.stop();
+                        try {
+                            await VideoService.start();
+                        } catch (e) {
+                            Toast.show('Resolution change failed');
+                        }
+                    }
+                }
+                );
+                $('#selCamera').addEventListener('change', async (e) => {
+                    const before = SettingsService.state.video.deviceId;
+                    SettingsService.state.video.deviceId = e.target.value || null;
+                    SettingsService.save();
+                    if (VideoService.isRunning() && before !== SettingsService.state.video.deviceId) {
+                        VideoService.stop();
+                        try {
+                            await VideoService.start();
+                        } catch (e) {
+                            Toast.show('Camera switch failed');
+                        }
+                    }
+                }
+                );
+
+                // --- Settings panel & Live Apply ---
+                const panel = $('#settingsPanel');
+                function openSettings() {
+                    FocusService.holdOn();
+                    $('#jsonEditor').value = SettingsService.export();
+                    $('#sideResolution').value = SettingsService.state.video.resolution;
+                    $('#sideCursorDelay').value = String(SettingsService.state.ui.cursorHideDelayMs);
+                    $('#sideFocusDelay').value = String(SettingsService.state.ui.focusBackDelayMs);
+                    panel.classList.add('active');
+                }
+                function closeSettings() {
+                    panel.classList.remove('active');
+                    setTimeout( () => {
+                        FocusService.holdOff();
+                        FocusService.schedule(SettingsService.state.ui.focusBackDelayMs);
+                    }
+                    , 50);
+                }
+                $('#btnSettings').addEventListener('click', openSettings);
+                $('#btnCloseSettings').addEventListener('click', closeSettings);
+
+                async function applySettingsNow(prev) {
+                    // reflect selects
+                    $('#selResolution').value = SettingsService.state.video.resolution;
+                    CursorService.setDelay(SettingsService.state.ui.cursorHideDelayMs);
+                    // camera restart if needed
+                    if (prev.video.resolution !== SettingsService.state.video.resolution || prev.video.deviceId !== SettingsService.state.video.deviceId || prev.video.mirror !== SettingsService.state.video.mirror) {
+                        if (VideoService.isRunning()) {
+                            VideoService.stop();
+                            try {
+                                await VideoService.start();
+                            } catch (e) {
+                                Toast.show('Camera re-init failed');
+                            }
+                        }
+                    }
+                    // restart current task to apply visual params immediately
+                    TaskManager.restart();
+                }
+
+                $('#btnSaveJson').addEventListener('click', async () => {
+                    try {
+                        const prev = structuredClone(SettingsService.state);
+                        SettingsService.import($('#jsonEditor').value);
+                        await applySettingsNow(prev);
+                        Toast.show('Settings saved & applied');
+                        closeSettings();
+                    } catch (e) {
+                        Toast.show('Invalid JSON');
+                    }
+                }
+                );
+
+                $('#btnExport').addEventListener('click', () => {
+                    const blob = new Blob([SettingsService.export()],{
+                        type: 'application/json'
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'settings.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }
+                );
+                $('#btnImport').addEventListener('click', () => {
+                    const inp = document.createElement('input');
+                    inp.type = 'file';
+                    inp.accept = 'application/json,.json';
+                    inp.onchange = () => {
+                        const f = inp.files[0];
+                        if (!f)
+                            return;
+                        const fr = new FileReader();
+                        fr.onload = () => {
+                            $('#jsonEditor').value = fr.result;
+                        }
+                        ;
+                        fr.readAsText(f);
+                    }
+                    ;
+                    inp.click();
+                }
+                );
+                $('#btnApplyQuick').addEventListener('click', async () => {
+                    const prev = structuredClone(SettingsService.state);
+                    SettingsService.state.video.resolution = $('#sideResolution').value;
+                    SettingsService.state.ui.cursorHideDelayMs = parseInt($('#sideCursorDelay').value, 10);
+                    SettingsService.state.ui.focusBackDelayMs = parseInt($('#sideFocusDelay').value, 10);
+                    SettingsService.save();
+                    await applySettingsNow(prev);
+                    Toast.show('Quick settings applied');
+                }
+                );
+
+                // --- Init ---
+                (async function init() {
+                    const st = SettingsService.state;
+                    CursorService.setDelay(st.ui.cursorHideDelayMs);
+                    try {
+                        await refreshDevices(st.video.deviceId);
+                        if (st.video.deviceId)
+                            $('#selCamera').value = st.video.deviceId;
+                    } catch (e) {}
+                    populateModeSelect();
+                    await TaskManager.start(st.lastMode || 'slit-scan');
+                    try {
+                        await VideoService.start();
+                        $('#btnCamToggle').textContent = 'Stop Camera';
+                    } catch (e) {}
+                    // scanner last
+                    (function setupScanner() {
+                        const s = SettingsService.state;
+                        const input = FocusService.input;
+                        const alias = {
+                            'pixelate': 'mosaic'
+                        };
+                        function process() {
+                            let v = input.value;
+                            if (s.scanner.trim)
+                                v = v.replace(/[\r\n]/g, '').trim();
+                            if (s.scanner.toLowerCase)
+                                v = v.toLowerCase();
+                            input.value = '';
+                            if (!v)
+                                return;
+                            v = alias[v] || v;
+                            TaskManager.start(v);
+                            FocusService.schedule(s.ui.focusBackDelayMs);
+                        }
+                        input.addEventListener('keydown', e => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                process();
+                            }
+                        }
+                        );
+                        input.addEventListener('blur', () => FocusService.schedule(SettingsService.state.ui.focusBackDelayMs));
+                        setTimeout( () => FocusService.reset(), 50);
+                    }
+                    )();
+                }
+                )();
+            }
+            )();
+        </script>
+    </body>
+</html>
