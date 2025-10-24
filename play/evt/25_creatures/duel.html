@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>신기한 생물 미니 TCG — Kiosk</title>
+  <title>신기한 생물 대결</title>
   <style>
     :root{
       --bg:#0b0f16; --bg2:#0b0f16; --fg:#e7ecff; --muted:#97a2c1; --card:#111827; --border:#20283a; --accent:#7aa2f7;
       --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --win:#58d68d; --lose:#ec7063; --draw:#f7dc6f;
-      --plus:#58d68d; --minus:#ec7063;
+      --plus:#ffd700; --minus:#ffd700;
       --slotW: 540px;
       --centerW: 780px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;overflow:hidden}
-    body{margin:0;background:linear-gradient(180deg,#0b0f16,#0d1320 50%,#0b0f16);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans KR"}
+    body{margin:0;background:linear-gradient(180deg,#0b0f16,#0d1320 50%,#0b0f16);color:var(--fg);font:22px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans KR"}
 
     body.idle{animation: idlePulse 12s ease-in-out 1}
     @keyframes idlePulse{
@@ -23,94 +23,111 @@
       100%{background:linear-gradient(180deg,#0b0f16,#0d1320 50%,#0b0f16)}
     }
 
-    .app{display:grid;grid-template-rows:auto 1fr;height:100vh}
-    .toolbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);font-size:14px}
+    .app{display:grid;grid-template-rows:auto 1fr;height:100vh;width:100vw}
+    .toolbar{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border-bottom:1px solid var(--border);font-size:18px}
     .toolbar .spacer{flex:1}
-    .badge{padding:.3rem .7rem;border-radius:999px;border:1px solid var(--border);font-weight:700;font-size:13px;color:var(--fg)}
+    .badge{padding:.35rem .8rem;border-radius:999px;border:1px solid var(--border);font-weight:800;font-size:16px;color:var(--fg)}
     .badge.ok{background:#102616;color:var(--ok);border-color:#1f3b26}
     .badge.warn{background:#2b2011;color:var(--warn);border-color:#4e3a20}
-    .btn{appearance:none;border:1px solid var(--border);background:#0f172a;color:var(--fg);border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:13px}
+    .btn{appearance:none;border:1px solid var(--border);background:#0f172a;color:var(--fg);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;font-size:16px}
     .btn:hover{background:#0c1423}
 
-    .stage{display:grid;grid-template-columns: var(--slotW) var(--centerW) var(--slotW);gap:10px;padding:10px;height:calc(100vh - 54px);overflow:hidden}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;min-height:0}
+    .stage{display:grid;grid-template-columns:minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(300px, 1fr);gap:12px;padding:12px;height:calc(100vh - 62px);width:100%;overflow:hidden}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;min-height:0}
 
     /* 플레이어 카드 */
-    .player{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;height:100%;padding:12px}
-    .p-header{display:flex;align-items:center;gap:10px;justify-content:center}
-    .p-name{font-size:22px;font-weight:900;letter-spacing:.2px}
-    .p-sub{color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-    .p-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-    .pill{border:1px solid var(--border);padding:6px 12px;border-radius:999px;font-size:14px;font-weight:700}
-    .pill.age-only{width:16px;height:16px;padding:0;border-radius:50%;border-width:2px}
+    .player{display:grid;grid-template-rows:auto auto auto auto 1fr auto;gap:10px;height:100%;padding:14px}
+    .p-creature{font-size:32px;font-weight:900;letter-spacing:.2px;text-align:center}
+    .p-coords{color:var(--muted);font-size:18px;text-align:center}
+    .p-intro{color:var(--fg);font-size:19px;text-align:center}
+    .p-meta{color:#cfd7ff;font-weight:800;font-size:19px;text-align:center}
 
-    .imgbox{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#0b0f16;width:100%;max-width:420px;aspect-ratio:1/1;margin:0 auto}
+    .imgbox{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#0b0f16;width:100%;max-width:460px;aspect-ratio:1/1;margin:0 auto}
     .imgbox img{width:100%;height:100%;object-fit:cover;display:block}
-    .imgbox .fallback{position:absolute;inset:0;display:grid;place-items:center;color:#6b7280;font-size:14px}
+    .imgbox .fallback{position:absolute;inset:0;display:grid;place-items:center;color:#6b7280;font-size:18px}
 
-    .attrs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:420px;margin:0 auto;width:100%}
-    .a{background:#0e1527;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;transition:all .3s ease}
+    .attrs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:460px;margin:0 auto;width:100%}
+    .a{background:#0e1527;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;transition:all .3s ease}
     .a.highlight{background:rgba(122,162,247,.15);border:2px solid var(--accent);transform:scale(1.02)}
-    .a .k{font-size:12px;color:var(--muted);font-weight:600}
-    .a .v{font-size:22px;font-weight:900;color:var(--accent)}
+    .a .k{font-size:15px;color:var(--muted);font-weight:700}
+    .a .v{font-size:28px;font-weight:900;color:var(--accent)}
 
     /* 중앙 패널 */
-    .center{display:grid;grid-template-rows:auto auto 1fr;gap:8px;height:100%}
-    .roulette{display:grid;place-items:center;padding:12px}
-    .roulette-display{padding:16px;border-radius:12px;background:rgba(122,162,247,.08);border:2px solid rgba(122,162,247,.35);min-width:360px;text-align:center;transition:all .3s ease}
+    .center{display:grid;grid-template-rows:auto auto 1fr;gap:10px;height:100%}
+    .roulette{display:grid;place-items:center;padding:14px}
+    .roulette-display{padding:18px;border-radius:14px;background:rgba(122,162,247,.08);border:2px solid rgba(122,162,247,.35);min-width:380px;text-align:center;transition:all .3s ease}
     .roulette-display.spinning{animation:roulettePulse .15s ease-in-out infinite;border-color:rgba(245,87,108,.5);background:rgba(245,87,108,.08)}
     @keyframes roulettePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
-    .roulette-display .emoji{font-size:40px;display:block;margin-bottom:6px}
-    .roulette-display .name{font-size:20px;font-weight:900;color:var(--accent)}
-    .roulette-display .formula{font-size:18px;font-weight:800;margin-top:4px}
-    .formula .op-plus{color:var(--plus)}
-    .formula .op-minus{color:var(--minus)}
-    .desc{font-size:13px;color:var(--muted);margin-top:4px}
+    .roulette-display .emoji{font-size:52px;display:block;margin-bottom:6px}
+    .roulette-display .name{font-size:28px;font-weight:900;color:var(--accent)}
+    .roulette-display .formula{font-size:26px;font-weight:900;margin-top:6px}
+    .formula .op-plus{color:var(--plus);font-size:1.2em;text-shadow:0 0 10px rgba(255,215,0,.6)}
+    .formula .op-minus{color:var(--minus);font-size:1.2em;text-shadow:0 0 10px rgba(255,215,0,.6)}
+    .desc{font-size:17px;color:var(--muted);margin-top:6px}
 
-    .result{font-size:20px;text-align:center;margin:6px 0;font-weight:900;padding:10px;border-radius:8px;background:rgba(0,0,0,.25);opacity:0;animation:fadeIn .5s ease forwards}
+    .result{font-size:26px;text-align:center;margin:6px 0;font-weight:900;padding:12px;border-radius:10px;background:rgba(0,0,0,.25);opacity:0;animation:fadeIn .5s ease forwards}
     .win{color:var(--win);background:rgba(88,214,141,.1)}
     .lose{color:var(--lose);background:rgba(236,112,99,.1)}
     .draw{color:var(--draw);background:rgba(247,220,111,.1)}
     @keyframes fadeIn{to{opacity:1}}
 
     /* 전투 결과 영역 */
-    .battle-results{border-top:1px solid var(--border);padding:12px;overflow-y:auto;max-height:calc(100vh - 500px)}
-    .duel-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
+    .battle-results{border-top:1px solid var(--border);padding:14px;overflow-y:auto;max-height:calc(100vh - 520px)}
+    .duel-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start}
     .player-battle{text-align:center}
-    .score{font-size:36px;font-weight:900;color:var(--accent);margin:6px 0}
-    .formula-breakdown{background:rgba(0,0,0,.3);padding:10px;border-radius:6px;margin-top:8px;font-size:15px}
-    .formula-breakdown .calc{font-weight:700;font-family:monospace}
-    .formula-breakdown .op-plus{color:var(--plus);font-size:1.3em;margin:0 4px}
-    .formula-breakdown .op-minus{color:var(--minus);font-size:1.3em;margin:0 4px}
+    .score{font-size:48px;font-weight:900;color:var(--accent);margin:6px 0}
+    .formula-breakdown{background:rgba(0,0,0,.3);padding:12px;border-radius:8px;margin-top:8px;font-size:20px}
+    .formula-breakdown .calc{font-weight:800;font-family:monospace}
+    .formula-breakdown .op-plus{color:var(--plus);font-size:1.3em;margin:0 4px;text-shadow:0 0 8px rgba(255,215,0,.5)}
+    .formula-breakdown .op-minus{color:var(--minus);font-size:1.3em;margin:0 4px;text-shadow:0 0 8px rgba(255,215,0,.5)}
     .formula-breakdown .attr{color:var(--accent)}
-    .vs-divider{font-size:18px;color:var(--muted);text-align:center;padding:0 10px;font-weight:900}
+    .vs-divider{font-size:24px;color:var(--muted);text-align:center;padding:0 10px;font-weight:900}
 
     /* 속성 바 */
-    .bars{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-    .bar{background:#0f1730;border:1px solid var(--border);border-radius:6px;padding:8px;transition:all .3s ease}
+    .bars{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+    .bar{background:#0f1730;border:1px solid var(--border);border-radius:8px;padding:10px;transition:all .3s ease}
     .bar.highlight{background:rgba(122,162,247,.15);border:2px solid var(--accent);transform:scale(1.02)}
-    .bar-label{display:flex;justify-content:space-between;font-size:12px;color:#a8b2d8;margin-bottom:6px;font-weight:700}
+    .bar-label{display:flex;justify-content:space-between;font-size:16px;color:#a8b2d8;margin-bottom:6px;font-weight:800}
     .bar.highlight .bar-label{color:#fff}
-    .bar-track{height:10px;background:#0b1330;border-radius:5px;overflow:hidden}
+    .bar-track{height:12px;background:#0b1330;border-radius:6px;overflow:hidden}
     .bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#25a1ff,#7cd3ff);transition:width .6s cubic-bezier(0.4, 0, 0.2, 1);box-shadow:0 0 8px rgba(124,207,255,.3)}
     .bar.highlight .bar-fill{background:linear-gradient(90deg,#7cf,#25a1ff);box-shadow:0 0 12px rgba(124,207,255,.6)}
 
     /* 환경 설명 */
-    .env-explain{background:rgba(122,162,247,.08);border:1px solid rgba(122,162,247,.2);border-radius:8px;padding:10px;margin:8px 0;text-align:center}
-    .env-explain .title{font-size:13px;color:var(--accent);font-weight:700;margin-bottom:4px}
-    .env-explain .detail{font-size:13px;color:var(--muted)}
+    .env-explain{background:rgba(122,162,247,.08);border:1px solid rgba(122,162,247,.2);border-radius:10px;padding:12px;margin:8px 0;text-align:center}
+    .env-explain .title{font-size:17px;color:var(--accent);font-weight:800;margin-bottom:4px}
+    .env-explain .detail{font-size:17px;color:var(--muted)}
 
     #scannerInput{position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none}
-    .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:30}
-    .toast{background:rgba(30,30,30,.95);border:1px solid var(--border);color:var(--fg);padding:.6rem .8rem;border-radius:.6rem;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:14px}
+    .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:30}
+    .toast{background:rgba(30,30,30,.95);border:1px solid var(--border);color:var(--fg);padding:.7rem .9rem;border-radius:.7rem;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:17px}
 
     .hidden{display:none !important}
+
+    /* 반응형 조정 */
+    @media (max-width: 1600px) {
+      .stage{grid-template-columns:minmax(280px, 1fr) minmax(450px, 1.5fr) minmax(280px, 1fr)}
+      .p-creature{font-size:28px}
+      .roulette-display .emoji{font-size:48px}
+      .roulette-display .name{font-size:24px}
+      .roulette-display .formula{font-size:22px}
+      .score{font-size:42px}
+    }
+
+    @media (max-width: 1200px) {
+      body{font:20px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans KR"}
+      .stage{grid-template-columns:minmax(250px, 1fr) minmax(400px, 1.5fr) minmax(250px, 1fr)}
+      .p-creature{font-size:26px}
+      .roulette-display .emoji{font-size:44px}
+      .roulette-display .name{font-size:22px}
+      .roulette-display .formula{font-size:20px}
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="toolbar" data-scan-guard>
-      <strong>🃏 신기한 생물 미니 TCG — Kiosk</strong>
+      <strong style="font-size:18px">🃏 신기한 생물 대결</strong>
       <span class="badge warn" id="focusBadge">not focused</span>
       <span class="spacer"></span>
       <button class="btn" id="btnFullscreen" title="전체 화면">⛶ 전체 화면</button>
@@ -122,15 +139,14 @@
       <!-- Player 1 -->
       <section class="card">
         <div class="player" id="p1">
-          <div class="p-header">
-            <div class="p-name" id="p1Title">플레이어 1</div>
-            <div class="p-badges" id="p1Badges"></div>
-          </div>
-          <div class="p-sub" id="p1Desc">—</div>
+          <div class="p-creature" id="p1Creature">신기한 생물</div>
+          <div class="p-coords" id="p1Coords">—</div>
           <div class="imgbox">
             <img id="p1Img" alt="" style="display:none" />
             <div class="fallback" id="p1ImgFallback">이미지 없음</div>
           </div>
+          <div class="p-intro" id="p1Intro">—</div>
+          <div class="p-meta" id="p1Meta">플레이어 1</div>
           <div class="attrs" id="p1Attrs"></div>
         </div>
       </section>
@@ -162,7 +178,7 @@
               <div class="formula-breakdown" id="p1Breakdown"></div>
               <div class="bars" id="p1Bars"></div>
             </div>
-            <div class="vs-divider">⚔️<br>VS<br>⚔️</div>
+            <div class="vs-divider"> <br>VS<br> </div>
             <div class="player-battle">
               <div class="p-name" id="p2Mini">—</div>
               <div class="score" id="p2Score">0</div>
@@ -176,15 +192,14 @@
       <!-- Player 2 -->
       <section class="card">
         <div class="player" id="p2">
-          <div class="p-header">
-            <div class="p-name" id="p2Title">플레이어 2</div>
-            <div class="p-badges" id="p2Badges"></div>
-          </div>
-          <div class="p-sub" id="p2Desc">—</div>
+          <div class="p-creature" id="p2Creature">신기한 생물</div>
+          <div class="p-coords" id="p2Coords">—</div>
           <div class="imgbox">
             <img id="p2Img" alt="" style="display:none" />
             <div class="fallback" id="p2ImgFallback">이미지 없음</div>
           </div>
+          <div class="p-intro" id="p2Intro">—</div>
+          <div class="p-meta" id="p2Meta">플레이어 2</div>
           <div class="attrs" id="p2Attrs"></div>
         </div>
       </section>
@@ -220,30 +235,30 @@
     }
 
     const ENVS = [
-      { name:'불타는 산', emoji:'\uD83C\uDF0B', desc:'모험심', attr1:'용감함', attr2:'호기심', op:'+' },
-      { name:'꿈의 바다', emoji:'\uD83C\uDF0C', desc:'꿈꾸는 마음', attr1:'상상력', attr2:'상냥함', op:'+' },
-      { name:'신비의 숲', emoji:'\uD83C\uDF32', desc:'탐구심', attr1:'호기심', attr2:'상냥함', op:'+' },
+      { name:'불타는 산', emoji:'🌋', desc:'모험심', attr1:'용감함', attr2:'호기심', op:'+' },
+      { name:'꿈의 바다', emoji:'🌌', desc:'꿈꾸는 마음', attr1:'상상력', attr2:'상냥함', op:'+' },
+      { name:'신비의 숲', emoji:'🌲', desc:'탐구심', attr1:'호기심', attr2:'상냥함', op:'+' },
       { name:'얼어붙은 동굴', emoji:'❄️', desc:'위험 회피', attr1:'용감함', attr2:'호기심', op:'-' },
-      { name:'어두운 늪', emoji:'\uD83C\uDF11', desc:'두려움', attr1:'용감함', attr2:'상상력', op:'-' },
+      { name:'어두운 늪', emoji:'🌑', desc:'두려움', attr1:'용감함', attr2:'상상력', op:'-' },
       { name:'빛나는 초원', emoji:'✨', desc:'평화로움', attr1:'상냥함', attr2:'호기심', op:'+' },
       { name:'천둥의 계곡', emoji:'⚡', desc:'압박', attr1:'용감함', attr2:'상냥함', op:'-' },
-      { name:'고요한 호수', emoji:'\uD83C\uDF4A', desc:'평온', attr1:'상냥함', attr2:'상상력', op:'+' },
-      { name:'화산 지대', emoji:'\uD83D\uDD25', desc:'도전', attr1:'용감함', attr2:'상상력', op:'+' },
-      { name:'달빛 정원', emoji:'\uD83C\uDF19', desc:'환상', attr1:'상상력', attr2:'호기심', op:'+' },
-      { name:'거센 바람', emoji:'\uD83D\uDCA8', desc:'역경', attr1:'용감함', attr2:'상냥함', op:'-' },
+      { name:'고요한 호수', emoji:'🌊', desc:'평온', attr1:'상냥함', attr2:'상상력', op:'+' },
+      { name:'화산 지대', emoji:'🔥', desc:'도전', attr1:'용감함', attr2:'상상력', op:'+' },
+      { name:'달빛 정원', emoji:'🌙', desc:'환상', attr1:'상상력', attr2:'호기심', op:'+' },
+      { name:'거센 바람', emoji:'💨', desc:'역경', attr1:'용감함', attr2:'상냥함', op:'-' },
       { name:'신성한 사원', emoji:'⛩️', desc:'경외', attr1:'상냥함', attr2:'용감함', op:'+' },
-      { name:'마법의 샘', emoji:'\uD83D\uDC8E', desc:'발견', attr1:'호기심', attr2:'상상력', op:'+' },
-      { name:'독버섯 숲', emoji:'\uD83C\uDF44', desc:'위험', attr1:'호기심', attr2:'상냥함', op:'-' },
+      { name:'마법의 샘', emoji:'💎', desc:'발견', attr1:'호기심', attr2:'상상력', op:'+' },
+      { name:'독버섯 숲', emoji:'🍄', desc:'위험', attr1:'호기심', attr2:'상냥함', op:'-' },
       { name:'별빛 언덕', emoji:'⭐', desc:'희망', attr1:'상상력', attr2:'용감함', op:'+' },
-      { name:'폭포수', emoji:'\uD83C\uDFDE️', desc:'자유', attr1:'용감함', attr2:'상상력', op:'+' },
-      { name:'안개 낀 다리', emoji:'\uD83C\uDF81', desc:'불확실성', attr1:'호기심', attr2:'용감함', op:'-' },
-      { name:'꽃밭', emoji:'\uD83C\uDF38', desc:'치유', attr1:'상냥함', attr2:'상상력', op:'+' },
-      { name:'용암 폭포', emoji:'\uD83C\uDF0B', desc:'극한', attr1:'용감함', attr2:'호기심', op:'-' },
-      { name:'수정 동굴', emoji:'\uD83D\uDD20', desc:'경이', attr1:'호기심', attr2:'상상력', op:'+' },
-      { name:'지진 지대', emoji:'\uD83C\uDFD4️', desc:'불안정', attr1:'용감함', attr2:'호기심', op:'-' },
-      { name:'무지개 폭포', emoji:'\uD83C\uDF08', desc:'행복', attr1:'상냥함', attr2:'상상력', op:'+' },
-      { name:'심연', emoji:'\uD83D\uDD73️', desc:'공포', attr1:'용감함', attr2:'상상력', op:'-' },
-      { name:'선물 상자', emoji:'\uD83C\uDF81', desc:'놀라움', attr1:'호기심', attr2:'상냥함', op:'+' },
+      { name:'폭포수', emoji:'🏞️', desc:'자유', attr1:'용감함', attr2:'상상력', op:'+' },
+      { name:'안개 낀 다리', emoji:'🌁', desc:'불확실성', attr1:'호기심', attr2:'용감함', op:'-' },
+      { name:'꽃밭', emoji:'🌸', desc:'치유', attr1:'상냥함', attr2:'상상력', op:'+' },
+      { name:'용암 폭포', emoji:'🌋', desc:'극한', attr1:'용감함', attr2:'호기심', op:'-' },
+      { name:'수정 동굴', emoji:'💠', desc:'경이', attr1:'호기심', attr2:'상상력', op:'+' },
+      { name:'지진 지대', emoji:'🏔️', desc:'불안정', attr1:'용감함', attr2:'호기심', op:'-' },
+      { name:'무지개 폭포', emoji:'🌈', desc:'행복', attr1:'상냥함', attr2:'상상력', op:'+' },
+      { name:'심연', emoji:'🕳️', desc:'공포', attr1:'용감함', attr2:'상상력', op:'-' },
+      { name:'선물 상자', emoji:'🎁', desc:'놀라움', attr1:'호기심', attr2:'상냥함', op:'+' },
       { name:'타임머신', emoji:'⏰', desc:'모험', attr1:'상상력', attr2:'용감함', op:'+' }
     ];
 
@@ -277,9 +292,17 @@
 
     // 🔤 유틸
     function prettyName(s){ return String(s||'').replace(/[_-]+/g,' ').trim(); }
-    function parseLatLng(str){
-      const m = String(str||'').match(/(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/);
-      return m ? { lat: parseFloat(m[1]), lng: parseFloat(m[2]) } : null;
+    function parseLatLngSimple(str){
+      const clean = String(str||'').trim();
+      if(!clean) return null;
+      let sep = clean.includes(',') ? ',' : ' ';
+      const arr = clean.split(sep).map(t=>t.trim()).filter(Boolean);
+      if(arr.length>=2){
+        const lat = parseFloat(arr[0]);
+        const lng = parseFloat(arr[1]);
+        if(!Number.isNaN(lat) && !Number.isNaN(lng)) return {lat,lng};
+      }
+      return null;
     }
 
     function focusScanner(){
@@ -296,7 +319,7 @@
         if(focusLost && document.visibilityState==='visible'){
           focusScanner();
         }
-      }, 3000); // 3초 후 자동 포커스 복구
+      }, 3000);
     }
 
     scanner.addEventListener('blur', ()=>{
@@ -315,7 +338,6 @@
     $('#btnFullscreen').addEventListener('click', ()=>{
       if(!document.fullscreenElement){ document.documentElement.requestFullscreen().catch(e=>console.error(e)); }
       else { document.exitFullscreen(); }
-      // 전체화면 전환 시에도 스캐너 포커스 유지 시도
       setTimeout(()=>{ if(focusLost || document.activeElement!==scanner) focusScanner(); }, 200);
     });
 
@@ -338,22 +360,27 @@
     async function loadTSV(url){
       const res = await fetch(url);
       const text = await res.text();
-      const lines = text.trim().split('\n');
-      const headers = lines[0].split('\t');
+      const NL = String.fromCharCode(10);
+      const TAB = String.fromCharCode(9);
+      const lines = text.trim().split(NL);
+      const headers = lines[0].split(TAB);
       return lines.slice(1).map(line=>{
-        const vals = line.split('\t');
+        const vals = line.split(TAB);
         const obj = {};
-        headers.forEach((h,i)=>{ obj[h.trim()] = vals[i]?.trim() || ''; });
+        headers.forEach((h,i)=>{ obj[h.trim()] = (vals[i]||'').trim(); });
         return obj;
       });
+    }
+
+    function removeExtPng(name){
+      const i = name.lastIndexOf('.');
+      return i>0 ? name.slice(0,i) : name;
     }
 
     async function preload(){
       try{
         const meta = await loadTSV(DATA_TSV);
-        meta.forEach(row=>{
-          if(row.file){ dataMap.set(row.file, row); }
-        });
+        meta.forEach(row=>{ if(row.file) dataMap.set(row.file, row); });
         const logs = await loadTSV(SHEET_EXPORT);
         logs.forEach(row=>{
           if(!row.file) return;
@@ -363,24 +390,13 @@
           if(!prev || ts > prev._ts){ latestByFile.set(row.file, row); }
         });
         for(const [file, row] of latestByFile){
-          const base = file.replace(/\.(png)$/i,'');
-          
-          // NFD와 NFC 양쪽 모두 인덱싱
+          const base = removeExtPng(file);
           const baseNFD = base.normalize('NFD').trim();
           const baseNFC = base.normalize('NFC').trim();
-          
-          // NFD 해시
           const hNFD = await sha256hex(baseNFD);
-          const code8NFD = hNFD.slice(0,8);
-          codeIndex.set(code8NFD, file);
-          
-          // NFC 해시 (다를 경우에만)
-          if(baseNFC !== baseNFD){
-            const hNFC = await sha256hex(baseNFC);
-            const code8NFC = hNFC.slice(0,8);
-            codeIndex.set(code8NFC, file);
-          }
-          
+          const hNFC = await sha256hex(baseNFC);
+          codeIndex.set(hNFD.slice(0,8), file);
+          codeIndex.set(hNFC.slice(0,8), file);
           baseToFile.set(baseNFD, file);
           baseToFile.set(baseNFC, file);
           allBases.push(baseNFD);
@@ -403,8 +419,8 @@
     function calcScore(dict, env){ return (env.op==='+')? dict[env.attr1]+dict[env.attr2] : dict[env.attr1]-dict[env.attr2]; }
 
     const PLAYERS_DATA = [
-      {title:'#p1Title',badges:'#p1Badges',desc:'#p1Desc',img:'#p1Img',imgFb:'#p1ImgFallback',attrs:'#p1Attrs'},
-      {title:'#p2Title',badges:'#p2Badges',desc:'#p2Desc',img:'#p2Img',imgFb:'#p2ImgFallback',attrs:'#p2Attrs'}
+      {creature:'#p1Creature',coords:'#p1Coords',intro:'#p1Intro',meta:'#p1Meta',img:'#p1Img',imgFb:'#p1ImgFallback',attrs:'#p1Attrs'},
+      {creature:'#p2Creature',coords:'#p2Coords',intro:'#p2Intro',meta:'#p2Meta',img:'#p2Img',imgFb:'#p2ImgFallback',attrs:'#p2Attrs'}
     ];
 
     function leftOutRightIn(){
@@ -414,70 +430,40 @@
 
     function renderPlayerCard(idx, p){
       const el = PLAYERS_DATA[idx];
-      const titleEl = $(el.title);
-      const badgesEl = $(el.badges);
-      const descEl = $(el.desc);
+      const creatureEl = $(el.creature);
+      const coordsEl = $(el.coords);
+      const introEl = $(el.intro);
+      const metaEl = $(el.meta);
       const imgEl = $(el.img);
       const imgFbEl = $(el.imgFb);
       const attrsEl = $(el.attrs);
 
       if(!p){
-        titleEl.textContent = `플레이어 ${idx+1}`;
-        badgesEl.innerHTML = '';
-        descEl.textContent = '—';
+        creatureEl.textContent = '신기한 생물';
+        coordsEl.textContent = '—';
+        introEl.textContent = '—';
+        metaEl.textContent = `플레이어 ${idx+1}`;
         imgEl.style.display='none';
         imgFbEl.style.display='grid';
         attrsEl.innerHTML = '';
         return;
       }
 
-      titleEl.textContent = p.name;
-      
-      badgesEl.innerHTML = '';
-      if(p.class){
-        const classPill = document.createElement('span');
-        classPill.className='pill';
-        classPill.textContent=p.class;
-        badgesEl.appendChild(classPill);
-      }
-      if(p.age){
-        const agePill = document.createElement('span');
-        agePill.className='pill age-only';
-        agePill.style.background = colorForAge(p.age);
-        agePill.style.borderColor = colorForAge(p.age);
-        agePill.title = `${p.age}세`;
-        badgesEl.appendChild(agePill);
-      }
-      // 📍 최초 발견 좌표 표시
+      creatureEl.textContent = p.creatureName || '신기한 생물';
       if(p.lat!=null && p.lng!=null){
-        const locPill = document.createElement('span');
-        locPill.className='pill';
-        locPill.textContent = `📍 ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`;
-        locPill.title = '최초 발견 위치 (위도, 경도)';
-        badgesEl.appendChild(locPill);
-      }
-
-      // 🦄 생물명 강조 + 설명
-      if(p.creatureName){
-        descEl.textContent = `🦄 ${p.creatureName}` + (p.desc? ` · ${p.desc}` : '');
+        coordsEl.textContent = `📍 ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`;
       } else {
-        descEl.textContent = p.desc || '—';
+        coordsEl.textContent = '—';
       }
-
-      attrsEl.innerHTML = '';
-      ATTRS_KO.forEach((k,i)=>{
-        const a = document.createElement('div');
-        a.className='a';
-        a.innerHTML = `<div class="k">${k}</div><div class="v">${p.norm[i]}</div>`;
-        attrsEl.appendChild(a);
-      });
 
       imgFbEl.style.display='grid';
       imgEl.style.display='none';
       imgEl.onerror = function(){
         if(!this._triedUpper){
           this._triedUpper=true;
-          this.src = assetUrlForFile(p.file, true);
+          const n = p.file.normalize('NFC');
+          const upper = n.toLowerCase().endsWith('.png') ? n.slice(0,-4) + '.PNG' : n;
+          this.src = ASSET_BASE + encodeURIComponent(upper);
         } else {
           this.style.display='none';
           imgFbEl.style.display='grid';
@@ -487,7 +473,22 @@
         this.style.display='block';
         imgFbEl.style.display='none';
       };
-      imgEl.src = assetUrlForFile(p.file, false);
+      (function(){
+        const n = p.file.normalize('NFC');
+        const src = ASSET_BASE + encodeURIComponent(n);
+        imgEl.src = src;
+      })();
+
+      introEl.textContent = p.desc || '—';
+      metaEl.textContent = `${p.name}${p.class ? ', ' + p.class : ''}`;
+
+      attrsEl.innerHTML = '';
+      ATTRS_KO.forEach((k,i)=>{
+        const a = document.createElement('div');
+        a.className='a';
+        a.innerHTML = `<div class="k">${k}</div><div class="v">${p.norm[i]}</div>`;
+        attrsEl.appendChild(a);
+      });
     }
 
     function renderPlayers(){
@@ -496,14 +497,16 @@
     }
 
     function assetUrlForFile(file, tryUpper){
-      // 서버는 NFC(조합형)를 선호하므로 NFC로 정규화
       const normalized = file.normalize('NFC');
-      const base = tryUpper ? normalized.replace(/\.png$/i, '.PNG') : normalized;
+      let base = normalized;
+      if(tryUpper && normalized.toLowerCase().endsWith('.png')){
+        base = normalized.slice(0,-4) + '.PNG';
+      }
       return ASSET_BASE + encodeURIComponent(base);
     }
 
     function nameFromFile(file){
-      const base = file.replace(/\.(png)$/i, '');
+      const base = removeExtPng(file);
       const parts = base.split('_');
       const name = parts[0] || base;
       const creature = parts.slice(1).join('_') || '';
@@ -522,19 +525,12 @@
     async function resolveFileByShortCode(code){
       if(!code) return null;
       const norm = String(code).trim().toLowerCase();
-
-      // 8자리 고속 경로 (이미 양쪽 형식이 인덱싱되어 있음)
       if(norm.length === 8 && codeIndex.has(norm)) return codeIndex.get(norm);
-
-      // prefix 스캔
       let foundBase = null;
       for(const base of allBases){
-        // 이미 NFD/NFC 양쪽이 allBases에 들어있으므로 그대로 해시
         const h = await sha256hex(base.trim());
         if(h.slice(0, norm.length) === norm){
-          if(foundBase && foundBase !== base){
-            return { _ambiguous: true };
-          }
+          if(foundBase && foundBase !== base){ return { _ambiguous: true }; }
           foundBase = base;
         }
       }
@@ -543,21 +539,13 @@
 
     async function registerByCodeOrUrl(raw){
       let code = null;
-      try{
-        const u = new URL(raw);
-        code = u.searchParams.get('code') || u.searchParams.get('c');
-      }catch{ /* not a URL */ }
-      if(!code){
-        const m = String(raw).trim().match(/^[0-9a-f]{6,64}$/i);
-        if(m) code = m[0];
-      }
+      try{ const u = new URL(raw); code = u.searchParams.get('code') || u.searchParams.get('c'); }catch{}
+      if(!code){ const m = String(raw).trim().match(/^[0-9a-f]{6,64}$/i); if(m) code = m[0]; }
       if(!code){ Toast.show('등록되지 않은 코드입니다.'); return; }
 
       let file = await resolveFileByShortCode(code);
       if(file && file._ambiguous){ Toast.show('코드가 모호해요. 더 긴 코드를 사용해 주세요.'); return; }
-      if(!file){
-        try{ await preload(); file = await resolveFileByShortCode(code); }catch(e){ console.error(e); }
-      }
+      if(!file){ try{ await preload(); file = await resolveFileByShortCode(code); }catch(e){ console.error(e); } }
       if(!file){ Toast.show('등록되지 않은 코드입니다.'); return; }
 
       const row = getLatestRowForFile(file);
@@ -569,11 +557,11 @@
       const meta = dataMap.get(file) || {};
 
       const {name, creature} = nameFromFile(file);
-      const ll = parseLatLng(meta.latlng || '');
+      const ll = parseLatLngSimple(meta.latlng || '');
       const creatureName = prettyName(meta.creature || creature);
 
       const player = {
-        file, code, name, creature: creature.replace(/\.(png)$/i,''),
+        file, code, name, creature: creature,
         creatureName: creatureName || '',
         imgUrl: assetUrlForFile(file, false),
         desc: descFor(file, row),
@@ -675,12 +663,11 @@
       score1El.textContent = s1;
       score2El.textContent = s2;
 
-      // 미니 타이틀: 생물명 우선 표시
-      $('#p1Mini').textContent = p1.creatureName || p1.name;
-      $('#p2Mini').textContent = p2.creatureName || p2.name;
+      document.querySelector('#p1Mini').textContent = p1.creatureName || p1.name;
+      document.querySelector('#p2Mini').textContent = p2.creatureName || p2.name;
 
       const opClass = selectedEnv.op === '+' ? 'op-plus' : 'op-minus';
-      $('#p1Breakdown').innerHTML = `
+      document.querySelector('#p1Breakdown').innerHTML = `
         <span class="calc">
           <span class="attr">${p1.dictKo[selectedEnv.attr1]}</span>
           <span class="${opClass}">${selectedEnv.op}</span>
@@ -688,7 +675,7 @@
           = ${s1}
         </span>
       `;
-      $('#p2Breakdown').innerHTML = `
+      document.querySelector('#p2Breakdown').innerHTML = `
         <span class="calc">
           <span class="attr">${p2.dictKo[selectedEnv.attr1]}</span>
           <span class="${opClass}">${selectedEnv.op}</span>
@@ -697,11 +684,11 @@
         </span>
       `;
 
-      updateBars($('#p1Bars'), p1.dictKo, selectedEnv);
-      updateBars($('#p2Bars'), p2.dictKo, selectedEnv);
+      updateBars(document.querySelector('#p1Bars'), p1.dictKo, selectedEnv);
+      updateBars(document.querySelector('#p2Bars'), p2.dictKo, selectedEnv);
 
-      highlightAttrs($('#p1Attrs'), selectedEnv);
-      highlightAttrs($('#p2Attrs'), selectedEnv);
+      highlightAttrs(document.querySelector('#p1Attrs'), selectedEnv);
+      highlightAttrs(document.querySelector('#p2Attrs'), selectedEnv);
 
       envExplain.style.display='block';
       envDetail.innerHTML = `
@@ -753,12 +740,10 @@
       if(text){ e.preventDefault(); processScan(text); setTimeout(focusScanner, 30); }
     });
 
-    $('#btnRoll').addEventListener('click', ()=>{ runRoulette(); focusScanner(); });
-    $('#btnDuel').addEventListener('click', ()=>{ duel(); focusScanner(); });
+    document.querySelector('#btnRoll').addEventListener('click', ()=>{ runRoulette(); focusScanner(); });
+    document.querySelector('#btnDuel').addEventListener('click', ()=>{ duel(); focusScanner(); });
 
-    preload().then(()=>{
-      // Ready
-    }).catch(err=> console.error(err));
+    preload().then(()=>{}).catch(err=> console.error(err));
 
     renderPlayers();
     focusScanner();
