@@ -56,6 +56,7 @@
     /* 이미지 박스: 둥둥 + 아우라 + 스파클 */
     .player .imgbox{
     position:relative;
+    z-index: 0;
     will-change: transform, filter;
     animation: float var(--float-duration) ease-in-out infinite;
     }
@@ -88,6 +89,7 @@
     /* 이미지 자체: 용감함 떨림 + 상상력 색상 순환 */
     .player .imgbox img{
     display:block; width:100%; height:100%; object-fit:cover;
+    z-index: 2;
     animation:
         tremble var(--tremble-duration) linear infinite,
         hue var(--hue-duration) linear infinite;
