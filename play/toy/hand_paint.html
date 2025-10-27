@@ -1,1330 +1,824 @@
 <!DOCTYPE html>
 <html lang="ko">
-    <head>
-        <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
-        <meta charset="UTF-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <title>핸드 뮤지컬 페인터</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                background: #e8e8e8;
-                height: 100vh;
-                overflow: hidden;
-            }
-
-            body.fullscreen-mode {
-                background: #000;
-            }
-
-            body.fullscreen-mode.hide-cursor {
-                cursor: none;
-            }
-
-            header {
-                background: #fff;
-                padding: 15px 25px;
-                margin: 15px 0 10px;
-                border-radius: 10px;
-                box-shadow: 0 4px 8px rgba(0,0,0,.15);
-                display: flex;
-                gap: 25px;
-                align-items: center;
-                flex-wrap: wrap;
-                justify-content: center;
-                width: fit-content;
-                z-index: 10;
-                transition: opacity .3s ease;
-            }
-
-            header.hidden {
-                opacity: 0;
-                pointer-events: none;
-            }
-
-            .control-group {
-                display: flex;
-                flex-direction: column;
-                gap: 6px;
-                align-items: flex-start;
-            }
-
-            .control-row {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                flex-wrap: wrap;
-            }
-
-            label {
-                font-size: .85em;
-                color: #333;
-                font-weight: 600;
-            }
-
-            .slider-value {
-                font-size: .85em;
-                color: #666;
-                min-width: 35px;
-                text-align: right;
-            }
-
-            input[type="range"] {
-                width: 150px;
-                cursor: pointer;
-            }
-
-            input[type="checkbox"] {
-                cursor: pointer;
-                width: 18px;
-                height: 18px;
-                vertical-align: middle;
-            }
-
-            select, input[type="number"], input[type="text"] {
-                padding: 6px 10px;
-                font-size: .85em;
-                cursor: pointer;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                background: #fff;
-                font-family: inherit;
-            }
-
-            select:hover {
-                border-color: #999;
-            }
-
-            button {
-                padding: 10px 14px;
-                font-size: .9em;
-                cursor: pointer;
-                border: none;
-                border-radius: 6px;
-                background: #6c757d;
-                color: #fff;
-                transition: background-color .2s, transform .1s;
-                font-weight: 600;
-            }
-
-            button:hover {
-                background: #5a6268;
-                transform: translateY(-1px);
-            }
-
-            button#fullscreenButton {
-                background: #007bff;
-            }
-
-            button#fullscreenButton:hover {
-                background: #0056b3;
-            }
-
-            #canvas-container {
-                position: relative;
-                width: 95%;
-                flex-grow: 1;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-bottom: 15px;
-                overflow: hidden;
-            }
-
-            body.fullscreen-mode #canvas-container {
-                width: 100%;
-                margin: 0;
-            }
-
-            canvas {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                display: block;
-                max-width: 100%;
-                max-height: 100%;
-                border-radius: 5px;
-            }
-
-            body.fullscreen-mode canvas {
-                border-radius: 0;
-            }
-
-            #feedback-canvas {
-                z-index: 5;
-            }
-
-            #drawing-canvas {
-                z-index: 4;
-                opacity: .9;
-            }
-
-            #video-canvas {
-                z-index: 3;
-            }
-
-            #background-canvas {
-                background: #fff;
-                z-index: 2;
-            }
-
-            #loading {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 1.2em;
-                background: rgba(255,255,255,.95);
-                padding: 20px 30px;
-                border-radius: 10px;
-                box-shadow: 0 4px 15px rgba(0,0,0,.25);
-                display: block;
-                z-index: 100;
-                text-align: center;
-                font-weight: 600;
-            }
-
-            .hidden {
-                display: none !important;
-            }
-
-            .gesture-indicator {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: rgba(0,0,0,.7);
-                color: #fff;
-                padding: 10px 15px;
-                border-radius: 8px;
-                font-size: .9em;
-                z-index: 50;
-                transition: opacity .3s;
-            }
-
-            body.fullscreen-mode .gesture-indicator {
-                display: none;
-            }
-
-            hr.sep {
-                height: 1px;
-                width: 100%;
-                border: none;
-                background: #eee;
-                margin: 6px 0;
-            }
-
-            /* Sequencer */
-            #seqContainer {
-                background: #fff;
-                padding: 12px 16px;
-                margin: 0 0 10px;
-                border-radius: 10px;
-                box-shadow: 0 4px 8px rgba(0,0,0,.12);
-                max-width: 95%;
-                overflow: auto;
-            }
-
-            body.fullscreen-mode #seqContainer {
-                display: none;
-            }
-
-            #seqHeader {
-                display: flex;
-                gap: 12px;
-                align-items: center;
-                flex-wrap: wrap;
-                margin-bottom: 10px;
-            }
-
-            .sequencer-grid {
-                display: grid;
-                grid-template-columns: 70px repeat(16, 28px);
-                gap: 6px 4px;
-                align-items: center;
-            }
-
-            .track-label {
-                font-size: .8em;
-                color: #333;
-                font-weight: 700;
-                text-align: right;
-                padding-right: 6px;
-            }
-
-            .step {
-                width: 28px;
-                height: 28px;
-                border-radius: 6px;
-                background: #eee;
-                border: 1px solid #ddd;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                user-select: none;
-                cursor: pointer;
-            }
-
-            .step.active {
-                background: #2ecc71;
-                border-color: #27ae60;
-            }
-
-            .step.current {
-                outline: 2px solid #007bff;
-            }
-        </style>
-    </head>
-    <body>
-        <header id="mainHeader">
-            <button id="clearButton">🗑️ 다 지우기</button>
-            <button id="fullscreenButton">🖥️ 전체화면</button>
-            <!-- 무지개/브러시 -->
-            <div class="control-group">
-                <label>무지개 속도 (초)</label>
-                <div class="control-row">
-                    <input type="range" id="rainbowSpeed" min="5" max="60" value="10" step="5"/>
-                    <span class="slider-value" id="rainbowSpeedValue">10</span>
-                </div>
-            </div>
-            <div class="control-group">
-                <label>브러시 굵기</label>
-                <div class="control-row">
-                    <input type="range" id="brushSize" min="10" max="100" value="60" step="10"/>
-                    <span class="slider-value" id="brushSizeValue">60</span>
-                </div>
-            </div>
-            <div class="control-group">
-                <label>드로잉 투명도 (%)</label>
-                <div class="control-row">
-                    <input type="range" id="drawingOpacity" min="10" max="100" value="90" step="10"/>
-                    <span class="slider-value" id="drawingOpacityValue">90</span>
-                </div>
-            </div>
-            <!-- 비디오/사운드 -->
-            <div class="control-group">
-                <div class="control-row">
-                    <input type="checkbox" id="hideWebcam"/>
-                    <label for="hideWebcam">웹캠 숨기기</label>
-                </div>
-                <div class="control-row">
-                    <input type="checkbox" id="enableSound"/>
-                    <label for="enableSound">오디오 활성화</label>
-                </div>
-            </div>
-            <hr class="sep"/>
-            <!-- 멜로디/드럼 컨트롤 -->
-            <div class="control-group">
-                <label>🤚 오른손 (멜로디)</label>
-                <div class="control-row">
-                    <select id="rightHandStyle">
-                        <option value="pentatonic">펜타토닉</option>
-                        <option value="major">메이저</option>
-                        <option value="xylophone">실로폰</option>
-                        <option value="chromatic">크로매틱</option>
-                    </select>
-                </div>
-            </div>
-            <div class="control-group">
-                <label>🤛 왼손 (퍼커션)</label>
-                <div class="control-row">
-                    <select id="leftHandMode">
-                        <option value="kick">킥</option>
-                        <option value="snare">스네어</option>
-                        <option value="hihat">하이햇</option>
-                        <option value="tom">탐</option>
-                        <option value="clap">클랩</option>
-                        <option value="cymbal">심벌</option>
-                    </select>
-                    <label>왼손 라이브 Subdivision</label>
-                    <select id="leftSubdivision">
-                        <option value="4n">1/4</option>
-                        <option value="8n" selected>1/8</option>
-                        <option value="16n">1/16</option>
-                        <option value="32n">1/32</option>
-                    </select>
-                </div>
-            </div>
-            <div class="control-group">
-                <label>Transport</label>
-                <div class="control-row">
-                    <button id="transportStart">▶ 재생</button>
-                    <button id="transportStop">■ 정지</button>
-                    <label>BPM</label>
-                    <input type="range" id="bpm" min="60" max="180" value="110"/>
-                    <span class="slider-value" id="bpmVal">110</span>
-                    <label>Swing</label>
-                    <input type="range" id="swing" min="0" max="60" value="0"/>
-                    <span class="slider-value" id="swingVal">0%</span>
-                </div>
-            </div>
-        </header>
-        <!-- Sequencer Panel -->
-        <div id="seqContainer">
-            <div id="seqHeader">
-                <label>
-                    <input type="checkbox" id="enableSequencer" checked/>시퀀서 사용
-                </label>
-                <label>프리셋</label>
-                <select id="drumPreset">
-                    <option value="empty">Empty</option>
-                    <option value="house">House 124</option>
-                    <option value="trap">Trap 140</option>
-                    <option value="lofi">LoFi 90</option>
-                </select>
-                <button id="clearSeq">패턴 지우기</button>
-            </div>
-            <div class="sequencer-grid" id="drumGrid"></div>
-        </div>
-        <div class="gesture-indicator hidden" id="gestureIndicator">
-            <div id="gestureText">손을 보여주세요</div>
-        </div>
-        <div id="loading">모델과 웹캠을 로딩 중입니다...</div>
-        <div id="canvas-container">
-            <canvas id="background-canvas"></canvas>
-            <canvas id="video-canvas"></canvas>
-            <canvas id="drawing-canvas"></canvas>
-            <canvas id="feedback-canvas"></canvas>
-        </div>
-        <video id="webcam" class="hidden" autoplay playsinline></video>
-        <script type="module">
-            import {HandLandmarker, FilesetResolver, DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-            import*as Tone from "https://cdn.skypack.dev/tone";
-
-            // --- DOM ---
-            const video = document.getElementById('webcam');
-            const loadingDiv = document.getElementById('loading');
-            const clearButton = document.getElementById('clearButton');
-            const fullscreenButton = document.getElementById('fullscreenButton');
-            const hideWebcamCheckbox = document.getElementById('hideWebcam');
-            const rainbowSpeedSlider = document.getElementById('rainbowSpeed');
-            const rainbowSpeedValue = document.getElementById('rainbowSpeedValue');
-            const rightHandStyleSelect = document.getElementById('rightHandStyle');
-            const leftHandModeSelect = document.getElementById('leftHandMode');
-            const leftSubdivisionSelect = document.getElementById('leftSubdivision');
-            const brushSizeSlider = document.getElementById('brushSize');
-            const brushSizeValue = document.getElementById('brushSizeValue');
-            const drawingOpacitySlider = document.getElementById('drawingOpacity');
-            const drawingOpacityValue = document.getElementById('drawingOpacityValue');
-            const enableSoundCheckbox = document.getElementById('enableSound');
-            const gestureIndicator = document.getElementById('gestureIndicator');
-            const gestureText = document.getElementById('gestureText');
-            const mainHeader = document.getElementById('mainHeader');
-            const canvasContainer = document.getElementById('canvas-container');
-            const bpmEl = document.getElementById('bpm');
-            const bpmVal = document.getElementById('bpmVal');
-            const swingEl = document.getElementById('swing');
-            const swingVal = document.getElementById('swingVal');
-            const transportStartBtn = document.getElementById('transportStart');
-            const transportStopBtn = document.getElementById('transportStop');
-
-            // Sequencer DOM
-            const enableSequencerCheckbox = document.getElementById('enableSequencer');
-            const drumPresetSelect = document.getElementById('drumPreset');
-            const clearSeqBtn = document.getElementById('clearSeq');
-            const drumGrid = document.getElementById('drumGrid');
-
-            // --- Canvases ---
-            const backgroundCanvas = document.getElementById('background-canvas');
-            const videoCanvas = document.getElementById('video-canvas');
-            const drawingCanvas = document.getElementById('drawing-canvas');
-            const feedbackCanvas = document.getElementById('feedback-canvas');
-            const backgroundCtx = backgroundCanvas.getContext('2d');
-            const videoCtx = videoCanvas.getContext('2d');
-            const drawingCtx = drawingCanvas.getContext('2d');
-            const feedbackCtx = feedbackCanvas.getContext('2d');
-
-            // --- MediaPipe Config ---
-            const DEFAULT_HANDS = 2;
-            let handLandmarker;
-            let drawingUtils;
-
-            // --- State ---
-            let webcamRunning = false;
-            let webcamHidden = false;
-            let lastVideoTime = -1;
-            let targetWidth = 1280;
-            let targetHeight = 720;
-            let isFullscreen = false;
-            let cursorTimeout = null;
-
-            // Drawing
-            let rainbowCycleDuration = 10000;
-            let brushSize = 60;
-            let startTime = performance.now();
-            let rightHandStyle = 'pentatonic';
-
-            // Gesture per hand
-            const activeTouches = {};
-            // { handId: { isDrawing, lastPoint, lastGesture, lastSpeed, emaSpeed, isRightHand } }
-
-            // Gating thresholds
-            const SPEED_ON = 12;
-            const SPEED_OFF = 6;
-            const EMA_ALPHA = 0.3;
-            const MAX_STROKE_DISTANCE = 100;
-
-            // Tone.js audio state
-            let toneReady = false;
-            let soundEnabled = false;
-            const tone = {
-                ctx: null,
-                limiter: null,
-                channels: {},
-                synths: {},
-                melody: null,
-                eraserBus: null,
-                left: {
-                    gate: false,
-                    subdivision: '8n',
-                    mode: 'kick',
-                    y: 0.5
-                },
-                leftLoop: null,
-                drumSeq: null,
-                seqStep: 0
-            };
-
-            // --- Scales ---
-            const SCALES = {
-                pentatonic: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00],
-                major: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77],
-                xylophone: [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00],
-                chromatic: null
-            };
-            function getFrequencyFromY(y, style='pentatonic') {
-                if (style === 'chromatic')
-                    return 261 + (1 - y) * 785;
-                const s = SCALES[style] || SCALES.pentatonic;
-                const i = Math.floor((1 - y) * s.length);
-                return s[Math.max(0, Math.min(s.length - 1, i))];
-            }
-
-            // --- MediaPipe Init ---
-            async function createHandLandmarker() {
-                try {
-                    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-                    handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                        baseOptions: {
-                            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-                            delegate: "GPU"
-                        },
-                        runningMode: "VIDEO",
-                        numHands: DEFAULT_HANDS,
-                        minHandDetectionConfidence: 0.5,
-                        minHandPresenceConfidence: 0.5,
-                        minTrackingConfidence: 0.5
-                    });
-                    enableCam();
-                } catch (e) {
-                    console.error(e);
-                    loadingDiv.textContent = '모델 로딩 실패. 새로고침 해주세요.';
-                }
-            }
-            async function enableCam() {
-                if (!handLandmarker)
-                    return;
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            width: {
-                                ideal: targetWidth
-                            },
-                            height: {
-                                ideal: targetHeight
-                            },
-                            aspectRatio: {
-                                ideal: 16 / 9
-                            }
-                        }
-                    });
-                    video.srcObject = stream;
-                    video.addEventListener('loadeddata', () => {
-                        webcamRunning = true;
-                        loadingDiv.classList.add('hidden');
-                        gestureIndicator.classList.remove('hidden');
-                        resizeCanvases();
-                        predictWebcam();
-                    }
-                    );
-                } catch (e) {
-                    console.error(e);
-                    loadingDiv.textContent = '웹캠 접근 실패. 권한을 확인하세요.';
-                }
-            }
-            function resizeCanvases() {
-                const rect = canvasContainer.getBoundingClientRect();
-                const cw = rect.width
-                  , ch = rect.height;
-                const vAsp = (video.videoWidth || 1280) / (video.videoHeight || 720);
-                const cAsp = cw / ch;
-                let w, h;
-                if (cAsp > vAsp) {
-                    h = ch;
-                    w = h * vAsp;
-                } else {
-                    w = cw;
-                    h = w / vAsp;
-                }
-                [backgroundCanvas, videoCanvas, drawingCanvas, feedbackCanvas].forEach(c => {
-                    c.width = video.videoWidth || 1280;
-                    c.height = video.videoHeight || 720;
-                    c.style.width = w + 'px';
-                    c.style.height = h + 'px';
-                }
-                );
-                drawingUtils = new DrawingUtils(feedbackCtx);
-            }
-            function getRainbowColor() {
-                const elapsed = performance.now() - startTime;
-                const hue = (elapsed % rainbowCycleDuration) / rainbowCycleDuration * 360;
-                return `hsl(${hue},100%,50%)`;
-            }
-            function getPalmCenter(lm) {
-                const w = lm[0]
-                  , m = lm[9];
-                return {
-                    x: (w.x + m.x) / 2,
-                    y: (w.y + m.y) / 2
-                };
-            }
-            function getCanvasCoordinates(p) {
-                return {
-                    x: (1 - p.x) * feedbackCanvas.width,
-                    y: p.y * feedbackCanvas.height
-                };
-            }
-            function dist(a, b) {
-                return Math.hypot(a.x - b.x, a.y - b.y);
-            }
-
-            // Gesture detection (open/closed)
-            const OPEN_HAND_THRESHOLD = 0.7
-              , CLOSED_HAND_THRESHOLD = 0.3;
-            function detectGesture(landmarks) {
-                const tips = [4, 8, 12, 16, 20]
-                  , bases = [2, 5, 9, 13, 17];
-                let extended = 0;
-                const wrist = landmarks[0];
-                for (let i = 0; i < tips.length; i++) {
-                    const tip = landmarks[tips[i]]
-                      , base = landmarks[bases[i]];
-                    const td = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
-                    const bd = Math.hypot(base.x - wrist.x, base.y - wrist.y);
-                    if (td > bd * 1.2)
-                        extended++;
-                }
-                const r = extended / tips.length;
-                if (r >= OPEN_HAND_THRESHOLD)
-                    return 'open';
-                if (r <= CLOSED_HAND_THRESHOLD)
-                    return 'closed';
-                return 'neutral';
-            }
-
-            // --- Tone.js Init & Synths ---
-            async function initToneIfNeeded() {
-                if (toneReady)
-                    return;
-                await Tone.start();
-                tone.ctx = Tone.getContext();
-                tone.limiter = new Tone.Limiter(-1).toDestination();
-                const mkChan = (vol=-8) => new Tone.Channel({
-                    volume: vol
-                }).connect(tone.limiter);
-                tone.channels = {
-                    kick: mkChan(-6),
-                    snare: mkChan(-8),
-                    hihat: mkChan(-10),
-                    tom: mkChan(-8),
-                    clap: mkChan(-10),
-                    cymbal: mkChan(-12),
-                    melody: mkChan(-6),
-                    eraser: mkChan(-12)
-                };
-                tone.synths.kick = new Tone.MembraneSynth({
-                    pitchDecay: 0.02,
-                    octaves: 6,
-                    oscillator: {
-                        type: 'sine'
-                    },
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.3,
-                        sustain: 0,
-                        release: 0.01
-                    }
-                }).connect(tone.channels.kick);
-                tone.synths.snare = new Tone.NoiseSynth({
-                    noise: {
-                        type: 'white'
-                    },
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.15,
-                        sustain: 0
-                    }
-                }).connect(tone.channels.snare);
-                tone.synths.hihat = new Tone.MetalSynth({
-                    frequency: 250,
-                    harmonicity: 5.1,
-                    modulationIndex: 32,
-                    resonance: 4000,
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.08,
-                        release: 0.01
-                    }
-                }).connect(tone.channels.hihat);
-                tone.synths.tom = new Tone.MembraneSynth({
-                    octaves: 4,
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.25,
-                        sustain: 0,
-                        release: 0.05
-                    }
-                }).connect(tone.channels.tom);
-                tone.synths.clap = new Tone.NoiseSynth({
-                    noise: {
-                        type: 'white'
-                    },
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.12,
-                        sustain: 0
-                    }
-                }).connect(tone.channels.clap);
-                tone.synths.cymbal = new Tone.MetalSynth({
-                    frequency: 300,
-                    harmonicity: 5,
-                    modulationIndex: 32,
-                    resonance: 2000,
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.6,
-                        release: 0.1
-                    }
-                }).connect(tone.channels.cymbal);
-
-                tone.melody = new Tone.PolySynth(Tone.AMSynth,{
-                    maxPolyphony: 8,
-                    oscillator: {
-                        type: 'sine'
-                    },
-                    envelope: {
-                        attack: 0.005,
-                        decay: 0.03,
-                        sustain: 0.5,
-                        release: 0.2
-                    }
-                }).connect(tone.channels.melody);
-
-                // 지우개(둔탁) 사운드 버스
-                tone.eraserBus = new Tone.Filter(700,'lowpass').connect(tone.channels.eraser);
-                tone.synths.eraserTone = new Tone.MembraneSynth({
-                    pitchDecay: 0.01,
-                    octaves: 2,
-                    oscillator: {
-                        type: 'sine'
-                    },
-                    envelope: {
-                        attack: 0.005,
-                        decay: 0.08,
-                        sustain: 0.0,
-                        release: 0.05
-                    }
-                }).connect(tone.eraserBus);
-                tone.synths.eraserNoise = new Tone.NoiseSynth({
-                    noise: {
-                        type: 'brown'
-                    },
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.05,
-                        sustain: 0
-                    }
-                }).connect(tone.eraserBus);
-
-                Tone.Transport.bpm.value = parseInt(bpmEl.value);
-                Tone.Transport.swing = 0;
-                Tone.Transport.swingSubdivision = '8n';
-
-                // 왼손 리피터
-                tone.left.subdivision = leftSubdivisionSelect.value;
-                tone.left.mode = leftHandModeSelect.value;
-                tone.leftLoop = new Tone.Loop(time => {
-                    if (!soundEnabled || !tone.left.gate)
-                        return;
-                    const vel = 0.5 + Math.min(0.5, currentLeftSpeed / 40);
-                    switch (tone.left.mode) {
-                    case 'kick':
-                        tone.synths.kick.triggerAttackRelease('C2', '8n', time, vel);
-                        break;
-                    case 'snare':
-                        tone.synths.snare.triggerAttackRelease('8n', time, vel);
-                        break;
-                    case 'hihat':
-                        tone.synths.hihat.triggerAttackRelease('32n', time, vel);
-                        break;
-                    case 'tom':
-                        {
-                            const f = 80 + (1 - tone.left.y) * 200;
-                            tone.synths.tom.triggerAttackRelease(Tone.Frequency(f).toNote(), '8n', time, vel);
-                            break;
-                        }
-                    case 'clap':
-                        tone.synths.clap.triggerAttackRelease('16n', time, vel);
-                        break;
-                    case 'cymbal':
-                        tone.synths.cymbal.triggerAttackRelease('8n', time, vel);
-                        break;
-                    }
-                }
-                ,tone.left.subdivision).start(0);
-
-                // 시퀀서(6트랙 × 16스텝) — **왼손 게이트가 ON일 때만 발음**
-                ensureSequencer();
-
-                toneReady = true;
-            }
-
-            function triggerEraser(y=0.5, velocity=0.6) {
-                const freq = 60 + (1 - y) * 140;
-                const now = Tone.now();
-                tone.synths.eraserTone.triggerAttackRelease(Tone.Frequency(freq).toNote(), '16n', now, velocity);
-                tone.synths.eraserNoise.triggerAttackRelease('32n', now, Math.min(1, velocity * 0.8));
-            }
-
-            // Melody limiter
-            const noteState = {};
-            function shouldTriggerNote(handId, pos, speed) {
-                const now = performance.now();
-                if (!noteState[handId]) {
-                    noteState[handId] = {
-                        lastNoteTime: 0,
-                        lastPos: pos
-                    };
-                    return true;
-                }
-                const s = speed || 0;
-                const interval = s < 5 ? 300 : (s < 20 ? 150 : 80);
-                const dt = now - noteState[handId].lastNoteTime;
-                const d = dist(noteState[handId].lastPos, pos);
-                if (dt >= interval && d >= 15) {
-                    noteState[handId].lastNoteTime = now;
-                    noteState[handId].lastPos = pos;
-                    return true;
-                }
-                return false;
-            }
-            function clearNoteState(handId) {
-                if (noteState[handId])
-                    delete noteState[handId];
-            }
-
-            // Sequencer state & UI
-            const tracks = ['kick', 'snare', 'hihat', 'tom', 'clap', 'cymbal'];
-            const pattern = {};
-            tracks.forEach(t => pattern[t] = Array(16).fill(false));
-            function ensureSequencer() {
-                if (tone.drumSeq)
-                    return;
-                tone.drumSeq = new Tone.Sequence( (time, step) => {
-                    tone.seqStep = step;
-                    highlightCurrentStep(step);
-                    if (!enableSequencerCheckbox.checked)
-                        return;
-                    if (!soundEnabled)
-                        return;
-                    if (!tone.left.gate)
-                        return;
-                    // <<< 왼손 움직임 게이트
-                    tracks.forEach(t => {
-                        if (!pattern[t][step])
-                            return;
-                        switch (t) {
-                        case 'kick':
-                            tone.synths.kick.triggerAttackRelease('C2', '8n', time, 0.9);
-                            break;
-                        case 'snare':
-                            tone.synths.snare.triggerAttackRelease('8n', time, 0.8);
-                            break;
-                        case 'hihat':
-                            tone.synths.hihat.triggerAttackRelease('32n', time, 0.5);
-                            break;
-                        case 'tom':
-                            tone.synths.tom.triggerAttackRelease('C2', '8n', time, 0.8);
-                            break;
-                        case 'clap':
-                            tone.synths.clap.triggerAttackRelease('16n', time, 0.7);
-                            break;
-                        case 'cymbal':
-                            tone.synths.cymbal.triggerAttackRelease('8n', time, 0.6);
-                            break;
-                        }
-                    }
-                    );
-                }
-                ,[...Array(16).keys()],'16n');
-                tone.drumSeq.start(0);
-            }
-
-            function renderSequencerGrid() {
-                drumGrid.innerHTML = '';
-                tracks.forEach(t => {
-                    const label = document.createElement('div');
-                    label.className = 'track-label';
-                    label.textContent = t.toUpperCase();
-                    drumGrid.appendChild(label);
-                    for (let i = 0; i < 16; i++) {
-                        const cell = document.createElement('div');
-                        cell.className = 'step';
-                        cell.dataset.track = t;
-                        cell.dataset.step = i;
-                        if (pattern[t][i])
-                            cell.classList.add('active');
-                        if (i % 4 === 0)
-                            cell.style.borderLeftColor = '#bbb';
-                        cell.addEventListener('click', () => {
-                            pattern[t][i] = !pattern[t][i];
-                            cell.classList.toggle('active');
-                        }
-                        );
-                        drumGrid.appendChild(cell);
-                    }
-                }
-                );
-            }
-            function highlightCurrentStep(step) {
-                const nodes = drumGrid.querySelectorAll('.step');
-                nodes.forEach(n => n.classList.remove('current'));
-                tracks.forEach( (t, row) => {
-                    const idx = row * (16 + 1) + 1 + step;
-                    const cell = drumGrid.children[idx];
-                    if (cell)
-                        cell.classList.add('current');
-                }
-                );
-            }
-            function clearPattern() {
-                tracks.forEach(t => pattern[t].fill(false));
-                renderSequencerGrid();
-            }
-
-            // Webcam loop
-            let currentLeftSpeed = 0;
-            async function predictWebcam() {
-                if (!webcamRunning)
-                    return;
-                const nowInMs = performance.now();
-                if (video.currentTime !== lastVideoTime) {
-                    lastVideoTime = video.currentTime;
-                    try {
-                        const results = await handLandmarker.detectForVideo(video, nowInMs);
-                        if (!webcamHidden) {
-                            videoCtx.save();
-                            videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
-                            videoCtx.scale(-1, 1);
-                            videoCtx.drawImage(video, -videoCanvas.width, 0, videoCanvas.width, videoCanvas.height);
-                            videoCtx.restore();
-                        } else {
-                            videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
-                        }
-                        feedbackCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
-                        processHandResults(results);
-                    } catch (e) {
-                        console.error('예측 오류', e);
-                    }
-                }
-                requestAnimationFrame(predictWebcam);
-            }
-
-            function processHandResults(results) {
-                const detected = results.landmarks;
-                const handednesses = results.handednesses;
-                const currentIds = new Set();
-                let gesturesForUI = [];
-                if (detected && detected.length > 0 && drawingUtils) {
-                    detected.forEach( (landmarks, idx) => {
-                        const handId = idx;
-                        currentIds.add(handId);
-                        const handedness = handednesses && handednesses[idx] ? handednesses[idx][0].categoryName : 'Right';
-                        const isRight = (handedness === 'Right');
-                        if (!activeTouches[handId])
-                            activeTouches[handId] = {
-                                isDrawing: false,
-                                lastPoint: null,
-                                lastGesture: null,
-                                lastSpeed: 0,
-                                emaSpeed: 0,
-                                isRightHand: isRight
-                            };
-                        const touch = activeTouches[handId];
-                        touch.isRightHand = isRight;
-                        feedbackCtx.save();
-                        feedbackCtx.scale(-1, 1);
-                        feedbackCtx.translate(-feedbackCanvas.width, 0);
-                        const lineColor = isRight ? '#00FF00' : '#00FFFF';
-                        const ptColor = isRight ? '#FF0000' : '#FF00FF';
-                        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
-                            color: lineColor,
-                            lineWidth: 2
-                        });
-                        drawingUtils.drawLandmarks(landmarks, {
-                            color: ptColor,
-                            lineWidth: 1,
-                            radius: 3
-                        });
-                        feedbackCtx.restore();
-                        const gesture = detectGesture(landmarks);
-                        gesturesForUI.push(gesture);
-                        const palm = getPalmCenter(landmarks);
-                        const canvasPalm = getCanvasCoordinates(palm);
-                        const y = palm.y;
-                        let speed = 0;
-                        if (touch.lastPoint)
-                            speed = dist(touch.lastPoint, canvasPalm);
-                        touch.emaSpeed = EMA_ALPHA * speed + (1 - EMA_ALPHA) * (touch.emaSpeed || 0);
-                        touch.lastSpeed = speed;
-                        if (!isRight)
-                            currentLeftSpeed = touch.emaSpeed;
-
-                        if (isRight) {
-                            // melody & eraser (right)
-                            const playMel = (gesture === 'open') && (touch.emaSpeed >= SPEED_ON) && soundEnabled;
-                            if (playMel && shouldTriggerNote(handId, canvasPalm, touch.emaSpeed)) {
-                                const f = getFrequencyFromY(y, rightHandStyle);
-                                const vel = 0.4 + Math.min(0.6, touch.emaSpeed / 40);
-                                tone.melody.triggerAttackRelease(f, 0.2, undefined, vel);
-                            }
-                            const playErase = (gesture === 'closed') && (touch.emaSpeed >= SPEED_ON) && soundEnabled;
-                            if (playErase && shouldTriggerNote(handId, canvasPalm, touch.emaSpeed)) {
-                                const vel = 0.35 + Math.min(0.45, touch.emaSpeed / 40);
-                                triggerEraser(y, vel);
-                            }
-                        } else {
-                            // left: gate repeater and gate sequencer
-                            if (soundEnabled) {
-                                tone.left.gate = (gesture === 'open') && (touch.emaSpeed >= SPEED_ON);
-                                tone.left.y = y;
-                            }
-                            const playEraseL = (gesture === 'closed') && (touch.emaSpeed >= SPEED_ON) && soundEnabled;
-                            if (playEraseL && shouldTriggerNote(handId, canvasPalm, touch.emaSpeed)) {
-                                const vel = 0.35 + Math.min(0.45, touch.emaSpeed / 40);
-                                triggerEraser(y, vel);
-                            }
-                        }
-
-                        // Visuals
-                        if (gesture === 'open') {
-                            const rainbow = getRainbowColor();
-                            feedbackCtx.fillStyle = rainbow;
-                            feedbackCtx.globalAlpha = .6;
-                            feedbackCtx.beginPath();
-                            feedbackCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
-                            feedbackCtx.fill();
-                            feedbackCtx.globalAlpha = 1;
-                            drawingCtx.strokeStyle = rainbow;
-                            drawingCtx.fillStyle = rainbow;
-                            drawingCtx.lineWidth = brushSize;
-                            drawingCtx.lineCap = 'round';
-                            drawingCtx.lineJoin = 'round';
-                            drawingCtx.globalCompositeOperation = 'source-over';
-                            if (touch.isDrawing && touch.lastPoint && touch.lastGesture === 'open') {
-                                const d = dist(touch.lastPoint, canvasPalm);
-                                if (d < MAX_STROKE_DISTANCE) {
-                                    drawingCtx.beginPath();
-                                    drawingCtx.moveTo(touch.lastPoint.x, touch.lastPoint.y);
-                                    drawingCtx.lineTo(canvasPalm.x, canvasPalm.y);
-                                    drawingCtx.stroke();
-                                } else {
-                                    drawingCtx.beginPath();
-                                    drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
-                                    drawingCtx.fill();
-                                }
-                            } else {
-                                drawingCtx.beginPath();
-                                drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
-                                drawingCtx.fill();
-                            }
-                            touch.isDrawing = true;
-                            touch.lastPoint = canvasPalm;
-                            touch.lastGesture = 'open';
-                        } else if (gesture === 'closed') {
-                            feedbackCtx.fillStyle = 'rgba(200,200,200,.6)';
-                            feedbackCtx.beginPath();
-                            feedbackCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
-                            feedbackCtx.fill();
-                            feedbackCtx.strokeStyle = '#FF0000';
-                            feedbackCtx.lineWidth = 2;
-                            feedbackCtx.stroke();
-                            drawingCtx.lineWidth = brushSize;
-                            drawingCtx.lineCap = 'round';
-                            drawingCtx.lineJoin = 'round';
-                            drawingCtx.globalCompositeOperation = 'destination-out';
-                            if (touch.isDrawing && touch.lastPoint && touch.lastGesture === 'closed') {
-                                const d = dist(touch.lastPoint, canvasPalm);
-                                if (d < MAX_STROKE_DISTANCE) {
-                                    drawingCtx.beginPath();
-                                    drawingCtx.moveTo(touch.lastPoint.x, touch.lastPoint.y);
-                                    drawingCtx.lineTo(canvasPalm.x, canvasPalm.y);
-                                    drawingCtx.stroke();
-                                } else {
-                                    drawingCtx.beginPath();
-                                    drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
-                                    drawingCtx.fill();
-                                }
-                            } else {
-                                drawingCtx.beginPath();
-                                drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
-                                drawingCtx.fill();
-                            }
-                            touch.isDrawing = true;
-                            touch.lastPoint = canvasPalm;
-                            touch.lastGesture = 'closed';
-                        } else {
-                            if (touch.isDrawing)
-                                clearNoteState(handId);
-                            touch.isDrawing = false;
-                            touch.lastPoint = null;
-                            touch.lastGesture = null;
-                        }
-
-                        activeTouches[handId] = touch;
-                    }
-                    );
-                }
-                Object.keys(activeTouches).forEach(id => {
-                    if (!currentIds.has(parseInt(id))) {
-                        clearNoteState(parseInt(id));
-                        delete activeTouches[id];
-                    }
-                }
-                );
-                updateGestureIndicator(gesturesForUI);
-            }
-
-            function updateGestureIndicator(gestures) {
-                if (gestures.length === 0)
-                    gestureText.textContent = '손을 보여주세요';
-                else
-                    gestureText.textContent = gestures.map(g => g === 'open' ? '✋ 그리기' : (g === 'closed' ? '✊ 지우기' : '👌 대기')).join(' | ');
-            }
-
-            // UI Events
-            clearButton.addEventListener('click', () => {
-                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-            }
-            );
-            hideWebcamCheckbox.addEventListener('change', e => {
-                webcamHidden = e.target.checked;
-            }
-            );
-            rainbowSpeedSlider.addEventListener('input', e => {
-                const v = +e.target.value;
-                rainbowSpeedValue.textContent = v;
-                rainbowCycleDuration = v * 1000;
-            }
-            );
-            rightHandStyleSelect.addEventListener('change', e => {
-                rightHandStyle = e.target.value;
-            }
-            );
-            leftHandModeSelect.addEventListener('change', e => {
-                if (toneReady)
-                    tone.left.mode = e.target.value;
-            }
-            );
-            leftSubdivisionSelect.addEventListener('change', e => {
-                const v = e.target.value;
-                if (toneReady) {
-                    tone.left.subdivision = v;
-                    if (tone.leftLoop)
-                        tone.leftLoop.interval = v;
-                }
-            }
-            );
-            brushSizeSlider.addEventListener('input', e => {
-                const v = +e.target.value;
-                brushSizeValue.textContent = v;
-                brushSize = v;
-            }
-            );
-            drawingOpacitySlider.addEventListener('input', e => {
-                const v = +e.target.value;
-                drawingOpacityValue.textContent = v;
-                drawingCanvas.style.opacity = v / 100;
-            }
-            );
-
-            enableSoundCheckbox.addEventListener('change', async e => {
-                soundEnabled = e.target.checked;
-                if (soundEnabled) {
-                    await initToneIfNeeded();
-                } else {
-                    tone.left.gate = false;
-                    Tone.Transport.stop();
-                }
-            }
-            );
-            transportStartBtn.addEventListener('click', async () => {
-                if (!toneReady)
-                    await initToneIfNeeded();
-                if (!soundEnabled) {
-                    enableSoundCheckbox.checked = true;
-                    soundEnabled = true;
-                }
-                Tone.Transport.start();
-            }
-            );
-            transportStopBtn.addEventListener('click', () => {
-                Tone.Transport.stop();
-                tone.left.gate = false;
-            }
-            );
-            bpmEl.addEventListener('input', e => {
-                const v = +e.target.value;
-                bpmVal.textContent = v;
-                if (toneReady)
-                    Tone.Transport.bpm.value = v;
-            }
-            );
-            swingEl.addEventListener('input', e => {
-                const v = +e.target.value;
-                swingVal.textContent = `${v}%`;
-                if (toneReady) {
-                    Tone.Transport.swing = v / 100;
-                    Tone.Transport.swingSubdivision = '8n';
-                }
-            }
-            );
-
-            // Sequencer UI
-            enableSequencerCheckbox.addEventListener('change', () => {
-                if (tone.drumSeq)
-                    tone.drumSeq.mute = !enableSequencerCheckbox.checked;
-            }
-            );
-            drumPresetSelect.addEventListener('change', e => {
-                const v = e.target.value;
-                (presets[v] || presets.empty)();
-            }
-            );
-            clearSeqBtn.addEventListener('click', () => clearPattern());
-
-            // Fullscreen
-            fullscreenButton.addEventListener('click', () => {
-                if (!isFullscreen)
-                    document.documentElement.requestFullscreen().catch(console.error);
-                else
-                    document.exitFullscreen().catch(console.error);
-            }
-            );
-            document.addEventListener('fullscreenchange', () => {
-                isFullscreen = !!document.fullscreenElement;
-                if (isFullscreen) {
-                    document.body.classList.add('fullscreen-mode');
-                    mainHeader.classList.add('hidden');
-                    fullscreenButton.textContent = '🔲 전체화면 종료';
-                    resetCursorTimer();
-                } else {
-                    document.body.classList.remove('fullscreen-mode');
-                    document.body.classList.remove('hide-cursor');
-                    mainHeader.classList.remove('hidden');
-                    fullscreenButton.textContent = '🖥️ 전체화면';
-                    if (cursorTimeout) {
-                        clearTimeout(cursorTimeout);
-                        cursorTimeout = null;
-                    }
-                }
-                resizeCanvases();
-            }
-            );
-            document.addEventListener('mousemove', () => {
-                if (isFullscreen) {
-                    document.body.classList.remove('hide-cursor');
-                    resetCursorTimer();
-                }
-            }
-            );
-            function resetCursorTimer() {
-                if (cursorTimeout)
-                    clearTimeout(cursorTimeout);
-                cursorTimeout = setTimeout( () => {
-                    if (isFullscreen)
-                        document.body.classList.add('hide-cursor');
-                }
-                , 5000);
-            }
-
-            // Resize
-            let resizeTimeout;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout( () => {
-                    if (webcamRunning) {
-                        resizeCanvases();
-                        lastVideoTime = -1;
-                    }
-                }
-                , 250);
-            }
-            );
-
-            // Sequencer presets
-            const presets = {
-                empty: () => clearPattern(),
-                house: () => {
-                    clearPattern();
-                    [0, 4, 8, 12].forEach(i => pattern.kick[i] = true);
-                    [4, 12].forEach(i => pattern.snare[i] = true);
-                    [4, 12].forEach(i => pattern.clap[i] = true);
-                    [2, 6, 10, 14].forEach(i => pattern.hihat[i] = true);
-                    renderSequencerGrid();
-                    bpmEl.value = 124;
-                    bpmVal.textContent = '124';
-                    if (toneReady)
-                        Tone.Transport.bpm.value = 124;
-                }
-                ,
-                trap: () => {
-                    clearPattern();
-                    [0, 7, 11, 15].forEach(i => pattern.kick[i] = true);
-                    [4, 12].forEach(i => pattern.snare[i] = true);
-                    [...Array(16).keys()].forEach(i => pattern.hihat[i] = true);
-                    renderSequencerGrid();
-                    bpmEl.value = 140;
-                    bpmVal.textContent = '140';
-                    if (toneReady)
-                        Tone.Transport.bpm.value = 140;
-                }
-                ,
-                lofi: () => {
-                    clearPattern();
-                    [0, 10].forEach(i => pattern.kick[i] = true);
-                    [4, 12].forEach(i => pattern.snare[i] = true);
-                    [2, 6, 10, 14].forEach(i => pattern.hihat[i] = true);
-                    renderSequencerGrid();
-                    bpmEl.value = 90;
-                    bpmVal.textContent = '90';
-                    if (toneReady)
-                        Tone.Transport.bpm.value = 90;
-                }
-            };
-
-            // Render & start
-            renderSequencerGrid();
-            createHandLandmarker();
-        </script>
-    </body>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>핸드 뮤지컬 페인팅</title>
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --text: #222;
+      --sub: #6b7280;
+      --accent: #0d6efd;
+      --ok: #22c55e;
+      --border: #e6e8eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, Segoe UI, Roboto, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* topbar */
+    .topbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: transparent;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #e9ecef;
+      color: #111;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn:hover {
+      filter: brightness(.98);
+    }
+
+    /* main ui layout */
+    .ui {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 1200px;
+      margin: 0 auto 10px;
+      padding: 0 12px;
+    }
+
+    .pane {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .05);
+      padding: 12px;
+    }
+
+    .pane h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--sub);
+      font-weight: 700;
+      letter-spacing: .02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+
+    .row > label {
+      font-size: 12px;
+      color: var(--sub);
+      min-width: 22px;
+    }
+
+    .slider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type=range] {
+      width: 180px;
+    }
+
+    select, input[type=text] {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    /* sequencer */
+    #seqContainer {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .05);
+      padding: 12px;
+      max-width: 1200px;
+      margin: 0 auto 10px;
+    }
+
+    #seqHeader {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .sequencer-grid {
+      display: grid;
+      grid-template-columns: 70px repeat(16, 28px);
+      gap: 6px 4px;
+      align-items: center;
+    }
+
+    .track-label {
+      font-size: 11px;
+      color: #374151;
+      font-weight: 700;
+      text-align: right;
+      padding-right: 6px;
+    }
+
+    .step {
+      width: 28px;
+      height: 28px;
+      border-radius: 12px;
+      background: #eef1f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .step.active {
+      background: #209255;
+      border-color: #b6f2d2;
+    }
+
+    .step.current {
+      outline: 2px solid var(--accent);
+    }
+
+    /* canvases */
+    #canvas-container {
+      position: relative;
+      width: 95%;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 6px auto 14px;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 6px;
+    }
+
+    #feedback-canvas {
+      z-index: 5;
+    }
+
+    #drawing-canvas {
+      z-index: 4;
+      opacity: .9;
+    }
+
+    #video-canvas {
+      z-index: 3;
+    }
+
+    #background-canvas {
+      background: #fff;
+      z-index: 2;
+    }
+
+    /* misc */
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14px;
+      background: rgba(255, 255, 255, .95);
+      padding: 16px 22px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, .15);
+      z-index: 100;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .gesture-indicator {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, .7);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 50;
+    }
+
+    /* fullscreen mode */
+    body.fullscreen-mode {
+      background: #000;
+    }
+
+    body.fullscreen-mode .topbar {
+      display: none;
+    }
+
+    body.fullscreen-mode .ui {
+      display: none;
+    }
+
+    body.fullscreen-mode #seqContainer {
+      display: none;
+    }
+
+    body.fullscreen-mode #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    body.fullscreen-mode canvas {
+      border-radius: 0;
+    }
+
+    body.fullscreen-mode .gesture-indicator {
+      display: none;
+    }
+
+    body.fullscreen-mode.hide-cursor {
+      cursor: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <button id="clearButton" class="btn">🗑️</button>
+    <button id="fullscreenButton" class="btn primary">🖥️</button>
+  </div>
+
+  <div class="ui">
+    <!-- LEFT: Drawing -->
+    <section class="pane" id="paneDrawing">
+      <h3>🎨 그리기</h3>
+      <div class="row">
+        <label>⏱</label>
+        <div class="slider"><input type="range" id="rainbowSpeed" min="5" max="60" value="10" step="5"><span class="tag" id="rainbowSpeedValue">10s</span></div>
+      </div>
+      <div class="row">
+        <label>🟠</label>
+        <div class="slider"><input type="range" id="rightHuePhase" min="0" max="360" value="0" step="10"><span class="tag" id="rightHuePhaseVal">0°</span></div>
+      </div>
+      <div class="row">
+        <label>🔵</label>
+        <div class="slider"><input type="range" id="leftHuePhase" min="0" max="360" value="180" step="10"><span class="tag" id="leftHuePhaseVal">180°</span></div>
+      </div>
+      <div class="row">
+        <label>✍️</label>
+        <div class="slider"><input type="range" id="rightBrush" min="10" max="120" value="60" step="5"><span class="tag" id="rightBrushVal">60</span></div>
+      </div>
+      <div class="row">
+        <label>🤛</label>
+        <div class="slider"><input type="range" id="leftBrush" min="10" max="120" value="80" step="5"><span class="tag" id="leftBrushVal">80</span></div>
+      </div>
+      <div class="row">
+        <label>🌫️</label>
+        <div class="slider"><input type="range" id="drawingOpacity" min="10" max="100" value="90" step="10"><span class="tag" id="drawingOpacityValue">90%</span></div>
+      </div>
+      <div class="row">
+        <label>📷</label>
+        <input type="checkbox" id="hideWebcam"><span class="tag">웹캠 숨김</span>
+      </div>
+    </section>
+
+    <!-- RIGHT: Sound -->
+    <section class="pane" id="paneSound">
+      <h3>🎛️ 사운드</h3>
+      <div class="row">
+        <label>🔊</label><input type="checkbox" id="enableSound"><span class="tag">오디오</span>
+      </div>
+      <div class="row">
+        <label>🎼</label>
+        <select id="rightHandStyle">
+          <option value="pentatonic">펜타</option>
+          <option value="major">메이저</option>
+          <option value="xylophone">실로폰</option>
+          <option value="chromatic">크로매틱</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>🥁</label>
+        <select id="leftHandMode">
+          <option value="kick">킥</option>
+          <option value="snare">스네어</option>
+          <option value="hihat">하이햇</option>
+          <option value="tom">탐</option>
+          <option value="clap">클랩</option>
+          <option value="cymbal">심벌</option>
+        </select>
+        <label>⏲️</label>
+        <select id="leftSubdivision">
+          <option value="4n">1/4</option>
+          <option value="8n" selected>1/8</option>
+          <option value="16n">1/16</option>
+          <option value="32n">1/32</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>▶/■</label>
+        <button class="btn" id="transportStart">▶</button>
+        <button class="btn" id="transportStop">■</button>
+        <label>🕒</label>
+        <div class="slider"><input type="range" id="bpm" min="60" max="180" value="110"><span class="tag" id="bpmVal">110</span></div>
+        <label>🎷</label>
+        <div class="slider"><input type="range" id="swing" min="0" max="60" value="0"><span class="tag" id="swingVal">0%</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sequencer: hides on fullscreen -->
+  <section id="seqContainer">
+    <div id="seqHeader">
+      <label><input type="checkbox" id="enableSequencer" checked> 패턴</label>
+      <select id="drumPreset">
+        <option value="empty">Empty</option>
+        <option value="house">House 124</option>
+        <option value="trap">Trap 140</option>
+        <option value="lofi">LoFi 90</option>
+      </select>
+      <button class="btn" id="clearSeq">지우기</button>
+      <input id="presetName" type="text" placeholder="프리셋 이름" style="width:160px">
+      <button class="btn" id="savePreset">💾 저장</button>
+      <span class="tag" id="dirtyTag" style="display:none">*수정됨</span>
+    </div>
+    <div class="sequencer-grid" id="drumGrid"></div>
+  </section>
+
+  <div class="gesture-indicator hidden" id="gestureIndicator"><div id="gestureText">손을 보여주세요</div></div>
+  <div id="loading">모델과 웹캠을 로딩 중입니다...</div>
+
+  <div id="canvas-container">
+    <canvas id="background-canvas"></canvas>
+    <canvas id="video-canvas"></canvas>
+    <canvas id="drawing-canvas"></canvas>
+    <canvas id="feedback-canvas"></canvas>
+  </div>
+
+  <video id="webcam" class="hidden" autoplay playsinline></video>
+
+<script type="module">
+  import { HandLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+  import * as Tone from "https://cdn.skypack.dev/tone";
+
+  /* ===================== DOM ===================== */
+  const video = document.getElementById('webcam');
+  const loadingDiv = document.getElementById('loading');
+  const clearButton = document.getElementById('clearButton');
+  const fullscreenButton = document.getElementById('fullscreenButton');
+  const hideWebcamCheckbox = document.getElementById('hideWebcam');
+
+  // Drawing controls
+  const rainbowSpeedSlider = document.getElementById('rainbowSpeed');
+  const rainbowSpeedValue = document.getElementById('rainbowSpeedValue');
+  const rightHuePhaseEl = document.getElementById('rightHuePhase');
+  const leftHuePhaseEl = document.getElementById('leftHuePhase');
+  const rightHuePhaseVal = document.getElementById('rightHuePhaseVal');
+  const leftHuePhaseVal = document.getElementById('leftHuePhaseVal');
+  const rightBrushEl = document.getElementById('rightBrush');
+  const leftBrushEl = document.getElementById('leftBrush');
+  const rightBrushVal = document.getElementById('rightBrushVal');
+  const leftBrushVal = document.getElementById('leftBrushVal');
+  const drawingOpacitySlider = document.getElementById('drawingOpacity');
+  const drawingOpacityValue = document.getElementById('drawingOpacityValue');
+
+  // Sound controls
+  const rightHandStyleSelect = document.getElementById('rightHandStyle');
+  const leftHandModeSelect = document.getElementById('leftHandMode');
+  const leftSubdivisionSelect = document.getElementById('leftSubdivision');
+  const enableSoundCheckbox = document.getElementById('enableSound');
+  const bpmEl = document.getElementById('bpm');
+  const bpmVal = document.getElementById('bpmVal');
+  const swingEl = document.getElementById('swing');
+  const swingVal = document.getElementById('swingVal');
+  const transportStartBtn = document.getElementById('transportStart');
+  const transportStopBtn = document.getElementById('transportStop');
+
+  // Sequencer controls
+  const enableSequencerCheckbox = document.getElementById('enableSequencer');
+  const drumPresetSelect = document.getElementById('drumPreset');
+  const clearSeqBtn = document.getElementById('clearSeq');
+  const drumGrid = document.getElementById('drumGrid');
+  const presetNameInput = document.getElementById('presetName');
+  const savePresetBtn = document.getElementById('savePreset');
+  const dirtyTag = document.getElementById('dirtyTag');
+
+  // Canvases
+  const backgroundCanvas = document.getElementById('background-canvas');
+  const videoCanvas = document.getElementById('video-canvas');
+  const drawingCanvas = document.getElementById('drawing-canvas');
+  const feedbackCanvas = document.getElementById('feedback-canvas');
+  const backgroundCtx = backgroundCanvas.getContext('2d');
+  const videoCtx = videoCanvas.getContext('2d');
+  const drawingCtx = drawingCanvas.getContext('2d');
+  const feedbackCtx = feedbackCanvas.getContext('2d');
+
+  /* ===================== MediaPipe ===================== */
+  const DEFAULT_HANDS = 2;
+  let handLandmarker, drawingUtils;
+
+  let webcamRunning = false, webcamHidden = false, lastVideoTime = -1;
+  let isFullscreen = false, cursorTimeout = null;
+  const targetWidth = 1280, targetHeight = 720;
+
+  /* ===================== Drawing State ===================== */
+  let startTime = performance.now();
+  let rainbowCycleDuration = 10000; // ms
+  let rightHuePhase = 0, leftHuePhase = 180;
+  let rightBrush = 60, leftBrush = 80;
+  let drawingOpacity = 0.9;
+  let rightHandStyle = 'pentatonic';
+
+  const activeTouches = {}; // per-hand state
+  const OPEN_HAND_THRESHOLD=0.7, CLOSED_HAND_THRESHOLD=0.3, MAX_STROKE_DISTANCE=100;
+  const SPEED_ON=12, SPEED_OFF=6, EMA_ALPHA=0.3;
+
+  /* ===================== Tone.js ===================== */
+  let toneReady=false, soundEnabled=false;
+  let currentLeftSpeed=0;
+  const tone = {
+    limiter:null,
+    channels:{},
+    synths:{},        // sequencer synths
+    liveSynths:{},    // left-hand live duplicates (collision-free)
+    melody:null,
+    eraserBus:null,
+    eraserTone:null,
+    eraserNoise:null,
+    left:{gate:false, subdivision:'8n', mode:'kick', y:0.5},
+    leftLoop:null,
+    drumSeq:null,
+    seqStep:0
+  };
+
+  const tracks=['kick','snare','hihat','tom','clap','cymbal'];
+  const pattern={}; tracks.forEach(t=> pattern[t]=Array(16).fill(false));
+  let presetDirty=false;
+
+  /* ===================== Utils ===================== */
+  function $(id){return document.getElementById(id)}
+  function rainbowColorWithPhase(phase){
+    const elapsed=performance.now()-startTime;
+    const hue=(elapsed%rainbowCycleDuration)/rainbowCycleDuration*360 + phase;
+    const h=((hue%360)+360)%360; return `hsl(${h},100%,50%)`;
+  }
+  function getPalmCenter(lm){ const w=lm[0], m=lm[9]; return {x:(w.x+m.x)/2, y:(w.y+m.y)/2}; }
+  function getCanvasCoordinates(p){ return { x:(1-p.x)*feedbackCanvas.width, y:p.y*feedbackCanvas.height }; }
+  function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+  function detectGesture(lm){ const tips=[4,8,12,16,20], bases=[2,5,9,13,17]; let ext=0; const w=lm[0]; for(let i=0;i<tips.length;i++){ const t=lm[tips[i]], b=lm[bases[i]]; const td=Math.hypot(t.x-w.x,t.y-w.y); const bd=Math.hypot(b.x-w.x,b.y-w.y); if (td>bd*1.2) ext++; } const r=ext/tips.length; return r>=OPEN_HAND_THRESHOLD?'open':(r<=CLOSED_HAND_THRESHOLD?'closed':'neutral'); }
+  function getFrequencyFromY(y, style='pentatonic'){
+    const SCALES={ pentatonic:[261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25,783.99,880.00], major:[261.63,293.66,329.63,349.23,392.00,440.00,493.88,523.25,587.33,659.25,698.46,783.99,880.00,987.77], xylophone:[523.25,587.33,659.25,783.99,880.00,1046.50,1174.66,1318.51,1567.98,1760.00] };
+    if (style==='chromatic') return 261 + (1-y)*785; const sc=SCALES[style]||SCALES.pentatonic; const i=Math.max(0, Math.min(sc.length-1, Math.floor((1-y)*sc.length))); return sc[i]; }
+
+  /* ===================== Init MediaPipe ===================== */
+  async function createHandLandmarker(){
+    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    handLandmarker = await HandLandmarker.createFromOptions(vision, { baseOptions:{ modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate:'GPU' }, runningMode:'VIDEO', numHands:DEFAULT_HANDS, minHandDetectionConfidence:.5, minHandPresenceConfidence:.5, minTrackingConfidence:.5 });
+    enableCam();
+  }
+  async function enableCam(){
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ width:{ideal:targetWidth}, height:{ideal:targetHeight}, aspectRatio:{ideal:16/9} } });
+    video.srcObject=stream; video.addEventListener('loadeddata',()=>{ webcamRunning=true; loadingDiv.classList.add('hidden'); $('gestureIndicator').classList.remove('hidden'); resizeCanvases(); predictWebcam(); });
+  }
+  function resizeCanvases(){
+    const rect=$('canvas-container').getBoundingClientRect(); const cw=rect.width, ch=rect.height; const vAsp=(video.videoWidth||1280)/(video.videoHeight||720); const cAsp=cw/ch; let w,h; if (cAsp>vAsp){ h=ch; w=h*vAsp; } else { w=cw; h=w/vAsp; }
+    [backgroundCanvas,videoCanvas,drawingCanvas,feedbackCanvas].forEach(c=>{ c.width=video.videoWidth||1280; c.height=video.videoHeight||720; c.style.width=w+'px'; c.style.height=h+'px'; });
+    drawingUtils=new DrawingUtils(feedbackCtx);
+  }
+
+  /* ===================== Tone.js Init ===================== */
+  async function initToneIfNeeded(){
+    if (toneReady) return;
+    await Tone.start();
+    tone.limiter = new Tone.Limiter(-1).toDestination();
+    const mkChan=v=> new Tone.Channel({volume:v}).connect(tone.limiter);
+    tone.channels={ kick:mkChan(-6), snare:mkChan(-8), hihat:mkChan(-10), tom:mkChan(-8), clap:mkChan(-10), cymbal:mkChan(-12), melody:mkChan(-6), eraser:mkChan(-12) };
+
+    // Sequencer synths
+    tone.synths.kick = new Tone.MembraneSynth({ pitchDecay:.02, octaves:6, oscillator:{type:'sine'}, envelope:{attack:.001, decay:.3, sustain:0, release:.01} }).connect(tone.channels.kick);
+    tone.synths.snare= new Tone.NoiseSynth({ noise:{type:'white'}, envelope:{attack:.001, decay:.15, sustain:0} }).connect(tone.channels.snare);
+    tone.synths.hihat= new Tone.MetalSynth({ frequency:250, harmonicity:5.1, modulationIndex:32, resonance:4000, envelope:{attack:.001, decay:.08, release:.01} }).connect(tone.channels.hihat);
+    tone.synths.tom  = new Tone.MembraneSynth({ octaves:4, envelope:{attack:.001, decay:.25, sustain:0, release:.05} }).connect(tone.channels.tom);
+    tone.synths.clap = new Tone.NoiseSynth({ noise:{type:'white'}, envelope:{attack:.001, decay:.12, sustain:0} }).connect(tone.channels.clap);
+    tone.synths.cymbal = new Tone.MetalSynth({ frequency:300, harmonicity:5, modulationIndex:32, resonance:2000, envelope:{attack:.001, decay:.6, release:.1} }).connect(tone.channels.cymbal);
+
+    // Live (left) synths: duplicates to avoid same-node double scheduling collisions
+    const dup = inst => inst instanceof Tone.MembraneSynth ? new Tone.MembraneSynth(inst.get())
+               : inst instanceof Tone.MetalSynth    ? new Tone.MetalSynth(inst.get())
+               : new Tone.NoiseSynth(inst.get());
+    tone.liveSynths.kick  = dup(tone.synths.kick).connect(tone.channels.kick);
+    tone.liveSynths.snare = dup(tone.synths.snare).connect(tone.channels.snare);
+    tone.liveSynths.hihat = dup(tone.synths.hihat).connect(tone.channels.hihat);
+    tone.liveSynths.tom   = dup(tone.synths.tom).connect(tone.channels.tom);
+    tone.liveSynths.clap  = dup(tone.synths.clap).connect(tone.channels.clap);
+    tone.liveSynths.cymbal= dup(tone.synths.cymbal).connect(tone.channels.cymbal);
+
+    // Melody & Eraser
+    tone.melody = new Tone.PolySynth(Tone.AMSynth,{ maxPolyphony:8, oscillator:{type:'sine'}, envelope:{attack:.005, decay:.03, sustain:.5, release:.2} }).connect(tone.channels.melody);
+    tone.eraserBus = new Tone.Filter(700,'lowpass').connect(tone.channels.eraser);
+    tone.eraserTone = new Tone.MembraneSynth({ pitchDecay:.01, octaves:2, oscillator:{type:'sine'}, envelope:{attack:.005, decay:.08, sustain:0, release:.05} }).connect(tone.eraserBus);
+    tone.eraserNoise= new Tone.NoiseSynth({ noise:{type:'brown'}, envelope:{attack:.001, decay:.05, sustain:0} }).connect(tone.eraserBus);
+
+    // Transport
+    Tone.Transport.bpm.value = +bpmEl.value; Tone.Transport.swing=0; Tone.Transport.swingSubdivision='8n';
+
+    // Left repeater (uses liveSynths) — create via helper to allow safe subdivision changes
+    tone.left.subdivision = leftSubdivisionSelect.value; tone.left.mode = leftHandModeSelect.value;
+    createOrReplaceLeftLoop();
+
+    // Sequencer
+    ensureSequencer();
+
+    toneReady=true;
+  }
+
+  function createOrReplaceLeftLoop(){
+    if (tone.leftLoop){ tone.leftLoop.dispose(); tone.leftLoop=null; }
+    tone.leftLoop = new Tone.Loop((time)=>{
+      if (!soundEnabled || !tone.left.gate) return;
+      const vel = 0.5 + Math.min(0.5, currentLeftSpeed/40);
+      const t = time + 0.0003; // small offset for safety
+      switch(tone.left.mode){
+        case 'kick':  tone.liveSynths.kick.triggerAttackRelease('C2','8n',t,vel); break;
+        case 'snare': tone.liveSynths.snare.triggerAttackRelease('8n',t,vel); break;
+        case 'hihat': tone.liveSynths.hihat.triggerAttackRelease('32n',t,vel); break;
+        case 'tom':   { const f=80+(1-tone.left.y)*200; tone.liveSynths.tom.triggerAttackRelease(Tone.Frequency(f).toNote(),'8n',t,vel); break; }
+        case 'clap':  tone.liveSynths.clap.triggerAttackRelease('16n',t,vel); break;
+        case 'cymbal':tone.liveSynths.cymbal.triggerAttackRelease('8n',t,vel); break;
+      }
+    }, tone.left.subdivision).start(0);
+  }
+
+  function ensureSequencer(){
+    if (tone.drumSeq) return;
+    tone.drumSeq = new Tone.Sequence((time, step)=>{
+      tone.seqStep=step; highlightCurrentStep(step);
+      if (!enableSequencerCheckbox.checked || !soundEnabled || !tone.left.gate) return;
+      tracks.forEach(tr=>{ if (!pattern[tr][step]) return; switch(tr){
+        case 'kick':  tone.synths.kick.triggerAttackRelease('C2','8n',time,0.9); break;
+        case 'snare': tone.synths.snare.triggerAttackRelease('8n',time,0.8); break;
+        case 'hihat': tone.synths.hihat.triggerAttackRelease('32n',time,0.5); break;
+        case 'tom':   tone.synths.tom.triggerAttackRelease('C2','8n',time,0.8); break;
+        case 'clap':  tone.synths.clap.triggerAttackRelease('16n',time,0.7); break;
+        case 'cymbal':tone.synths.cymbal.triggerAttackRelease('8n',time,0.6); break;
+      }});
+    }, [...Array(16).keys()], '16n');
+    tone.drumSeq.start(0);
+  }
+
+  function triggerEraser(y=.5, vel=.6){
+    const freq=60 + (1-y)*140; const now=Tone.now()+0.0002;
+    tone.eraserTone.triggerAttackRelease(Tone.Frequency(freq).toNote(),'16n',now,vel);
+    tone.eraserNoise.triggerAttackRelease('32n',now,Math.min(1,vel*.8));
+  }
+
+  // melody limiter
+  const noteState={};
+  function shouldTriggerNote(handId,pos,speed){
+    const now=performance.now();
+    if (!noteState[handId]){ noteState[handId]={lastNoteTime:0,lastPos:pos}; return true; }
+    const interval = speed<5?300:(speed<20?150:80); const dt=now-noteState[handId].lastNoteTime; const d=dist(noteState[handId].lastPos,pos);
+    if (dt>=interval && d>=15){ noteState[handId].lastNoteTime=now; noteState[handId].lastPos=pos; return true; }
+    return false;
+  }
+  function clearNoteState(handId){ if (noteState[handId]) delete noteState[handId]; }
+
+  /* ===================== Sequencer UI ===================== */
+  function renderSequencerGrid(){
+    drumGrid.innerHTML='';
+    tracks.forEach(t=>{
+      const label=document.createElement('div'); label.className='track-label'; label.textContent=t.toUpperCase(); drumGrid.appendChild(label);
+      for(let i=0;i<16;i++){
+        const cell=document.createElement('div'); cell.className='step'; cell.dataset.track=t; cell.dataset.step=i; if (pattern[t][i]) cell.classList.add('active'); if (i%4===0) cell.style.borderLeftColor='#bbb';
+        cell.addEventListener('click',()=>{ pattern[t][i]=!pattern[t][i]; cell.classList.toggle('active'); markDirty(true); });
+        drumGrid.appendChild(cell);
+      }
+    });
+  }
+  function highlightCurrentStep(step){ const nodes=drumGrid.querySelectorAll('.step'); nodes.forEach(n=>n.classList.remove('current')); tracks.forEach((t,row)=>{ const idx=row*(16+1)+1+step; const cell=drumGrid.children[idx]; if (cell) cell.classList.add('current'); }); }
+  function clearPattern(){ tracks.forEach(t=> pattern[t].fill(false)); renderSequencerGrid(); markDirty(true); }
+
+  // Presets (built-in)
+  const presets={
+    empty:()=>{ clearPattern(); },
+    house:()=>{ clearPattern(); [0,4,8,12].forEach(i=> pattern.kick[i]=true); [4,12].forEach(i=> pattern.snare[i]=true); [4,12].forEach(i=> pattern.clap[i]=true); [2,6,10,14].forEach(i=> pattern.hihat[i]=true); renderSequencerGrid(); setBpm(124,false); markDirty(false); },
+    trap:()=>{ clearPattern(); [0,7,11,15].forEach(i=> pattern.kick[i]=true); [4,12].forEach(i=> pattern.snare[i]=true); [...Array(16).keys()].forEach(i=> pattern.hihat[i]=true); renderSequencerGrid(); setBpm(140,false); markDirty(false); },
+    lofi:()=>{ clearPattern(); [0,10].forEach(i=> pattern.kick[i]=true); [4,12].forEach(i=> pattern.snare[i]=true); [2,6,10,14].forEach(i=> pattern.hihat[i]=true); renderSequencerGrid(); setBpm(90,false); markDirty(false); }
+  };
+
+  // LocalStorage custom preset (single most recent)
+  const LS_KEY='handdraw.customPreset';
+  function saveCustomPreset(){
+    const name=(presetNameInput.value||'Custom').trim();
+    const data={ name, bpm:+bpmEl.value, pattern };
+    // shallow clone arrays
+    const out={ name:data.name, bpm:data.bpm, pattern:{} };
+    tracks.forEach(t=> out.pattern[t]=[...pattern[t]]);
+    localStorage.setItem(LS_KEY, JSON.stringify(out));
+    upsertCustomPresetOption(out.name);
+    selectDropdownValue('custom');
+    markDirty(false);
+  }
+  function loadCustomPresetIfAny(){
+    try{ const raw=localStorage.getItem(LS_KEY); if (!raw) return; const obj=JSON.parse(raw); if (!obj || !obj.pattern) return; upsertCustomPresetOption(obj.name||'Custom'); applyPresetObject(obj, true); }
+    catch(e){ console.warn('preset load fail', e); }
+  }
+  function upsertCustomPresetOption(name){
+    let opt = [...drumPresetSelect.options].find(o=>o.value==='custom');
+    if (!opt){ opt=document.createElement('option'); opt.value='custom'; drumPresetSelect.prepend(opt); }
+    opt.textContent = '⭐ '+(name||'Custom');
+  }
+  function applyPresetObject(obj, doNotSelect){
+    if (!obj || !obj.pattern) return;
+    tracks.forEach(t=>{ pattern[t] = [...obj.pattern[t]]; });
+    renderSequencerGrid();
+    setBpm(obj.bpm||+bpmEl.value, false);
+    if (!doNotSelect) selectDropdownValue(obj.value||'custom');
+    markDirty(false);
+  }
+  function selectDropdownValue(v){ drumPresetSelect.value=v; }
+  function markDirty(v){ presetDirty=!!v; dirtyTag.style.display=v?'inline':'none'; }
+
+  /* ===================== Webcam Loop ===================== */
+  async function predictWebcam(){
+    if (!webcamRunning) return;
+    const nowMs=performance.now();
+    if (video.currentTime!==lastVideoTime){
+      lastVideoTime=video.currentTime;
+      const results = await handLandmarker.detectForVideo(video, nowMs);
+      if (!webcamHidden){ videoCtx.save(); videoCtx.clearRect(0,0,videoCanvas.width,videoCanvas.height); videoCtx.scale(-1,1); videoCtx.drawImage(video,-videoCanvas.width,0,videoCanvas.width,videoCanvas.height); videoCtx.restore(); }
+      else videoCtx.clearRect(0,0,videoCanvas.width,videoCanvas.height);
+      feedbackCtx.clearRect(0,0,feedbackCanvas.width,feedbackCanvas.height);
+      processHandResults(results);
+    }
+    requestAnimationFrame(predictWebcam);
+  }
+
+  function processHandResults(results){
+    const detected=results.landmarks, handed=results.handednesses; const seen=new Set(); let uiGestures=[];
+    if (detected && detected.length>0 && drawingUtils){
+      detected.forEach((lm, idx)=>{
+        const id=idx; seen.add(id);
+        const handedness = handed && handed[idx] ? handed[idx][0].categoryName : 'Right'; const isRight=(handedness==='Right');
+        const t = activeTouches[id] || { isDrawing:false, lastPoint:null, lastGesture:null, lastSpeed:0, emaSpeed:0, isRightHand:isRight };
+        t.isRightHand=isRight;
+
+        // draw landmarks mirrored
+        feedbackCtx.save(); feedbackCtx.scale(-1,1); feedbackCtx.translate(-feedbackCanvas.width,0);
+        drawingUtils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, {color:isRight?'#00c853':'#00acc1', lineWidth:2});
+        drawingUtils.drawLandmarks(lm, {color:isRight?'#ef5350':'#ab47bc', lineWidth:1, radius:3});
+        feedbackCtx.restore();
+
+        const g = detectGesture(lm); uiGestures.push(g);
+        const palm = getPalmCenter(lm); const p = getCanvasCoordinates(palm); const y=palm.y;
+
+        let spd=0; if (t.lastPoint) spd=dist(t.lastPoint,p);
+        t.emaSpeed = EMA_ALPHA*spd + (1-EMA_ALPHA)*(t.emaSpeed||0);
+        t.lastSpeed = spd; if (!isRight) currentLeftSpeed = t.emaSpeed;
+
+        // ====== SOUND ======
+        if (isRight){
+          if (g==='open' && t.emaSpeed>=SPEED_ON && soundEnabled){
+            if (shouldTriggerNote(id,p,t.emaSpeed)){
+              const f=getFrequencyFromY(y,rightHandStyle); const vel=0.4+Math.min(0.6,t.emaSpeed/40); tone.melody.triggerAttackRelease(f, 0.2, undefined, vel);
+            }
+          }
+          if (g==='closed' && t.emaSpeed>=SPEED_ON && soundEnabled){ if (shouldTriggerNote(id,p,t.emaSpeed)){ const vel=0.35+Math.min(0.45,t.emaSpeed/40); triggerEraser(y,vel);} }
+        } else {
+          if (soundEnabled){ t.emaSpeed>=SPEED_ON ? (tone.left.gate=true) : (tone.left.gate=false); tone.left.y=y; }
+          if (g==='closed' && t.emaSpeed>=SPEED_ON && soundEnabled){ if (shouldTriggerNote(id,p,t.emaSpeed)){ const vel=0.35+Math.min(0.45,t.emaSpeed/40); triggerEraser(y,vel);} }
+        }
+
+        // ====== DRAWING ======
+        const phase=isRight?rightHuePhase:leftHuePhase; const brush=isRight?rightBrush:leftBrush;
+        if (g==='open'){
+          const col=rainbowColorWithPhase(phase);
+          feedbackCtx.fillStyle=col; feedbackCtx.globalAlpha=.6; feedbackCtx.beginPath(); feedbackCtx.arc(p.x,p.y,brush/2,0,Math.PI*2); feedbackCtx.fill(); feedbackCtx.globalAlpha=1;
+          drawingCtx.strokeStyle=col; drawingCtx.fillStyle=col; drawingCtx.lineWidth=brush; drawingCtx.lineCap='round'; drawingCtx.lineJoin='round'; drawingCtx.globalCompositeOperation='source-over';
+          if (t.isDrawing && t.lastPoint && t.lastGesture==='open'){
+            const d=dist(t.lastPoint,p); if (d<MAX_STROKE_DISTANCE){ drawingCtx.beginPath(); drawingCtx.moveTo(t.lastPoint.x,t.lastPoint.y); drawingCtx.lineTo(p.x,p.y); drawingCtx.stroke(); } else { drawingCtx.beginPath(); drawingCtx.arc(p.x,p.y,brush/2,0,Math.PI*2); drawingCtx.fill(); }
+          } else { drawingCtx.beginPath(); drawingCtx.arc(p.x,p.y,brush/2,0,Math.PI*2); drawingCtx.fill(); }
+          t.isDrawing=true; t.lastPoint=p; t.lastGesture='open';
+        } else if (g==='closed'){
+          feedbackCtx.fillStyle='rgba(200,200,200,.6)'; feedbackCtx.beginPath(); feedbackCtx.arc(p.x,p.y,brush/2,0,Math.PI*2); feedbackCtx.fill(); feedbackCtx.strokeStyle='#ef4444'; feedbackCtx.lineWidth=2; feedbackCtx.stroke();
+          drawingCtx.lineWidth=brush; drawingCtx.lineCap='round'; drawingCtx.lineJoin='round'; drawingCtx.globalCompositeOperation='destination-out';
+          if (t.isDrawing && t.lastPoint && t.lastGesture==='closed'){
+            const d=dist(t.lastPoint,p); if (d<MAX_STROKE_DISTANCE){ drawingCtx.beginPath(); drawingCtx.moveTo(t.lastPoint.x,t.lastPoint.y); drawingCtx.lineTo(p.x,p.y); drawingCtx.stroke(); } else { drawingCtx.beginPath(); drawingCtx.arc(p.x,p.y,brush/2,0,Math.PI*2); drawingCtx.fill(); }
+          } else { drawingCtx.beginPath(); drawingCtx.arc(p.x,p.y,brush/2,0,Math.PI*2); drawingCtx.fill(); }
+          t.isDrawing=true; t.lastPoint=p; t.lastGesture='closed';
+        } else {
+          if (t.isDrawing) clearNoteState(id);
+          t.isDrawing=false; t.lastPoint=null; t.lastGesture=null;
+        }
+
+        activeTouches[id]=t;
+      });
+    }
+    Object.keys(activeTouches).forEach(id=>{ if (!seen.has(+id)){ clearNoteState(+id); delete activeTouches[id]; }});
+    updateGestureIndicator(uiGestures);
+  }
+
+  function updateGestureIndicator(gest){ $('gestureText').textContent = (gest.length===0)?'손을 보여주세요':gest.map(g=>g==='open'?'✋ 그리기':(g==='closed'?'✊ 지우기':'👌 대기')).join(' | ');
+  }
+
+  /* ===================== Events ===================== */
+  clearButton.addEventListener('click',()=> drawingCtx.clearRect(0,0,drawingCanvas.width,drawingCanvas.height));
+  hideWebcamCheckbox.addEventListener('change',e=> webcamHidden=e.target.checked);
+
+  rainbowSpeedSlider.addEventListener('input',e=>{ const v=+e.target.value; rainbowCycleDuration=v*1000; rainbowSpeedValue.textContent=v+'s'; });
+  rightHuePhaseEl.addEventListener('input',e=>{ rightHuePhase=+e.target.value; rightHuePhaseVal.textContent=rightHuePhase+'°'; });
+  leftHuePhaseEl.addEventListener('input',e=>{ leftHuePhase=+e.target.value; leftHuePhaseVal.textContent=leftHuePhase+'°'; });
+  rightBrushEl.addEventListener('input',e=>{ rightBrush=+e.target.value; rightBrushVal.textContent=rightBrush; });
+  leftBrushEl.addEventListener('input',e=>{ leftBrush=+e.target.value; leftBrushVal.textContent=leftBrush; });
+  drawingOpacitySlider.addEventListener('input',e=>{ const v=+e.target.value; drawingOpacityValue.textContent=v+'%'; drawingCanvas.style.opacity=v/100; });
+
+  rightHandStyleSelect.addEventListener('change', e=> rightHandStyle=e.target.value);
+  leftHandModeSelect.addEventListener('change', e=>{ if (!toneReady) return; tone.left.mode=e.target.value; });
+  leftSubdivisionSelect.addEventListener('change', e=>{ if (!toneReady) return; tone.left.subdivision=e.target.value; createOrReplaceLeftLoop(); });
+
+  enableSoundCheckbox.addEventListener('change', async e=>{ soundEnabled=e.target.checked; if (soundEnabled) await initToneIfNeeded(); else { tone.left.gate=false; Tone.Transport.stop(); } });
+  function setBpm(v, updateSlider=true){ if (updateSlider){ bpmEl.value=v; bpmVal.textContent=v; } if (toneReady) Tone.Transport.bpm.value=+v; }
+  bpmEl.addEventListener('input', e=> setBpm(+e.target.value,false));
+  swingEl.addEventListener('input', e=>{ const v=+e.target.value; swingVal.textContent=v+'%'; if (toneReady){ Tone.Transport.swing=v/100; Tone.Transport.swingSubdivision='8n'; }});
+
+  transportStartBtn.addEventListener('click', async ()=>{ if (!toneReady) await initToneIfNeeded(); if (!soundEnabled){ enableSoundCheckbox.checked=true; soundEnabled=true; } if (Tone.Transport.state!=='started') Tone.Transport.start('+0.01'); });
+  transportStopBtn.addEventListener('click', ()=> Tone.Transport.stop());
+
+  // Preset UI
+  enableSequencerCheckbox.addEventListener('change', ()=>{ if (tone.drumSeq) tone.drumSeq.mute = !enableSequencerCheckbox.checked; });
+  drumPresetSelect.addEventListener('change', e=>{ const v=e.target.value; if (v==='custom'){ const raw=localStorage.getItem(LS_KEY); if (raw){ applyPresetObject(JSON.parse(raw), true); } } else (presets[v]||presets.empty)(); });
+  clearSeqBtn.addEventListener('click', clearPattern);
+  savePresetBtn.addEventListener('click', saveCustomPreset);
+
+  // fullscreen
+  fullscreenButton.addEventListener('click', ()=>{ if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); });
+  document.addEventListener('fullscreenchange', ()=>{
+    isFullscreen = !!document.fullscreenElement;
+    document.body.classList.toggle('fullscreen-mode', isFullscreen);
+    if (isFullscreen){ resetCursorTimer(); }
+  });
+  document.addEventListener('mousemove',()=>{ if (isFullscreen){ document.body.classList.remove('hide-cursor'); resetCursorTimer(); }});
+  function resetCursorTimer(){ if (cursorTimeout) clearTimeout(cursorTimeout); cursorTimeout=setTimeout(()=>{ if (isFullscreen) document.body.classList.add('hide-cursor'); }, 5000); }
+
+  // resize
+  let resizeTimeout; window.addEventListener('resize', ()=>{ clearTimeout(resizeTimeout); resizeTimeout=setTimeout(()=>{ if (webcamRunning){ resizeCanvases(); lastVideoTime=-1; } },250); });
+
+  // boot
+  renderSequencerGrid();
+  loadCustomPresetIfAny();
+  createHandLandmarker().catch(e=>{ console.error('ML load fail',e); loadingDiv.textContent='모델 로딩 실패. 새로고침 해주세요.'; });
+  
+</script>
+</body>
 </html>
