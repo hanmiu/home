@@ -1,1340 +1,1330 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>손 제스처 드로잉</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #e8e8e8;
-            height: 100vh;
-            overflow: hidden;
-        }
-        body.fullscreen-mode {
-            background-color: #000000;
-        }
-        body.fullscreen-mode.hide-cursor {
-            cursor: none;
-        }
-        header {
-            background-color: #ffffff;
-            padding: 15px 25px;
-            margin: 15px 0;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            display: flex;
-            gap: 25px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: fit-content;
-            z-index: 10;
-            transition: opacity 0.3s ease;
-        }
-        header.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            align-items: flex-start;
-        }
-        .control-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        label {
-            font-size: 0.85em;
-            color: #333;
-            font-weight: 500;
-        }
-        .slider-value {
-            font-size: 0.85em;
-            color: #666;
-            min-width: 35px;
-            text-align: right;
-        }
-        input[type="range"] {
-            width: 150px;
-            cursor: pointer;
-        }
-        input[type="checkbox"] {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-            vertical-align: middle;
-        }
-        select {
-            padding: 6px 10px;
-            font-size: 0.85em;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: white;
-            font-family: inherit;
-        }
-        select:hover {
-            border-color: #999;
-        }
-        button {
-            padding: 10px 18px;
-            font-size: 0.9em;
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            background-color: #6c757d;
-            color: white;
-            transition: background-color 0.2s, transform 0.1s;
-            font-weight: 500;
-        }
-        button:hover {
-            background-color: #5a6268;
-            transform: translateY(-1px);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-        button#fullscreenButton {
-            background-color: #007bff;
-        }
-        button#fullscreenButton:hover {
-            background-color: #0056b3;
-        }
-        #canvas-container {
-            position: relative;
-            width: 95%;
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-        body.fullscreen-mode #canvas-container {
-            width: 100%;
-            margin: 0;
-        }
-        canvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: block;
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 5px;
-        }
-        body.fullscreen-mode canvas {
-            border-radius: 0;
-        }
-        #feedback-canvas {
-            z-index: 5;
-        }
-        #drawing-canvas {
-            z-index: 4;
-            opacity: 0.9; /* 기본 90% */
-        }
-        #video-canvas {
-            z-index: 3;
-        }
-        #background-canvas {
-            background-color: #ffffff;
-            z-index: 2;
-        }
-        #loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.3em;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 25px 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-            display: block;
-            z-index: 100;
-            text-align: center;
-            font-weight: 500;
-        }
-        .hidden {
-            display: none !important;
-        }
-        
-        /* 제스처 인디케이터 */
-        .gesture-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            z-index: 50;
-            transition: opacity 0.3s;
-        }
-        body.fullscreen-mode .gesture-indicator {
-            display: none;
-        }
-    </style>
-</head>
-<body>
+    <head>
+        <script type="text/javascript" src="/___vscode_livepreview_injected_script"></script>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>핸드 뮤지컬 페인터</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-<header id="mainHeader">
-    <button id="clearButton">🗑️ 다 지우기</button>
-    <button id="fullscreenButton">🖥️ 전체화면</button>
-    
-    <div class="control-group">
-        <label>무지개 속도 (초)</label>
-        <div class="control-row">
-            <input type="range" id="rainbowSpeed" min="5" max="60" value="10" step="5">
-            <span class="slider-value" id="rainbowSpeedValue">10</span>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                background: #e8e8e8;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            body.fullscreen-mode {
+                background: #000;
+            }
+
+            body.fullscreen-mode.hide-cursor {
+                cursor: none;
+            }
+
+            header {
+                background: #fff;
+                padding: 15px 25px;
+                margin: 15px 0 10px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0,0,0,.15);
+                display: flex;
+                gap: 25px;
+                align-items: center;
+                flex-wrap: wrap;
+                justify-content: center;
+                width: fit-content;
+                z-index: 10;
+                transition: opacity .3s ease;
+            }
+
+            header.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .control-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                align-items: flex-start;
+            }
+
+            .control-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            label {
+                font-size: .85em;
+                color: #333;
+                font-weight: 600;
+            }
+
+            .slider-value {
+                font-size: .85em;
+                color: #666;
+                min-width: 35px;
+                text-align: right;
+            }
+
+            input[type="range"] {
+                width: 150px;
+                cursor: pointer;
+            }
+
+            input[type="checkbox"] {
+                cursor: pointer;
+                width: 18px;
+                height: 18px;
+                vertical-align: middle;
+            }
+
+            select, input[type="number"], input[type="text"] {
+                padding: 6px 10px;
+                font-size: .85em;
+                cursor: pointer;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: #fff;
+                font-family: inherit;
+            }
+
+            select:hover {
+                border-color: #999;
+            }
+
+            button {
+                padding: 10px 14px;
+                font-size: .9em;
+                cursor: pointer;
+                border: none;
+                border-radius: 6px;
+                background: #6c757d;
+                color: #fff;
+                transition: background-color .2s, transform .1s;
+                font-weight: 600;
+            }
+
+            button:hover {
+                background: #5a6268;
+                transform: translateY(-1px);
+            }
+
+            button#fullscreenButton {
+                background: #007bff;
+            }
+
+            button#fullscreenButton:hover {
+                background: #0056b3;
+            }
+
+            #canvas-container {
+                position: relative;
+                width: 95%;
+                flex-grow: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 15px;
+                overflow: hidden;
+            }
+
+            body.fullscreen-mode #canvas-container {
+                width: 100%;
+                margin: 0;
+            }
+
+            canvas {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: block;
+                max-width: 100%;
+                max-height: 100%;
+                border-radius: 5px;
+            }
+
+            body.fullscreen-mode canvas {
+                border-radius: 0;
+            }
+
+            #feedback-canvas {
+                z-index: 5;
+            }
+
+            #drawing-canvas {
+                z-index: 4;
+                opacity: .9;
+            }
+
+            #video-canvas {
+                z-index: 3;
+            }
+
+            #background-canvas {
+                background: #fff;
+                z-index: 2;
+            }
+
+            #loading {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 1.2em;
+                background: rgba(255,255,255,.95);
+                padding: 20px 30px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0,0,0,.25);
+                display: block;
+                z-index: 100;
+                text-align: center;
+                font-weight: 600;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .gesture-indicator {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: rgba(0,0,0,.7);
+                color: #fff;
+                padding: 10px 15px;
+                border-radius: 8px;
+                font-size: .9em;
+                z-index: 50;
+                transition: opacity .3s;
+            }
+
+            body.fullscreen-mode .gesture-indicator {
+                display: none;
+            }
+
+            hr.sep {
+                height: 1px;
+                width: 100%;
+                border: none;
+                background: #eee;
+                margin: 6px 0;
+            }
+
+            /* Sequencer */
+            #seqContainer {
+                background: #fff;
+                padding: 12px 16px;
+                margin: 0 0 10px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0,0,0,.12);
+                max-width: 95%;
+                overflow: auto;
+            }
+
+            body.fullscreen-mode #seqContainer {
+                display: none;
+            }
+
+            #seqHeader {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-bottom: 10px;
+            }
+
+            .sequencer-grid {
+                display: grid;
+                grid-template-columns: 70px repeat(16, 28px);
+                gap: 6px 4px;
+                align-items: center;
+            }
+
+            .track-label {
+                font-size: .8em;
+                color: #333;
+                font-weight: 700;
+                text-align: right;
+                padding-right: 6px;
+            }
+
+            .step {
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                background: #eee;
+                border: 1px solid #ddd;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                user-select: none;
+                cursor: pointer;
+            }
+
+            .step.active {
+                background: #2ecc71;
+                border-color: #27ae60;
+            }
+
+            .step.current {
+                outline: 2px solid #007bff;
+            }
+        </style>
+    </head>
+    <body>
+        <header id="mainHeader">
+            <button id="clearButton">🗑️ 다 지우기</button>
+            <button id="fullscreenButton">🖥️ 전체화면</button>
+            <!-- 무지개/브러시 -->
+            <div class="control-group">
+                <label>무지개 속도 (초)</label>
+                <div class="control-row">
+                    <input type="range" id="rainbowSpeed" min="5" max="60" value="10" step="5"/>
+                    <span class="slider-value" id="rainbowSpeedValue">10</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>브러시 굵기</label>
+                <div class="control-row">
+                    <input type="range" id="brushSize" min="10" max="100" value="60" step="10"/>
+                    <span class="slider-value" id="brushSizeValue">60</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>드로잉 투명도 (%)</label>
+                <div class="control-row">
+                    <input type="range" id="drawingOpacity" min="10" max="100" value="90" step="10"/>
+                    <span class="slider-value" id="drawingOpacityValue">90</span>
+                </div>
+            </div>
+            <!-- 비디오/사운드 -->
+            <div class="control-group">
+                <div class="control-row">
+                    <input type="checkbox" id="hideWebcam"/>
+                    <label for="hideWebcam">웹캠 숨기기</label>
+                </div>
+                <div class="control-row">
+                    <input type="checkbox" id="enableSound"/>
+                    <label for="enableSound">오디오 활성화</label>
+                </div>
+            </div>
+            <hr class="sep"/>
+            <!-- 멜로디/드럼 컨트롤 -->
+            <div class="control-group">
+                <label>🤚 오른손 (멜로디)</label>
+                <div class="control-row">
+                    <select id="rightHandStyle">
+                        <option value="pentatonic">펜타토닉</option>
+                        <option value="major">메이저</option>
+                        <option value="xylophone">실로폰</option>
+                        <option value="chromatic">크로매틱</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>🤛 왼손 (퍼커션)</label>
+                <div class="control-row">
+                    <select id="leftHandMode">
+                        <option value="kick">킥</option>
+                        <option value="snare">스네어</option>
+                        <option value="hihat">하이햇</option>
+                        <option value="tom">탐</option>
+                        <option value="clap">클랩</option>
+                        <option value="cymbal">심벌</option>
+                    </select>
+                    <label>왼손 라이브 Subdivision</label>
+                    <select id="leftSubdivision">
+                        <option value="4n">1/4</option>
+                        <option value="8n" selected>1/8</option>
+                        <option value="16n">1/16</option>
+                        <option value="32n">1/32</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Transport</label>
+                <div class="control-row">
+                    <button id="transportStart">▶ 재생</button>
+                    <button id="transportStop">■ 정지</button>
+                    <label>BPM</label>
+                    <input type="range" id="bpm" min="60" max="180" value="110"/>
+                    <span class="slider-value" id="bpmVal">110</span>
+                    <label>Swing</label>
+                    <input type="range" id="swing" min="0" max="60" value="0"/>
+                    <span class="slider-value" id="swingVal">0%</span>
+                </div>
+            </div>
+        </header>
+        <!-- Sequencer Panel -->
+        <div id="seqContainer">
+            <div id="seqHeader">
+                <label>
+                    <input type="checkbox" id="enableSequencer" checked/>시퀀서 사용
+                </label>
+                <label>프리셋</label>
+                <select id="drumPreset">
+                    <option value="empty">Empty</option>
+                    <option value="house">House 124</option>
+                    <option value="trap">Trap 140</option>
+                    <option value="lofi">LoFi 90</option>
+                </select>
+                <button id="clearSeq">패턴 지우기</button>
+            </div>
+            <div class="sequencer-grid" id="drumGrid"></div>
         </div>
-    </div>
-    
-    <div class="control-group">
-        <label>🤚 오른손 (멜로디)</label>
-        <div class="control-row">
-            <select id="rightHandStyle">
-                <option value="pentatonic">펜타토닉 (밝고 경쾌)</option>
-                <option value="major">메이저 스케일 (클래식)</option>
-                <option value="xylophone">실로폰 (반짝임)</option>
-                <option value="chromatic">크로매틱 (자유로움)</option>
-            </select>
+        <div class="gesture-indicator hidden" id="gestureIndicator">
+            <div id="gestureText">손을 보여주세요</div>
         </div>
-    </div>
-    
-    <div class="control-group">
-        <label>🤛 왼손 (퍼커션)</label>
-        <div class="control-row">
-            <select id="leftHandStyle">
-                <option value="kick">킥 드럼 (베이스)</option>
-                <option value="snare">스네어 (탁!)</option>
-                <option value="hihat">하이햇 (칫!)</option>
-                <option value="tom">탐 (둥둥)</option>
-                <option value="clap">박수 (짝!)</option>
-                <option value="cymbal">심벌 (챙~)</option>
-                <option value="melody">멜로디 (오른손과 동일)</option>
-            </select>
+        <div id="loading">모델과 웹캠을 로딩 중입니다...</div>
+        <div id="canvas-container">
+            <canvas id="background-canvas"></canvas>
+            <canvas id="video-canvas"></canvas>
+            <canvas id="drawing-canvas"></canvas>
+            <canvas id="feedback-canvas"></canvas>
         </div>
-    </div>
-    
-    <div class="control-group">
-        <label>브러시 굵기</label>
-        <div class="control-row">
-            <input type="range" id="brushSize" min="10" max="100" value="60" step="10">
-            <span class="slider-value" id="brushSizeValue">60</span>
-        </div>
-    </div>
-    
-    <div class="control-group">
-        <label>드로잉 투명도 (%)</label>
-        <div class="control-row">
-            <input type="range" id="drawingOpacity" min="10" max="100" value="90" step="10">
-            <span class="slider-value" id="drawingOpacityValue">90</span>
-        </div>
-    </div>
-    
-    <div class="control-group">
-        <div class="control-row">
-            <input type="checkbox" id="hideWebcam">
-            <label for="hideWebcam">웹캠 숨기기</label>
-        </div>
-    </div>
-    
-    <div class="control-group">
-        <div class="control-row">
-            <input type="checkbox" id="enableSound" checked>
-            <label for="enableSound">사운드 켜기</label>
-        </div>
-    </div>
-</header>
+        <video id="webcam" class="hidden" autoplay playsinline></video>
+        <script type="module">
+            import {HandLandmarker, FilesetResolver, DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+            import*as Tone from "https://cdn.skypack.dev/tone";
 
-<div class="gesture-indicator hidden" id="gestureIndicator">
-    <div id="gestureText">손을 보여주세요</div>
-</div>
+            // --- DOM ---
+            const video = document.getElementById('webcam');
+            const loadingDiv = document.getElementById('loading');
+            const clearButton = document.getElementById('clearButton');
+            const fullscreenButton = document.getElementById('fullscreenButton');
+            const hideWebcamCheckbox = document.getElementById('hideWebcam');
+            const rainbowSpeedSlider = document.getElementById('rainbowSpeed');
+            const rainbowSpeedValue = document.getElementById('rainbowSpeedValue');
+            const rightHandStyleSelect = document.getElementById('rightHandStyle');
+            const leftHandModeSelect = document.getElementById('leftHandMode');
+            const leftSubdivisionSelect = document.getElementById('leftSubdivision');
+            const brushSizeSlider = document.getElementById('brushSize');
+            const brushSizeValue = document.getElementById('brushSizeValue');
+            const drawingOpacitySlider = document.getElementById('drawingOpacity');
+            const drawingOpacityValue = document.getElementById('drawingOpacityValue');
+            const enableSoundCheckbox = document.getElementById('enableSound');
+            const gestureIndicator = document.getElementById('gestureIndicator');
+            const gestureText = document.getElementById('gestureText');
+            const mainHeader = document.getElementById('mainHeader');
+            const canvasContainer = document.getElementById('canvas-container');
+            const bpmEl = document.getElementById('bpm');
+            const bpmVal = document.getElementById('bpmVal');
+            const swingEl = document.getElementById('swing');
+            const swingVal = document.getElementById('swingVal');
+            const transportStartBtn = document.getElementById('transportStart');
+            const transportStopBtn = document.getElementById('transportStop');
 
-<div id="loading">모델과 웹캠을 로딩 중입니다...</div>
+            // Sequencer DOM
+            const enableSequencerCheckbox = document.getElementById('enableSequencer');
+            const drumPresetSelect = document.getElementById('drumPreset');
+            const clearSeqBtn = document.getElementById('clearSeq');
+            const drumGrid = document.getElementById('drumGrid');
 
-<div id="canvas-container">
-    <canvas id="background-canvas"></canvas>
-    <canvas id="video-canvas"></canvas>
-    <canvas id="drawing-canvas"></canvas>
-    <canvas id="feedback-canvas"></canvas>
-</div>
+            // --- Canvases ---
+            const backgroundCanvas = document.getElementById('background-canvas');
+            const videoCanvas = document.getElementById('video-canvas');
+            const drawingCanvas = document.getElementById('drawing-canvas');
+            const feedbackCanvas = document.getElementById('feedback-canvas');
+            const backgroundCtx = backgroundCanvas.getContext('2d');
+            const videoCtx = videoCanvas.getContext('2d');
+            const drawingCtx = drawingCanvas.getContext('2d');
+            const feedbackCtx = feedbackCanvas.getContext('2d');
 
-<video id="webcam" class="hidden" autoplay playsinline></video>
+            // --- MediaPipe Config ---
+            const DEFAULT_HANDS = 2;
+            let handLandmarker;
+            let drawingUtils;
 
-<script type="module">
-    import { HandLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+            // --- State ---
+            let webcamRunning = false;
+            let webcamHidden = false;
+            let lastVideoTime = -1;
+            let targetWidth = 1280;
+            let targetHeight = 720;
+            let isFullscreen = false;
+            let cursorTimeout = null;
 
-    // --- DOM 요소 ---
-    const video = document.getElementById('webcam');
-    const loadingDiv = document.getElementById('loading');
-    const clearButton = document.getElementById('clearButton');
-    const fullscreenButton = document.getElementById('fullscreenButton');
-    const hideWebcamCheckbox = document.getElementById('hideWebcam');
-    const rainbowSpeedSlider = document.getElementById('rainbowSpeed');
-    const rainbowSpeedValue = document.getElementById('rainbowSpeedValue');
-    const rightHandStyleSelect = document.getElementById('rightHandStyle');
-    const leftHandStyleSelect = document.getElementById('leftHandStyle');
-    const brushSizeSlider = document.getElementById('brushSize');
-    const brushSizeValue = document.getElementById('brushSizeValue');
-    const drawingOpacitySlider = document.getElementById('drawingOpacity');
-    const drawingOpacityValue = document.getElementById('drawingOpacityValue');
-    const enableSoundCheckbox = document.getElementById('enableSound');
-    const gestureIndicator = document.getElementById('gestureIndicator');
-    const gestureText = document.getElementById('gestureText');
-    const mainHeader = document.getElementById('mainHeader');
-    const canvasContainer = document.getElementById('canvas-container');
+            // Drawing
+            let rainbowCycleDuration = 10000;
+            let brushSize = 60;
+            let startTime = performance.now();
+            let rightHandStyle = 'pentatonic';
 
-    // --- 캔버스 및 컨텍스트 ---
-    const backgroundCanvas = document.getElementById('background-canvas');
-    const videoCanvas = document.getElementById('video-canvas');
-    const drawingCanvas = document.getElementById('drawing-canvas');
-    const feedbackCanvas = document.getElementById('feedback-canvas');
+            // Gesture per hand
+            const activeTouches = {};
+            // { handId: { isDrawing, lastPoint, lastGesture, lastSpeed, emaSpeed, isRightHand } }
 
-    const backgroundCtx = backgroundCanvas.getContext('2d');
-    const videoCtx = videoCanvas.getContext('2d');
-    const drawingCtx = drawingCanvas.getContext('2d');
-    const feedbackCtx = feedbackCanvas.getContext('2d');
+            // Gating thresholds
+            const SPEED_ON = 12;
+            const SPEED_OFF = 6;
+            const EMA_ALPHA = 0.3;
+            const MAX_STROKE_DISTANCE = 100;
 
-    // --- MediaPipe 설정 ---
-    const MAX_HANDS = 4;
-    const DEFAULT_HANDS = 2;
-    let handLandmarker;
-    let drawingUtils;
-
-    // --- 상태 변수 ---
-    let webcamRunning = false;
-    let webcamHidden = false;
-    let lastVideoTime = -1;
-    let targetWidth = 1280;
-    let targetHeight = 720;
-    let isFullscreen = false;
-    let cursorTimeout = null;
-    let soundEnabled = true;
-
-    // --- Web Audio API ---
-    let audioContext = null;
-    let masterGain = null;
-    let activeNotes = {}; // 손 ID별 활성 노트 추적 { handId: { lastNoteTime, lastPosition, noteCount } }
-
-    // --- 그리기 관련 변수 ---
-    let rainbowCycleDuration = 10000; // 밀리초 (10초)
-    let brushSize = 60;
-    let startTime = performance.now(); // 무지개 색상 시작 시간
-    let rightHandStyle = 'pentatonic'; // 오른손: 멜로디
-    let leftHandStyle = 'kick'; // 왼손: 퍼커션
-    
-    let activeTouches = {}; // 손 ID별 그리기 상태 { handId: { isDrawing: false, lastPoint: null } }
-
-    // --- 제스처 감지 임계값 ---
-    const OPEN_HAND_THRESHOLD = 0.7; // 손가락 펴짐 비율 (70% 이상이면 손바닥)
-    const CLOSED_HAND_THRESHOLD = 0.3; // 손가락 접힘 비율 (30% 이하면 주먹)
-    const MAX_STROKE_DISTANCE = 100; // 이전 점과의 최대 거리 (픽셀) - 이보다 멀면 선을 잇지 않음
-
-    // --- HandLandmarker 초기화 ---
-    async function createHandLandmarker() {
-        try {
-            const vision = await FilesetResolver.forVisionTasks(
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-            );
-            handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                baseOptions: {
-                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-                    delegate: "GPU"
+            // Tone.js audio state
+            let toneReady = false;
+            let soundEnabled = false;
+            const tone = {
+                ctx: null,
+                limiter: null,
+                channels: {},
+                synths: {},
+                melody: null,
+                eraserBus: null,
+                left: {
+                    gate: false,
+                    subdivision: '8n',
+                    mode: 'kick',
+                    y: 0.5
                 },
-                runningMode: "VIDEO",
-                numHands: DEFAULT_HANDS,
-                minHandDetectionConfidence: 0.5,
-                minHandPresenceConfidence: 0.5,
-                minTrackingConfidence: 0.5
-            });
-            console.log("HandLandmarker 초기화 완료");
-            enableCam();
-        } catch (error) {
-            console.error("HandLandmarker 초기화 실패:", error);
-            loadingDiv.textContent = "모델 로딩 실패. 페이지를 새로고침 해주세요.";
-        }
-    }
-
-    // --- 웹캠 활성화 ---
-    async function enableCam() {
-        if (!handLandmarker) {
-            console.log("HandLandmarker가 아직 로드되지 않았습니다.");
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    width: { ideal: targetWidth },
-                    height: { ideal: targetHeight },
-                    aspectRatio: { ideal: 16/9 }
-                }
-            });
-            video.srcObject = stream;
-            video.addEventListener('loadeddata', () => {
-                webcamRunning = true;
-                loadingDiv.classList.add('hidden');
-                gestureIndicator.classList.remove('hidden');
-                resizeCanvases();
-                predictWebcam();
-                console.log(`웹캠 시작 - 해상도: ${video.videoWidth}x${video.videoHeight}, 비율: ${(video.videoWidth/video.videoHeight).toFixed(2)}`);
-            });
-        } catch (error) {
-            console.error("웹캠 접근 실패:", error);
-            loadingDiv.textContent = "웹캠 접근 실패. 권한을 확인해주세요.";
-        }
-    }
-
-    // --- 캔버스 크기 조정 ---
-    function resizeCanvases() {
-        const containerRect = canvasContainer.getBoundingClientRect();
-        const containerWidth = containerRect.width;
-        const containerHeight = containerRect.height;
-
-        const videoAspect = video.videoWidth / video.videoHeight;
-        const containerAspect = containerWidth / containerHeight;
-
-        let canvasWidth, canvasHeight;
-
-        if (containerAspect > videoAspect) {
-            canvasHeight = containerHeight;
-            canvasWidth = canvasHeight * videoAspect;
-        } else {
-            canvasWidth = containerWidth;
-            canvasHeight = canvasWidth / videoAspect;
-        }
-
-        [backgroundCanvas, videoCanvas, drawingCanvas, feedbackCanvas].forEach(canvas => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.style.width = `${canvasWidth}px`;
-            canvas.style.height = `${canvasHeight}px`;
-        });
-
-        drawingUtils = new DrawingUtils(feedbackCtx);
-        console.log(`캔버스 크기 조정: ${canvasWidth}x${canvasHeight} (내부: ${video.videoWidth}x${video.videoHeight})`);
-    }
-
-    // --- 무지개 색상 계산 ---
-    function getRainbowColor() {
-        const elapsed = performance.now() - startTime;
-        const hue = (elapsed % rainbowCycleDuration) / rainbowCycleDuration * 360;
-        return `hsl(${hue}, 100%, 50%)`; // 채도 100%, 밝기 50%
-    }
-
-    // --- 손바닥 중심점 계산 ---
-    function getPalmCenter(landmarks) {
-        // 손목(0)과 중지 기저부(9)의 중점을 손바닥 중심으로 사용
-        const wrist = landmarks[0];
-        const middleBase = landmarks[9];
-        return {
-            x: (wrist.x + middleBase.x) / 2,
-            y: (wrist.y + middleBase.y) / 2
-        };
-    }
-
-    // --- 캔버스 좌표 변환 (좌우 반전 적용) ---
-    function getCanvasCoordinates(normalizedPoint) {
-        return {
-            x: (1 - normalizedPoint.x) * feedbackCanvas.width, // 좌우 반전
-            y: normalizedPoint.y * feedbackCanvas.height
-        };
-    }
-
-    // --- 두 점 사이 거리 계산 ---
-    function getDistance(p1, p2) {
-        const dx = p1.x - p2.x;
-        const dy = p1.y - p2.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    // --- Web Audio 초기화 ---
-    function initAudio() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            masterGain = audioContext.createGain();
-            masterGain.gain.value = 0.2; // 전체 볼륨 낮춤
-            masterGain.connect(audioContext.destination);
-            console.log("Web Audio 초기화 완료");
-        }
-    }
-
-    // --- 음계 정의 (주파수 Hz) ---
-    const SCALES = {
-        // C Major Pentatonic: C4~C6 (2옥타브)
-        pentatonic: [
-            261.63, 293.66, 329.63, 392.00, 440.00,  // C4, D4, E4, G4, A4
-            523.25, 587.33, 659.25, 783.99, 880.00   // C5, D5, E5, G5, A5
-        ],
-        // C Major Scale: C4~C6 (2옥타브) 
-        major: [
-            261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88,  // C4~B4
-            523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77   // C5~B5
-        ],
-        // 실로폰 스타일 - 메이저 펜타토닉 (더 밝게)
-        xylophone: [
-            523.25, 587.33, 659.25, 783.99, 880.00,  // C5~A5
-            1046.50, 1174.66, 1318.51, 1567.98, 1760.00  // C6~A6 (한 옥타브 위)
-        ],
-        // 크로매틱 - 반음계 (자유로운 연속)
-        chromatic: null // 특수 처리
-    };
-
-    // --- y 좌표를 주파수로 변환 ---
-    function getFrequencyFromY(normalizedY, style = 'pentatonic') {
-        if (style === 'chromatic') {
-            // 크로매틱: 연속 주파수 (원래 방식)
-            return 261 + (1 - normalizedY) * 785; // C4(261Hz) ~ C6(1046Hz)
-        }
-        
-        const scale = SCALES[style];
-        if (!scale) return 261; // 기본값
-        
-        // y 좌표를 스케일 인덱스로 매핑
-        const index = Math.floor((1 - normalizedY) * scale.length);
-        const clampedIndex = Math.max(0, Math.min(scale.length - 1, index));
-        
-        return scale[clampedIndex];
-    }
-
-    // --- 퍼커션 사운드 생성 ---
-    function playPercussion(type, normalizedY = 0.5) {
-        if (!soundEnabled || !audioContext) return;
-
-        const now = audioContext.currentTime;
-        
-        switch(type) {
-            case 'kick':
-                // 킥 드럼: 낮은 주파수 + pitch envelope
-                {
-                    const osc = audioContext.createOscillator();
-                    osc.type = 'sine';
-                    
-                    // Pitch envelope: 150Hz -> 40Hz
-                    osc.frequency.setValueAtTime(150, now);
-                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
-                    
-                    const gain = audioContext.createGain();
-                    gain.gain.setValueAtTime(0.8, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    
-                    osc.connect(gain);
-                    gain.connect(masterGain);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
-                }
-                break;
-                
-            case 'snare':
-                // 스네어: white noise + pitch envelope
-                {
-                    // Noise
-                    const bufferSize = audioContext.sampleRate * 0.2;
-                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = Math.random() * 2 - 1;
-                    }
-                    
-                    const noise = audioContext.createBufferSource();
-                    noise.buffer = buffer;
-                    
-                    const noiseFilter = audioContext.createBiquadFilter();
-                    noiseFilter.type = 'highpass';
-                    noiseFilter.frequency.value = 1000;
-                    
-                    const noiseGain = audioContext.createGain();
-                    noiseGain.gain.setValueAtTime(0.5, now);
-                    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    
-                    noise.connect(noiseFilter);
-                    noiseFilter.connect(noiseGain);
-                    noiseGain.connect(masterGain);
-                    noise.start(now);
-                    
-                    // Tone
-                    const osc = audioContext.createOscillator();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(200, now);
-                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
-                    
-                    const oscGain = audioContext.createGain();
-                    oscGain.gain.setValueAtTime(0.3, now);
-                    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                    
-                    osc.connect(oscGain);
-                    oscGain.connect(masterGain);
-                    osc.start(now);
-                    osc.stop(now + 0.1);
-                }
-                break;
-                
-            case 'hihat':
-                // 하이햇: high-pass filtered noise
-                {
-                    const bufferSize = audioContext.sampleRate * 0.05;
-                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = Math.random() * 2 - 1;
-                    }
-                    
-                    const noise = audioContext.createBufferSource();
-                    noise.buffer = buffer;
-                    
-                    const filter = audioContext.createBiquadFilter();
-                    filter.type = 'highpass';
-                    filter.frequency.value = 7000;
-                    
-                    const gain = audioContext.createGain();
-                    gain.gain.setValueAtTime(0.3, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-                    
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(masterGain);
-                    noise.start(now);
-                }
-                break;
-                
-            case 'tom':
-                // 탐: sine wave with pitch sweep
-                {
-                    // y 좌표로 피치 조절 (높이에 따라 다른 탐)
-                    const basePitch = 80 + (1 - normalizedY) * 120; // 80Hz ~ 200Hz
-                    
-                    const osc = audioContext.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(basePitch * 2, now);
-                    osc.frequency.exponentialRampToValueAtTime(basePitch, now + 0.1);
-                    
-                    const gain = audioContext.createGain();
-                    gain.gain.setValueAtTime(0.6, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    
-                    osc.connect(gain);
-                    gain.connect(masterGain);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
-                }
-                break;
-                
-            case 'clap':
-                // 박수: multiple short noise bursts
-                {
-                    for (let i = 0; i < 3; i++) {
-                        const delay = i * 0.015;
-                        
-                        const bufferSize = audioContext.sampleRate * 0.03;
-                        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-                        const data = buffer.getChannelData(0);
-                        for (let j = 0; j < bufferSize; j++) {
-                            data[j] = Math.random() * 2 - 1;
-                        }
-                        
-                        const noise = audioContext.createBufferSource();
-                        noise.buffer = buffer;
-                        
-                        const filter = audioContext.createBiquadFilter();
-                        filter.type = 'bandpass';
-                        filter.frequency.value = 1500;
-                        filter.Q.value = 2;
-                        
-                        const gain = audioContext.createGain();
-                        gain.gain.setValueAtTime(0.3, now + delay);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.05);
-                        
-                        noise.connect(filter);
-                        filter.connect(gain);
-                        gain.connect(masterGain);
-                        noise.start(now + delay);
-                    }
-                }
-                break;
-                
-            case 'cymbal':
-                // 심벌: high-pass filtered noise with long decay
-                {
-                    const bufferSize = audioContext.sampleRate * 1.5;
-                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = Math.random() * 2 - 1;
-                    }
-                    
-                    const noise = audioContext.createBufferSource();
-                    noise.buffer = buffer;
-                    
-                    const filter = audioContext.createBiquadFilter();
-                    filter.type = 'highpass';
-                    filter.frequency.value = 3000;
-                    filter.Q.value = 1;
-                    
-                    const gain = audioContext.createGain();
-                    gain.gain.setValueAtTime(0.4, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
-                    
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(masterGain);
-                    noise.start(now);
-                }
-                break;
-        }
-    }
-
-    // --- ADSR 노트 생성 (음악 스타일별) ---
-    function playNote(frequency, duration = 0.5, isEraser = false, style = 'pentatonic') {
-        if (!soundEnabled || !audioContext) return;
-
-        const now = audioContext.currentTime;
-        
-        // ADSR 파라미터 (스타일별)
-        let attackTime, decayTime, sustainLevel, releaseTime, peakVolume;
-        
-        if (isEraser) {
-            // 지우개: 부드럽고 짧은 소리
-            attackTime = 0.01;
-            decayTime = 0.03;
-            sustainLevel = 0.5;
-            releaseTime = 0.1;
-            peakVolume = 0.06;
-        } else if (style === 'xylophone') {
-            // 실로폰: 매우 빠른 attack, 긴 release
-            attackTime = 0.005;
-            decayTime = 0.02;
-            sustainLevel = 0.3;
-            releaseTime = 0.3;
-            peakVolume = 0.15;
-        } else {
-            // 칼림바/펜타토닉/메이저: 밝고 명확한 소리
-            attackTime = 0.005;  // 매우 빠른 attack
-            decayTime = 0.03;
-            sustainLevel = 0.5;
-            releaseTime = 0.2;
-            peakVolume = 0.12;
-        }
-        
-        // 메인 게인 노드
-        const mainGain = audioContext.createGain();
-        mainGain.gain.setValueAtTime(0, now);
-        mainGain.gain.linearRampToValueAtTime(peakVolume, now + attackTime); // Attack
-        mainGain.gain.linearRampToValueAtTime(peakVolume * sustainLevel, now + attackTime + decayTime); // Decay
-        mainGain.gain.setValueAtTime(peakVolume * sustainLevel, now + duration - releaseTime); // Sustain
-        mainGain.gain.linearRampToValueAtTime(0, now + duration); // Release
-        
-        // 필터
-        const filter = audioContext.createBiquadFilter();
-        filter.type = 'lowpass';
-        
-        if (isEraser) {
-            filter.frequency.value = 600;
-            filter.Q.value = 2;
-            
-            // 지우개: 단순한 소리
-            [1, 1.5].forEach((multiplier, i) => {
-                const osc = audioContext.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.value = frequency * multiplier;
-                
-                const oscGain = audioContext.createGain();
-                oscGain.gain.value = i === 0 ? 0.7 : 0.3;
-                
-                osc.connect(oscGain);
-                oscGain.connect(filter);
-                osc.start(now);
-                osc.stop(now + duration);
-            });
-            
-        } else if (style === 'xylophone') {
-            filter.frequency.value = frequency * 6;
-            filter.Q.value = 3;
-            
-            // 실로폰: triangle wave + 많은 배음
-            const chordFreqs = [frequency, frequency * 1.25, frequency * 1.5]; // 메이저 화음
-            
-            chordFreqs.forEach((freq, i) => {
-                // 기본음
-                const osc1 = audioContext.createOscillator();
-                osc1.type = 'triangle';
-                osc1.frequency.value = freq;
-                
-                const gain1 = audioContext.createGain();
-                gain1.gain.value = i === 0 ? 0.5 : 0.15;
-                
-                osc1.connect(gain1);
-                gain1.connect(filter);
-                osc1.start(now);
-                osc1.stop(now + duration);
-                
-                // 고조파
-                [2, 3, 4].forEach((harmonic, j) => {
-                    const osc = audioContext.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.value = freq * harmonic;
-                    
-                    const oscGain = audioContext.createGain();
-                    oscGain.gain.value = 0.05 / (j + 1);
-                    
-                    osc.connect(oscGain);
-                    oscGain.connect(filter);
-                    osc.start(now);
-                    osc.stop(now + duration);
-                });
-            });
-            
-        } else {
-            // 칼림바/펜타토닉/메이저: 메이저 3화음 + 풍부한 배음
-            filter.frequency.value = frequency * 5;
-            filter.Q.value = 2;
-            
-            // 메이저 3화음: 근음, 장3도(1.25배), 완전5도(1.5배)
-            const chordFreqs = [frequency, frequency * 1.25, frequency * 1.5];
-            
-            chordFreqs.forEach((freq, i) => {
-                // 기본음 (Sine wave)
-                const osc1 = audioContext.createOscillator();
-                osc1.type = 'sine';
-                osc1.frequency.value = freq;
-                
-                const gain1 = audioContext.createGain();
-                gain1.gain.value = i === 0 ? 1.0 : 0.25; // 근음이 가장 크게
-                
-                osc1.connect(gain1);
-                gain1.connect(filter);
-                osc1.start(now);
-                osc1.stop(now + duration);
-                
-                // 배음들 (칼림바의 금속성 느낌)
-                [2, 3, 4, 5].forEach((harmonic, j) => {
-                    const osc = audioContext.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.value = freq * harmonic;
-                    
-                    const oscGain = audioContext.createGain();
-                    oscGain.gain.value = [0.12, 0.08, 0.05, 0.03][j];
-                    
-                    osc.connect(oscGain);
-                    oscGain.connect(filter);
-                    osc.start(now);
-                    osc.stop(now + duration);
-                });
-            });
-        }
-        
-        filter.connect(mainGain);
-        mainGain.connect(masterGain);
-    }
-
-    // --- 노트 트리거 판단 (움직임 기반) ---
-    function shouldTriggerNote(handId, currentPosition, speed) {
-        if (!activeNotes[handId]) {
-            activeNotes[handId] = {
-                lastNoteTime: 0,
-                lastPosition: currentPosition,
-                noteCount: 0
+                leftLoop: null,
+                drumSeq: null,
+                seqStep: 0
             };
-            return true; // 첫 노트
-        }
-        
-        const noteState = activeNotes[handId];
-        const now = performance.now();
-        const timeSinceLastNote = now - noteState.lastNoteTime;
-        
-        // 속도에 따른 노트 간격 계산 (빠를수록 짧은 간격)
-        // 느림(speed < 5): 300ms 간격
-        // 보통(speed 5-20): 150ms 간격
-        // 빠름(speed > 20): 80ms 간격
-        let noteInterval;
-        if (speed < 5) {
-            noteInterval = 300;
-        } else if (speed < 20) {
-            noteInterval = 150;
-        } else {
-            noteInterval = 80;
-        }
-        
-        // 거리 체크 (최소 이동 거리)
-        const distance = getDistance(noteState.lastPosition, currentPosition);
-        const minDistance = 15; // 픽셀
-        
-        // 시간 또는 거리 조건 만족 시 노트 트리거
-        if (timeSinceLastNote >= noteInterval && distance >= minDistance) {
-            noteState.lastNoteTime = now;
-            noteState.lastPosition = currentPosition;
-            noteState.noteCount++;
-            return true;
-        }
-        
-        return false;
-    }
 
-    // --- 손 사라질 때 노트 상태 초기화 ---
-    function clearNoteState(handId) {
-        if (activeNotes[handId]) {
-            delete activeNotes[handId];
-        }
-    }
-
-    // --- 손가락 펴짐/접힘 감지 ---
-    function detectGesture(landmarks) {
-        // 각 손가락의 끝(tip)과 기저부(base) 사이 거리 계산
-        const fingerTips = [4, 8, 12, 16, 20]; // 엄지, 검지, 중지, 약지, 새끼
-        const fingerBases = [2, 5, 9, 13, 17];
-        
-        let extendedCount = 0;
-        
-        for (let i = 0; i < fingerTips.length; i++) {
-            const tip = landmarks[fingerTips[i]];
-            const base = landmarks[fingerBases[i]];
-            
-            // 손목과의 거리로 비교
-            const wrist = landmarks[0];
-            const tipDist = Math.sqrt(
-                Math.pow(tip.x - wrist.x, 2) + 
-                Math.pow(tip.y - wrist.y, 2)
-            );
-            const baseDist = Math.sqrt(
-                Math.pow(base.x - wrist.x, 2) + 
-                Math.pow(base.y - wrist.y, 2)
-            );
-            
-            // 끝이 기저부보다 멀리 있으면 펴진 것으로 간주
-            if (tipDist > baseDist * 1.2) {
-                extendedCount++;
+            // --- Scales ---
+            const SCALES = {
+                pentatonic: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00],
+                major: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77],
+                xylophone: [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00],
+                chromatic: null
+            };
+            function getFrequencyFromY(y, style='pentatonic') {
+                if (style === 'chromatic')
+                    return 261 + (1 - y) * 785;
+                const s = SCALES[style] || SCALES.pentatonic;
+                const i = Math.floor((1 - y) * s.length);
+                return s[Math.max(0, Math.min(s.length - 1, i))];
             }
-        }
-        
-        const extendedRatio = extendedCount / fingerTips.length;
-        
-        if (extendedRatio >= OPEN_HAND_THRESHOLD) {
-            return 'open'; // 손바닥
-        } else if (extendedRatio <= CLOSED_HAND_THRESHOLD) {
-            return 'closed'; // 주먹
-        } else {
-            return 'neutral'; // 중간 상태
-        }
-    }
 
-    // --- 웹캠 프레임 예측 및 그리기 ---
-    async function predictWebcam() {
-        if (!webcamRunning) return;
-
-        const nowInMs = performance.now();
-
-        if (video.currentTime !== lastVideoTime) {
-            lastVideoTime = video.currentTime;
-
-            try {
-                const results = await handLandmarker.detectForVideo(video, nowInMs);
-                
-                // 비디오 캔버스 그리기 (좌우 반전)
-                if (!webcamHidden) {
-                    videoCtx.save();
-                    videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
-                    videoCtx.scale(-1, 1);
-                    videoCtx.drawImage(video, -videoCanvas.width, 0, videoCanvas.width, videoCanvas.height);
-                    videoCtx.restore();
-                } else {
-                    videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+            // --- MediaPipe Init ---
+            async function createHandLandmarker() {
+                try {
+                    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+                    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                        baseOptions: {
+                            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+                            delegate: "GPU"
+                        },
+                        runningMode: "VIDEO",
+                        numHands: DEFAULT_HANDS,
+                        minHandDetectionConfidence: 0.5,
+                        minHandPresenceConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+                    enableCam();
+                } catch (e) {
+                    console.error(e);
+                    loadingDiv.textContent = '모델 로딩 실패. 새로고침 해주세요.';
                 }
-
-                // 피드백 캔버스 초기화
-                feedbackCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
-
-                // 손 결과 처리
-                processHandResults(results);
-
-            } catch (error) {
-                console.error("프레임 예측 오류:", error);
             }
-        }
+            async function enableCam() {
+                if (!handLandmarker)
+                    return;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: {
+                                ideal: targetWidth
+                            },
+                            height: {
+                                ideal: targetHeight
+                            },
+                            aspectRatio: {
+                                ideal: 16 / 9
+                            }
+                        }
+                    });
+                    video.srcObject = stream;
+                    video.addEventListener('loadeddata', () => {
+                        webcamRunning = true;
+                        loadingDiv.classList.add('hidden');
+                        gestureIndicator.classList.remove('hidden');
+                        resizeCanvases();
+                        predictWebcam();
+                    }
+                    );
+                } catch (e) {
+                    console.error(e);
+                    loadingDiv.textContent = '웹캠 접근 실패. 권한을 확인하세요.';
+                }
+            }
+            function resizeCanvases() {
+                const rect = canvasContainer.getBoundingClientRect();
+                const cw = rect.width
+                  , ch = rect.height;
+                const vAsp = (video.videoWidth || 1280) / (video.videoHeight || 720);
+                const cAsp = cw / ch;
+                let w, h;
+                if (cAsp > vAsp) {
+                    h = ch;
+                    w = h * vAsp;
+                } else {
+                    w = cw;
+                    h = w / vAsp;
+                }
+                [backgroundCanvas, videoCanvas, drawingCanvas, feedbackCanvas].forEach(c => {
+                    c.width = video.videoWidth || 1280;
+                    c.height = video.videoHeight || 720;
+                    c.style.width = w + 'px';
+                    c.style.height = h + 'px';
+                }
+                );
+                drawingUtils = new DrawingUtils(feedbackCtx);
+            }
+            function getRainbowColor() {
+                const elapsed = performance.now() - startTime;
+                const hue = (elapsed % rainbowCycleDuration) / rainbowCycleDuration * 360;
+                return `hsl(${hue},100%,50%)`;
+            }
+            function getPalmCenter(lm) {
+                const w = lm[0]
+                  , m = lm[9];
+                return {
+                    x: (w.x + m.x) / 2,
+                    y: (w.y + m.y) / 2
+                };
+            }
+            function getCanvasCoordinates(p) {
+                return {
+                    x: (1 - p.x) * feedbackCanvas.width,
+                    y: p.y * feedbackCanvas.height
+                };
+            }
+            function dist(a, b) {
+                return Math.hypot(a.x - b.x, a.y - b.y);
+            }
 
-        requestAnimationFrame(predictWebcam);
-    }
+            // Gesture detection (open/closed)
+            const OPEN_HAND_THRESHOLD = 0.7
+              , CLOSED_HAND_THRESHOLD = 0.3;
+            function detectGesture(landmarks) {
+                const tips = [4, 8, 12, 16, 20]
+                  , bases = [2, 5, 9, 13, 17];
+                let extended = 0;
+                const wrist = landmarks[0];
+                for (let i = 0; i < tips.length; i++) {
+                    const tip = landmarks[tips[i]]
+                      , base = landmarks[bases[i]];
+                    const td = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+                    const bd = Math.hypot(base.x - wrist.x, base.y - wrist.y);
+                    if (td > bd * 1.2)
+                        extended++;
+                }
+                const r = extended / tips.length;
+                if (r >= OPEN_HAND_THRESHOLD)
+                    return 'open';
+                if (r <= CLOSED_HAND_THRESHOLD)
+                    return 'closed';
+                return 'neutral';
+            }
 
-    // --- 손 결과 처리 및 그리기 ---
-    function processHandResults(results) {
-        const detectedHands = results.landmarks;
-        const handednesses = results.handednesses; // 손 방향 정보
-        const currentFrameHandIds = new Set();
-        
-        let activeGestures = [];
+            // --- Tone.js Init & Synths ---
+            async function initToneIfNeeded() {
+                if (toneReady)
+                    return;
+                await Tone.start();
+                tone.ctx = Tone.getContext();
+                tone.limiter = new Tone.Limiter(-1).toDestination();
+                const mkChan = (vol=-8) => new Tone.Channel({
+                    volume: vol
+                }).connect(tone.limiter);
+                tone.channels = {
+                    kick: mkChan(-6),
+                    snare: mkChan(-8),
+                    hihat: mkChan(-10),
+                    tom: mkChan(-8),
+                    clap: mkChan(-10),
+                    cymbal: mkChan(-12),
+                    melody: mkChan(-6),
+                    eraser: mkChan(-12)
+                };
+                tone.synths.kick = new Tone.MembraneSynth({
+                    pitchDecay: 0.02,
+                    octaves: 6,
+                    oscillator: {
+                        type: 'sine'
+                    },
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.3,
+                        sustain: 0,
+                        release: 0.01
+                    }
+                }).connect(tone.channels.kick);
+                tone.synths.snare = new Tone.NoiseSynth({
+                    noise: {
+                        type: 'white'
+                    },
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.15,
+                        sustain: 0
+                    }
+                }).connect(tone.channels.snare);
+                tone.synths.hihat = new Tone.MetalSynth({
+                    frequency: 250,
+                    harmonicity: 5.1,
+                    modulationIndex: 32,
+                    resonance: 4000,
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.08,
+                        release: 0.01
+                    }
+                }).connect(tone.channels.hihat);
+                tone.synths.tom = new Tone.MembraneSynth({
+                    octaves: 4,
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.25,
+                        sustain: 0,
+                        release: 0.05
+                    }
+                }).connect(tone.channels.tom);
+                tone.synths.clap = new Tone.NoiseSynth({
+                    noise: {
+                        type: 'white'
+                    },
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.12,
+                        sustain: 0
+                    }
+                }).connect(tone.channels.clap);
+                tone.synths.cymbal = new Tone.MetalSynth({
+                    frequency: 300,
+                    harmonicity: 5,
+                    modulationIndex: 32,
+                    resonance: 2000,
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.6,
+                        release: 0.1
+                    }
+                }).connect(tone.channels.cymbal);
 
-        if (detectedHands && detectedHands.length > 0 && drawingUtils) {
-            detectedHands.forEach((landmarks, handIndex) => {
-                const handId = handIndex;
-                currentFrameHandIds.add(handId);
+                tone.melody = new Tone.PolySynth(Tone.AMSynth,{
+                    maxPolyphony: 8,
+                    oscillator: {
+                        type: 'sine'
+                    },
+                    envelope: {
+                        attack: 0.005,
+                        decay: 0.03,
+                        sustain: 0.5,
+                        release: 0.2
+                    }
+                }).connect(tone.channels.melody);
 
-                // 손 방향 확인 (Left/Right)
-                const handedness = handednesses && handednesses[handIndex] ? 
-                    handednesses[handIndex][0].categoryName : 'Right';
-                const isRightHand = handedness === 'Right';
+                // 지우개(둔탁) 사운드 버스
+                tone.eraserBus = new Tone.Filter(700,'lowpass').connect(tone.channels.eraser);
+                tone.synths.eraserTone = new Tone.MembraneSynth({
+                    pitchDecay: 0.01,
+                    octaves: 2,
+                    oscillator: {
+                        type: 'sine'
+                    },
+                    envelope: {
+                        attack: 0.005,
+                        decay: 0.08,
+                        sustain: 0.0,
+                        release: 0.05
+                    }
+                }).connect(tone.eraserBus);
+                tone.synths.eraserNoise = new Tone.NoiseSynth({
+                    noise: {
+                        type: 'brown'
+                    },
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.05,
+                        sustain: 0
+                    }
+                }).connect(tone.eraserBus);
 
-                if (!activeTouches[handId]) {
-                    activeTouches[handId] = { 
-                        isDrawing: false, 
-                        lastPoint: null, 
-                        lastGesture: null,
-                        lastSpeed: 0,
-                        isRightHand: isRightHand
+                Tone.Transport.bpm.value = parseInt(bpmEl.value);
+                Tone.Transport.swing = 0;
+                Tone.Transport.swingSubdivision = '8n';
+
+                // 왼손 리피터
+                tone.left.subdivision = leftSubdivisionSelect.value;
+                tone.left.mode = leftHandModeSelect.value;
+                tone.leftLoop = new Tone.Loop(time => {
+                    if (!soundEnabled || !tone.left.gate)
+                        return;
+                    const vel = 0.5 + Math.min(0.5, currentLeftSpeed / 40);
+                    switch (tone.left.mode) {
+                    case 'kick':
+                        tone.synths.kick.triggerAttackRelease('C2', '8n', time, vel);
+                        break;
+                    case 'snare':
+                        tone.synths.snare.triggerAttackRelease('8n', time, vel);
+                        break;
+                    case 'hihat':
+                        tone.synths.hihat.triggerAttackRelease('32n', time, vel);
+                        break;
+                    case 'tom':
+                        {
+                            const f = 80 + (1 - tone.left.y) * 200;
+                            tone.synths.tom.triggerAttackRelease(Tone.Frequency(f).toNote(), '8n', time, vel);
+                            break;
+                        }
+                    case 'clap':
+                        tone.synths.clap.triggerAttackRelease('16n', time, vel);
+                        break;
+                    case 'cymbal':
+                        tone.synths.cymbal.triggerAttackRelease('8n', time, vel);
+                        break;
+                    }
+                }
+                ,tone.left.subdivision).start(0);
+
+                // 시퀀서(6트랙 × 16스텝) — **왼손 게이트가 ON일 때만 발음**
+                ensureSequencer();
+
+                toneReady = true;
+            }
+
+            function triggerEraser(y=0.5, velocity=0.6) {
+                const freq = 60 + (1 - y) * 140;
+                const now = Tone.now();
+                tone.synths.eraserTone.triggerAttackRelease(Tone.Frequency(freq).toNote(), '16n', now, velocity);
+                tone.synths.eraserNoise.triggerAttackRelease('32n', now, Math.min(1, velocity * 0.8));
+            }
+
+            // Melody limiter
+            const noteState = {};
+            function shouldTriggerNote(handId, pos, speed) {
+                const now = performance.now();
+                if (!noteState[handId]) {
+                    noteState[handId] = {
+                        lastNoteTime: 0,
+                        lastPos: pos
                     };
+                    return true;
                 }
-                let touchState = activeTouches[handId];
-                touchState.isRightHand = isRightHand; // 업데이트
-
-                // 랜드마크 그리기 (좌우 반전 적용)
-                feedbackCtx.save();
-                feedbackCtx.scale(-1, 1);
-                feedbackCtx.translate(-feedbackCanvas.width, 0);
-                
-                // 손에 따라 다른 색상
-                const landmarkColor = isRightHand ? "#00FF00" : "#00FFFF";
-                const pointColor = isRightHand ? "#FF0000" : "#FF00FF";
-                
-                drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { 
-                    color: landmarkColor, 
-                    lineWidth: 2 
-                });
-                drawingUtils.drawLandmarks(landmarks, { 
-                    color: pointColor, 
-                    lineWidth: 1, 
-                    radius: 3 
-                });
-                
-                feedbackCtx.restore();
-
-                // 제스처 감지
-                const gesture = detectGesture(landmarks);
-                activeGestures.push(gesture);
-
-                // 손바닥 중심점
-                const palmCenter = getPalmCenter(landmarks);
-                const canvasPalmCenter = getCanvasCoordinates(palmCenter);
-
-                // y 좌표
-                const normalizedY = palmCenter.y; // 0~1
-
-                // 손 움직임 속도 계산
-                let speed = 0;
-                if (touchState.lastPoint) {
-                    speed = getDistance(touchState.lastPoint, canvasPalmCenter);
+                const s = speed || 0;
+                const interval = s < 5 ? 300 : (s < 20 ? 150 : 80);
+                const dt = now - noteState[handId].lastNoteTime;
+                const d = dist(noteState[handId].lastPos, pos);
+                if (dt >= interval && d >= 15) {
+                    noteState[handId].lastNoteTime = now;
+                    noteState[handId].lastPos = pos;
+                    return true;
                 }
-                touchState.lastSpeed = speed;
+                return false;
+            }
+            function clearNoteState(handId) {
+                if (noteState[handId])
+                    delete noteState[handId];
+            }
 
-                // 제스처에 따른 동작
-                if (gesture === 'open') {
-                    // 손바닥: 그리기 + 사운드
-                    const rainbowColor = getRainbowColor();
-                    
-                    // 사운드: 오른손/왼손에 따라 다르게
-                    if (isRightHand) {
-                        // 오른손: 멜로디
-                        const frequency = getFrequencyFromY(normalizedY, rightHandStyle);
-                        if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
-                            playNote(frequency, 0.5, false, rightHandStyle);
+            // Sequencer state & UI
+            const tracks = ['kick', 'snare', 'hihat', 'tom', 'clap', 'cymbal'];
+            const pattern = {};
+            tracks.forEach(t => pattern[t] = Array(16).fill(false));
+            function ensureSequencer() {
+                if (tone.drumSeq)
+                    return;
+                tone.drumSeq = new Tone.Sequence( (time, step) => {
+                    tone.seqStep = step;
+                    highlightCurrentStep(step);
+                    if (!enableSequencerCheckbox.checked)
+                        return;
+                    if (!soundEnabled)
+                        return;
+                    if (!tone.left.gate)
+                        return;
+                    // <<< 왼손 움직임 게이트
+                    tracks.forEach(t => {
+                        if (!pattern[t][step])
+                            return;
+                        switch (t) {
+                        case 'kick':
+                            tone.synths.kick.triggerAttackRelease('C2', '8n', time, 0.9);
+                            break;
+                        case 'snare':
+                            tone.synths.snare.triggerAttackRelease('8n', time, 0.8);
+                            break;
+                        case 'hihat':
+                            tone.synths.hihat.triggerAttackRelease('32n', time, 0.5);
+                            break;
+                        case 'tom':
+                            tone.synths.tom.triggerAttackRelease('C2', '8n', time, 0.8);
+                            break;
+                        case 'clap':
+                            tone.synths.clap.triggerAttackRelease('16n', time, 0.7);
+                            break;
+                        case 'cymbal':
+                            tone.synths.cymbal.triggerAttackRelease('8n', time, 0.6);
+                            break;
                         }
-                    } else {
-                        // 왼손: 퍼커션 또는 멜로디
-                        if (leftHandStyle === 'melody') {
-                            const frequency = getFrequencyFromY(normalizedY, rightHandStyle);
-                            if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
-                                playNote(frequency, 0.5, false, rightHandStyle);
+                    }
+                    );
+                }
+                ,[...Array(16).keys()],'16n');
+                tone.drumSeq.start(0);
+            }
+
+            function renderSequencerGrid() {
+                drumGrid.innerHTML = '';
+                tracks.forEach(t => {
+                    const label = document.createElement('div');
+                    label.className = 'track-label';
+                    label.textContent = t.toUpperCase();
+                    drumGrid.appendChild(label);
+                    for (let i = 0; i < 16; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'step';
+                        cell.dataset.track = t;
+                        cell.dataset.step = i;
+                        if (pattern[t][i])
+                            cell.classList.add('active');
+                        if (i % 4 === 0)
+                            cell.style.borderLeftColor = '#bbb';
+                        cell.addEventListener('click', () => {
+                            pattern[t][i] = !pattern[t][i];
+                            cell.classList.toggle('active');
+                        }
+                        );
+                        drumGrid.appendChild(cell);
+                    }
+                }
+                );
+            }
+            function highlightCurrentStep(step) {
+                const nodes = drumGrid.querySelectorAll('.step');
+                nodes.forEach(n => n.classList.remove('current'));
+                tracks.forEach( (t, row) => {
+                    const idx = row * (16 + 1) + 1 + step;
+                    const cell = drumGrid.children[idx];
+                    if (cell)
+                        cell.classList.add('current');
+                }
+                );
+            }
+            function clearPattern() {
+                tracks.forEach(t => pattern[t].fill(false));
+                renderSequencerGrid();
+            }
+
+            // Webcam loop
+            let currentLeftSpeed = 0;
+            async function predictWebcam() {
+                if (!webcamRunning)
+                    return;
+                const nowInMs = performance.now();
+                if (video.currentTime !== lastVideoTime) {
+                    lastVideoTime = video.currentTime;
+                    try {
+                        const results = await handLandmarker.detectForVideo(video, nowInMs);
+                        if (!webcamHidden) {
+                            videoCtx.save();
+                            videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.scale(-1, 1);
+                            videoCtx.drawImage(video, -videoCanvas.width, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.restore();
+                        } else {
+                            videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+                        }
+                        feedbackCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
+                        processHandResults(results);
+                    } catch (e) {
+                        console.error('예측 오류', e);
+                    }
+                }
+                requestAnimationFrame(predictWebcam);
+            }
+
+            function processHandResults(results) {
+                const detected = results.landmarks;
+                const handednesses = results.handednesses;
+                const currentIds = new Set();
+                let gesturesForUI = [];
+                if (detected && detected.length > 0 && drawingUtils) {
+                    detected.forEach( (landmarks, idx) => {
+                        const handId = idx;
+                        currentIds.add(handId);
+                        const handedness = handednesses && handednesses[idx] ? handednesses[idx][0].categoryName : 'Right';
+                        const isRight = (handedness === 'Right');
+                        if (!activeTouches[handId])
+                            activeTouches[handId] = {
+                                isDrawing: false,
+                                lastPoint: null,
+                                lastGesture: null,
+                                lastSpeed: 0,
+                                emaSpeed: 0,
+                                isRightHand: isRight
+                            };
+                        const touch = activeTouches[handId];
+                        touch.isRightHand = isRight;
+                        feedbackCtx.save();
+                        feedbackCtx.scale(-1, 1);
+                        feedbackCtx.translate(-feedbackCanvas.width, 0);
+                        const lineColor = isRight ? '#00FF00' : '#00FFFF';
+                        const ptColor = isRight ? '#FF0000' : '#FF00FF';
+                        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
+                            color: lineColor,
+                            lineWidth: 2
+                        });
+                        drawingUtils.drawLandmarks(landmarks, {
+                            color: ptColor,
+                            lineWidth: 1,
+                            radius: 3
+                        });
+                        feedbackCtx.restore();
+                        const gesture = detectGesture(landmarks);
+                        gesturesForUI.push(gesture);
+                        const palm = getPalmCenter(landmarks);
+                        const canvasPalm = getCanvasCoordinates(palm);
+                        const y = palm.y;
+                        let speed = 0;
+                        if (touch.lastPoint)
+                            speed = dist(touch.lastPoint, canvasPalm);
+                        touch.emaSpeed = EMA_ALPHA * speed + (1 - EMA_ALPHA) * (touch.emaSpeed || 0);
+                        touch.lastSpeed = speed;
+                        if (!isRight)
+                            currentLeftSpeed = touch.emaSpeed;
+
+                        if (isRight) {
+                            // melody & eraser (right)
+                            const playMel = (gesture === 'open') && (touch.emaSpeed >= SPEED_ON) && soundEnabled;
+                            if (playMel && shouldTriggerNote(handId, canvasPalm, touch.emaSpeed)) {
+                                const f = getFrequencyFromY(y, rightHandStyle);
+                                const vel = 0.4 + Math.min(0.6, touch.emaSpeed / 40);
+                                tone.melody.triggerAttackRelease(f, 0.2, undefined, vel);
+                            }
+                            const playErase = (gesture === 'closed') && (touch.emaSpeed >= SPEED_ON) && soundEnabled;
+                            if (playErase && shouldTriggerNote(handId, canvasPalm, touch.emaSpeed)) {
+                                const vel = 0.35 + Math.min(0.45, touch.emaSpeed / 40);
+                                triggerEraser(y, vel);
                             }
                         } else {
-                            if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
-                                playPercussion(leftHandStyle, normalizedY);
+                            // left: gate repeater and gate sequencer
+                            if (soundEnabled) {
+                                tone.left.gate = (gesture === 'open') && (touch.emaSpeed >= SPEED_ON);
+                                tone.left.y = y;
+                            }
+                            const playEraseL = (gesture === 'closed') && (touch.emaSpeed >= SPEED_ON) && soundEnabled;
+                            if (playEraseL && shouldTriggerNote(handId, canvasPalm, touch.emaSpeed)) {
+                                const vel = 0.35 + Math.min(0.45, touch.emaSpeed / 40);
+                                triggerEraser(y, vel);
                             }
                         }
-                    }
-                    
-                    // 피드백: 브러시 프리뷰
-                    feedbackCtx.fillStyle = rainbowColor;
-                    feedbackCtx.globalAlpha = 0.6;
-                    feedbackCtx.beginPath();
-                    feedbackCtx.arc(canvasPalmCenter.x, canvasPalmCenter.y, brushSize / 2, 0, Math.PI * 2);
-                    feedbackCtx.fill();
-                    feedbackCtx.globalAlpha = 1.0;
 
-                    // 그리기
-                    drawingCtx.strokeStyle = rainbowColor;
-                    drawingCtx.fillStyle = rainbowColor;
-                    drawingCtx.lineWidth = brushSize;
-                    drawingCtx.lineCap = 'round';
-                    drawingCtx.lineJoin = 'round';
-                    drawingCtx.globalCompositeOperation = 'source-over';
-
-                    // 이전 포인트가 있고, 같은 제스처이며, 거리가 적당한 경우에만 선 잇기
-                    if (touchState.isDrawing && touchState.lastPoint && touchState.lastGesture === 'open') {
-                        const distance = getDistance(touchState.lastPoint, canvasPalmCenter);
-                        
-                        if (distance < MAX_STROKE_DISTANCE) {
-                            // 거리가 가까우면 선으로 이음
-                            drawingCtx.beginPath();
-                            drawingCtx.moveTo(touchState.lastPoint.x, touchState.lastPoint.y);
-                            drawingCtx.lineTo(canvasPalmCenter.x, canvasPalmCenter.y);
-                            drawingCtx.stroke();
+                        // Visuals
+                        if (gesture === 'open') {
+                            const rainbow = getRainbowColor();
+                            feedbackCtx.fillStyle = rainbow;
+                            feedbackCtx.globalAlpha = .6;
+                            feedbackCtx.beginPath();
+                            feedbackCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
+                            feedbackCtx.fill();
+                            feedbackCtx.globalAlpha = 1;
+                            drawingCtx.strokeStyle = rainbow;
+                            drawingCtx.fillStyle = rainbow;
+                            drawingCtx.lineWidth = brushSize;
+                            drawingCtx.lineCap = 'round';
+                            drawingCtx.lineJoin = 'round';
+                            drawingCtx.globalCompositeOperation = 'source-over';
+                            if (touch.isDrawing && touch.lastPoint && touch.lastGesture === 'open') {
+                                const d = dist(touch.lastPoint, canvasPalm);
+                                if (d < MAX_STROKE_DISTANCE) {
+                                    drawingCtx.beginPath();
+                                    drawingCtx.moveTo(touch.lastPoint.x, touch.lastPoint.y);
+                                    drawingCtx.lineTo(canvasPalm.x, canvasPalm.y);
+                                    drawingCtx.stroke();
+                                } else {
+                                    drawingCtx.beginPath();
+                                    drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
+                                    drawingCtx.fill();
+                                }
+                            } else {
+                                drawingCtx.beginPath();
+                                drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
+                                drawingCtx.fill();
+                            }
+                            touch.isDrawing = true;
+                            touch.lastPoint = canvasPalm;
+                            touch.lastGesture = 'open';
+                        } else if (gesture === 'closed') {
+                            feedbackCtx.fillStyle = 'rgba(200,200,200,.6)';
+                            feedbackCtx.beginPath();
+                            feedbackCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
+                            feedbackCtx.fill();
+                            feedbackCtx.strokeStyle = '#FF0000';
+                            feedbackCtx.lineWidth = 2;
+                            feedbackCtx.stroke();
+                            drawingCtx.lineWidth = brushSize;
+                            drawingCtx.lineCap = 'round';
+                            drawingCtx.lineJoin = 'round';
+                            drawingCtx.globalCompositeOperation = 'destination-out';
+                            if (touch.isDrawing && touch.lastPoint && touch.lastGesture === 'closed') {
+                                const d = dist(touch.lastPoint, canvasPalm);
+                                if (d < MAX_STROKE_DISTANCE) {
+                                    drawingCtx.beginPath();
+                                    drawingCtx.moveTo(touch.lastPoint.x, touch.lastPoint.y);
+                                    drawingCtx.lineTo(canvasPalm.x, canvasPalm.y);
+                                    drawingCtx.stroke();
+                                } else {
+                                    drawingCtx.beginPath();
+                                    drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
+                                    drawingCtx.fill();
+                                }
+                            } else {
+                                drawingCtx.beginPath();
+                                drawingCtx.arc(canvasPalm.x, canvasPalm.y, brushSize / 2, 0, Math.PI * 2);
+                                drawingCtx.fill();
+                            }
+                            touch.isDrawing = true;
+                            touch.lastPoint = canvasPalm;
+                            touch.lastGesture = 'closed';
                         } else {
-                            // 거리가 너무 멀면 새로운 점으로 시작
-                            drawingCtx.beginPath();
-                            drawingCtx.arc(canvasPalmCenter.x, canvasPalmCenter.y, brushSize / 2, 0, Math.PI * 2);
-                            drawingCtx.fill();
+                            if (touch.isDrawing)
+                                clearNoteState(handId);
+                            touch.isDrawing = false;
+                            touch.lastPoint = null;
+                            touch.lastGesture = null;
                         }
-                    } else {
-                        // 처음 시작하거나 제스처가 바뀐 경우 점 찍기
-                        drawingCtx.beginPath();
-                        drawingCtx.arc(canvasPalmCenter.x, canvasPalmCenter.y, brushSize / 2, 0, Math.PI * 2);
-                        drawingCtx.fill();
+
+                        activeTouches[handId] = touch;
                     }
-
-                    touchState.isDrawing = true;
-                    touchState.lastPoint = canvasPalmCenter;
-                    touchState.lastGesture = 'open';
-
-                } else if (gesture === 'closed') {
-                    // 주먹: 지우기 (양손 동일)
-                    
-                    // 노트 트리거 (지우개 소리)
-                    const style = isRightHand ? rightHandStyle : (leftHandStyle === 'melody' ? rightHandStyle : 'pentatonic');
-                    const eraserFreq = getFrequencyFromY(normalizedY, style) * 0.5;
-                    if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
-                        playNote(eraserFreq, 0.4, true, style);
+                    );
+                }
+                Object.keys(activeTouches).forEach(id => {
+                    if (!currentIds.has(parseInt(id))) {
+                        clearNoteState(parseInt(id));
+                        delete activeTouches[id];
                     }
-                    
-                    // 피드백: 지우개 프리뷰
-                    feedbackCtx.fillStyle = 'rgba(200, 200, 200, 0.6)';
-                    feedbackCtx.beginPath();
-                    feedbackCtx.arc(canvasPalmCenter.x, canvasPalmCenter.y, brushSize / 2, 0, Math.PI * 2);
-                    feedbackCtx.fill();
-                    feedbackCtx.strokeStyle = '#FF0000';
-                    feedbackCtx.lineWidth = 2;
-                    feedbackCtx.stroke();
+                }
+                );
+                updateGestureIndicator(gesturesForUI);
+            }
 
-                    // 지우기
-                    drawingCtx.lineWidth = brushSize;
-                    drawingCtx.lineCap = 'round';
-                    drawingCtx.lineJoin = 'round';
-                    drawingCtx.globalCompositeOperation = 'destination-out';
+            function updateGestureIndicator(gestures) {
+                if (gestures.length === 0)
+                    gestureText.textContent = '손을 보여주세요';
+                else
+                    gestureText.textContent = gestures.map(g => g === 'open' ? '✋ 그리기' : (g === 'closed' ? '✊ 지우기' : '👌 대기')).join(' | ');
+            }
 
-                    // 이전 포인트가 있고, 같은 제스처이며, 거리가 적당한 경우에만 선 잇기
-                    if (touchState.isDrawing && touchState.lastPoint && touchState.lastGesture === 'closed') {
-                        const distance = getDistance(touchState.lastPoint, canvasPalmCenter);
-                        
-                        if (distance < MAX_STROKE_DISTANCE) {
-                            // 거리가 가까우면 선으로 지움
-                            drawingCtx.beginPath();
-                            drawingCtx.moveTo(touchState.lastPoint.x, touchState.lastPoint.y);
-                            drawingCtx.lineTo(canvasPalmCenter.x, canvasPalmCenter.y);
-                            drawingCtx.stroke();
-                        } else {
-                            // 거리가 너무 멀면 새로운 점으로 시작
-                            drawingCtx.beginPath();
-                            drawingCtx.arc(canvasPalmCenter.x, canvasPalmCenter.y, brushSize / 2, 0, Math.PI * 2);
-                            drawingCtx.fill();
-                        }
-                    } else {
-                        // 처음 시작하거나 제스처가 바뀐 경우 점 지우기
-                        drawingCtx.beginPath();
-                        drawingCtx.arc(canvasPalmCenter.x, canvasPalmCenter.y, brushSize / 2, 0, Math.PI * 2);
-                        drawingCtx.fill();
-                    }
+            // UI Events
+            clearButton.addEventListener('click', () => {
+                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            }
+            );
+            hideWebcamCheckbox.addEventListener('change', e => {
+                webcamHidden = e.target.checked;
+            }
+            );
+            rainbowSpeedSlider.addEventListener('input', e => {
+                const v = +e.target.value;
+                rainbowSpeedValue.textContent = v;
+                rainbowCycleDuration = v * 1000;
+            }
+            );
+            rightHandStyleSelect.addEventListener('change', e => {
+                rightHandStyle = e.target.value;
+            }
+            );
+            leftHandModeSelect.addEventListener('change', e => {
+                if (toneReady)
+                    tone.left.mode = e.target.value;
+            }
+            );
+            leftSubdivisionSelect.addEventListener('change', e => {
+                const v = e.target.value;
+                if (toneReady) {
+                    tone.left.subdivision = v;
+                    if (tone.leftLoop)
+                        tone.leftLoop.interval = v;
+                }
+            }
+            );
+            brushSizeSlider.addEventListener('input', e => {
+                const v = +e.target.value;
+                brushSizeValue.textContent = v;
+                brushSize = v;
+            }
+            );
+            drawingOpacitySlider.addEventListener('input', e => {
+                const v = +e.target.value;
+                drawingOpacityValue.textContent = v;
+                drawingCanvas.style.opacity = v / 100;
+            }
+            );
 
-                    touchState.isDrawing = true;
-                    touchState.lastPoint = canvasPalmCenter;
-                    touchState.lastGesture = 'closed';
-
+            enableSoundCheckbox.addEventListener('change', async e => {
+                soundEnabled = e.target.checked;
+                if (soundEnabled) {
+                    await initToneIfNeeded();
                 } else {
-                    // 중간 상태: 그리기 중단
-                    if (touchState.isDrawing) {
-                        clearNoteState(handId);
-                    }
-                    touchState.isDrawing = false;
-                    touchState.lastPoint = null;
-                    touchState.lastGesture = null;
+                    tone.left.gate = false;
+                    Tone.Transport.stop();
                 }
-
-                activeTouches[handId] = touchState;
-            });
-        }
-
-        // 사라진 손 처리 - 노트 상태 즉시 초기화
-        Object.keys(activeTouches).forEach(handId => {
-            if (!currentFrameHandIds.has(parseInt(handId))) {
-                clearNoteState(parseInt(handId));
-                delete activeTouches[handId];
             }
-        });
-
-        // 제스처 인디케이터 업데이트
-        updateGestureIndicator(activeGestures);
-    }
-
-    // --- 제스처 인디케이터 업데이트 ---
-    function updateGestureIndicator(gestures) {
-        if (gestures.length === 0) {
-            gestureText.textContent = '손을 보여주세요';
-        } else {
-            const gestureNames = gestures.map(g => {
-                if (g === 'open') return '✋ 그리기';
-                if (g === 'closed') return '✊ 지우기';
-                return '👌 대기';
-            });
-            gestureText.textContent = gestureNames.join(' | ');
-        }
-    }
-
-    // --- 이벤트 리스너 ---
-    clearButton.addEventListener('click', () => {
-        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-        console.log("드로잉 캔버스 초기화");
-    });
-
-    hideWebcamCheckbox.addEventListener('change', (event) => {
-        webcamHidden = event.target.checked;
-    });
-
-    rainbowSpeedSlider.addEventListener('input', (event) => {
-        const value = parseInt(event.target.value);
-        rainbowSpeedValue.textContent = value;
-        rainbowCycleDuration = value * 1000;
-    });
-
-    rightHandStyleSelect.addEventListener('change', (event) => {
-        rightHandStyle = event.target.value;
-        console.log(`오른손 스타일 변경: ${rightHandStyle}`);
-    });
-
-    leftHandStyleSelect.addEventListener('change', (event) => {
-        leftHandStyle = event.target.value;
-        console.log(`왼손 스타일 변경: ${leftHandStyle}`);
-    });
-
-    brushSizeSlider.addEventListener('input', (event) => {
-        const value = parseInt(event.target.value);
-        brushSizeValue.textContent = value;
-        brushSize = value;
-    });
-
-    drawingOpacitySlider.addEventListener('input', (event) => {
-        const value = parseInt(event.target.value);
-        drawingOpacityValue.textContent = value;
-        drawingCanvas.style.opacity = value / 100;
-    });
-
-    enableSoundCheckbox.addEventListener('change', (event) => {
-        soundEnabled = event.target.checked;
-        if (soundEnabled) {
-            initAudio();
-        } else {
-            // 모든 노트 상태 초기화
-            Object.keys(activeNotes).forEach(handId => clearNoteState(parseInt(handId)));
-        }
-    });
-
-    // 전체화면 토글
-    fullscreenButton.addEventListener('click', () => {
-        if (!isFullscreen) {
-            document.documentElement.requestFullscreen().then(() => {
-                console.log("전체화면 진입");
-            }).catch(err => {
-                console.error("전체화면 오류:", err);
-            });
-        } else {
-            document.exitFullscreen().then(() => {
-                console.log("전체화면 종료");
-            }).catch(err => {
-                console.error("전체화면 종료 오류:", err);
-            });
-        }
-    });
-
-    // 전체화면 상태 변경 감지
-    document.addEventListener('fullscreenchange', () => {
-        isFullscreen = !!document.fullscreenElement;
-        
-        if (isFullscreen) {
-            document.body.classList.add('fullscreen-mode');
-            mainHeader.classList.add('hidden');
-            fullscreenButton.textContent = '🔲 전체화면 종료';
-            
-            // 커서 숨김 타이머 시작
-            resetCursorTimer();
-        } else {
-            document.body.classList.remove('fullscreen-mode');
-            document.body.classList.remove('hide-cursor');
-            mainHeader.classList.remove('hidden');
-            fullscreenButton.textContent = '🖥️ 전체화면';
-            
-            // 커서 타이머 정리
-            if (cursorTimeout) {
-                clearTimeout(cursorTimeout);
-                cursorTimeout = null;
+            );
+            transportStartBtn.addEventListener('click', async () => {
+                if (!toneReady)
+                    await initToneIfNeeded();
+                if (!soundEnabled) {
+                    enableSoundCheckbox.checked = true;
+                    soundEnabled = true;
+                }
+                Tone.Transport.start();
             }
-        }
-        
-        // 캔버스 크기 재조정
-        resizeCanvases();
-    });
-
-    // 전체화면 모드에서 마우스 움직임 감지
-    document.addEventListener('mousemove', () => {
-        if (isFullscreen) {
-            document.body.classList.remove('hide-cursor');
-            resetCursorTimer();
-        }
-    });
-
-    // 커서 타이머 리셋 함수
-    function resetCursorTimer() {
-        if (cursorTimeout) {
-            clearTimeout(cursorTimeout);
-        }
-        cursorTimeout = setTimeout(() => {
-            if (isFullscreen) {
-                document.body.classList.add('hide-cursor');
+            );
+            transportStopBtn.addEventListener('click', () => {
+                Tone.Transport.stop();
+                tone.left.gate = false;
             }
-        }, 5000); // 5초 후 커서 숨김
-    }
+            );
+            bpmEl.addEventListener('input', e => {
+                const v = +e.target.value;
+                bpmVal.textContent = v;
+                if (toneReady)
+                    Tone.Transport.bpm.value = v;
+            }
+            );
+            swingEl.addEventListener('input', e => {
+                const v = +e.target.value;
+                swingVal.textContent = `${v}%`;
+                if (toneReady) {
+                    Tone.Transport.swing = v / 100;
+                    Tone.Transport.swingSubdivision = '8n';
+                }
+            }
+            );
 
-    // 창 크기 변경 시 캔버스 리사이즈
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            if (webcamRunning) {
+            // Sequencer UI
+            enableSequencerCheckbox.addEventListener('change', () => {
+                if (tone.drumSeq)
+                    tone.drumSeq.mute = !enableSequencerCheckbox.checked;
+            }
+            );
+            drumPresetSelect.addEventListener('change', e => {
+                const v = e.target.value;
+                (presets[v] || presets.empty)();
+            }
+            );
+            clearSeqBtn.addEventListener('click', () => clearPattern());
+
+            // Fullscreen
+            fullscreenButton.addEventListener('click', () => {
+                if (!isFullscreen)
+                    document.documentElement.requestFullscreen().catch(console.error);
+                else
+                    document.exitFullscreen().catch(console.error);
+            }
+            );
+            document.addEventListener('fullscreenchange', () => {
+                isFullscreen = !!document.fullscreenElement;
+                if (isFullscreen) {
+                    document.body.classList.add('fullscreen-mode');
+                    mainHeader.classList.add('hidden');
+                    fullscreenButton.textContent = '🔲 전체화면 종료';
+                    resetCursorTimer();
+                } else {
+                    document.body.classList.remove('fullscreen-mode');
+                    document.body.classList.remove('hide-cursor');
+                    mainHeader.classList.remove('hidden');
+                    fullscreenButton.textContent = '🖥️ 전체화면';
+                    if (cursorTimeout) {
+                        clearTimeout(cursorTimeout);
+                        cursorTimeout = null;
+                    }
+                }
                 resizeCanvases();
-                lastVideoTime = -1;
             }
-        }, 250);
-    });
+            );
+            document.addEventListener('mousemove', () => {
+                if (isFullscreen) {
+                    document.body.classList.remove('hide-cursor');
+                    resetCursorTimer();
+                }
+            }
+            );
+            function resetCursorTimer() {
+                if (cursorTimeout)
+                    clearTimeout(cursorTimeout);
+                cursorTimeout = setTimeout( () => {
+                    if (isFullscreen)
+                        document.body.classList.add('hide-cursor');
+                }
+                , 5000);
+            }
 
-    // --- 초기화 시작 ---
-    createHandLandmarker();
-    
-    // Web Audio 초기화 (사용자 인터랙션 후)
-    document.addEventListener('click', () => {
-        if (soundEnabled && !audioContext) {
-            initAudio();
-        }
-    }, { once: true });
+            // Resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout( () => {
+                    if (webcamRunning) {
+                        resizeCanvases();
+                        lastVideoTime = -1;
+                    }
+                }
+                , 250);
+            }
+            );
 
-</script>
+            // Sequencer presets
+            const presets = {
+                empty: () => clearPattern(),
+                house: () => {
+                    clearPattern();
+                    [0, 4, 8, 12].forEach(i => pattern.kick[i] = true);
+                    [4, 12].forEach(i => pattern.snare[i] = true);
+                    [4, 12].forEach(i => pattern.clap[i] = true);
+                    [2, 6, 10, 14].forEach(i => pattern.hihat[i] = true);
+                    renderSequencerGrid();
+                    bpmEl.value = 124;
+                    bpmVal.textContent = '124';
+                    if (toneReady)
+                        Tone.Transport.bpm.value = 124;
+                }
+                ,
+                trap: () => {
+                    clearPattern();
+                    [0, 7, 11, 15].forEach(i => pattern.kick[i] = true);
+                    [4, 12].forEach(i => pattern.snare[i] = true);
+                    [...Array(16).keys()].forEach(i => pattern.hihat[i] = true);
+                    renderSequencerGrid();
+                    bpmEl.value = 140;
+                    bpmVal.textContent = '140';
+                    if (toneReady)
+                        Tone.Transport.bpm.value = 140;
+                }
+                ,
+                lofi: () => {
+                    clearPattern();
+                    [0, 10].forEach(i => pattern.kick[i] = true);
+                    [4, 12].forEach(i => pattern.snare[i] = true);
+                    [2, 6, 10, 14].forEach(i => pattern.hihat[i] = true);
+                    renderSequencerGrid();
+                    bpmEl.value = 90;
+                    bpmVal.textContent = '90';
+                    if (toneReady)
+                        Tone.Transport.bpm.value = 90;
+                }
+            };
 
-</body>
+            // Render & start
+            renderSequencerGrid();
+            createHandLandmarker();
+        </script>
+    </body>
 </html>
