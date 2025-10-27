@@ -22,6 +22,9 @@
         body.fullscreen-mode {
             background-color: #000000;
         }
+        body.fullscreen-mode.hide-cursor {
+            cursor: none;
+        }
         header {
             background-color: #ffffff;
             padding: 15px 25px;
@@ -72,6 +75,18 @@
             width: 18px;
             height: 18px;
             vertical-align: middle;
+        }
+        select {
+            padding: 6px 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            font-family: inherit;
+        }
+        select:hover {
+            border-color: #999;
         }
         button {
             padding: 10px 18px;
@@ -190,10 +205,22 @@
     </div>
     
     <div class="control-group">
+        <label>음악 스타일</label>
+        <div class="control-row">
+            <select id="musicStyle">
+                <option value="pentatonic">펜타토닉 (밝고 경쾌)</option>
+                <option value="major">메이저 스케일 (클래식)</option>
+                <option value="xylophone">실로폰 (반짝임)</option>
+                <option value="chromatic">크로매틱 (자유로움)</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="control-group">
         <label>브러시 굵기</label>
         <div class="control-row">
-            <input type="range" id="brushSize" min="10" max="100" value="30" step="10">
-            <span class="slider-value" id="brushSizeValue">30</span>
+            <input type="range" id="brushSize" min="10" max="100" value="60" step="10">
+            <span class="slider-value" id="brushSizeValue">60</span>
         </div>
     </div>
     
@@ -209,6 +236,13 @@
         <div class="control-row">
             <input type="checkbox" id="hideWebcam">
             <label for="hideWebcam">웹캠 숨기기</label>
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <div class="control-row">
+            <input type="checkbox" id="enableSound" checked>
+            <label for="enableSound">사운드 켜기</label>
         </div>
     </div>
 </header>
@@ -239,10 +273,12 @@
     const hideWebcamCheckbox = document.getElementById('hideWebcam');
     const rainbowSpeedSlider = document.getElementById('rainbowSpeed');
     const rainbowSpeedValue = document.getElementById('rainbowSpeedValue');
+    const musicStyleSelect = document.getElementById('musicStyle');
     const brushSizeSlider = document.getElementById('brushSize');
     const brushSizeValue = document.getElementById('brushSizeValue');
     const drawingOpacitySlider = document.getElementById('drawingOpacity');
     const drawingOpacityValue = document.getElementById('drawingOpacityValue');
+    const enableSoundCheckbox = document.getElementById('enableSound');
     const gestureIndicator = document.getElementById('gestureIndicator');
     const gestureText = document.getElementById('gestureText');
     const mainHeader = document.getElementById('mainHeader');
@@ -272,11 +308,19 @@
     let targetWidth = 1280;
     let targetHeight = 720;
     let isFullscreen = false;
+    let cursorTimeout = null;
+    let soundEnabled = true;
+
+    // --- Web Audio API ---
+    let audioContext = null;
+    let masterGain = null;
+    let activeNotes = {}; // 손 ID별 활성 노트 추적 { handId: { lastNoteTime, lastPosition, noteCount } }
 
     // --- 그리기 관련 변수 ---
     let rainbowCycleDuration = 10000; // 밀리초 (10초)
-    let brushSize = 30;
+    let brushSize = 60;
     let startTime = performance.now(); // 무지개 색상 시작 시간
+    let currentMusicStyle = 'pentatonic'; // 기본 펜타토닉
     
     let activeTouches = {}; // 손 ID별 그리기 상태 { handId: { isDrawing: false, lastPoint: null } }
 
@@ -403,6 +447,249 @@
         return Math.sqrt(dx * dx + dy * dy);
     }
 
+    // --- Web Audio 초기화 ---
+    function initAudio() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.2; // 전체 볼륨 낮춤
+            masterGain.connect(audioContext.destination);
+            console.log("Web Audio 초기화 완료");
+        }
+    }
+
+    // --- 음계 정의 (주파수 Hz) ---
+    const SCALES = {
+        // C Major Pentatonic: C4~C6 (2옥타브)
+        pentatonic: [
+            261.63, 293.66, 329.63, 392.00, 440.00,  // C4, D4, E4, G4, A4
+            523.25, 587.33, 659.25, 783.99, 880.00   // C5, D5, E5, G5, A5
+        ],
+        // C Major Scale: C4~C6 (2옥타브) 
+        major: [
+            261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88,  // C4~B4
+            523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77   // C5~B5
+        ],
+        // 실로폰 스타일 - 메이저 펜타토닉 (더 밝게)
+        xylophone: [
+            523.25, 587.33, 659.25, 783.99, 880.00,  // C5~A5
+            1046.50, 1174.66, 1318.51, 1567.98, 1760.00  // C6~A6 (한 옥타브 위)
+        ],
+        // 크로매틱 - 반음계 (자유로운 연속)
+        chromatic: null // 특수 처리
+    };
+
+    // --- y 좌표를 주파수로 변환 ---
+    function getFrequencyFromY(normalizedY, style = 'pentatonic') {
+        if (style === 'chromatic') {
+            // 크로매틱: 연속 주파수 (원래 방식)
+            return 261 + (1 - normalizedY) * 785; // C4(261Hz) ~ C6(1046Hz)
+        }
+        
+        const scale = SCALES[style];
+        if (!scale) return 261; // 기본값
+        
+        // y 좌표를 스케일 인덱스로 매핑
+        const index = Math.floor((1 - normalizedY) * scale.length);
+        const clampedIndex = Math.max(0, Math.min(scale.length - 1, index));
+        
+        return scale[clampedIndex];
+    }
+
+    // --- ADSR 노트 생성 (음악 스타일별) ---
+    function playNote(frequency, duration = 0.5, isEraser = false) {
+        if (!soundEnabled || !audioContext) return;
+
+        const now = audioContext.currentTime;
+        const style = currentMusicStyle;
+        
+        // ADSR 파라미터 (스타일별)
+        let attackTime, decayTime, sustainLevel, releaseTime, peakVolume;
+        
+        if (isEraser) {
+            // 지우개: 부드럽고 짧은 소리
+            attackTime = 0.01;
+            decayTime = 0.03;
+            sustainLevel = 0.5;
+            releaseTime = 0.1;
+            peakVolume = 0.06;
+        } else if (style === 'xylophone') {
+            // 실로폰: 매우 빠른 attack, 긴 release
+            attackTime = 0.005;
+            decayTime = 0.02;
+            sustainLevel = 0.3;
+            releaseTime = 0.3;
+            peakVolume = 0.15;
+        } else {
+            // 칼림바/펜타토닉/메이저: 밝고 명확한 소리
+            attackTime = 0.005;  // 매우 빠른 attack
+            decayTime = 0.03;
+            sustainLevel = 0.5;
+            releaseTime = 0.2;
+            peakVolume = 0.12;
+        }
+        
+        // 메인 게인 노드
+        const mainGain = audioContext.createGain();
+        mainGain.gain.setValueAtTime(0, now);
+        mainGain.gain.linearRampToValueAtTime(peakVolume, now + attackTime); // Attack
+        mainGain.gain.linearRampToValueAtTime(peakVolume * sustainLevel, now + attackTime + decayTime); // Decay
+        mainGain.gain.setValueAtTime(peakVolume * sustainLevel, now + duration - releaseTime); // Sustain
+        mainGain.gain.linearRampToValueAtTime(0, now + duration); // Release
+        
+        // 필터
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        
+        if (isEraser) {
+            filter.frequency.value = 600;
+            filter.Q.value = 2;
+            
+            // 지우개: 단순한 소리
+            [1, 1.5].forEach((multiplier, i) => {
+                const osc = audioContext.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = frequency * multiplier;
+                
+                const oscGain = audioContext.createGain();
+                oscGain.gain.value = i === 0 ? 0.7 : 0.3;
+                
+                osc.connect(oscGain);
+                oscGain.connect(filter);
+                osc.start(now);
+                osc.stop(now + duration);
+            });
+            
+        } else if (style === 'xylophone') {
+            filter.frequency.value = frequency * 6;
+            filter.Q.value = 3;
+            
+            // 실로폰: triangle wave + 많은 배음
+            const chordFreqs = [frequency, frequency * 1.25, frequency * 1.5]; // 메이저 화음
+            
+            chordFreqs.forEach((freq, i) => {
+                // 기본음
+                const osc1 = audioContext.createOscillator();
+                osc1.type = 'triangle';
+                osc1.frequency.value = freq;
+                
+                const gain1 = audioContext.createGain();
+                gain1.gain.value = i === 0 ? 0.5 : 0.15;
+                
+                osc1.connect(gain1);
+                gain1.connect(filter);
+                osc1.start(now);
+                osc1.stop(now + duration);
+                
+                // 고조파
+                [2, 3, 4].forEach((harmonic, j) => {
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq * harmonic;
+                    
+                    const oscGain = audioContext.createGain();
+                    oscGain.gain.value = 0.05 / (j + 1);
+                    
+                    osc.connect(oscGain);
+                    oscGain.connect(filter);
+                    osc.start(now);
+                    osc.stop(now + duration);
+                });
+            });
+            
+        } else {
+            // 칼림바/펜타토닉/메이저: 메이저 3화음 + 풍부한 배음
+            filter.frequency.value = frequency * 5;
+            filter.Q.value = 2;
+            
+            // 메이저 3화음: 근음, 장3도(1.25배), 완전5도(1.5배)
+            const chordFreqs = [frequency, frequency * 1.25, frequency * 1.5];
+            
+            chordFreqs.forEach((freq, i) => {
+                // 기본음 (Sine wave)
+                const osc1 = audioContext.createOscillator();
+                osc1.type = 'sine';
+                osc1.frequency.value = freq;
+                
+                const gain1 = audioContext.createGain();
+                gain1.gain.value = i === 0 ? 1.0 : 0.25; // 근음이 가장 크게
+                
+                osc1.connect(gain1);
+                gain1.connect(filter);
+                osc1.start(now);
+                osc1.stop(now + duration);
+                
+                // 배음들 (칼림바의 금속성 느낌)
+                [2, 3, 4, 5].forEach((harmonic, j) => {
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq * harmonic;
+                    
+                    const oscGain = audioContext.createGain();
+                    oscGain.gain.value = [0.12, 0.08, 0.05, 0.03][j];
+                    
+                    osc.connect(oscGain);
+                    oscGain.connect(filter);
+                    osc.start(now);
+                    osc.stop(now + duration);
+                });
+            });
+        }
+        
+        filter.connect(mainGain);
+        mainGain.connect(masterGain);
+    }
+
+    // --- 노트 트리거 판단 (움직임 기반) ---
+    function shouldTriggerNote(handId, currentPosition, speed) {
+        if (!activeNotes[handId]) {
+            activeNotes[handId] = {
+                lastNoteTime: 0,
+                lastPosition: currentPosition,
+                noteCount: 0
+            };
+            return true; // 첫 노트
+        }
+        
+        const noteState = activeNotes[handId];
+        const now = performance.now();
+        const timeSinceLastNote = now - noteState.lastNoteTime;
+        
+        // 속도에 따른 노트 간격 계산 (빠를수록 짧은 간격)
+        // 느림(speed < 5): 300ms 간격
+        // 보통(speed 5-20): 150ms 간격
+        // 빠름(speed > 20): 80ms 간격
+        let noteInterval;
+        if (speed < 5) {
+            noteInterval = 300;
+        } else if (speed < 20) {
+            noteInterval = 150;
+        } else {
+            noteInterval = 80;
+        }
+        
+        // 거리 체크 (최소 이동 거리)
+        const distance = getDistance(noteState.lastPosition, currentPosition);
+        const minDistance = 15; // 픽셀
+        
+        // 시간 또는 거리 조건 만족 시 노트 트리거
+        if (timeSinceLastNote >= noteInterval && distance >= minDistance) {
+            noteState.lastNoteTime = now;
+            noteState.lastPosition = currentPosition;
+            noteState.noteCount++;
+            return true;
+        }
+        
+        return false;
+    }
+
+    // --- 손 사라질 때 노트 상태 초기화 ---
+    function clearNoteState(handId) {
+        if (activeNotes[handId]) {
+            delete activeNotes[handId];
+        }
+    }
+
     // --- 손가락 펴짐/접힘 감지 ---
     function detectGesture(landmarks) {
         // 각 손가락의 끝(tip)과 기저부(base) 사이 거리 계산
@@ -493,7 +780,12 @@
                 currentFrameHandIds.add(handId);
 
                 if (!activeTouches[handId]) {
-                    activeTouches[handId] = { isDrawing: false, lastPoint: null, lastGesture: null };
+                    activeTouches[handId] = { 
+                        isDrawing: false, 
+                        lastPoint: null, 
+                        lastGesture: null,
+                        lastSpeed: 0
+                    };
                 }
                 let touchState = activeTouches[handId];
 
@@ -522,10 +814,26 @@
                 const palmCenter = getPalmCenter(landmarks);
                 const canvasPalmCenter = getCanvasCoordinates(palmCenter);
 
+                // y 좌표를 음악적 주파수로 변환 (스타일별 음계)
+                const normalizedY = palmCenter.y; // 0~1
+                const baseFrequency = getFrequencyFromY(normalizedY, currentMusicStyle);
+
+                // 손 움직임 속도 계산
+                let speed = 0;
+                if (touchState.lastPoint) {
+                    speed = getDistance(touchState.lastPoint, canvasPalmCenter);
+                }
+                touchState.lastSpeed = speed;
+
                 // 제스처에 따른 동작
                 if (gesture === 'open') {
                     // 손바닥: 무지개 색으로 그리기
                     const rainbowColor = getRainbowColor();
+                    
+                    // 노트 트리거 판단 (움직임 기반)
+                    if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
+                        playNote(baseFrequency, 0.5, false);
+                    }
                     
                     // 피드백: 브러시 프리뷰
                     feedbackCtx.fillStyle = rainbowColor;
@@ -573,6 +881,12 @@
                 } else if (gesture === 'closed') {
                     // 주먹: 지우기
                     
+                    // 노트 트리거 판단 (한 옥타브 아래 사용)
+                    const eraserFreq = getFrequencyFromY(normalizedY, currentMusicStyle) * 0.5; // 한 옥타브 낮게
+                    if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
+                        playNote(eraserFreq, 0.4, true);
+                    }
+                    
                     // 피드백: 지우개 프리뷰
                     feedbackCtx.fillStyle = 'rgba(200, 200, 200, 0.6)';
                     feedbackCtx.beginPath();
@@ -617,6 +931,9 @@
 
                 } else {
                     // 중간 상태: 그리기 중단
+                    if (touchState.isDrawing) {
+                        clearNoteState(handId);
+                    }
                     touchState.isDrawing = false;
                     touchState.lastPoint = null;
                     touchState.lastGesture = null;
@@ -626,9 +943,10 @@
             });
         }
 
-        // 사라진 손 처리
+        // 사라진 손 처리 - 노트 상태 즉시 초기화
         Object.keys(activeTouches).forEach(handId => {
             if (!currentFrameHandIds.has(parseInt(handId))) {
+                clearNoteState(parseInt(handId));
                 delete activeTouches[handId];
             }
         });
@@ -667,6 +985,11 @@
         rainbowCycleDuration = value * 1000;
     });
 
+    musicStyleSelect.addEventListener('change', (event) => {
+        currentMusicStyle = event.target.value;
+        console.log(`음악 스타일 변경: ${currentMusicStyle}`);
+    });
+
     brushSizeSlider.addEventListener('input', (event) => {
         const value = parseInt(event.target.value);
         brushSizeValue.textContent = value;
@@ -677,6 +1000,16 @@
         const value = parseInt(event.target.value);
         drawingOpacityValue.textContent = value;
         drawingCanvas.style.opacity = value / 100;
+    });
+
+    enableSoundCheckbox.addEventListener('change', (event) => {
+        soundEnabled = event.target.checked;
+        if (soundEnabled) {
+            initAudio();
+        } else {
+            // 모든 노트 상태 초기화
+            Object.keys(activeNotes).forEach(handId => clearNoteState(parseInt(handId)));
+        }
     });
 
     // 전체화면 토글
@@ -704,15 +1037,45 @@
             document.body.classList.add('fullscreen-mode');
             mainHeader.classList.add('hidden');
             fullscreenButton.textContent = '🔲 전체화면 종료';
+            
+            // 커서 숨김 타이머 시작
+            resetCursorTimer();
         } else {
             document.body.classList.remove('fullscreen-mode');
+            document.body.classList.remove('hide-cursor');
             mainHeader.classList.remove('hidden');
             fullscreenButton.textContent = '🖥️ 전체화면';
+            
+            // 커서 타이머 정리
+            if (cursorTimeout) {
+                clearTimeout(cursorTimeout);
+                cursorTimeout = null;
+            }
         }
         
         // 캔버스 크기 재조정
         resizeCanvases();
     });
+
+    // 전체화면 모드에서 마우스 움직임 감지
+    document.addEventListener('mousemove', () => {
+        if (isFullscreen) {
+            document.body.classList.remove('hide-cursor');
+            resetCursorTimer();
+        }
+    });
+
+    // 커서 타이머 리셋 함수
+    function resetCursorTimer() {
+        if (cursorTimeout) {
+            clearTimeout(cursorTimeout);
+        }
+        cursorTimeout = setTimeout(() => {
+            if (isFullscreen) {
+                document.body.classList.add('hide-cursor');
+            }
+        }, 5000); // 5초 후 커서 숨김
+    }
 
     // 창 크기 변경 시 캔버스 리사이즈
     let resizeTimeout;
@@ -728,6 +1091,13 @@
 
     // --- 초기화 시작 ---
     createHandLandmarker();
+    
+    // Web Audio 초기화 (사용자 인터랙션 후)
+    document.addEventListener('click', () => {
+        if (soundEnabled && !audioContext) {
+            initAudio();
+        }
+    }, { once: true });
 
 </script>
 
