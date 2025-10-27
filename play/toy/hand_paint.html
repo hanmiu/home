@@ -205,13 +205,28 @@
     </div>
     
     <div class="control-group">
-        <label>음악 스타일</label>
+        <label>🤚 오른손 (멜로디)</label>
         <div class="control-row">
-            <select id="musicStyle">
+            <select id="rightHandStyle">
                 <option value="pentatonic">펜타토닉 (밝고 경쾌)</option>
                 <option value="major">메이저 스케일 (클래식)</option>
                 <option value="xylophone">실로폰 (반짝임)</option>
                 <option value="chromatic">크로매틱 (자유로움)</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <label>🤛 왼손 (퍼커션)</label>
+        <div class="control-row">
+            <select id="leftHandStyle">
+                <option value="kick">킥 드럼 (베이스)</option>
+                <option value="snare">스네어 (탁!)</option>
+                <option value="hihat">하이햇 (칫!)</option>
+                <option value="tom">탐 (둥둥)</option>
+                <option value="clap">박수 (짝!)</option>
+                <option value="cymbal">심벌 (챙~)</option>
+                <option value="melody">멜로디 (오른손과 동일)</option>
             </select>
         </div>
     </div>
@@ -273,7 +288,8 @@
     const hideWebcamCheckbox = document.getElementById('hideWebcam');
     const rainbowSpeedSlider = document.getElementById('rainbowSpeed');
     const rainbowSpeedValue = document.getElementById('rainbowSpeedValue');
-    const musicStyleSelect = document.getElementById('musicStyle');
+    const rightHandStyleSelect = document.getElementById('rightHandStyle');
+    const leftHandStyleSelect = document.getElementById('leftHandStyle');
     const brushSizeSlider = document.getElementById('brushSize');
     const brushSizeValue = document.getElementById('brushSizeValue');
     const drawingOpacitySlider = document.getElementById('drawingOpacity');
@@ -320,7 +336,8 @@
     let rainbowCycleDuration = 10000; // 밀리초 (10초)
     let brushSize = 60;
     let startTime = performance.now(); // 무지개 색상 시작 시간
-    let currentMusicStyle = 'pentatonic'; // 기본 펜타토닉
+    let rightHandStyle = 'pentatonic'; // 오른손: 멜로디
+    let leftHandStyle = 'kick'; // 왼손: 퍼커션
     
     let activeTouches = {}; // 손 ID별 그리기 상태 { handId: { isDrawing: false, lastPoint: null } }
 
@@ -496,12 +513,197 @@
         return scale[clampedIndex];
     }
 
-    // --- ADSR 노트 생성 (음악 스타일별) ---
-    function playNote(frequency, duration = 0.5, isEraser = false) {
+    // --- 퍼커션 사운드 생성 ---
+    function playPercussion(type, normalizedY = 0.5) {
         if (!soundEnabled || !audioContext) return;
 
         const now = audioContext.currentTime;
-        const style = currentMusicStyle;
+        
+        switch(type) {
+            case 'kick':
+                // 킥 드럼: 낮은 주파수 + pitch envelope
+                {
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    
+                    // Pitch envelope: 150Hz -> 40Hz
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+                    
+                    const gain = audioContext.createGain();
+                    gain.gain.setValueAtTime(0.8, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    
+                    osc.connect(gain);
+                    gain.connect(masterGain);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+                break;
+                
+            case 'snare':
+                // 스네어: white noise + pitch envelope
+                {
+                    // Noise
+                    const bufferSize = audioContext.sampleRate * 0.2;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const noiseFilter = audioContext.createBiquadFilter();
+                    noiseFilter.type = 'highpass';
+                    noiseFilter.frequency.value = 1000;
+                    
+                    const noiseGain = audioContext.createGain();
+                    noiseGain.gain.setValueAtTime(0.5, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    
+                    noise.connect(noiseFilter);
+                    noiseFilter.connect(noiseGain);
+                    noiseGain.connect(masterGain);
+                    noise.start(now);
+                    
+                    // Tone
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+                    
+                    const oscGain = audioContext.createGain();
+                    oscGain.gain.setValueAtTime(0.3, now);
+                    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    
+                    osc.connect(oscGain);
+                    oscGain.connect(masterGain);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                }
+                break;
+                
+            case 'hihat':
+                // 하이햇: high-pass filtered noise
+                {
+                    const bufferSize = audioContext.sampleRate * 0.05;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'highpass';
+                    filter.frequency.value = 7000;
+                    
+                    const gain = audioContext.createGain();
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(masterGain);
+                    noise.start(now);
+                }
+                break;
+                
+            case 'tom':
+                // 탐: sine wave with pitch sweep
+                {
+                    // y 좌표로 피치 조절 (높이에 따라 다른 탐)
+                    const basePitch = 80 + (1 - normalizedY) * 120; // 80Hz ~ 200Hz
+                    
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(basePitch * 2, now);
+                    osc.frequency.exponentialRampToValueAtTime(basePitch, now + 0.1);
+                    
+                    const gain = audioContext.createGain();
+                    gain.gain.setValueAtTime(0.6, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    
+                    osc.connect(gain);
+                    gain.connect(masterGain);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+                break;
+                
+            case 'clap':
+                // 박수: multiple short noise bursts
+                {
+                    for (let i = 0; i < 3; i++) {
+                        const delay = i * 0.015;
+                        
+                        const bufferSize = audioContext.sampleRate * 0.03;
+                        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                        const data = buffer.getChannelData(0);
+                        for (let j = 0; j < bufferSize; j++) {
+                            data[j] = Math.random() * 2 - 1;
+                        }
+                        
+                        const noise = audioContext.createBufferSource();
+                        noise.buffer = buffer;
+                        
+                        const filter = audioContext.createBiquadFilter();
+                        filter.type = 'bandpass';
+                        filter.frequency.value = 1500;
+                        filter.Q.value = 2;
+                        
+                        const gain = audioContext.createGain();
+                        gain.gain.setValueAtTime(0.3, now + delay);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.05);
+                        
+                        noise.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(masterGain);
+                        noise.start(now + delay);
+                    }
+                }
+                break;
+                
+            case 'cymbal':
+                // 심벌: high-pass filtered noise with long decay
+                {
+                    const bufferSize = audioContext.sampleRate * 1.5;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'highpass';
+                    filter.frequency.value = 3000;
+                    filter.Q.value = 1;
+                    
+                    const gain = audioContext.createGain();
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                    
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(masterGain);
+                    noise.start(now);
+                }
+                break;
+        }
+    }
+
+    // --- ADSR 노트 생성 (음악 스타일별) ---
+    function playNote(frequency, duration = 0.5, isEraser = false, style = 'pentatonic') {
+        if (!soundEnabled || !audioContext) return;
+
+        const now = audioContext.currentTime;
         
         // ADSR 파라미터 (스타일별)
         let attackTime, decayTime, sustainLevel, releaseTime, peakVolume;
@@ -770,6 +972,7 @@
     // --- 손 결과 처리 및 그리기 ---
     function processHandResults(results) {
         const detectedHands = results.landmarks;
+        const handednesses = results.handednesses; // 손 방향 정보
         const currentFrameHandIds = new Set();
         
         let activeGestures = [];
@@ -779,27 +982,38 @@
                 const handId = handIndex;
                 currentFrameHandIds.add(handId);
 
+                // 손 방향 확인 (Left/Right)
+                const handedness = handednesses && handednesses[handIndex] ? 
+                    handednesses[handIndex][0].categoryName : 'Right';
+                const isRightHand = handedness === 'Right';
+
                 if (!activeTouches[handId]) {
                     activeTouches[handId] = { 
                         isDrawing: false, 
                         lastPoint: null, 
                         lastGesture: null,
-                        lastSpeed: 0
+                        lastSpeed: 0,
+                        isRightHand: isRightHand
                     };
                 }
                 let touchState = activeTouches[handId];
+                touchState.isRightHand = isRightHand; // 업데이트
 
                 // 랜드마크 그리기 (좌우 반전 적용)
                 feedbackCtx.save();
                 feedbackCtx.scale(-1, 1);
                 feedbackCtx.translate(-feedbackCanvas.width, 0);
                 
+                // 손에 따라 다른 색상
+                const landmarkColor = isRightHand ? "#00FF00" : "#00FFFF";
+                const pointColor = isRightHand ? "#FF0000" : "#FF00FF";
+                
                 drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { 
-                    color: "#00FF00", 
+                    color: landmarkColor, 
                     lineWidth: 2 
                 });
                 drawingUtils.drawLandmarks(landmarks, { 
-                    color: "#FF0000", 
+                    color: pointColor, 
                     lineWidth: 1, 
                     radius: 3 
                 });
@@ -814,9 +1028,8 @@
                 const palmCenter = getPalmCenter(landmarks);
                 const canvasPalmCenter = getCanvasCoordinates(palmCenter);
 
-                // y 좌표를 음악적 주파수로 변환 (스타일별 음계)
+                // y 좌표
                 const normalizedY = palmCenter.y; // 0~1
-                const baseFrequency = getFrequencyFromY(normalizedY, currentMusicStyle);
 
                 // 손 움직임 속도 계산
                 let speed = 0;
@@ -827,12 +1040,28 @@
 
                 // 제스처에 따른 동작
                 if (gesture === 'open') {
-                    // 손바닥: 무지개 색으로 그리기
+                    // 손바닥: 그리기 + 사운드
                     const rainbowColor = getRainbowColor();
                     
-                    // 노트 트리거 판단 (움직임 기반)
-                    if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
-                        playNote(baseFrequency, 0.5, false);
+                    // 사운드: 오른손/왼손에 따라 다르게
+                    if (isRightHand) {
+                        // 오른손: 멜로디
+                        const frequency = getFrequencyFromY(normalizedY, rightHandStyle);
+                        if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
+                            playNote(frequency, 0.5, false, rightHandStyle);
+                        }
+                    } else {
+                        // 왼손: 퍼커션 또는 멜로디
+                        if (leftHandStyle === 'melody') {
+                            const frequency = getFrequencyFromY(normalizedY, rightHandStyle);
+                            if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
+                                playNote(frequency, 0.5, false, rightHandStyle);
+                            }
+                        } else {
+                            if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
+                                playPercussion(leftHandStyle, normalizedY);
+                            }
+                        }
                     }
                     
                     // 피드백: 브러시 프리뷰
@@ -879,12 +1108,13 @@
                     touchState.lastGesture = 'open';
 
                 } else if (gesture === 'closed') {
-                    // 주먹: 지우기
+                    // 주먹: 지우기 (양손 동일)
                     
-                    // 노트 트리거 판단 (한 옥타브 아래 사용)
-                    const eraserFreq = getFrequencyFromY(normalizedY, currentMusicStyle) * 0.5; // 한 옥타브 낮게
+                    // 노트 트리거 (지우개 소리)
+                    const style = isRightHand ? rightHandStyle : (leftHandStyle === 'melody' ? rightHandStyle : 'pentatonic');
+                    const eraserFreq = getFrequencyFromY(normalizedY, style) * 0.5;
                     if (shouldTriggerNote(handId, canvasPalmCenter, speed)) {
-                        playNote(eraserFreq, 0.4, true);
+                        playNote(eraserFreq, 0.4, true, style);
                     }
                     
                     // 피드백: 지우개 프리뷰
@@ -985,9 +1215,14 @@
         rainbowCycleDuration = value * 1000;
     });
 
-    musicStyleSelect.addEventListener('change', (event) => {
-        currentMusicStyle = event.target.value;
-        console.log(`음악 스타일 변경: ${currentMusicStyle}`);
+    rightHandStyleSelect.addEventListener('change', (event) => {
+        rightHandStyle = event.target.value;
+        console.log(`오른손 스타일 변경: ${rightHandStyle}`);
+    });
+
+    leftHandStyleSelect.addEventListener('change', (event) => {
+        leftHandStyle = event.target.value;
+        console.log(`왼손 스타일 변경: ${leftHandStyle}`);
     });
 
     brushSizeSlider.addEventListener('input', (event) => {
