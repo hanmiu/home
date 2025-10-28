@@ -210,6 +210,7 @@
       { id: '14', name: '김예나', address: '탄현마을 4단지' },
       { id: '15', name: '박다인', address: '성저마을 1단지 동익아파트' }
     ];
+    console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length, ids: CHILDREN.map(c => c.id) });
 
     const SVG_BASE = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/';
     
@@ -220,16 +221,22 @@
     function getSvgUrl(id) {
       const num = parseInt(id, 10);
       const svgNum = ((num - 1) % 10) + 1;
-      return `${SVG_BASE}monster${svgNum}.svg`;
+      const url = `${SVG_BASE}monster${svgNum}.svg`;
+      console.log(`🎨 SVG 매핑: ID ${id} → monster${svgNum}.svg`);
+      return url;
     }
 
     // URL 파라미터 파싱
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'card';
     const id = params.get('id');
+    
+    console.log('🚀 페이지 로드:', { mode, id, url: location.href });
 
     // === PRINT 모드 렌더링 ===
     function renderPrintMode() {
+      console.log('🖨️ PRINT 모드 렌더링 시작', { totalCards: CHILDREN.length });
+      
       const app = document.getElementById('app');
       app.className = 'print-mode';
       
@@ -261,6 +268,7 @@
 
       // QR 코드 생성
       setTimeout(() => {
+        console.log('📱 QR 코드 생성 시작');
         CHILDREN.forEach(child => {
           const qrId = `qr-${child.id}`;
           const qrUrl = `https://www.hanmiu.cc/play/evt/25_creatures/mini.html?mode=card&id=${child.id}`;
@@ -273,15 +281,19 @@
             correctLevel: QRCode.CorrectLevel.M
           });
         });
+        console.log('✅ QR 코드 생성 완료', { count: CHILDREN.length });
       }, 100);
     }
 
     // === CARD 모드 렌더링 ===
     function renderCardMode(childId) {
+      console.log('🎴 CARD 모드 렌더링', { childId });
+      
       const app = document.getElementById('app');
       app.className = 'card-mode';
 
       if (!childId) {
+        console.warn('⚠️ ID가 없습니다');
         app.innerHTML = '<div class="error-message">ID를 입력해주세요.</div>';
         currentChild = null;
         return;
@@ -289,6 +301,7 @@
 
       const child = CHILDREN.find(c => c.id === childId);
       if (!child) {
+        console.error('❌ 유효하지 않은 ID:', childId);
         app.innerHTML = '<div class="error-message">유효하지 않은 ID입니다.</div>';
         currentChild = null;
         return;
@@ -296,6 +309,12 @@
 
       // 현재 카드 정보 저장
       currentChild = child;
+      console.log('✅ 카드 정보 로드:', { 
+        id: child.id, 
+        name: child.name, 
+        address: child.address,
+        svg: getSvgUrl(child.id)
+      });
 
       app.innerHTML = `
         <div class="card-container">
@@ -317,9 +336,15 @@
 
     // TTS 함수
     window.speakWelcome = function() {
-      if (!currentChild) return;
+      console.log('🔊 TTS 실행 요청');
+      
+      if (!currentChild) {
+        console.error('❌ currentChild가 없습니다');
+        return;
+      }
 
       const text = `${currentChild.address}에 사는 ${currentChild.name}. 반가워! 한미유치원에 온 것을 환영해!`;
+      console.log('📢 TTS 텍스트:', text);
       
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
@@ -327,18 +352,26 @@
         utterance.rate = 0.9;
         utterance.pitch = 1.1;
         
+        utterance.onstart = function() {
+          console.log('▶️ TTS 시작');
+        };
+        
         // TTS 종료 후 3초 뒤 포커스 복귀
         utterance.onend = function() {
+          console.log('⏹️ TTS 종료, 3초 후 포커스 복귀');
           setTimeout(() => {
             document.getElementById('barcodeInput').focus();
+            console.log('🎯 바코드 입력 포커스 복귀');
           }, 3000);
         };
         
         window.speechSynthesis.speak(utterance);
       } else {
+        console.error('❌ 브라우저가 TTS를 지원하지 않습니다');
         alert('이 브라우저는 음성 출력을 지원하지 않습니다.');
         setTimeout(() => {
           document.getElementById('barcodeInput').focus();
+          console.log('🎯 바코드 입력 포커스 복귀');
         }, 3000);
       }
     };
@@ -346,7 +379,12 @@
     // 바코드 리더 설정
     let barcodeReaderSetup = false;
     function setupBarcodeReader() {
-      if (barcodeReaderSetup) return; // 이미 설정됨
+      if (barcodeReaderSetup) {
+        console.log('ℹ️ 바코드 리더 이미 설정됨');
+        return; // 이미 설정됨
+      }
+      
+      console.log('🔧 바코드 리더 설정 시작');
       barcodeReaderSetup = true;
       
       const input = document.getElementById('barcodeInput');
@@ -355,32 +393,54 @@
       setInterval(() => {
         if (document.activeElement !== input) {
           input.focus();
+          console.log('🔄 바코드 입력 포커스 자동 복귀');
         }
       }, 1000);
 
       // 엔터 키 입력 감지
       input.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-          const scannedId = input.value.trim();
+          let scannedId = input.value.trim();
+          console.log('📥 바코드 입력 감지:', { raw: input.value, scannedId });
           input.value = '';
           
           if (scannedId) {
+            // URL이 들어온 경우 ID만 추출
+            if (scannedId.includes('?') && scannedId.includes('id=')) {
+              try {
+                const url = new URL(scannedId);
+                const extractedId = url.searchParams.get('id');
+                if (extractedId) {
+                  console.log('🔍 URL에서 ID 추출:', { url: scannedId, extractedId });
+                  scannedId = extractedId;
+                }
+              } catch (e) {
+                console.error('❌ URL 파싱 실패:', e);
+              }
+            }
+            
+            console.log('✨ 카드 전환 시작:', scannedId);
             // 동적으로 카드 렌더링만 수행 (URL 변경 없음)
             renderCardMode(scannedId);
+          } else {
+            console.warn('⚠️ 빈 ID 입력됨');
           }
         }
       });
 
       // 초기 포커스
       input.focus();
+      console.log('✅ 바코드 리더 설정 완료, 초기 포커스 설정');
     }
 
     // 모드에 따라 렌더링
+    console.log('🎬 모드 선택:', mode);
     if (mode === 'print') {
       renderPrintMode();
     } else {
       renderCardMode(id);
     }
+    console.log('🏁 초기화 완료');
   </script>
 </body>
 </html>
