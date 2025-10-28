@@ -20,6 +20,7 @@
       min-height: 100vh;
       padding: 20px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: filter 0.6s ease;
     }
     .card-container {
       background: white;
@@ -152,7 +153,7 @@
     /* 인쇄 스타일 */
     @media print {
       body { background: white; }
-      .print-controls { display: none; }
+      .print-controls { display: none !important; }
       .print-grid {
         max-width: 100%;
         gap: 0;
@@ -209,7 +210,8 @@
       { id: '13', name: '임설아', address: '풍동 더샾 퍼스트월드2단지' },
       { id: '14', name: '김예나', address: '탄현마을 4단지' },
       { id: '15', name: '박다인', address: '성저마을 1단지 동익아파트' },
-      { id: '16', name: '하다온', address: '현대홈타운 아파트' }
+      { id: '16', name: '하다온', address: '현대홈타운 아파트' },
+      { id: '17', name: '김지민', address: '일산 동양 아파트' }
     ];
     console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length, ids: CHILDREN.map(c => c.id) });
 
@@ -217,6 +219,35 @@
     
     // 현재 표시 중인 카드 정보
     let currentChild = null;
+    
+    // 새 카드 추가 함수 (print 모드용)
+    window.addNewCard = function() {
+      const nameInput = document.getElementById('newName');
+      const addressInput = document.getElementById('newAddress');
+      
+      const name = nameInput.value.trim();
+      const address = addressInput.value.trim();
+      
+      if (!name || !address) {
+        alert('이름과 주소를 모두 입력해주세요.');
+        return;
+      }
+      
+      // 새 ID 생성 (현재 최대 ID + 1)
+      const maxId = Math.max(...CHILDREN.map(c => parseInt(c.id, 10)));
+      const newId = String(maxId + 1).padStart(2, '0');
+      
+      // 데이터 추가
+      CHILDREN.push({ id: newId, name, address });
+      console.log('➕ 새 카드 추가:', { id: newId, name, address });
+      
+      // 입력 필드 초기화
+      nameInput.value = '';
+      addressInput.value = '';
+      
+      // print 모드 다시 렌더링
+      renderPrintMode();
+    };
     
     // ID에 따른 SVG 반환 (순환)
     function getSvgUrl(id) {
@@ -243,9 +274,31 @@
       
       let html = `
         <div class="print-controls">
+          <h2 style="margin-bottom: 20px; color: #333;">카드 인쇄하기</h2>
+          
+          <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3 style="margin-bottom: 15px; color: #555;">새 카드 추가</h3>
+            <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: center;">
+              <input type="text" id="newName" placeholder="어린이 이름" 
+                style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+              <input type="text" id="newAddress" placeholder="주소" 
+                style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+              <button onclick="addNewCard()" 
+                style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 700; transition: background 0.3s;"
+                onmouseover="this.style.background='#1976D2'" 
+                onmouseout="this.style.background='#2196F3'">
+                추가
+              </button>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+              추가된 카드는 현재 세션에만 유효합니다. (새로고침 시 초기화)
+            </div>
+          </div>
+          
           <button class="print-button" onclick="window.print()">🖨️ 인쇄하기</button>
+          <div style="margin-top: 10px; color: #666;">총 <strong id="cardCount">${CHILDREN.length}</strong>장의 카드</div>
         </div>
-        <div class="print-grid">
+        <div class="print-grid" id="printGrid">
       `;
 
       CHILDREN.forEach(child => {
@@ -266,6 +319,12 @@
 
       html += '</div>';
       app.innerHTML = html;
+      
+      // 카드 수 업데이트
+      const cardCountEl = document.getElementById('cardCount');
+      if (cardCountEl) {
+        cardCountEl.textContent = CHILDREN.length;
+      }
 
       // QR 코드 생성
       setTimeout(() => {
@@ -316,6 +375,11 @@
         address: child.address,
         svg: getSvgUrl(child.id)
       });
+      
+      // 배경색 hue rotation (무작위)
+      const hueRotation = Math.floor(Math.random() * 360);
+      app.style.filter = `hue-rotate(${hueRotation}deg)`;
+      console.log('🎨 배경색 변경:', { hueRotation: `${hueRotation}deg` });
 
       app.innerHTML = `
         <div class="card-container">
