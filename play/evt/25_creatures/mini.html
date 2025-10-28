@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한미유치원 신기한 생물</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Noto Sans KR', system-ui, sans-serif; 
+      background: #f5f5f5;
+    }
+
+    /* === CARD 모드 스타일 === */
+    .card-mode {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .card-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+    .svg-container {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 30px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    .svg-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .child-name {
+      font-size: 36px;
+      font-weight: 900;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .welcome-message {
+      font-size: 20px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .tts-button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s;
+    }
+    .tts-button:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    .tts-button:active {
+      transform: translateY(0);
+    }
+
+    /* === PRINT 모드 스타일 === */
+    .print-mode {
+      padding: 20px;
+    }
+    .print-controls {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .print-button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+    .print-button:hover {
+      background: #45a049;
+    }
+    .print-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+      max-width: 210mm;
+      margin: 0 auto;
+    }
+    .print-card {
+      width: 89mm;
+      height: 127mm;
+      border: 2px solid #333;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10mm;
+      page-break-inside: avoid;
+    }
+    .print-card .svg-box {
+      width: 60mm;
+      height: 60mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .print-card .svg-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .print-card .name {
+      font-size: 28px;
+      font-weight: 900;
+      color: #333;
+      text-align: center;
+      margin: 5mm 0;
+    }
+    .print-card .address {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 5mm;
+    }
+    .print-card .qr-box {
+      width: 22mm;
+      height: 22mm;
+    }
+
+    /* 인쇄 스타일 */
+    @media print {
+      body { background: white; }
+      .print-controls { display: none; }
+      .print-grid {
+        max-width: 100%;
+        gap: 0;
+      }
+      .print-card {
+        border: 1px solid #333;
+      }
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+
+    /* 페이지 나누기 (4개마다) */
+    .print-card:nth-child(4n) {
+      page-break-after: always;
+    }
+
+    /* 숨김 input */
+    #barcodeInput {
+      position: absolute;
+      left: -9999px;
+      opacity: 0;
+    }
+
+    .error-message {
+      text-align: center;
+      padding: 40px;
+      font-size: 20px;
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <input type="text" id="barcodeInput" autocomplete="off" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    // 데이터 하드코딩 (중복 제거됨)
+    const CHILDREN = [
+      { id: '01', name: '박지호', address: '하늘마을5단지' },
+      { id: '02', name: '전시윤', address: '일산동 일산어반스카이' },
+      { id: '03', name: '손태율', address: '경의로867 덕이동 철산아파트' },
+      { id: '04', name: '서강율', address: '일신건영1차' },
+      { id: '05', name: '오주원', address: '일산동양아파트' },
+      { id: '06', name: '이서휘', address: '중산마을 일산2차아이파크' },
+      { id: '07', name: '이서진', address: '더샵 엘로이' },
+      { id: '08', name: '김시우', address: '덕이동 하이파크시티' },
+      { id: '09', name: '강지아', address: '식사동 주상복합1단지' },
+      { id: '10', name: '김유연', address: '식사동 위시티' },
+      { id: '11', name: '손예준', address: '하늘마을2단지' },
+      { id: '12', name: '김서율', address: '킨텍스로255, 운정 12단지' },
+      { id: '13', name: '임설아', address: '풍동 더샾 퍼스트월드2단지' },
+      { id: '14', name: '김예나', address: '탄현마을 4단지' },
+      { id: '15', name: '박다인', address: '성저마을 1단지 동익아파트' }
+    ];
+
+    const SVG_BASE = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/';
+    
+    // 현재 표시 중인 카드 정보
+    let currentChild = null;
+    
+    // ID에 따른 SVG 반환 (순환)
+    function getSvgUrl(id) {
+      const num = parseInt(id, 10);
+      const svgNum = ((num - 1) % 10) + 1;
+      return `${SVG_BASE}monster${svgNum}.svg`;
+    }
+
+    // URL 파라미터 파싱
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode') || 'card';
+    const id = params.get('id');
+
+    // === PRINT 모드 렌더링 ===
+    function renderPrintMode() {
+      const app = document.getElementById('app');
+      app.className = 'print-mode';
+      
+      let html = `
+        <div class="print-controls">
+          <button class="print-button" onclick="window.print()">🖨️ 인쇄하기</button>
+        </div>
+        <div class="print-grid">
+      `;
+
+      CHILDREN.forEach(child => {
+        const qrId = `qr-${child.id}`;
+        const qrUrl = `https://www.hanmiu.cc/play/evt/25_creatures/mini.html?mode=card&id=${child.id}`;
+        
+        html += `
+          <div class="print-card">
+            <div class="svg-box">
+              <img src="${getSvgUrl(child.id)}" alt="${child.name}">
+            </div>
+            <div class="name">${child.name}</div>
+            <div class="address">${child.address}</div>
+            <div class="qr-box" id="${qrId}"></div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      app.innerHTML = html;
+
+      // QR 코드 생성
+      setTimeout(() => {
+        CHILDREN.forEach(child => {
+          const qrId = `qr-${child.id}`;
+          const qrUrl = `https://www.hanmiu.cc/play/evt/25_creatures/mini.html?mode=card&id=${child.id}`;
+          new QRCode(document.getElementById(qrId), {
+            text: qrUrl,
+            width: 85,  // 22mm at 96dpi
+            height: 85,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        });
+      }, 100);
+    }
+
+    // === CARD 모드 렌더링 ===
+    function renderCardMode(childId) {
+      const app = document.getElementById('app');
+      app.className = 'card-mode';
+
+      if (!childId) {
+        app.innerHTML = '<div class="error-message">ID를 입력해주세요.</div>';
+        currentChild = null;
+        return;
+      }
+
+      const child = CHILDREN.find(c => c.id === childId);
+      if (!child) {
+        app.innerHTML = '<div class="error-message">유효하지 않은 ID입니다.</div>';
+        currentChild = null;
+        return;
+      }
+
+      // 현재 카드 정보 저장
+      currentChild = child;
+
+      app.innerHTML = `
+        <div class="card-container">
+          <div class="svg-container">
+            <img src="${getSvgUrl(child.id)}" alt="${child.name}">
+          </div>
+          <div class="child-name">${child.name}</div>
+          <div class="welcome-message">
+            ${child.address}에 사는 ${child.name}. 반가워!<br>
+            한미유치원에 온 것을 환영해!
+          </div>
+          <button class="tts-button" onclick="speakWelcome()">안녕! 👋</button>
+        </div>
+      `;
+
+      // 바코드 리더 설정
+      setupBarcodeReader();
+    }
+
+    // TTS 함수
+    window.speakWelcome = function() {
+      if (!currentChild) return;
+
+      const text = `${currentChild.address}에 사는 ${currentChild.name}. 반가워! 한미유치원에 온 것을 환영해!`;
+      
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        
+        // TTS 종료 후 3초 뒤 포커스 복귀
+        utterance.onend = function() {
+          setTimeout(() => {
+            document.getElementById('barcodeInput').focus();
+          }, 3000);
+        };
+        
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert('이 브라우저는 음성 출력을 지원하지 않습니다.');
+        setTimeout(() => {
+          document.getElementById('barcodeInput').focus();
+        }, 3000);
+      }
+    };
+
+    // 바코드 리더 설정
+    let barcodeReaderSetup = false;
+    function setupBarcodeReader() {
+      if (barcodeReaderSetup) return; // 이미 설정됨
+      barcodeReaderSetup = true;
+      
+      const input = document.getElementById('barcodeInput');
+      
+      // 주기적으로 포커스 유지
+      setInterval(() => {
+        if (document.activeElement !== input) {
+          input.focus();
+        }
+      }, 1000);
+
+      // 엔터 키 입력 감지
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          const scannedId = input.value.trim();
+          input.value = '';
+          
+          if (scannedId) {
+            // 동적으로 카드 렌더링만 수행 (URL 변경 없음)
+            renderCardMode(scannedId);
+          }
+        }
+      });
+
+      // 초기 포커스
+      input.focus();
+    }
+
+    // 모드에 따라 렌더링
+    if (mode === 'print') {
+      renderPrintMode();
+    } else {
+      renderCardMode(id);
+    }
+  </script>
+</body>
+</html>
