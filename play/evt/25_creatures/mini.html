@@ -22,6 +22,7 @@
       padding: 20px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       overflow: hidden;
+      transition: filter 1.5s ease-in-out;
     }
     
     /* 배경 도형 레이어 */
@@ -35,17 +36,19 @@
       pointer-events: none;
     }
     
+    /* (중요) 도형은 WAAPI로만 애니메이션한다: CSS transition 제거 */
     .shape {
       position: absolute;
-      opacity: 0.4;
-      transition-property: transform, opacity;
-      transition-timing-function: ease-in-out;
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      /* transition 없음 */
     }
-    
+    /* 개별 path들의 fill transition도 제거 — 색상은 JS에서 WAAPI로 처리 */
     .shape circle,
     .shape rect,
     .shape polygon {
-      transition: fill 1.5s ease-in-out;
+      /* transition 없음 */
     }
     
     .card-container {
@@ -267,6 +270,8 @@
       { id: '042', name: '최준이', address: '' },
       { id: '043', name: '홍별', address: '' },
       { id: '044', name: '황재희', address: '' },
+      { id: '045', name: '방선우', address: '' },
+      { id: '046', name: '김라온', address: '' },
     ];
     console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length, ids: CHILDREN.map(c => c.id) });
 
@@ -275,22 +280,27 @@
     // 현재 표시 중인 카드 정보
     let currentChild = null;
     
+    // TTS 자동 재생 플래그
+    let ttsEnabled = false;
+    
     // 배경 도형 관리
     let shapesLayer = null;
-    const SHAPE_COUNT = 18; // 15-20개 중 적당한 개수
+    const SHAPE_COUNT = 25; // 전체 도형 개수
+    const VISIBLE_RATIO = 1.0; // 100% 모두 보이기 (현재는 고정)
+    const BOUNCE_RATIO = 0.75; // 75%에 bounce 적용
     
-    // 무지개 색상 팔레트
+    // 무지개 색상 팔레트 (채도 높은 비비드 색상)
     const RAINBOW_COLORS = [
-      '#FF6B6B', // 빨강
-      '#FF8E53', // 주황
-      '#FFD93D', // 노랑
-      '#6BCF7F', // 초록
-      '#4ECDC4', // 청록
-      '#45B7D1', // 하늘
-      '#5C7CFA', // 파랑
-      '#7950F2', // 남보라
-      '#E599F7', // 연보라
-      '#FF6BCF', // 핑크
+      '#FF0000', // 빨강
+      '#FF6600', // 주황
+      '#FFFF00', // 노랑
+      '#00FF00', // 초록
+      '#00FFFF', // 시안
+      '#0099FF', // 하늘
+      '#0000FF', // 파랑
+      '#9900FF', // 보라
+      '#FF00FF', // 마젠타
+      '#FF0099', // 핑크
     ];
     
     // SVG 도형 생성 함수
@@ -305,31 +315,31 @@
       const center = size / 2;
       
       switch(type) {
-        case 'circle':
+        case 'circle': {
           shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
           shape.setAttribute('cx', center);
           shape.setAttribute('cy', center);
           shape.setAttribute('r', center - 2);
-          shape.style.fill = color; // CSS style로 설정
+          shape.style.fill = color;
           break;
-          
-        case 'square':
+        }
+        case 'square': {
           shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
           shape.setAttribute('x', 4);
           shape.setAttribute('y', 4);
           shape.setAttribute('width', size - 8);
           shape.setAttribute('height', size - 8);
-          shape.style.fill = color; // CSS style로 설정
+          shape.style.fill = color;
           break;
-          
-        case 'triangle':
+        }
+        case 'triangle': {
           shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
           const points = `${center},4 ${size-4},${size-4} 4,${size-4}`;
           shape.setAttribute('points', points);
-          shape.style.fill = color; // CSS style로 설정
+          shape.style.fill = color;
           break;
-          
-        case 'star':
+        }
+        case 'star': {
           shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
           const starPoints = [];
           for (let i = 0; i < 10; i++) {
@@ -340,51 +350,107 @@
             starPoints.push(`${x},${y}`);
           }
           shape.setAttribute('points', starPoints.join(' '));
-          shape.style.fill = color; // CSS style로 설정
+          shape.style.fill = color;
           break;
+        }
       }
       
       svg.appendChild(shape);
       return svg;
     }
     
-    // 도형 초기화 및 업데이트 함수
+    // Bounce 애니메이션 (WAAPI)
+    function applyBounce(shape, baseTransform) {
+      // baseTransform 뒤에 상대 scale을 곱해 살짝 튕김
+      const bounceKeyframes = [
+        { transform: baseTransform + ' scale(1.0)' },
+        { transform: baseTransform + ' scale(1.3)' },
+        { transform: baseTransform + ' scale(1.0)' }
+      ];
+      shape.animate(bounceKeyframes, {
+        duration: 400,
+        easing: 'ease-out',
+        fill: 'forwards'
+      });
+    }
+    
+    // 도형 상태 업데이트 (WAAPI)
     function updateShapes() {
       if (!shapesLayer) return;
       
-      console.log('🎨 배경 도형 업데이트 시작');
+      console.log('🎨 배경 도형 업데이트 (WAAPI) 시작');
       
       const shapes = shapesLayer.querySelectorAll('.shape');
+      const bounceCount = Math.floor(SHAPE_COUNT * BOUNCE_RATIO); // 75%에 bounce 적용
+      
+      // 랜덤하게 섞어서 bounce 대상 선택
+      const indices = Array.from({ length: SHAPE_COUNT }, (_, i) => i).sort(() => Math.random() - 0.5);
+      const bounceIndices = new Set(indices.slice(0, bounceCount));
       
       shapes.forEach((shape, index) => {
-        // 랜덤 값 생성
-        const x = Math.random() * 100; // 0-100%
+        // 모든 도형은 항상 보임 (opacity 0.75)
+        shape.style.opacity = 0.75;
+
+        // 다음 상태 계산
+        const x = Math.random() * 100;
         const y = Math.random() * 100;
         const rotation = Math.random() * 360;
-        const scale = 0.5 + Math.random() * 0.8; // 0.5-1.3
-        const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
-        const duration = 1 + Math.random(); // 1-2초
-        
-        // Transition 시간 설정 (객체마다 다름)
-        shape.style.transitionDuration = `${duration}s`;
-        
-        // Transform 적용
-        shape.style.transform = `translate(${x}vw, ${y}vh) rotate(${rotation}deg) scale(${scale})`;
-        
-        // 색상 변경 (SVG 내부 fill - CSS style로)
+        const scale = 0.5 + Math.random() * 0.8;
+        const toTransform = `translate(${x}vw, ${y}vh) rotate(${rotation}deg) scale(${scale})`;
+
+        // 이전 상태(from)를 저장된 dataset에서 가져오고 없으면 현재 스타일 사용
+        const fromTransform = shape.dataset.transform || shape.style.transform || 'translate(0,0) rotate(0deg) scale(1)';
+
+        // 기존 진행 중인 애니메이션이 있으면 취소(겹침 방지)
+        shape.getAnimations().forEach(a => a.cancel());
+
+        // 주 애니메이션 (이동/회전/스케일/불투명도)
+        const duration = 1000 + Math.random() * 1000; // 1.0~2.0s
+        const main = shape.animate(
+          [
+            { transform: fromTransform, opacity: parseFloat(getComputedStyle(shape).opacity) || 0.75 },
+            { transform: toTransform,   opacity: 0.75 }
+          ],
+          { duration, easing: 'ease-in-out', fill: 'forwards' }
+        );
+
+        // 다음 사이클의 from 값으로 쓰기 위해 저장
+        shape.dataset.transform = toTransform;
+
+        // 색상 변경: WAAPI 지원 시 부드럽게, 미지원이면 즉시 변경
         const fillElement = shape.querySelector('circle, rect, polygon');
         if (fillElement) {
-          fillElement.style.fill = color; // CSS style로 변경
+          const nextColor = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+          const prevColor = getComputedStyle(fillElement).fill;
+          try {
+            fillElement.animate(
+              [{ fill: prevColor }, { fill: nextColor }],
+              { duration, easing: 'ease-in-out', fill: 'forwards' }
+            ).finished.then(() => { fillElement.style.fill = nextColor; });
+          } catch {
+            fillElement.style.fill = nextColor; // Fallback
+          }
         }
-        
-        console.log(`  도형 ${index + 1}: x=${x.toFixed(1)}%, y=${y.toFixed(1)}%, rotation=${rotation.toFixed(0)}°, scale=${scale.toFixed(2)}, color=${color}, duration=${duration.toFixed(2)}s`);
+
+        // bounce는 메인 이동 완료 후 체이닝
+        if (bounceIndices.has(index)) {
+          main.finished.then(() => applyBounce(shape, toTransform));
+        }
       });
       
-      console.log('✅ 배경 도형 업데이트 완료');
+      console.log('✅ 배경 도형 업데이트 (WAAPI) 예약 완료', { 
+        total: SHAPE_COUNT,
+        bounce: bounceCount 
+      });
     }
     
-    // 도형 레이어 초기화
+    // 도형 레이어 초기화 (한 번만 실행, transitionend 리스너 제거)
     function initShapes() {
+      if (shapesLayer) {
+        console.log('ℹ️ 도형 레이어 이미 초기화됨');
+        return;
+      }
+      
       console.log('🎭 배경 도형 레이어 초기화');
       
       shapesLayer = document.createElement('div');
@@ -399,13 +465,33 @@
         const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
         
         const shape = createShapeSVG(type, size, color);
+        
+        // 초기 랜덤 위치 설정 (transition 없이 즉시 배치)
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const rotation = Math.random() * 360;
+        const scale = 0.5 + Math.random() * 0.8;
+        const initialTransform = `translate(${x}vw, ${y}vh) rotate(${rotation}deg) scale(${scale})`;
+        
+        shape.style.opacity = 0.75;
+        shape.style.transform = initialTransform;
+
+        // 이후 애니메이션 시작점으로 사용
+        shape.dataset.transform = initialTransform;
+        
+        // 도형 내부 도형(fill)도 초기 transition 없음
+        const fillElement = shape.querySelector('circle, rect, polygon');
+        if (fillElement) fillElement.style.transition = 'none';
+        
         shapesLayer.appendChild(shape);
       }
       
-      console.log(`✅ ${SHAPE_COUNT}개 도형 생성 완료`);
+      console.log(`✅ ${SHAPE_COUNT}개 도형 생성 완료 (초기 위치 랜덤 배치)`);
       
-      // 초기 위치 설정
-      updateShapes();
+      // 초기 배치 후 약간의 딜레이를 두고 첫 번째 업데이트 실행
+      setTimeout(() => {
+        updateShapes();
+      }, 100);
     }
     
     // 새 카드 추가 함수 (print 모드용)
@@ -437,14 +523,14 @@
       renderPrintMode();
     };
     
-    // ID에 따른 SVG 반환 (순환)
+    // ID에 따른 SVG 반환 (107개 순환)
     function getSvgUrl(id) {
-        const num = parseInt(id, 10);
-        const svgNum = ((num - 1) % 107) + 1; // 1~107 순환
-        const svgId = String(svgNum).padStart(3, '0'); // 001, 002, ... 107
-        const url = `${SVG_BASE}${svgId}.svg`;
-        console.log(`🎨 SVG 매핑: ID ${id} → ${svgId}.svg`);
-        return url;
+      const num = parseInt(id, 10);
+      const svgNum = ((num - 1) % 107) + 1; // 1~107 순환
+      const svgId = String(svgNum).padStart(3, '0'); // 001, 002, ... 107
+      const url = `${SVG_BASE}${svgId}.svg`;
+      console.log(`🎨 SVG 매핑: ID ${id} → ${svgId}.svg`);
+      return url;
     }
 
     // URL 파라미터 파싱
@@ -539,11 +625,16 @@
       console.log('🎴 CARD 모드 렌더링', { childId });
       
       const app = document.getElementById('app');
-      app.className = 'card-mode';
-
+      
       if (!childId) {
         console.warn('⚠️ ID가 없습니다');
-        app.innerHTML = '<div class="error-message">ID를 입력해주세요.</div>';
+        if (!app.classList.contains('card-mode')) {
+          app.className = 'card-mode';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-message';
+          errorDiv.textContent = 'ID를 입력해주세요.';
+          app.appendChild(errorDiv);
+        }
         currentChild = null;
         return;
       }
@@ -551,7 +642,13 @@
       const child = CHILDREN.find(c => c.id === childId);
       if (!child) {
         console.error('❌ 유효하지 않은 ID:', childId);
-        app.innerHTML = '<div class="error-message">유효하지 않은 ID입니다.</div>';
+        if (!app.classList.contains('card-mode')) {
+          app.className = 'card-mode';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-message';
+          errorDiv.textContent = '유효하지 않은 ID입니다.';
+          app.appendChild(errorDiv);
+        }
         currentChild = null;
         return;
       }
@@ -565,54 +662,72 @@
         svg: getSvgUrl(child.id)
       });
       
-      // 도형 레이어가 없으면 초기화
+      // 배경색 hue rotation (무작위)
+      const hueRotation = Math.floor(Math.random() * 360);
+      app.style.filter = `hue-rotate(${hueRotation}deg)`;
+      console.log('🎨 배경색 변경:', { hueRotation: `${hueRotation}deg` });
+      
+      // 도형 레이어 초기화 (한 번만)
       if (!shapesLayer) {
         initShapes();
       }
       
-      // 기존 내용 지우고 새로 구성
-      app.innerHTML = '';
-      app.appendChild(shapesLayer);
+      // 첫 렌더링인 경우 전체 구조 생성
+      if (!app.classList.contains('card-mode')) {
+        app.className = 'card-mode';
+        app.appendChild(shapesLayer);
+        
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'card-container';
+        cardContainer.id = 'cardContainer';
+        app.appendChild(cardContainer);
+      }
       
-      const cardContainer = document.createElement('div');
-      cardContainer.className = 'card-container';
-      cardContainer.innerHTML = `
-        <div class="svg-container">
-          <img src="${getSvgUrl(child.id)}" alt="${child.name}">
-        </div>
-        <div class="child-name">${child.name}</div>
-        <div class="welcome-message">
-          ${child.name}. 반가워!<br>
-          한미유치원에 온 것을 환영해!
-        </div>
-        <button class="tts-button" onclick="speakWelcome()">안녕! 👋</button>
-      `;
-      app.appendChild(cardContainer);
+      // 카드 내용만 업데이트
+      const cardContainer = document.getElementById('cardContainer');
+      if (cardContainer) {
+        cardContainer.innerHTML = `
+          <div class="svg-container">
+            <img src="${getSvgUrl(child.id)}" alt="${child.name}">
+          </div>
+          <div class="child-name">${child.name}</div>
+          <div class="welcome-message">
+            안녕! ${child.name}. 반가워!<br>
+            한미유치원에 온 것을 환영해!
+          </div>
+          <button class="tts-button" onclick="speakWelcome()">안녕! 👋</button>
+        `;
+      }
 
-      // 도형 업데이트 (새로운 랜덤 배치)
+      // 도형 업데이트 (새로운 랜덤 배치) — 바코드 스캔마다 항상 이동
       updateShapes();
+      
+      // TTS 자동 재생 (활성화된 경우)
+      if (ttsEnabled) {
+        playTTS();
+      }
       
       // 바코드 리더 설정
       setupBarcodeReader();
     }
 
-    // TTS 함수
-    window.speakWelcome = function() {
-      console.log('🔊 TTS 실행 요청');
+    // TTS 재생 함수
+    function playTTS() {
+      console.log('🔊 TTS 실행');
       
       if (!currentChild) {
         console.error('❌ currentChild가 없습니다');
         return;
       }
 
-      const text = `${currentChild.name}. 반가워! 한미유치원에 온 것을 환영해!`;
+      const text = `안녕! ${currentChild.name}. 반가워! 한미유치원에 온 것을 환영해!`;
       console.log('📢 TTS 텍스트:', text);
       
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ko-KR';
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.4; // 밝게
         
         utterance.onstart = function() {
           console.log('▶️ TTS 시작');
@@ -636,6 +751,13 @@
           console.log('🎯 바코드 입력 포커스 복귀');
         }, 3000);
       }
+    }
+
+    // TTS 버튼 클릭 (최초 활성화)
+    window.speakWelcome = function() {
+      console.log('🎤 TTS 버튼 클릭 - 자동 재생 활성화');
+      ttsEnabled = true;
+      playTTS();
     };
 
     // 바코드 리더 설정
@@ -643,7 +765,7 @@
     function setupBarcodeReader() {
       if (barcodeReaderSetup) {
         console.log('ℹ️ 바코드 리더 이미 설정됨');
-        return; // 이미 설정됨
+        return;
       }
       
       console.log('🔧 바코드 리더 설정 시작');
@@ -682,7 +804,6 @@
             }
             
             console.log('✨ 카드 전환 시작:', scannedId);
-            // 동적으로 카드 렌더링만 수행 (URL 변경 없음)
             renderCardMode(scannedId);
           } else {
             console.warn('⚠️ 빈 ID 입력됨');
