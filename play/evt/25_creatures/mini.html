@@ -13,6 +13,7 @@
 
     /* === CARD 모드 스타일 === */
     .card-mode {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -20,9 +21,36 @@
       min-height: 100vh;
       padding: 20px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      transition: filter 0.6s ease;
+      overflow: hidden;
     }
+    
+    /* 배경 도형 레이어 */
+    .shapes-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    
+    .shape {
+      position: absolute;
+      opacity: 0.4;
+      transition-property: transform, opacity;
+      transition-timing-function: ease-in-out;
+    }
+    
+    .shape circle,
+    .shape rect,
+    .shape polygon {
+      transition: fill 1.5s ease-in-out;
+    }
+    
     .card-container {
+      position: relative;
+      z-index: 10;
       background: white;
       border-radius: 20px;
       padding: 40px;
@@ -195,24 +223,50 @@
   <script>
     // 데이터 하드코딩 (중복 제거됨)
     const CHILDREN = [
-      { id: '01', name: '박지호', address: '하늘마을5단지' },
-      { id: '02', name: '전시윤', address: '일산동 일산어반스카이' },
-      { id: '03', name: '손태율', address: '경의로867 덕이동 철산아파트' },
-      { id: '04', name: '서강율', address: '일신건영1차' },
-      { id: '05', name: '오주원', address: '일산동양아파트' },
-      { id: '06', name: '이서휘', address: '중산마을 일산2차아이파크' },
-      { id: '07', name: '이서진', address: '더샵 엘로이' },
-      { id: '08', name: '김시우', address: '덕이동 하이파크시티' },
-      { id: '09', name: '강지아', address: '식사동 주상복합1단지' },
-      { id: '10', name: '김유연', address: '식사동 위시티' },
-      { id: '11', name: '손예준', address: '하늘마을2단지' },
-      { id: '12', name: '김서율', address: '킨텍스로255, 운정 12단지' },
-      { id: '13', name: '임설아', address: '풍동 더샾 퍼스트월드2단지' },
-      { id: '14', name: '김예나', address: '탄현마을 4단지' },
-      { id: '15', name: '박다인', address: '성저마을 1단지 동익아파트' },
-      { id: '16', name: '하다온', address: '현대홈타운 아파트' },
-      { id: '17', name: '김지민', address: '일산 동양 아파트' },
-      { id: '18', name: '유정원', address: '일산 태영데시앙 2단지 아파트' },
+      { id: '001', name: '박지호', address: '하늘마을5단지' },
+      { id: '002', name: '전시윤', address: '일산동 일산어반스카이' },
+      { id: '003', name: '손태율', address: '경의로867 덕이동 철산아파트' },
+      { id: '004', name: '서강율', address: '일신건영1차' },
+      { id: '005', name: '오주원', address: '일산동양아파트' },
+      { id: '006', name: '이서휘', address: '중산마을 일산2차아이파크' },
+      { id: '007', name: '이서진', address: '더샵 엘로이' },
+      { id: '008', name: '김시우', address: '덕이동 하이파크시티' },
+      { id: '009', name: '강지아', address: '식사동 주상복합1단지' },
+      { id: '010', name: '김유연', address: '식사동 위시티' },
+      { id: '011', name: '손예준', address: '하늘마을2단지' },
+      { id: '012', name: '김서율', address: '킨텍스로255, 운정 12단지' },
+      { id: '013', name: '임설아', address: '풍동 더샾 퍼스트월드2단지' },
+      { id: '014', name: '김예나', address: '탄현마을 4단지' },
+      { id: '015', name: '박다인', address: '성저마을 1단지 동익아파트' },
+      { id: '016', name: '하다온', address: '현대홈타운 아파트' },
+      { id: '017', name: '김지민', address: '일산 동양 아파트' },
+      { id: '018', name: '유정원', address: '일산 태영데시앙 2단지 아파트' },
+      { id: '019', name: '강현우', address: '' },
+      { id: '020', name: '구하이', address: '' },
+      { id: '021', name: '구하준', address: '' },
+      { id: '022', name: '김서우', address: '' },
+      { id: '023', name: '김시안', address: '' },
+      { id: '024', name: '김하늘', address: '' },
+      { id: '025', name: '류단비', address: '' },
+      { id: '026', name: '방서우', address: '' },
+      { id: '027', name: '석우진', address: '' },
+      { id: '028', name: '손태율', address: '' },
+      { id: '029', name: '송유희', address: '' },
+      { id: '030', name: '신솔', address: '' },
+      { id: '031', name: '신그린', address: '' },
+      { id: '032', name: '심아민', address: '' },
+      { id: '033', name: '심은호', address: '' },
+      { id: '034', name: '오주현', address: '' },
+      { id: '035', name: '윤로아', address: '' },
+      { id: '036', name: '윤의현', address: '' },
+      { id: '037', name: '이도율', address: '' },
+      { id: '038', name: '이서휘', address: '' },
+      { id: '039', name: '이지오', address: '' },
+      { id: '040', name: '임설아', address: '' },
+      { id: '041', name: '전설', address: '' },
+      { id: '042', name: '최준이', address: '' },
+      { id: '043', name: '홍별', address: '' },
+      { id: '044', name: '황재희', address: '' },
     ];
     console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length, ids: CHILDREN.map(c => c.id) });
 
@@ -220,6 +274,139 @@
     
     // 현재 표시 중인 카드 정보
     let currentChild = null;
+    
+    // 배경 도형 관리
+    let shapesLayer = null;
+    const SHAPE_COUNT = 18; // 15-20개 중 적당한 개수
+    
+    // 무지개 색상 팔레트
+    const RAINBOW_COLORS = [
+      '#FF6B6B', // 빨강
+      '#FF8E53', // 주황
+      '#FFD93D', // 노랑
+      '#6BCF7F', // 초록
+      '#4ECDC4', // 청록
+      '#45B7D1', // 하늘
+      '#5C7CFA', // 파랑
+      '#7950F2', // 남보라
+      '#E599F7', // 연보라
+      '#FF6BCF', // 핑크
+    ];
+    
+    // SVG 도형 생성 함수
+    function createShapeSVG(type, size, color) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', size);
+      svg.setAttribute('height', size);
+      svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+      svg.classList.add('shape');
+      
+      let shape;
+      const center = size / 2;
+      
+      switch(type) {
+        case 'circle':
+          shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          shape.setAttribute('cx', center);
+          shape.setAttribute('cy', center);
+          shape.setAttribute('r', center - 2);
+          shape.style.fill = color; // CSS style로 설정
+          break;
+          
+        case 'square':
+          shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          shape.setAttribute('x', 4);
+          shape.setAttribute('y', 4);
+          shape.setAttribute('width', size - 8);
+          shape.setAttribute('height', size - 8);
+          shape.style.fill = color; // CSS style로 설정
+          break;
+          
+        case 'triangle':
+          shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          const points = `${center},4 ${size-4},${size-4} 4,${size-4}`;
+          shape.setAttribute('points', points);
+          shape.style.fill = color; // CSS style로 설정
+          break;
+          
+        case 'star':
+          shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          const starPoints = [];
+          for (let i = 0; i < 10; i++) {
+            const radius = i % 2 === 0 ? center - 4 : (center - 4) * 0.4;
+            const angle = (i * Math.PI) / 5 - Math.PI / 2;
+            const x = center + radius * Math.cos(angle);
+            const y = center + radius * Math.sin(angle);
+            starPoints.push(`${x},${y}`);
+          }
+          shape.setAttribute('points', starPoints.join(' '));
+          shape.style.fill = color; // CSS style로 설정
+          break;
+      }
+      
+      svg.appendChild(shape);
+      return svg;
+    }
+    
+    // 도형 초기화 및 업데이트 함수
+    function updateShapes() {
+      if (!shapesLayer) return;
+      
+      console.log('🎨 배경 도형 업데이트 시작');
+      
+      const shapes = shapesLayer.querySelectorAll('.shape');
+      
+      shapes.forEach((shape, index) => {
+        // 랜덤 값 생성
+        const x = Math.random() * 100; // 0-100%
+        const y = Math.random() * 100;
+        const rotation = Math.random() * 360;
+        const scale = 0.5 + Math.random() * 0.8; // 0.5-1.3
+        const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+        const duration = 1 + Math.random(); // 1-2초
+        
+        // Transition 시간 설정 (객체마다 다름)
+        shape.style.transitionDuration = `${duration}s`;
+        
+        // Transform 적용
+        shape.style.transform = `translate(${x}vw, ${y}vh) rotate(${rotation}deg) scale(${scale})`;
+        
+        // 색상 변경 (SVG 내부 fill - CSS style로)
+        const fillElement = shape.querySelector('circle, rect, polygon');
+        if (fillElement) {
+          fillElement.style.fill = color; // CSS style로 변경
+        }
+        
+        console.log(`  도형 ${index + 1}: x=${x.toFixed(1)}%, y=${y.toFixed(1)}%, rotation=${rotation.toFixed(0)}°, scale=${scale.toFixed(2)}, color=${color}, duration=${duration.toFixed(2)}s`);
+      });
+      
+      console.log('✅ 배경 도형 업데이트 완료');
+    }
+    
+    // 도형 레이어 초기화
+    function initShapes() {
+      console.log('🎭 배경 도형 레이어 초기화');
+      
+      shapesLayer = document.createElement('div');
+      shapesLayer.className = 'shapes-background';
+      
+      const shapeTypes = ['circle', 'square', 'triangle', 'star'];
+      
+      // 도형 생성
+      for (let i = 0; i < SHAPE_COUNT; i++) {
+        const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        const size = 40 + Math.random() * 100; // 40-140px
+        const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+        
+        const shape = createShapeSVG(type, size, color);
+        shapesLayer.appendChild(shape);
+      }
+      
+      console.log(`✅ ${SHAPE_COUNT}개 도형 생성 완료`);
+      
+      // 초기 위치 설정
+      updateShapes();
+    }
     
     // 새 카드 추가 함수 (print 모드용)
     window.addNewCard = function() {
@@ -236,7 +423,7 @@
       
       // 새 ID 생성 (현재 최대 ID + 1)
       const maxId = Math.max(...CHILDREN.map(c => parseInt(c.id, 10)));
-      const newId = String(maxId + 1).padStart(2, '0');
+      const newId = String(maxId + 1).padStart(3, '0');
       
       // 데이터 추가
       CHILDREN.push({ id: newId, name, address });
@@ -377,25 +564,33 @@
         svg: getSvgUrl(child.id)
       });
       
-      // 배경색 hue rotation (무작위)
-      const hueRotation = Math.floor(Math.random() * 360);
-      app.style.filter = `hue-rotate(${hueRotation}deg)`;
-      console.log('🎨 배경색 변경:', { hueRotation: `${hueRotation}deg` });
-
-      app.innerHTML = `
-        <div class="card-container">
-          <div class="svg-container">
-            <img src="${getSvgUrl(child.id)}" alt="${child.name}">
-          </div>
-          <div class="child-name">${child.name}</div>
-          <div class="welcome-message">
-            ${child.address}에 사는 ${child.name}. 반가워!<br>
-            한미유치원에 온 것을 환영해!
-          </div>
-          <button class="tts-button" onclick="speakWelcome()">안녕! 👋</button>
+      // 도형 레이어가 없으면 초기화
+      if (!shapesLayer) {
+        initShapes();
+      }
+      
+      // 기존 내용 지우고 새로 구성
+      app.innerHTML = '';
+      app.appendChild(shapesLayer);
+      
+      const cardContainer = document.createElement('div');
+      cardContainer.className = 'card-container';
+      cardContainer.innerHTML = `
+        <div class="svg-container">
+          <img src="${getSvgUrl(child.id)}" alt="${child.name}">
         </div>
+        <div class="child-name">${child.name}</div>
+        <div class="welcome-message">
+          ${child.name}. 반가워!<br>
+          한미유치원에 온 것을 환영해!
+        </div>
+        <button class="tts-button" onclick="speakWelcome()">안녕! 👋</button>
       `;
+      app.appendChild(cardContainer);
 
+      // 도형 업데이트 (새로운 랜덤 배치)
+      updateShapes();
+      
       // 바코드 리더 설정
       setupBarcodeReader();
     }
@@ -409,7 +604,7 @@
         return;
       }
 
-      const text = `${currentChild.address}에 사는 ${currentChild.name}. 반가워! 한미유치원에 온 것을 환영해!`;
+      const text = `${currentChild.name}. 반가워! 한미유치원에 온 것을 환영해!`;
       console.log('📢 TTS 텍스트:', text);
       
       if ('speechSynthesis' in window) {
