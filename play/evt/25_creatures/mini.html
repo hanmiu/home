@@ -270,7 +270,7 @@
     ];
     console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length, ids: CHILDREN.map(c => c.id) });
 
-    const SVG_BASE = 'https://www.hanmiu.cc/play/evt/20_creatures/assets/';
+    const SVG_BASE = 'https://www.hanmiu.cc/play/toy/assets/creatures/';
     
     // 현재 표시 중인 카드 정보
     let currentChild = null;
@@ -439,11 +439,12 @@
     
     // ID에 따른 SVG 반환 (순환)
     function getSvgUrl(id) {
-      const num = parseInt(id, 10);
-      const svgNum = ((num - 1) % 10) + 1;
-      const url = `${SVG_BASE}monster${svgNum}.svg`;
-      console.log(`🎨 SVG 매핑: ID ${id} → monster${svgNum}.svg`);
-      return url;
+        const num = parseInt(id, 10);
+        const svgNum = ((num - 1) % 107) + 1; // 1~107 순환
+        const svgId = String(svgNum).padStart(3, '0'); // 001, 002, ... 107
+        const url = `${SVG_BASE}${svgId}.svg`;
+        console.log(`🎨 SVG 매핑: ID ${id} → ${svgId}.svg`);
+        return url;
     }
 
     // URL 파라미터 파싱
