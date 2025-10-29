@@ -36,19 +36,12 @@
       pointer-events: none;
     }
     
-    /* (중요) 도형은 WAAPI로만 애니메이션한다: CSS transition 제거 */
+    /* 도형은 WAAPI로만 애니메이션 */
     .shape {
       position: absolute;
       transform-box: fill-box;
       transform-origin: 50% 50%;
       will-change: transform, opacity;
-      /* transition 없음 */
-    }
-    /* 개별 path들의 fill transition도 제거 — 색상은 JS에서 WAAPI로 처리 */
-    .shape circle,
-    .shape rect,
-    .shape polygon {
-      /* transition 없음 */
     }
     
     .card-container {
@@ -223,8 +216,9 @@
   <input type="text" id="barcodeInput" autocomplete="off" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
   <script>
-    // 데이터 하드코딩 (중복 제거됨)
+    // 데이터 하드코딩
     const CHILDREN = [
       { id: '001', name: '박지호', address: '하늘마을5단지' },
       { id: '002', name: '전시윤', address: '일산동 일산어반스카이' },
@@ -272,8 +266,9 @@
       { id: '044', name: '황재희', address: '' },
       { id: '045', name: '방선우', address: '' },
       { id: '046', name: '김라온', address: '' },
+      { id: '047', name: '박수빈', address: '' },
     ];
-    console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length, ids: CHILDREN.map(c => c.id) });
+    console.log('📊 데이터 로드 완료:', { totalChildren: CHILDREN.length });
 
     const SVG_BASE = 'https://www.hanmiu.cc/play/toy/assets/creatures/';
     
@@ -285,25 +280,307 @@
     
     // 배경 도형 관리
     let shapesLayer = null;
-    const SHAPE_COUNT = 25; // 전체 도형 개수
-    const VISIBLE_RATIO = 1.0; // 100% 모두 보이기 (현재는 고정)
-    const BOUNCE_RATIO = 0.75; // 75%에 bounce 적용
+    const SHAPE_COUNT = 25;
+    const VISIBLE_RATIO = 1.0;
+    const BOUNCE_RATIO = 0.75;
     
-    // 무지개 색상 팔레트 (채도 높은 비비드 색상)
+    // 무지개 색상 팔레트
     const RAINBOW_COLORS = [
-      '#FF0000', // 빨강
-      '#FF6600', // 주황
-      '#FFFF00', // 노랑
-      '#00FF00', // 초록
-      '#00FFFF', // 시안
-      '#0099FF', // 하늘
-      '#0000FF', // 파랑
-      '#9900FF', // 보라
-      '#FF00FF', // 마젠타
-      '#FF0099', // 핑크
+      '#FF0000', '#FF6600', '#FFFF00', '#00FF00', '#00FFFF',
+      '#0099FF', '#0000FF', '#9900FF', '#FF00FF', '#FF0099',
     ];
     
-    // SVG 도형 생성 함수
+    // ========== 🎵 음악 시스템 ==========
+    let melodySynth = null;
+    let chordSynth = null;
+    let melodySeq = null;
+    let chordSeq = null;
+    let musicPlaying = false;
+    let musicNoteEvents = []; // 음표별 이벤트 상태
+    let currentMusicNote = -1; // 현재 재생 중인 음표 인덱스
+    
+    // 이름 → 해시 함수
+    function nameToHash(name) {
+      let sum = 0;
+      let product = 1;
+      for (let i = 0; i < name.length; i++) {
+        const code = name.charCodeAt(i);
+        sum += code;
+        product = (product * (code % 100 + 1)) % 10000;
+      }
+      
+      return {
+        genre: sum % 3,           // 0: 동요, 1: 왈츠, 2: 행진곡
+        scale: sum % 2,           // 0: 메이저, 1: 펜타토닉
+        tempo: 100 + (sum % 41),  // 100-140 BPM
+        colorBase: sum % 360,     // 색상
+        noteCount: 8 + (product % 5), // 8-12개 음표
+        octaveBase: 4 + (sum % 2),    // 옥타브
+        chordStyle: product % 3   // 코드 진행 스타일
+      };
+    }
+    
+    // 장르 정의
+    const GENRES = {
+      0: { name: '동요', timeSignature: 4, tempoMod: 1.0, feel: 'children' },
+      1: { name: '왈츠', timeSignature: 3, tempoMod: 0.9, feel: 'waltz' },
+      2: { name: '행진곡', timeSignature: 4, tempoMod: 1.1, feel: 'march' }
+    };
+    
+    // 스케일 정의
+    const SCALES = {
+      0: { name: '메이저', notes: ['C', 'D', 'E', 'F', 'G', 'A', 'B'] },
+      1: { name: '펜타토닉', notes: ['C', 'D', 'E', 'G', 'A'] }
+    };
+    
+    // 값 → 음표 변환
+    function valueToNote(value, scale, octave) {
+      const note = scale.notes[value % scale.notes.length];
+      const oct = octave + Math.floor(value / scale.notes.length) % 2;
+      return `${note}${oct}`;
+    }
+    
+    // 코드 생성
+    function createChord(rootValue, scale, octave) {
+      const notes = scale.notes;
+      const root = notes[rootValue % notes.length];
+      const third = notes[(rootValue + 2) % notes.length];
+      const fifth = notes[(rootValue + 4) % notes.length];
+      return [`${root}${octave}`, `${third}${octave}`, `${fifth}${octave}`];
+    }
+    
+    // 이름으로 음악 데이터 생성
+    function createMusicFromName(name) {
+      const hash = nameToHash(name);
+      const genre = GENRES[hash.genre];
+      const scale = SCALES[hash.scale];
+      
+      console.log('🎼 음악 생성:', { 
+        name, 
+        genre: genre.name, 
+        scale: scale.name, 
+        tempo: hash.tempo,
+        noteCount: hash.noteCount 
+      });
+      
+      // 멜로디 생성
+      const melodyNotes = [];
+      for (let i = 0; i < hash.noteCount; i++) {
+        const charCode = i < name.length ? name.charCodeAt(i) : (hash.colorBase + i * 17);
+        const value = charCode % 12;
+        let octave = hash.octaveBase + (i % 3 === 0 ? 1 : 0);
+        
+        let duration = '8n';
+        if (genre.feel === 'waltz') {
+          duration = i % 3 === 0 ? '4n' : '8n';
+        } else if (genre.feel === 'march') {
+          duration = i % 2 === 0 ? '8n' : '16n';
+        }
+        
+        // 마지막 음은 짧고 밝게 (한 옥타브 높게)
+        if (i === hash.noteCount - 1) {
+          duration = '16n';  // 짧게
+          octave = hash.octaveBase + 1;  // 높게
+        }
+        
+        melodyNotes.push({
+          note: valueToNote(value, scale, octave),
+          duration: duration,
+          velocity: 0.7 + (i % 3) * 0.1
+        });
+      }
+      
+      // 코드 생성 (높은 음역대로, 2-3개)
+      const chordGroups = [];
+      const chordCount = Math.ceil(hash.noteCount / 4);
+      for (let i = 0; i < chordCount; i++) {
+        const rootValue = (hash.colorBase + i * 7) % 7;
+        chordGroups.push({
+          chord: createChord(rootValue, scale, hash.octaveBase), // 낮추지 않음 (밝게)
+          duration: '2n'  // 2분음표 (1n보다 짧게)
+        });
+      }
+      
+      return {
+        hash,
+        genre,
+        scale,
+        melodyNotes,
+        chordGroups
+      };
+    }
+    
+    // 음악 정지
+    function stopMusic() {
+      if (!musicPlaying) return;
+      
+      console.log('⏹️ 음악 정지');
+      
+      if (Tone.Transport.state === 'started') {
+        Tone.Transport.stop();
+      }
+      
+      if (melodySeq) {
+        melodySeq.dispose();
+        melodySeq = null;
+      }
+      if (chordSeq) {
+        chordSeq.dispose();
+        chordSeq = null;
+      }
+      if (melodySynth) {
+        melodySynth.dispose();
+        melodySynth = null;
+      }
+      if (chordSynth) {
+        chordSynth.dispose();
+        chordSynth = null;
+      }
+      
+      musicPlaying = false;
+      musicNoteEvents = [];
+      currentMusicNote = -1;
+    }
+    
+    // 음악 재생
+    async function playNameMusic(name) {
+      console.log('🎵 음악 재생 시작:', name);
+      
+      // 기존 음악 정지
+      stopMusic();
+      
+      // Tone.js 초기화
+      await Tone.start();
+      
+      // 음악 데이터 생성
+      const musicData = createMusicFromName(name);
+      const { hash, genre, melodyNotes, chordGroups } = musicData;
+      
+      // 신스 생성 (밝고 경쾌한 음색)
+      melodySynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { 
+          attack: 0.005,   // 즉각적인 시작
+          decay: 0.1,      // 짧은 감쇠
+          sustain: 0.3,    // 적당한 지속
+          release: 0.1     // 빠른 종료 (무섭게 끝나지 않게)
+        }
+      }).toDestination();
+      
+      chordSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { 
+          attack: 0.01,    // 부드러운 시작
+          decay: 0.15,     // 짧은 감쇠
+          sustain: 0.2,    // 짧은 지속
+          release: 0.15    // 빠른 종료
+        }
+      }).toDestination();
+      
+      melodySynth.volume.value = -6;   // 멜로디 더 밝게
+      chordSynth.volume.value = -18;   // 코드는 더 작게 (배경 역할)
+      
+      // 템포 설정
+      Tone.Transport.bpm.value = hash.tempo * genre.tempoMod;
+      
+      // 음표 이벤트 초기화
+      musicNoteEvents = melodyNotes.map(() => ({ 
+        active: false, 
+        energy: 0, 
+        decay: 0 
+      }));
+      
+      // 멜로디 시퀀스
+      let melodyIndex = 0;
+      melodySeq = new Tone.Sequence((time, noteData) => {
+        melodySynth.triggerAttackRelease(
+          noteData.note, 
+          noteData.duration, 
+          time, 
+          noteData.velocity
+        );
+        
+        // 도형 반응을 위한 이벤트 스케줄
+        Tone.Draw.schedule(() => {
+          const idx = melodyIndex % melodyNotes.length;
+          musicNoteEvents[idx] = {
+            active: true,
+            energy: noteData.velocity,
+            decay: 0
+          };
+          currentMusicNote = idx;
+          
+          // 도형 업데이트 트리거
+          if (shapesLayer) {
+            triggerShapeReaction(idx, noteData.velocity);
+          }
+        }, time);
+        
+        melodyIndex++;
+      }, melodyNotes, '8n');
+      
+      melodySeq.loop = false;
+      melodySeq.start(0);
+      
+      // 코드 시퀀스
+      chordSeq = new Tone.Sequence((time, chordData) => {
+        chordSynth.triggerAttackRelease(chordData.chord, chordData.duration, time);
+      }, chordGroups, '2n');  // 2분음표마다 (더 경쾌하게)
+      
+      chordSeq.loop = false;
+      chordSeq.start(0);
+      
+      // 재생 상태 설정
+      musicPlaying = true;
+      Tone.Transport.start();
+      
+      // 음악 종료 시점 정확하게 계산 (마지막 음표 끝 + 0.2초)
+      const lastNote = melodyNotes[melodyNotes.length - 1];
+      const lastNoteDuration = Tone.Time(lastNote.duration).toSeconds();
+      const totalDuration = (melodyNotes.length - 1) * Tone.Time('8n').toSeconds() + lastNoteDuration + 0.2;
+      
+      console.log('⏱️ 음악 재생 시간:', totalDuration.toFixed(2), '초');
+      
+      setTimeout(() => {
+        stopMusic();
+        console.log('✅ 음악 재생 완료');
+      }, totalDuration * 1000);
+    }
+    
+    // 도형 반응 트리거
+    function triggerShapeReaction(noteIndex, energy) {
+      if (!shapesLayer) return;
+      
+      const shapes = shapesLayer.querySelectorAll('.shape');
+      const targetIndex = noteIndex % shapes.length;
+      const shape = shapes[targetIndex];
+      
+      if (!shape) return;
+      
+      // 현재 transform 값 가져오기
+      const currentTransform = shape.dataset.transform || shape.style.transform;
+      
+      // Bounce 효과
+      const bounceKeyframes = [
+        { transform: currentTransform + ' scale(1.0)', opacity: 0.75 },
+        { transform: currentTransform + ' scale(1.5)', opacity: 1.0 },
+        { transform: currentTransform + ' scale(1.0)', opacity: 0.75 }
+      ];
+      
+      shape.animate(bounceKeyframes, {
+        duration: 300,
+        easing: 'ease-out'
+      });
+      
+      // 색상 변경
+      const fillElement = shape.querySelector('circle, rect, polygon');
+      if (fillElement) {
+        const brightColor = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+        fillElement.style.fill = brightColor;
+      }
+    }
+    
+    // ========== SVG 도형 생성 ==========
     function createShapeSVG(type, size, color) {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('width', size);
@@ -359,9 +636,8 @@
       return svg;
     }
     
-    // Bounce 애니메이션 (WAAPI)
+    // Bounce 애니메이션
     function applyBounce(shape, baseTransform) {
-      // baseTransform 뒤에 상대 scale을 곱해 살짝 튕김
       const bounceKeyframes = [
         { transform: baseTransform + ' scale(1.0)' },
         { transform: baseTransform + ' scale(1.3)' },
@@ -374,50 +650,42 @@
       });
     }
     
-    // 도형 상태 업데이트 (WAAPI)
+    // 도형 상태 업데이트
     function updateShapes() {
       if (!shapesLayer) return;
       
-      console.log('🎨 배경 도형 업데이트 (WAAPI) 시작');
+      console.log('🎨 배경 도형 업데이트 시작');
       
       const shapes = shapesLayer.querySelectorAll('.shape');
-      const bounceCount = Math.floor(SHAPE_COUNT * BOUNCE_RATIO); // 75%에 bounce 적용
+      const bounceCount = Math.floor(SHAPE_COUNT * BOUNCE_RATIO);
       
-      // 랜덤하게 섞어서 bounce 대상 선택
       const indices = Array.from({ length: SHAPE_COUNT }, (_, i) => i).sort(() => Math.random() - 0.5);
       const bounceIndices = new Set(indices.slice(0, bounceCount));
       
       shapes.forEach((shape, index) => {
-        // 모든 도형은 항상 보임 (opacity 0.75)
         shape.style.opacity = 0.75;
 
-        // 다음 상태 계산
         const x = Math.random() * 100;
         const y = Math.random() * 100;
         const rotation = Math.random() * 360;
         const scale = 0.5 + Math.random() * 0.8;
         const toTransform = `translate(${x}vw, ${y}vh) rotate(${rotation}deg) scale(${scale})`;
 
-        // 이전 상태(from)를 저장된 dataset에서 가져오고 없으면 현재 스타일 사용
         const fromTransform = shape.dataset.transform || shape.style.transform || 'translate(0,0) rotate(0deg) scale(1)';
 
-        // 기존 진행 중인 애니메이션이 있으면 취소(겹침 방지)
         shape.getAnimations().forEach(a => a.cancel());
 
-        // 주 애니메이션 (이동/회전/스케일/불투명도)
-        const duration = 1000 + Math.random() * 1000; // 1.0~2.0s
+        const duration = 1000 + Math.random() * 1000;
         const main = shape.animate(
           [
             { transform: fromTransform, opacity: parseFloat(getComputedStyle(shape).opacity) || 0.75 },
-            { transform: toTransform,   opacity: 0.75 }
+            { transform: toTransform, opacity: 0.75 }
           ],
           { duration, easing: 'ease-in-out', fill: 'forwards' }
         );
 
-        // 다음 사이클의 from 값으로 쓰기 위해 저장
         shape.dataset.transform = toTransform;
 
-        // 색상 변경: WAAPI 지원 시 부드럽게, 미지원이면 즉시 변경
         const fillElement = shape.querySelector('circle, rect, polygon');
         if (fillElement) {
           const nextColor = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
@@ -428,23 +696,19 @@
               { duration, easing: 'ease-in-out', fill: 'forwards' }
             ).finished.then(() => { fillElement.style.fill = nextColor; });
           } catch {
-            fillElement.style.fill = nextColor; // Fallback
+            fillElement.style.fill = nextColor;
           }
         }
 
-        // bounce는 메인 이동 완료 후 체이닝
         if (bounceIndices.has(index)) {
           main.finished.then(() => applyBounce(shape, toTransform));
         }
       });
       
-      console.log('✅ 배경 도형 업데이트 (WAAPI) 예약 완료', { 
-        total: SHAPE_COUNT,
-        bounce: bounceCount 
-      });
+      console.log('✅ 배경 도형 업데이트 완료');
     }
     
-    // 도형 레이어 초기화 (한 번만 실행, transitionend 리스너 제거)
+    // 도형 레이어 초기화
     function initShapes() {
       if (shapesLayer) {
         console.log('ℹ️ 도형 레이어 이미 초기화됨');
@@ -458,15 +722,13 @@
       
       const shapeTypes = ['circle', 'square', 'triangle', 'star'];
       
-      // 도형 생성
       for (let i = 0; i < SHAPE_COUNT; i++) {
         const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
-        const size = 40 + Math.random() * 100; // 40-140px
+        const size = 40 + Math.random() * 100;
         const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
         
         const shape = createShapeSVG(type, size, color);
         
-        // 초기 랜덤 위치 설정 (transition 없이 즉시 배치)
         const x = Math.random() * 100;
         const y = Math.random() * 100;
         const rotation = Math.random() * 360;
@@ -475,26 +737,22 @@
         
         shape.style.opacity = 0.75;
         shape.style.transform = initialTransform;
-
-        // 이후 애니메이션 시작점으로 사용
         shape.dataset.transform = initialTransform;
         
-        // 도형 내부 도형(fill)도 초기 transition 없음
         const fillElement = shape.querySelector('circle, rect, polygon');
         if (fillElement) fillElement.style.transition = 'none';
         
         shapesLayer.appendChild(shape);
       }
       
-      console.log(`✅ ${SHAPE_COUNT}개 도형 생성 완료 (초기 위치 랜덤 배치)`);
+      console.log(`✅ ${SHAPE_COUNT}개 도형 생성 완료`);
       
-      // 초기 배치 후 약간의 딜레이를 두고 첫 번째 업데이트 실행
       setTimeout(() => {
         updateShapes();
       }, 100);
     }
     
-    // 새 카드 추가 함수 (print 모드용)
+    // ========== PRINT 모드 ==========
     window.addNewCard = function() {
       const nameInput = document.getElementById('newName');
       const addressInput = document.getElementById('newAddress');
@@ -507,42 +765,27 @@
         return;
       }
       
-      // 새 ID 생성 (현재 최대 ID + 1)
       const maxId = Math.max(...CHILDREN.map(c => parseInt(c.id, 10)));
       const newId = String(maxId + 1).padStart(3, '0');
       
-      // 데이터 추가
       CHILDREN.push({ id: newId, name, address });
       console.log('➕ 새 카드 추가:', { id: newId, name, address });
       
-      // 입력 필드 초기화
       nameInput.value = '';
       addressInput.value = '';
       
-      // print 모드 다시 렌더링
       renderPrintMode();
     };
     
-    // ID에 따른 SVG 반환 (107개 순환)
     function getSvgUrl(id) {
       const num = parseInt(id, 10);
-      const svgNum = ((num - 1) % 107) + 1; // 1~107 순환
-      const svgId = String(svgNum).padStart(3, '0'); // 001, 002, ... 107
-      const url = `${SVG_BASE}${svgId}.svg`;
-      console.log(`🎨 SVG 매핑: ID ${id} → ${svgId}.svg`);
-      return url;
+      const svgNum = ((num - 1) % 107) + 1;
+      const svgId = String(svgNum).padStart(3, '0');
+      return `${SVG_BASE}${svgId}.svg`;
     }
 
-    // URL 파라미터 파싱
-    const params = new URLSearchParams(location.search);
-    const mode = params.get('mode') || 'card';
-    const id = params.get('id');
-    
-    console.log('🚀 페이지 로드:', { mode, id, url: location.href });
-
-    // === PRINT 모드 렌더링 ===
     function renderPrintMode() {
-      console.log('🖨️ PRINT 모드 렌더링 시작', { totalCards: CHILDREN.length });
+      console.log('🖨️ PRINT 모드 렌더링 시작');
       
       const app = document.getElementById('app');
       app.className = 'print-mode';
@@ -559,21 +802,16 @@
               <input type="text" id="newAddress" placeholder="주소" 
                 style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
               <button onclick="addNewCard()" 
-                style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 700; transition: background 0.3s;"
-                onmouseover="this.style.background='#1976D2'" 
-                onmouseout="this.style.background='#2196F3'">
+                style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 700;">
                 추가
               </button>
-            </div>
-            <div style="margin-top: 10px; font-size: 12px; color: #666;">
-              추가된 카드는 현재 세션에만 유효합니다. (새로고침 시 초기화)
             </div>
           </div>
           
           <button class="print-button" onclick="window.print()">🖨️ 인쇄하기</button>
-          <div style="margin-top: 10px; color: #666;">총 <strong id="cardCount">${CHILDREN.length}</strong>장의 카드</div>
+          <div style="margin-top: 10px; color: #666;">총 <strong>${CHILDREN.length}</strong>장의 카드</div>
         </div>
-        <div class="print-grid" id="printGrid">
+        <div class="print-grid">
       `;
 
       CHILDREN.forEach(child => {
@@ -594,33 +832,25 @@
 
       html += '</div>';
       app.innerHTML = html;
-      
-      // 카드 수 업데이트
-      const cardCountEl = document.getElementById('cardCount');
-      if (cardCountEl) {
-        cardCountEl.textContent = CHILDREN.length;
-      }
 
-      // QR 코드 생성
       setTimeout(() => {
-        console.log('📱 QR 코드 생성 시작');
         CHILDREN.forEach(child => {
           const qrId = `qr-${child.id}`;
           const qrUrl = `https://www.hanmiu.cc/play/evt/25_creatures/mini.html?mode=card&id=${child.id}`;
           new QRCode(document.getElementById(qrId), {
             text: qrUrl,
-            width: 85,  // 22mm at 96dpi
+            width: 85,
             height: 85,
             colorDark: '#000000',
             colorLight: '#ffffff',
             correctLevel: QRCode.CorrectLevel.M
           });
         });
-        console.log('✅ QR 코드 생성 완료', { count: CHILDREN.length });
+        console.log('✅ QR 코드 생성 완료');
       }, 100);
     }
 
-    // === CARD 모드 렌더링 ===
+    // ========== CARD 모드 ==========
     function renderCardMode(childId) {
       console.log('🎴 CARD 모드 렌더링', { childId });
       
@@ -653,26 +883,23 @@
         return;
       }
 
-      // 현재 카드 정보 저장
+      // 🎵 기존 음악 중단
+      stopMusic();
+
       currentChild = child;
       console.log('✅ 카드 정보 로드:', { 
         id: child.id, 
         name: child.name, 
-        address: child.address,
         svg: getSvgUrl(child.id)
       });
       
-      // 배경색 hue rotation (무작위)
       const hueRotation = Math.floor(Math.random() * 360);
       app.style.filter = `hue-rotate(${hueRotation}deg)`;
-      console.log('🎨 배경색 변경:', { hueRotation: `${hueRotation}deg` });
       
-      // 도형 레이어 초기화 (한 번만)
       if (!shapesLayer) {
         initShapes();
       }
       
-      // 첫 렌더링인 경우 전체 구조 생성
       if (!app.classList.contains('card-mode')) {
         app.className = 'card-mode';
         app.appendChild(shapesLayer);
@@ -683,7 +910,6 @@
         app.appendChild(cardContainer);
       }
       
-      // 카드 내용만 업데이트
       const cardContainer = document.getElementById('cardContainer');
       if (cardContainer) {
         cardContainer.innerHTML = `
@@ -699,19 +925,16 @@
         `;
       }
 
-      // 도형 업데이트 (새로운 랜덤 배치) — 바코드 스캔마다 항상 이동
       updateShapes();
       
-      // TTS 자동 재생 (활성화된 경우)
       if (ttsEnabled) {
         playTTS();
       }
       
-      // 바코드 리더 설정
       setupBarcodeReader();
     }
 
-    // TTS 재생 함수
+    // TTS 재생
     function playTTS() {
       console.log('🔊 TTS 실행');
       
@@ -727,19 +950,26 @@
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ko-KR';
         utterance.rate = 1.0;
-        utterance.pitch = 1.4; // 밝게
+        utterance.pitch = 1.4;
         
         utterance.onstart = function() {
           console.log('▶️ TTS 시작');
         };
         
-        // TTS 종료 후 3초 뒤 포커스 복귀
+        // 🎵 TTS 종료 후 음악 재생
         utterance.onend = function() {
-          console.log('⏹️ TTS 종료, 3초 후 포커스 복귀');
+          console.log('⏹️ TTS 종료, 음악 재생 시작');
+          
+          // 이름을 기반으로 음악 재생
+          playNameMusic(currentChild.name);
+          
+          // 음악 길이 계산 (대략 5-7초) + 여유 1초
+          const estimatedMusicDuration = 6000;
+          
           setTimeout(() => {
             document.getElementById('barcodeInput').focus();
             console.log('🎯 바코드 입력 포커스 복귀');
-          }, 3000);
+          }, estimatedMusicDuration);
         };
         
         window.speechSynthesis.speak(utterance);
@@ -748,12 +978,11 @@
         alert('이 브라우저는 음성 출력을 지원하지 않습니다.');
         setTimeout(() => {
           document.getElementById('barcodeInput').focus();
-          console.log('🎯 바코드 입력 포커스 복귀');
         }, 3000);
       }
     }
 
-    // TTS 버튼 클릭 (최초 활성화)
+    // TTS 버튼 클릭
     window.speakWelcome = function() {
       console.log('🎤 TTS 버튼 클릭 - 자동 재생 활성화');
       ttsEnabled = true;
@@ -763,66 +992,59 @@
     // 바코드 리더 설정
     let barcodeReaderSetup = false;
     function setupBarcodeReader() {
-      if (barcodeReaderSetup) {
-        console.log('ℹ️ 바코드 리더 이미 설정됨');
-        return;
-      }
+      if (barcodeReaderSetup) return;
       
-      console.log('🔧 바코드 리더 설정 시작');
+      console.log('🔧 바코드 리더 설정');
       barcodeReaderSetup = true;
       
       const input = document.getElementById('barcodeInput');
       
-      // 주기적으로 포커스 유지
       setInterval(() => {
         if (document.activeElement !== input) {
           input.focus();
-          console.log('🔄 바코드 입력 포커스 자동 복귀');
         }
       }, 1000);
 
-      // 엔터 키 입력 감지
       input.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
           let scannedId = input.value.trim();
-          console.log('📥 바코드 입력 감지:', { raw: input.value, scannedId });
+          console.log('📥 바코드 입력:', scannedId);
           input.value = '';
           
           if (scannedId) {
-            // URL이 들어온 경우 ID만 추출
             if (scannedId.includes('?') && scannedId.includes('id=')) {
               try {
                 const url = new URL(scannedId);
                 const extractedId = url.searchParams.get('id');
-                if (extractedId) {
-                  console.log('🔍 URL에서 ID 추출:', { url: scannedId, extractedId });
-                  scannedId = extractedId;
-                }
+                if (extractedId) scannedId = extractedId;
               } catch (e) {
                 console.error('❌ URL 파싱 실패:', e);
               }
             }
             
-            console.log('✨ 카드 전환 시작:', scannedId);
+            console.log('✨ 카드 전환:', scannedId);
             renderCardMode(scannedId);
-          } else {
-            console.warn('⚠️ 빈 ID 입력됨');
           }
         }
       });
 
-      // 초기 포커스
       input.focus();
-      console.log('✅ 바코드 리더 설정 완료, 초기 포커스 설정');
+      console.log('✅ 바코드 리더 설정 완료');
     }
 
-    // 모드에 따라 렌더링
-    console.log('🎬 모드 선택:', mode);
+    // 초기화
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode') || 'card';
+    const id = params.get('id');
+    
+    console.log('🚀 페이지 로드:', { mode, id });
+
     if (mode === 'print') {
       renderPrintMode();
     } else {
       renderCardMode(id);
     }
+    
     console.log('🏁 초기화 완료');
   </script>
 </body>
