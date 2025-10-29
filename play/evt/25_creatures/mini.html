@@ -293,44 +293,62 @@
     // ========== 🎵 음악 시스템 ==========
     let melodySynth = null;
     let chordSynth = null;
+    let arpSynth = null;  // 아르페지오 신스 추가
     let melodySeq = null;
     let chordSeq = null;
+    let arpSeq = null;    // 아르페지오 시퀀스 추가
     let musicPlaying = false;
     let musicNoteEvents = []; // 음표별 이벤트 상태
     let currentMusicNote = -1; // 현재 재생 중인 음표 인덱스
     
-    // 이름 → 해시 함수
+    // 이름 → 해시 함수 (확장)
     function nameToHash(name) {
       let sum = 0;
       let product = 1;
+      let xorValue = 0;
+      let firstChar = name.charCodeAt(0) || 0;
+      let lastChar = name.charCodeAt(name.length - 1) || 0;
+      
       for (let i = 0; i < name.length; i++) {
         const code = name.charCodeAt(i);
         sum += code;
         product = (product * (code % 100 + 1)) % 10000;
+        xorValue ^= code;
       }
       
       return {
-        genre: sum % 3,           // 0: 동요, 1: 왈츠, 2: 행진곡
-        scale: sum % 2,           // 0: 메이저, 1: 펜타토닉
-        tempo: 100 + (sum % 41),  // 100-140 BPM
-        colorBase: sum % 360,     // 색상
-        noteCount: 8 + (product % 5), // 8-12개 음표
-        octaveBase: 4 + (sum % 2),    // 옥타브
-        chordStyle: product % 3   // 코드 진행 스타일
+        genre: sum % 5,                    // 0-4: 5가지 장르
+        scale: sum % 5,                    // 0-4: 5가지 음계
+        tempo: 100 + (sum % 41),           // 100-140 BPM
+        colorBase: sum % 360,              // 색상
+        noteCount: 8 + (product % 5),      // 8-12개 음표
+        octaveBase: 4 + (sum % 2),         // 옥타브
+        melodyDirection: xorValue % 4,     // 멜로디 진행 방향
+        rhythmPattern: product % 5,        // 리듬 패턴
+        noteVariation: (firstChar + lastChar) % 4,  // 음표 길이 변화
+        chordDensity: product % 3,         // 코드 밀도
+        oscillatorType: sum % 3,           // 음색
+        arpPattern: xorValue % 3,          // 아르페지오 패턴
+        dynamics: (sum + product) % 3      // 다이나믹스
       };
     }
     
-    // 장르 정의
+    // 장르 정의 (5가지로 확장)
     const GENRES = {
       0: { name: '동요', timeSignature: 4, tempoMod: 1.0, feel: 'children' },
-      1: { name: '왈츠', timeSignature: 3, tempoMod: 0.9, feel: 'waltz' },
-      2: { name: '행진곡', timeSignature: 4, tempoMod: 1.1, feel: 'march' }
+      1: { name: '왈츠', timeSignature: 3, tempoMod: 0.85, feel: 'waltz' },
+      2: { name: '행진곡', timeSignature: 4, tempoMod: 1.15, feel: 'march' },
+      3: { name: '스킵', timeSignature: 4, tempoMod: 1.2, feel: 'skip' },      // 깡충깡충
+      4: { name: '자장가', timeSignature: 4, tempoMod: 0.75, feel: 'lullaby' }  // 느리고 부드럽게
     };
     
-    // 스케일 정의
+    // 스케일 정의 (5가지로 확장)
     const SCALES = {
       0: { name: '메이저', notes: ['C', 'D', 'E', 'F', 'G', 'A', 'B'] },
-      1: { name: '펜타토닉', notes: ['C', 'D', 'E', 'G', 'A'] }
+      1: { name: '펜타토닉', notes: ['C', 'D', 'E', 'G', 'A'] },
+      2: { name: '일본', notes: ['C', 'D', 'F', 'G', 'A'] },
+      3: { name: '마이너', notes: ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb'] },
+      4: { name: '믹솔리디안', notes: ['C', 'D', 'E', 'F', 'G', 'A', 'Bb'] }
     };
     
     // 값 → 음표 변환
@@ -359,46 +377,146 @@
         name, 
         genre: genre.name, 
         scale: scale.name, 
-        tempo: hash.tempo,
-        noteCount: hash.noteCount 
+        tempo: Math.round(hash.tempo * genre.tempoMod),
+        noteCount: hash.noteCount,
+        melodyDirection: ['상승', '하강', '지그재그', '랜덤'][hash.melodyDirection],
+        rhythmPattern: ['균등', '긴짧', '빨라짐', '왈츠', '복잡'][hash.rhythmPattern],
+        oscillator: ['사인', '삼각', '사인4'][hash.oscillatorType],
+        chordDensity: ['희소', '중간', '밀집'][hash.chordDensity],
+        dynamics: ['일정', '크레센도', '웨이브'][hash.dynamics],
+        arpPattern: ['없음', '상승', '하강'][hash.arpPattern]
       });
       
-      // 멜로디 생성
+      // 멜로디 생성 (다양한 패턴 적용)
       const melodyNotes = [];
+      const melodyDirection = hash.melodyDirection; // 0: 상승, 1: 하강, 2: 지그재그, 3: 랜덤
+      const rhythmPattern = hash.rhythmPattern;
+      const noteVariation = hash.noteVariation;
+      const dynamics = hash.dynamics; // 0: 일정, 1: 크레센도, 2: 웨이브
+      
       for (let i = 0; i < hash.noteCount; i++) {
         const charCode = i < name.length ? name.charCodeAt(i) : (hash.colorBase + i * 17);
-        const value = charCode % 12;
-        let octave = hash.octaveBase + (i % 3 === 0 ? 1 : 0);
+        let value = charCode % 12;
         
+        // 멜로디 진행 방향 적용
+        if (melodyDirection === 0) {
+          // 상승: 점점 높아짐
+          value = (value + i * 2) % scale.notes.length;
+        } else if (melodyDirection === 1) {
+          // 하강: 점점 낮아짐
+          value = (value + (hash.noteCount - i) * 2) % scale.notes.length;
+        } else if (melodyDirection === 2) {
+          // 지그재그
+          value = i % 2 === 0 ? value : (value + 4) % scale.notes.length;
+        }
+        // melodyDirection === 3이면 랜덤 (기존 로직)
+        
+        // 옥타브 변화
+        let octave = hash.octaveBase;
+        if (melodyDirection === 0) {
+          octave += Math.floor(i / 4); // 상승하면서 옥타브도 올라감
+        } else if (melodyDirection === 1) {
+          octave += Math.floor((hash.noteCount - i) / 4); // 하강
+        } else {
+          octave += (i % 3 === 0 ? 1 : 0);
+        }
+        octave = Math.min(octave, 6); // 너무 높지 않게
+        
+        // 리듬 패턴 (5가지)
         let duration = '8n';
+        if (rhythmPattern === 0) {
+          // 균등
+          duration = '8n';
+        } else if (rhythmPattern === 1) {
+          // 긴-짧-긴-짧
+          duration = i % 2 === 0 ? '4n' : '16n';
+        } else if (rhythmPattern === 2) {
+          // 점점 빨라짐
+          duration = i < hash.noteCount / 2 ? '4n' : '16n';
+        } else if (rhythmPattern === 3) {
+          // 왈츠 느낌
+          duration = i % 3 === 0 ? '4n' : '8n';
+        } else {
+          // 복잡한 패턴
+          const patterns = ['8n', '16n', '8n', '8n', '16n'];
+          duration = patterns[i % patterns.length];
+        }
+        
+        // 장르별 리듬 오버라이드
         if (genre.feel === 'waltz') {
           duration = i % 3 === 0 ? '4n' : '8n';
         } else if (genre.feel === 'march') {
           duration = i % 2 === 0 ? '8n' : '16n';
+        } else if (genre.feel === 'skip') {
+          duration = '16n'; // 빠르게
+        } else if (genre.feel === 'lullaby') {
+          duration = '4n'; // 느리게
+        }
+        
+        // 다이나믹스 적용
+        let velocity = 0.7;
+        if (dynamics === 1) {
+          // 크레센도
+          velocity = 0.5 + (i / hash.noteCount) * 0.4;
+        } else if (dynamics === 2) {
+          // 웨이브
+          velocity = 0.6 + Math.sin(i * Math.PI / 3) * 0.3;
         }
         
         // 마지막 음은 짧고 밝게 (한 옥타브 높게)
         if (i === hash.noteCount - 1) {
-          duration = '16n';  // 짧게
-          octave = hash.octaveBase + 1;  // 높게
+          duration = '16n';
+          octave = Math.min(hash.octaveBase + 2, 6);
+          velocity = 0.9;
         }
         
         melodyNotes.push({
           note: valueToNote(value, scale, octave),
           duration: duration,
-          velocity: 0.7 + (i % 3) * 0.1
+          velocity: velocity
         });
       }
       
-      // 코드 생성 (높은 음역대로, 2-3개)
+      // 코드 생성 (밀도에 따라 다양하게)
       const chordGroups = [];
-      const chordCount = Math.ceil(hash.noteCount / 4);
+      const chordDensity = hash.chordDensity; // 0: 희소, 1: 중간, 2: 밀집
+      
+      let chordCount, chordInterval;
+      if (chordDensity === 0) {
+        chordCount = 2; // 2개만
+        chordInterval = '2n';
+      } else if (chordDensity === 1) {
+        chordCount = 3; // 3개
+        chordInterval = '2n';
+      } else {
+        chordCount = 4; // 4개
+        chordInterval = '4n';
+      }
+      
       for (let i = 0; i < chordCount; i++) {
-        const rootValue = (hash.colorBase + i * 7) % 7;
+        const rootValue = (hash.colorBase + i * 5 + hash.melodyDirection * 2) % 7;
         chordGroups.push({
-          chord: createChord(rootValue, scale, hash.octaveBase), // 낮추지 않음 (밝게)
-          duration: '2n'  // 2분음표 (1n보다 짧게)
+          chord: createChord(rootValue, scale, hash.octaveBase),
+          duration: chordInterval
         });
+      }
+      
+      // 아르페지오 생성 (arpPattern에 따라)
+      const arpNotes = [];
+      if (hash.arpPattern > 0) { // 0이 아닐 때만 아르페지오 추가
+        const arpCount = Math.min(6, hash.noteCount);
+        for (let i = 0; i < arpCount; i++) {
+          const rootValue = (hash.colorBase + i * 3) % scale.notes.length;
+          const chord = createChord(rootValue, scale, hash.octaveBase + 1);
+          
+          if (hash.arpPattern === 1) {
+            // 상승 아르페지오
+            arpNotes.push(chord[0], chord[1], chord[2]);
+          } else if (hash.arpPattern === 2) {
+            // 하강 아르페지오
+            arpNotes.push(chord[2], chord[1], chord[0]);
+          }
+        }
       }
       
       return {
@@ -406,7 +524,9 @@
         genre,
         scale,
         melodyNotes,
-        chordGroups
+        chordGroups,
+        chordInterval,
+        arpNotes
       };
     }
     
@@ -428,6 +548,10 @@
         chordSeq.dispose();
         chordSeq = null;
       }
+      if (arpSeq) {
+        arpSeq.dispose();
+        arpSeq = null;
+      }
       if (melodySynth) {
         melodySynth.dispose();
         melodySynth = null;
@@ -435,6 +559,10 @@
       if (chordSynth) {
         chordSynth.dispose();
         chordSynth = null;
+      }
+      if (arpSynth) {
+        arpSynth.dispose();
+        arpSynth = null;
       }
       
       musicPlaying = false;
@@ -456,14 +584,17 @@
       const musicData = createMusicFromName(name);
       const { hash, genre, melodyNotes, chordGroups } = musicData;
       
-      // 신스 생성 (밝고 경쾌한 음색)
+      // 신스 생성 (밝고 경쾌한 음색 - 해시에 따라 변화)
+      const oscillatorTypes = ['sine', 'triangle', 'sine4']; // 밝은 음색만
+      const melodyOsc = oscillatorTypes[hash.oscillatorType];
+      
       melodySynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine' },
+        oscillator: { type: melodyOsc },
         envelope: { 
           attack: 0.005,   // 즉각적인 시작
           decay: 0.1,      // 짧은 감쇠
           sustain: 0.3,    // 적당한 지속
-          release: 0.1     // 빠른 종료 (무섭게 끝나지 않게)
+          release: 0.1     // 빠른 종료
         }
       }).toDestination();
       
@@ -479,6 +610,20 @@
       
       melodySynth.volume.value = -6;   // 멜로디 더 밝게
       chordSynth.volume.value = -18;   // 코드는 더 작게 (배경 역할)
+      
+      // 아르페지오 신스 (선택적)
+      if (musicData.arpNotes.length > 0) {
+        arpSynth = new Tone.Synth({
+          oscillator: { type: 'triangle8' },
+          envelope: { 
+            attack: 0.002,
+            decay: 0.1,
+            sustain: 0.05,
+            release: 0.1
+          }
+        }).toDestination();
+        arpSynth.volume.value = -14;  // 작게
+      }
       
       // 템포 설정
       Tone.Transport.bpm.value = hash.tempo * genre.tempoMod;
@@ -525,10 +670,20 @@
       // 코드 시퀀스
       chordSeq = new Tone.Sequence((time, chordData) => {
         chordSynth.triggerAttackRelease(chordData.chord, chordData.duration, time);
-      }, chordGroups, '2n');  // 2분음표마다 (더 경쾌하게)
+      }, chordGroups, musicData.chordInterval);  // 동적 간격
       
       chordSeq.loop = false;
       chordSeq.start(0);
+      
+      // 아르페지오 시퀀스 (있는 경우만)
+      if (musicData.arpNotes.length > 0) {
+        arpSeq = new Tone.Sequence((time, note) => {
+          arpSynth.triggerAttackRelease(note, '16n', time);
+        }, musicData.arpNotes, '16n');
+        
+        arpSeq.loop = false;
+        arpSeq.start(0);
+      }
       
       // 재생 상태 설정
       musicPlaying = true;
