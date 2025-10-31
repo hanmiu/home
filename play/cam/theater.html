@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한미 극장</title>
+    <title>한미 극장 + MIDI</title>
     <style>
         body {
             margin: 0;
@@ -127,6 +127,16 @@
             cursor: grabbing;
             fill: rgba(255, 100, 100, 0.9);
         }
+        #midi-effects {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            pointer-events: none;
+            overflow: visible;
+        }
         #webcam-video {
             position: absolute;
             top: 0px;
@@ -169,6 +179,43 @@
             color: #aaa;
             font-size: 12px;
         }
+        #midi-status {
+            font-size: 12px;
+            color: #aaa;
+            margin-left: 10px;
+        }
+        #midi-status.active {
+            color: #2ecc71;
+        }
+        
+        /* MIDI Effects Animations */
+        .midi-effect {
+            animation: midiPop 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transform-origin: center;
+        }
+        @keyframes midiPop {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                transform: scale(1.3) rotate(var(--rotate));
+                opacity: 1;
+            }
+            40% {
+                transform: scale(1) rotate(var(--rotate));
+                opacity: 1;
+            }
+            80% {
+                transform: scale(1) rotate(var(--rotate));
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.8) rotate(var(--rotate));
+                opacity: 0;
+            }
+        }
+
         /* Fullscreen specific styles */
         body:fullscreen header {
             display: none;
@@ -181,6 +228,23 @@
         }
         body:-ms-fullscreen header {
             display: none;
+        }
+
+        /* Loading indicator */
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+        .loading-indicator.show {
+            display: block;
         }
     </style>
 </head>
@@ -252,6 +316,19 @@
         <label for="video-filter" style="margin-left: 20px;">영상 필터:</label>
         <input type="text" id="video-filter" value="brightness(1) contrast(1) saturate(1)">
     </div>
+    <div id="midi-controls" class="header-row">
+        <label>
+            MIDI 장치
+            <select id="midi-input">
+                <option value="">장치 선택...</option>
+            </select>
+        </label>
+        <label for="tone-enabled">
+            <input type="checkbox" id="tone-enabled" checked>
+            🔊 소리 재생
+        </label>
+        <span id="midi-status">MIDI 비활성</span>
+    </div>
 </header>
 
 <div id="container">
@@ -261,9 +338,12 @@
     <svg id="overlay">
         <polygon id="outline-polygon" points=""></polygon>
     </svg>
+    <svg id="midi-effects"></svg>
     <video id="webcam-video" playsinline autoplay muted></video>
     <div id="drop-zone">비디오/이미지 파일을 여기에 드롭하세요</div>
 </div>
+
+<div class="loading-indicator" id="loading">MIDI 초기화 중...</div>
 
 <script type="importmap">
     {
@@ -272,6 +352,9 @@
         }
     }
 </script>
+
+<!-- Tone.js -->
+<script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
 
 <script type="module">
     import * as THREE from 'three';
@@ -315,8 +398,23 @@
     let backgroundImageElement;
     let mediaFileURL = null;
     let isMediaVisible = false;
-    let currentMediaType = null; // 'video' or 'image'
+    let currentMediaType = null;
     let currentBlendMode = 'multiply';
+
+    // MIDI variables
+    let midiEffectsSvg;
+    let midiInput = null;
+    let toneSampler = null;
+    let toneEnabled = true;
+    let midiEnabled = false;
+    let WebMidi = null;
+
+    // PC Keyboard MIDI simulation
+    let pcKeyboard = {
+        octave: 4,
+        velocity: 100,
+        pressed: new Set()
+    };
 
     // --- DOM Elements ---
     const modeToggleButton = document.getElementById('mode-toggle');
@@ -342,6 +440,10 @@
     const videoOnlyControls = document.getElementById('video-only-controls');
     const mediaTypeDisplay = document.getElementById('media-type-display');
     const dropZone = document.getElementById('drop-zone');
+    const midiInputSelect = document.getElementById('midi-input');
+    const toneEnabledCheckbox = document.getElementById('tone-enabled');
+    const midiStatus = document.getElementById('midi-status');
+    const loadingIndicator = document.getElementById('loading');
     
     container = document.getElementById('container');
     videoElement = document.getElementById('webcam-video');
@@ -349,6 +451,7 @@
     backgroundImageElement = document.getElementById('background-image');
     svgOverlay = document.getElementById('overlay');
     svgPolygon = document.getElementById('outline-polygon');
+    midiEffectsSvg = document.getElementById('midi-effects');
 
     // --- LocalStorage Keys ---
     const STORAGE_KEYS = {
@@ -356,7 +459,9 @@
         videoSettings: 'webcam-unwarp-video-settings',
         webcamFilter: 'webcam-unwarp-webcam-filter',
         videoFilter: 'webcam-unwarp-video-filter',
-        blendMode: 'webcam-unwarp-blend-mode'
+        blendMode: 'webcam-unwarp-blend-mode',
+        midiDevice: 'theater-midi-device',
+        toneEnabled: 'theater-tone-enabled'
     };
 
     // --- Utility Functions ---
@@ -405,7 +510,6 @@
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
         
-        // 이미지를 webgl canvas 크기에 맞춰서 높이 기준으로 조정
         backgroundImageElement.style.height = '100%';
         backgroundImageElement.style.width = 'auto';
         backgroundImageElement.style.objectFit = 'contain';
@@ -450,7 +554,6 @@
             try {
                 const settings = JSON.parse(saved);
                 if (settings.url) {
-                    // Check if URL is still valid
                     fetch(settings.url, { method: 'HEAD' })
                         .then(() => {
                             mediaFileURL = settings.url;
@@ -458,7 +561,6 @@
                             return settings;
                         })
                         .catch(() => {
-                            // URL is no longer valid
                             localStorage.removeItem(STORAGE_KEYS.videoSettings);
                             loadRecentVideoButton.disabled = true;
                         });
@@ -496,6 +598,438 @@
             blendModeSelect.value = blendMode;
             applyBlendMode();
         }
+    }
+
+    function saveMidiSettings() {
+        if (midiInput) {
+            localStorage.setItem(STORAGE_KEYS.midiDevice, midiInput.id);
+        }
+        localStorage.setItem(STORAGE_KEYS.toneEnabled, toneEnabled.toString());
+    }
+
+    function loadMidiSettings() {
+        const savedDevice = localStorage.getItem(STORAGE_KEYS.midiDevice);
+        const savedTone = localStorage.getItem(STORAGE_KEYS.toneEnabled);
+        
+        if (savedTone !== null) {
+            toneEnabled = savedTone === 'true';
+            toneEnabledCheckbox.checked = toneEnabled;
+        }
+        
+        return savedDevice;
+    }
+
+    // --- MIDI Visual Patterns ---
+    // Launchpad 색상 매핑: MIDI note → HSL 색상
+    function getMidiColor(midiNote, isLaunchpad = false) {
+        if (isLaunchpad) {
+            // Launchpad: MIDI note를 hue로 매핑 (0-127 → 0-360)
+            const hue = (midiNote * 2.835) % 360; // 360/127 ≈ 2.835
+            return `hsl(${hue}, 80%, 60%)`;
+        } else {
+            // 일반 키보드: 기존 패턴 색상 사용
+            const patterns = [
+                '#e74c3c', '#e67e22', '#f39c12', '#f1c40f', '#2ecc71',
+                '#16a085', '#3498db', '#2980b9', '#9b59b6', '#8e44ad',
+                '#e91e63', '#ff5722', '#ff9800', '#ffc107', '#cddc39',
+                '#8bc34a', '#4caf50', '#009688', '#00bcd4', '#03a9f4',
+                '#2196f3', '#3f51b5', '#673ab7', '#9c27b0', '#e91e63'
+            ];
+            return patterns[midiNote % patterns.length];
+        }
+    }
+
+    function getMidiVisualPattern(midiNote, velocity) {
+        // 드럼/패드 범위 감지 (일반적인 드럼 노트: 35-81)
+        const isDrum = (midiNote >= 35 && midiNote <= 81) && (midiNote < 60 || midiNote > 71);
+        const isLaunchpad = midiNote >= 0 && midiNote <= 127 && !isDrum;
+        
+        // 크기: velocity 기반 (0.8-1.5배)
+        const velocityScale = 0.8 + (velocity / 127) * 0.7;
+        
+        // 기본 크기를 1.5-2배 증가
+        const baseScale = 1.75;
+        const finalScale = baseScale * velocityScale;
+        
+        const color = getMidiColor(midiNote, isLaunchpad);
+        
+        // 패턴 타입 결정
+        const patternTypes = ['circle', 'square', 'star', 'hexagon', 'triangle', 'burst', 'ring', 'polygon'];
+        const typeIndex = midiNote % patternTypes.length;
+        const type = patternTypes[typeIndex];
+        
+        // 드럼은 더 강렬한 효과
+        if (isDrum) {
+            const drumPatterns = [
+                { type: 'burst', rays: 12, radius: 60 * finalScale },
+                { type: 'ring', radius: 55 * finalScale, thickness: 10 },
+                { type: 'polygon', sides: 8, radius: 50 * finalScale },
+                { type: 'burst', rays: 16, radius: 65 * finalScale },
+                { type: 'ring', radius: 60 * finalScale, thickness: 12 },
+                { type: 'polygon', sides: 6, radius: 55 * finalScale },
+                { type: 'burst', rays: 20, radius: 58 * finalScale },
+                { type: 'ring', radius: 52 * finalScale, thickness: 8 }
+            ];
+            const pattern = drumPatterns[midiNote % drumPatterns.length];
+            pattern.color = color;
+            return pattern;
+        }
+        
+        // 일반 키보드/Launchpad
+        switch (type) {
+            case 'circle':
+                return { type: 'circle', color, radius: 45 * finalScale };
+            case 'square':
+                return { type: 'square', color, size: 75 * finalScale };
+            case 'star':
+                return { type: 'star', color, points: 5 + (midiNote % 4), radius: 50 * finalScale };
+            case 'hexagon':
+                return { type: 'hexagon', color, radius: 45 * finalScale };
+            case 'triangle':
+                return { type: 'triangle', color, size: 75 * finalScale };
+            case 'burst':
+                return { type: 'burst', color, rays: 8 + (midiNote % 8), radius: 55 * finalScale };
+            case 'ring':
+                return { type: 'ring', color, radius: 50 * finalScale, thickness: 8 };
+            case 'polygon':
+                return { type: 'polygon', color, sides: 5 + (midiNote % 4), radius: 48 * finalScale };
+            default:
+                return { type: 'circle', color, radius: 45 * finalScale };
+        }
+    }
+
+    function getRandomPosition() {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        // 50% 완전 무작위, 50% 중앙 집중
+        if (Math.random() < 0.5) {
+            // 완전 무작위
+            return {
+                x: Math.random() * width,
+                y: Math.random() * height
+            };
+        } else {
+            // 중앙 집중 (가우시안 분포)
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const spreadX = width * 0.3;
+            const spreadY = height * 0.3;
+            
+            // Box-Muller 변환으로 정규분포 생성
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            const z1 = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
+            
+            return {
+                x: Math.max(0, Math.min(width, centerX + z0 * spreadX * 0.5)),
+                y: Math.max(0, Math.min(height, centerY + z1 * spreadY * 0.5))
+            };
+        }
+    }
+
+    function createMidiEffect(pattern, x, y, velocity) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.classList.add('midi-effect');
+        
+        // 무작위 회전
+        const randomRotate = (Math.random() - 0.5) * 90;
+        g.style.setProperty('--rotate', `${randomRotate}deg`);
+        
+        let element;
+        
+        switch (pattern.type) {
+            case 'circle': {
+                element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                element.setAttribute('cx', x);
+                element.setAttribute('cy', y);
+                element.setAttribute('r', pattern.radius);
+                element.setAttribute('fill', pattern.color);
+                element.setAttribute('stroke', pattern.color);
+                element.setAttribute('stroke-width', '2');
+                break;
+            }
+            case 'square': {
+                element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                element.setAttribute('x', x - pattern.size / 2);
+                element.setAttribute('y', y - pattern.size / 2);
+                element.setAttribute('width', pattern.size);
+                element.setAttribute('height', pattern.size);
+                element.setAttribute('fill', pattern.color);
+                element.setAttribute('stroke', pattern.color);
+                element.setAttribute('stroke-width', '2');
+                break;
+            }
+            case 'star': {
+                element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                element.setAttribute('d', createStarPath(x, y, pattern.points, pattern.radius));
+                element.setAttribute('fill', pattern.color);
+                element.setAttribute('stroke', pattern.color);
+                element.setAttribute('stroke-width', '2');
+                break;
+            }
+            case 'hexagon':
+            case 'triangle':
+            case 'polygon': {
+                element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const sides = pattern.type === 'hexagon' ? 6 : pattern.type === 'triangle' ? 3 : pattern.sides;
+                const radius = pattern.radius || pattern.size / 2;
+                element.setAttribute('d', createPolygonPath(x, y, sides, radius));
+                element.setAttribute('fill', pattern.color);
+                element.setAttribute('stroke', pattern.color);
+                element.setAttribute('stroke-width', '2');
+                break;
+            }
+            case 'burst': {
+                element = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                for (let i = 0; i < pattern.rays; i++) {
+                    const angle = (i / pattern.rays) * Math.PI * 2;
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('x2', x + Math.cos(angle) * pattern.radius);
+                    line.setAttribute('y2', y + Math.sin(angle) * pattern.radius);
+                    line.setAttribute('stroke', pattern.color);
+                    line.setAttribute('stroke-width', '4');
+                    line.setAttribute('stroke-linecap', 'round');
+                    element.appendChild(line);
+                }
+                break;
+            }
+            case 'ring': {
+                element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                element.setAttribute('cx', x);
+                element.setAttribute('cy', y);
+                element.setAttribute('r', pattern.radius);
+                element.setAttribute('fill', 'none');
+                element.setAttribute('stroke', pattern.color);
+                element.setAttribute('stroke-width', pattern.thickness);
+                break;
+            }
+        }
+        
+        // 발광 효과
+        element.style.filter = `drop-shadow(0 0 10px ${pattern.color})`;
+        
+        g.appendChild(element);
+        return g;
+    }
+
+    function createStarPath(cx, cy, points, radius) {
+        const innerRadius = radius * 0.4;
+        let path = '';
+        for (let i = 0; i < points * 2; i++) {
+            const angle = (i * Math.PI) / points - Math.PI / 2;
+            const r = i % 2 === 0 ? radius : innerRadius;
+            const x = cx + r * Math.cos(angle);
+            const y = cy + r * Math.sin(angle);
+            path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+        }
+        return path + 'Z';
+    }
+
+    function createPolygonPath(cx, cy, sides, radius) {
+        let path = '';
+        for (let i = 0; i < sides; i++) {
+            const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+            const x = cx + radius * Math.cos(angle);
+            const y = cy + radius * Math.sin(angle);
+            path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+        }
+        return path + 'Z';
+    }
+
+    // --- MIDI Handlers ---
+    function handleMidiNote(midiNote, velocity) {
+        // Unwarped 모드에서만 작동
+        if (mode !== 'unwarped') return;
+        if (!midiEnabled) return;
+        
+        console.log(`MIDI Note: ${midiNote}, Velocity: ${velocity}`);
+        
+        // 시각 효과 생성
+        const pos = getRandomPosition();
+        const pattern = getMidiVisualPattern(midiNote, velocity);
+        const effect = createMidiEffect(pattern, pos.x, pos.y, velocity);
+        
+        midiEffectsSvg.appendChild(effect);
+        
+        // 1.5초 후 제거
+        setTimeout(() => {
+            if (effect.parentNode) {
+                effect.remove();
+            }
+        }, 1500);
+        
+        // Tone.js 재생
+        if (toneEnabled && toneSampler && Tone.context.state === 'running') {
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const octave = Math.floor(midiNote / 12) - 1;
+            const noteName = noteNames[midiNote % 12] + octave;
+            
+            try {
+                toneSampler.triggerAttackRelease(noteName, '8n', undefined, velocity / 127);
+            } catch (e) {
+                console.error('Tone.js playback error:', e);
+            }
+        }
+    }
+
+    // --- PC Keyboard MIDI Simulation ---
+    const PC_PIANO = {
+        KeyA: 60, KeyW: 61, KeyS: 62, KeyE: 63, KeyD: 64, KeyF: 65,
+        KeyT: 66, KeyG: 67, KeyY: 68, KeyH: 69, KeyU: 70, KeyJ: 71,
+        KeyK: 72, KeyO: 73, KeyL: 74, KeyP: 75, Semicolon: 76, Quote: 77
+    };
+    const PC_DRUMS = {
+        Digit1: 36, Digit2: 37, Digit3: 38, Digit4: 39,
+        Digit5: 40, Digit6: 41, Digit7: 42, Digit8: 43
+    };
+
+    function isTypingTarget(el) {
+        return ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName);
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (isTypingTarget(e.target)) return;
+        if (e.repeat) return;
+        
+        // 옥타브 조정
+        if (e.code === 'KeyZ') {
+            pcKeyboard.octave = Math.max(1, pcKeyboard.octave - 1);
+            console.log('PC Octave:', pcKeyboard.octave);
+            e.preventDefault();
+            return;
+        }
+        if (e.code === 'KeyX') {
+            pcKeyboard.octave = Math.min(7, pcKeyboard.octave + 1);
+            console.log('PC Octave:', pcKeyboard.octave);
+            e.preventDefault();
+            return;
+        }
+        
+        // 벨로시티 조정
+        if (e.code === 'Minus') {
+            pcKeyboard.velocity = Math.max(1, pcKeyboard.velocity - 8);
+            console.log('PC Velocity:', pcKeyboard.velocity);
+            e.preventDefault();
+            return;
+        }
+        if (e.code === 'Equal') {
+            pcKeyboard.velocity = Math.min(127, pcKeyboard.velocity + 8);
+            console.log('PC Velocity:', pcKeyboard.velocity);
+            e.preventDefault();
+            return;
+        }
+        
+        let midi = null;
+        if (PC_PIANO[e.code] != null) {
+            midi = PC_PIANO[e.code] + (pcKeyboard.octave - 4) * 12;
+        } else if (PC_DRUMS[e.code] != null) {
+            midi = PC_DRUMS[e.code];
+        }
+        
+        if (midi == null) return;
+        if (pcKeyboard.pressed.has(e.code)) return;
+        
+        pcKeyboard.pressed.add(e.code);
+        
+        const velocity = e.shiftKey ? 120 : (e.altKey ? 80 : pcKeyboard.velocity);
+        handleMidiNote(midi, velocity);
+        
+        e.preventDefault();
+    });
+
+    window.addEventListener('keyup', (e) => {
+        pcKeyboard.pressed.delete(e.code);
+    });
+
+    // --- MIDI Initialization ---
+    async function initMIDI() {
+        try {
+            loadingIndicator.classList.add('show');
+            loadingIndicator.textContent = 'MIDI 초기화 중...';
+            
+            // WebMIDI 동적 import
+            const { WebMidi: WM } = await import('https://cdn.jsdelivr.net/npm/webmidi@3/dist/esm/webmidi.esm.min.js');
+            WebMidi = WM;
+            
+            await WebMidi.enable();
+            console.log('WebMIDI enabled');
+            
+            // MIDI 입력 장치 목록
+            WebMidi.inputs.forEach(input => {
+                const option = document.createElement('option');
+                option.value = input.id;
+                option.textContent = input.name;
+                midiInputSelect.appendChild(option);
+            });
+            
+            // 저장된 장치 또는 첫 번째 장치 자동 선택
+            const savedDevice = loadMidiSettings();
+            if (savedDevice && WebMidi.getInputById(savedDevice)) {
+                midiInputSelect.value = savedDevice;
+                selectMidiInput(savedDevice);
+            } else if (WebMidi.inputs.length > 0) {
+                const firstInput = WebMidi.inputs[0];
+                midiInputSelect.value = firstInput.id;
+                selectMidiInput(firstInput.id);
+            }
+            
+            // Tone.js Sampler 초기화
+            loadingIndicator.textContent = 'Tone.js 초기화 중...';
+            toneSampler = new Tone.Sampler({
+                urls: {
+                    A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
+                    A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3",
+                    A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3",
+                    A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3",
+                    A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3",
+                    A5: "A5.mp3", C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3",
+                    A6: "A6.mp3", C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3",
+                    A7: "A7.mp3", C8: "C8.mp3"
+                },
+                baseUrl: "https://tonejs.github.io/audio/salamander/"
+            }).toDestination();
+            
+            await Tone.loaded();
+            console.log('Tone.js ready');
+            
+            loadingIndicator.classList.remove('show');
+            
+        } catch (error) {
+            console.error('MIDI initialization error:', error);
+            loadingIndicator.textContent = 'MIDI 초기화 실패 (계속 진행)';
+            setTimeout(() => {
+                loadingIndicator.classList.remove('show');
+            }, 2000);
+        }
+    }
+
+    function selectMidiInput(inputId) {
+        if (!WebMidi) return;
+        
+        if (midiInput) {
+            midiInput.removeListener();
+        }
+        
+        midiInput = WebMidi.getInputById(inputId);
+        if (!midiInput) return;
+        
+        midiInput.addListener('noteon', e => {
+            const note = e.note;
+            const midiNote = note.number || note.identifier || 60;
+            const velocity = Math.round((note.attack || 0.5) * 127);
+            handleMidiNote(midiNote, velocity);
+        });
+        
+        midiEnabled = true;
+        midiStatus.textContent = `MIDI 활성: ${midiInput.name}`;
+        midiStatus.classList.add('active');
+        
+        saveMidiSettings();
+        console.log('MIDI Input selected:', midiInput.name);
     }
 
     // --- Initialization ---
@@ -554,6 +1088,9 @@
         populateResolutionSelect();
         setupWebcam();
 
+        // Initialize MIDI
+        initMIDI();
+
         // Start Animation Loop
         animate();
 
@@ -605,6 +1142,24 @@
         backgroundVideoElement.addEventListener('ended', () => {
             if (!backgroundVideoElement.loop) {
                 playPauseButton.textContent = '재생';
+            }
+        });
+
+        // MIDI controls
+        midiInputSelect.addEventListener('change', () => {
+            const inputId = midiInputSelect.value;
+            if (inputId) {
+                selectMidiInput(inputId);
+            }
+        });
+
+        toneEnabledCheckbox.addEventListener('change', () => {
+            toneEnabled = toneEnabledCheckbox.checked;
+            saveMidiSettings();
+            
+            // Tone.js 컨텍스트 시작
+            if (toneEnabled && Tone && Tone.context.state !== 'running') {
+                Tone.context.resume();
             }
         });
 
@@ -661,21 +1216,17 @@
             }
         });
 
-        // Helper function to check if file is an image (including SVG)
         function isImageFile(file, fileName) {
-            // Check MIME type first
             if (file.type.startsWith('image/')) {
                 return true;
             }
             
-            // Check for SVG with different MIME types
             if (file.type === 'image/svg+xml' || 
                 file.type === 'text/xml' || 
                 file.type === 'application/xml') {
                 return fileName.endsWith('.svg');
             }
             
-            // Check file extension for common image formats including SVG
             const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
             return imageExtensions.some(ext => fileName.endsWith(ext));
         }
@@ -692,14 +1243,12 @@
         backgroundVideoElement.src = mediaFileURL;
         backgroundVideoElement.load();
         
-        // Hide image element
         backgroundImageElement.style.display = 'none';
         
         isMediaVisible = true;
         backgroundVideoElement.style.display = 'block';
         applyBlendMode();
         
-        // Auto play video
         backgroundVideoElement.addEventListener('loadeddata', () => {
             try {
                 backgroundVideoElement.play().catch(e => {
@@ -725,7 +1274,6 @@
         
         backgroundImageElement.src = mediaFileURL;
         
-        // Hide video element
         backgroundVideoElement.style.display = 'none';
         backgroundVideoElement.pause();
         
@@ -746,7 +1294,6 @@
                 const settings = JSON.parse(saved);
                 if (settings.url) {
                     if (settings.mediaType === 'image') {
-                        // Load as image
                         currentMediaType = 'image';
                         backgroundImageElement.src = settings.url;
                         backgroundVideoElement.style.display = 'none';
@@ -758,7 +1305,6 @@
                             updateBackgroundImageSize();
                         }
                     } else {
-                        // Load as video (default)
                         currentMediaType = 'video';
                         backgroundVideoElement.src = settings.url;
                         backgroundVideoElement.currentTime = settings.currentTime || 0;
@@ -1331,18 +1877,16 @@
             planeMesh.scale.x = 1;
             planeMesh.scale.y = 1;
             
-            // Remove blend mode in calibration mode
             canvasElement.style.mixBlendMode = 'normal';
             backgroundVideoElement.style.display = 'none';
             backgroundImageElement.style.display = 'none';
-        } else { // mode === 'unwarped'
+        } else {
             aspectRatioControl.classList.remove('hidden');
             blendModeControl.classList.remove('hidden');
             svgOverlay.classList.add('hidden');
             videoControls.classList.remove('hidden');
             if (backgroundPlaneMesh) backgroundPlaneMesh.visible = false;
             
-            // Apply blend mode if media is visible
             if (isMediaVisible && currentMediaType) {
                 if (currentMediaType === 'video') {
                     backgroundVideoElement.style.display = 'block';
