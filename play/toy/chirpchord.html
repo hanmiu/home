@@ -54,7 +54,30 @@
     .note-visual.replay { animation: noteReplay 0.3s ease-out; }
     @keyframes noteReplay { 0% { transform: scale(var(--scale)) rotate(var(--rotate)); filter: brightness(2) drop-shadow(0 0 10px currentColor); } 100% { transform: scale(var(--scale)) rotate(var(--rotate)); filter: brightness(1) drop-shadow(0 0 0px currentColor); } }
 
-    .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; opacity: 0.6; }
+    /* 미리보기 노트 (녹음 중이 아닐 때) */
+    .note-visual.preview { animation: notePreview 1.5s ease-out forwards; }
+    @keyframes notePreview { 
+      0% { opacity: 0; transform: scale(0) rotate(0deg); }
+      20% { opacity: 1; transform: scale(1.2) rotate(var(--rotate)); }
+      80% { opacity: 1; transform: scale(1) rotate(var(--rotate)); }
+      100% { opacity: 0; transform: scale(0.8) rotate(var(--rotate)); }
+    }
+
+    .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; opacity: 0.9; text-align: center; line-height: 1.6; max-width: 400px; }
+
+    /* 위자드 모달 */
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal.hidden { display: none; }
+    .modal-content { background: #1a1a1a; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
+    .modal-content h2 { margin-bottom: 20px; font-size: 24px; }
+    .modal-content h3 { font-size: 18px; margin: 20px 0 10px 0; color: #3498db; }
+    .modal-content p { margin: 10px 0; opacity: 0.9; }
+    .wizard-step { margin: 20px 0; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; }
+    .wizard-step.hidden { display: none; }
+    .wizard-status { font-size: 16px; margin-top: 10px; padding: 10px; background: rgba(52, 152, 219, 0.2); border-radius: 6px; text-align: center; }
+    .wizard-status.success { background: rgba(46, 204, 113, 0.2); }
+    .wizard-buttons { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+    .wizard-tip { margin-top: 15px; padding: 10px; background: rgba(241, 196, 15, 0.1); border-left: 3px solid #f1c40f; font-size: 13px; opacity: 0.8; }
   </style>
 </head>
 <body>
@@ -73,9 +96,15 @@
 
     <label class="toggle">
       <input type="checkbox" id="toneToggle" checked>
-      <span id="toneIcon">🔊</span>
+      <span id="toneIcon" title="사운드 On/Off">🔊</span>
     </label>
 
+    <label class="toggle">
+      <input type="checkbox" id="labelToggle">
+      <span id="labelIcon" title="음계 레이블 숨김">🔖</span>
+    </label>
+
+    <button id="recalibrateBtn" class="btn" disabled>⚙️ 재보정</button>
     <button id="saveBtn" class="btn" disabled>💾 저장</button>
     <button id="loadBtn" class="btn">📂 불러오기</button>
     <input type="file" id="fileInput" accept=".svg" style="display: none;">
@@ -93,8 +122,35 @@
     </div>
   </div>
 
-  <div id="debug">
+  <div id="debug" class="hidden">
     <div id="debugContent">디버그 모드 활성화</div>
+  </div>
+
+  <!-- 위자드 모달 -->
+  <div id="wizardModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>🎹 MIDI 범위 설정</h2>
+      <p id="wizardDevice">연결된 장치: <strong>-</strong></p>
+      
+      <div id="wizardStep1" class="wizard-step">
+        <h3>① 건반 최저음을 눌러주세요</h3>
+        <div class="wizard-status">대기 중... 🎹</div>
+      </div>
+      
+      <div id="wizardStep2" class="wizard-step hidden">
+        <h3>② 건반 최고음을 눌러주세요</h3>
+        <div class="wizard-status">미입력</div>
+      </div>
+      
+      <div class="wizard-tip">
+        💡 팁: 실제로 사용할 범위를 설정하면 더 보기 좋습니다
+      </div>
+      
+      <div class="wizard-buttons">
+        <button id="wizardSkip" class="btn">건너뛰기 (기본값)</button>
+        <button id="wizardCancel" class="btn">취소</button>
+      </div>
+    </div>
   </div>
 
   <div class="loading" id="loading">MIDI 초기화 중...</div>
@@ -114,7 +170,7 @@
       // 녹음
       recordStartTime: 0,
       maxDuration: 180, // 3분 = 180초
-      recordedNotes: [], // { time, midiNote, velocity, duration?, layer }
+      recordedNotes: [], // { time, midiNote, velocity, duration?, layer, channel }
 
       // 재생
       playStartTime: 0,
@@ -135,13 +191,32 @@
       // 디버그
       debugLog: [],
 
+      // === 디바이스 프로필 ===
+      deviceProfile: {
+        deviceKey: null,
+        keyboardMin: null,
+        keyboardMax: null,
+        drumNotes: new Set(),
+        calibrated: false
+      },
+
+      // === 위자드 ===
+      wizard: {
+        active: false,
+        step: 0, // 0: 최저음, 1: 최고음
+        minNote: null,
+        maxNote: null
+      },
+
       // === PC 키보드 입력 상태 ===
       pc: {
         octave: 4, // 기본 C4
         velocity: 100,
-        pressed: new Set(),
-        // monitor: false // 요청사항: "녹음할 때만" 반응하므로 모니터 기능은 비활성
-      }
+        pressed: new Set()
+      },
+
+      // === UI 설정 ===
+      showNoteLabels: false // 음계 레이블 표시 여부
     };
 
     // ===== DOM 요소 =====
@@ -152,6 +227,9 @@
     const midiInput = document.getElementById('midiInput');
     const toneToggle = document.getElementById('toneToggle');
     const toneIcon = document.getElementById('toneIcon');
+    const labelToggle = document.getElementById('labelToggle');
+    const labelIcon = document.getElementById('labelIcon');
+    const recalibrateBtn = document.getElementById('recalibrateBtn');
     const saveBtn = document.getElementById('saveBtn');
     const loadBtn = document.getElementById('loadBtn');
     const fileInput = document.getElementById('fileInput');
@@ -165,10 +243,16 @@
     const gridSvg = document.getElementById('grid');
     const notesSvg = document.getElementById('notes');
     const playhead = document.getElementById('playhead');
+    const wizardModal = document.getElementById('wizardModal');
+    const wizardDevice = document.getElementById('wizardDevice');
+    const wizardStep1 = document.getElementById('wizardStep1');
+    const wizardStep2 = document.getElementById('wizardStep2');
+    const wizardSkip = document.getElementById('wizardSkip');
+    const wizardCancel = document.getElementById('wizardCancel');
 
     // ===== 유틸리티 =====
     function log(...args) {
-      console.log('[MIDI Visual]', ...args);
+      console.log('[ChirpChord]', ...args);
       const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
       state.debugLog.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
       if (state.debugLog.length > 100) state.debugLog.shift();
@@ -184,14 +268,188 @@
       return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
-    // === Pitch → Y 매핑 ===
-    function getYByPitch(midi){
-      const H = timeline.clientHeight; // 전체 높이
-      const M = 40;                    // 상하 여백
-      const lo = 36;                   // C2
-      const hi = 84;                   // C6
-      const t = Math.min(1, Math.max(0, (midi - lo) / (hi - lo)));
-      return H - (M + t * (H - 2 * M));
+    // MIDI 번호를 음이름으로 변환
+    function midiToNoteName(midiNote) {
+      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const octave = Math.floor(midiNote / 12) - 1;
+      const noteName = noteNames[midiNote % 12];
+      return `${noteName}${octave}`;
+    }
+
+    // ===== localStorage 관리 =====
+    function getDeviceKey(midiInput) {
+      const manufacturer = midiInput.manufacturer || 'Unknown';
+      const name = midiInput.name || 'Device';
+      return `${manufacturer}-${name}`.replace(/[^a-zA-Z0-9-]/g, '_');
+    }
+
+    function loadDeviceProfile(deviceKey) {
+      try {
+        const profiles = JSON.parse(localStorage.getItem('chirpchord-devices') || '{}');
+        return profiles[deviceKey] || null;
+      } catch (e) {
+        log('프로필 로드 실패:', e.message);
+        return null;
+      }
+    }
+
+    function saveDeviceProfile(deviceKey, profile) {
+      try {
+        const profiles = JSON.parse(localStorage.getItem('chirpchord-devices') || '{}');
+        profiles[deviceKey] = {
+          ...profile,
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('chirpchord-devices', JSON.stringify(profiles));
+        log('프로필 저장 완료:', deviceKey);
+      } catch (e) {
+        log('프로필 저장 실패:', e.message);
+      }
+    }
+
+    // ===== 위자드 =====
+    function startWizard() {
+      state.wizard.active = true;
+      state.wizard.step = 0;
+      state.wizard.minNote = null;
+      state.wizard.maxNote = null;
+      
+      wizardModal.classList.remove('hidden');
+      wizardDevice.innerHTML = `연결된 장치: <strong>${state.midiInput?.name || '알 수 없음'}</strong>`;
+      
+      wizardStep1.classList.remove('hidden');
+      wizardStep1.querySelector('.wizard-status').textContent = '대기 중... 🎹';
+      wizardStep1.querySelector('.wizard-status').classList.remove('success');
+      
+      wizardStep2.classList.add('hidden');
+      wizardStep2.querySelector('.wizard-status').textContent = '미입력';
+      wizardStep2.querySelector('.wizard-status').classList.remove('success');
+      
+      recordBtn.disabled = true;
+      playBtn.disabled = true;
+      
+      log('위자드 시작');
+    }
+
+    function handleWizardNote(midiNote, channel) {
+      if (!state.wizard.active) return;
+      if (channel === 10) {
+        log('위자드: 드럼 패드 무시');
+        return; // 드럼 패드 무시
+      }
+      
+      if (state.wizard.step === 0) {
+        // 최저음 입력
+        state.wizard.minNote = midiNote;
+        state.wizard.step = 1;
+        
+        const status = wizardStep1.querySelector('.wizard-status');
+        status.textContent = `✓ 최저음: MIDI ${midiNote}`;
+        status.classList.add('success');
+        
+        wizardStep2.classList.remove('hidden');
+        wizardStep2.querySelector('.wizard-status').textContent = '대기 중... 🎹';
+        
+        log(`위자드: 최저음 = ${midiNote}`);
+        
+      } else if (state.wizard.step === 1) {
+        // 최고음 입력
+        state.wizard.maxNote = midiNote;
+        
+        // 자동 정렬 (최저 < 최고)
+        if (state.wizard.maxNote < state.wizard.minNote) {
+          [state.wizard.minNote, state.wizard.maxNote] = 
+            [state.wizard.maxNote, state.wizard.minNote];
+          log('위자드: 최저/최고음 자동 정렬');
+        }
+        
+        const status = wizardStep2.querySelector('.wizard-status');
+        status.textContent = `✓ 최고음: MIDI ${state.wizard.maxNote}`;
+        status.classList.add('success');
+        
+        log(`위자드: 최고음 = ${state.wizard.maxNote}`);
+        
+        // 잠깐 대기 후 완료
+        setTimeout(completeWizard, 500);
+      }
+    }
+
+    function completeWizard() {
+      const deviceKey = getDeviceKey(state.midiInput);
+      
+      saveDeviceProfile(deviceKey, {
+        keyboardMin: state.wizard.minNote,
+        keyboardMax: state.wizard.maxNote
+      });
+      
+      state.deviceProfile.keyboardMin = state.wizard.minNote;
+      state.deviceProfile.keyboardMax = state.wizard.maxNote;
+      state.deviceProfile.calibrated = true;
+      
+      wizardModal.classList.add('hidden');
+      recordBtn.disabled = false;
+      playBtn.disabled = state.recordedNotes.length === 0;
+      recalibrateBtn.disabled = false;
+      
+      log(`위자드 완료: ${state.wizard.minNote} ~ ${state.wizard.maxNote}`);
+      
+      state.wizard.active = false;
+    }
+
+    function skipWizard() {
+      // 기본값 사용 (2옥타브, C3-C5)
+      state.wizard.minNote = 48;
+      state.wizard.maxNote = 72;
+      log('위자드: 기본값 사용');
+      completeWizard();
+    }
+
+    function cancelWizard() {
+      wizardModal.classList.add('hidden');
+      state.wizard.active = false;
+      log('위자드 취소');
+    }
+
+    // === Y축 계산 (핵심 변경) ===
+    function getYByPitch(midiNote, isDrumPad = false) {
+      const H = timeline.clientHeight;
+      
+      if (isDrumPad) {
+        // 하단 25% 영역 (Y: 75% ~ 100%)
+        const drumTop = H * 0.75;
+        const drumHeight = H * 0.25;
+        const padding = 60; // 40 → 60으로 증가
+        
+        // 감지된 드럼 노트들을 정렬하여 인덱스 찾기
+        const drumNotes = Array.from(state.deviceProfile.drumNotes).sort((a, b) => a - b);
+        const index = drumNotes.indexOf(midiNote);
+        
+        if (index === -1) {
+          // 새로운 드럼 노트 - 일단 중앙에
+          return drumTop + drumHeight / 2;
+        }
+        
+        const t = drumNotes.length > 1 
+          ? index / (drumNotes.length - 1) 
+          : 0.5;
+        
+        return drumTop + padding + t * (drumHeight - 2 * padding);
+        
+      } else {
+        // 상단 75% 영역 (Y: 0% ~ 75%)
+        const keyboardHeight = H * 0.75;
+        const padding = 50; // 30 → 50으로 증가
+        
+        const min = state.deviceProfile.keyboardMin || 48;
+        const max = state.deviceProfile.keyboardMax || 72;
+        
+        // 범위를 벗어나는 노트 처리
+        const clampedNote = Math.max(min, Math.min(max, midiNote));
+        const t = (clampedNote - min) / Math.max(1, max - min);
+        
+        // 높은 음 = 위, 낮은 음 = 아래
+        return padding + (1 - t) * (keyboardHeight - 2 * padding);
+      }
     }
 
     // ===== 33가지 비주얼 패턴 (25 건반 + 8 패드) =====
@@ -234,33 +492,26 @@
     ];
 
     function getVisualPattern(midiNote, isDrumPad = false) {
-      log(`getVisualPattern: note=${midiNote}, isDrumPad=${isDrumPad}`);
       if (isDrumPad) {
         const padIndex = (midiNote % 8);
-        const pattern = visualPatterns[25 + padIndex];
-        log(`Drum pad pattern: index=${25 + padIndex}, type=${pattern?.type}`);
-        return pattern;
+        return visualPatterns[25 + padIndex];
       } else {
-        const keyIndex = midiNote % 25; // 25개 건반에 순환 매핑
-        const pattern = visualPatterns[keyIndex];
-        log(`Keyboard pattern: note=${midiNote}, index=${keyIndex}, type=${pattern?.type}`);
-        return pattern;
+        const keyIndex = midiNote % 25;
+        return visualPatterns[keyIndex];
       }
     }
 
-    function createSVGElement(pattern, x, y, velocity, isReplay = false) {
+    function createSVGElement(pattern, x, y, velocity, isReplay = false, midiNote = null) {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.classList.add('note-visual');
       if (isReplay) g.classList.add('replay');
 
-      // velocity 영향 (0.7 - 1.3 범위)
       const velScale = 0.7 + (velocity / 127) * 0.6;
       const baseOpacity = 0.6 + (velocity / 127) * 0.3;
 
-      // 무작위 요소 (지터 축소)
       const randomRotate = (Math.random() - 0.5) * 60;
       const randomHue = (Math.random() - 0.5) * 40;
-      const randomY = (Math.random() - 0.5) * 16; // 기존 40 → 16으로 축소
+      const randomY = (Math.random() - 0.5) * 16;
 
       g.style.setProperty('--rotate', `${randomRotate}deg`);
       g.style.setProperty('--opacity', baseOpacity);
@@ -330,6 +581,21 @@
       element.style.filter = `hue-rotate(${randomHue}deg)`;
 
       g.appendChild(element);
+      
+      // 노트 레이블 추가 (음이름) - showNoteLabels가 true일 때만
+      if (midiNote !== null && state.showNoteLabels) {
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', x + 35);
+        label.setAttribute('y', actualY + 5);
+        label.setAttribute('fill', '#fff');
+        label.setAttribute('font-size', '12');
+        label.setAttribute('font-family', 'monospace');
+        label.setAttribute('font-weight', 'bold');
+        label.setAttribute('opacity', '0.8');
+        label.textContent = midiToNoteName(midiNote);
+        g.appendChild(label);
+      }
+      
       return g;
     }
 
@@ -374,7 +640,6 @@
       notesSvg.setAttribute('width', state.timelineWidth);
       notesSvg.setAttribute('height', height);
 
-      // 그리드 그리기
       gridSvg.innerHTML = '';
       for (let sec = 0; sec <= duration; sec += state.gridSeconds) {
         const x = sec * state.pixelsPerSecond;
@@ -400,14 +665,17 @@
 
     // ===== 노트 렌더링 =====
     function renderNotes() {
-      notesSvg.innerHTML = '';
-      const height = timeline.clientHeight; // eslint-disable-line no-unused-vars
+      // 기존 녹음 노트만 제거 (미리보기는 유지)
+      const recordedElements = notesSvg.querySelectorAll('.note:not([data-preview])');
+      recordedElements.forEach(el => el.remove());
 
       for (const note of state.recordedNotes) {
         const x = note.time * state.pixelsPerSecond;
-        const y = getYByPitch(note.midiNote);
-        const pattern = getVisualPattern(note.midiNote, note.layer === 'drumpad');
-        const element = createSVGElement(pattern, x, y, note.velocity);
+        const isDrumPad = (note.layer === 'drumpad');
+        const y = getYByPitch(note.midiNote, isDrumPad);
+        
+        const pattern = getVisualPattern(note.midiNote, isDrumPad);
+        const element = createSVGElement(pattern, x, y, note.velocity, false, note.midiNote);
 
         element.setAttribute('data-midi', note.midiNote);
         element.setAttribute('data-time', note.time);
@@ -417,45 +685,92 @@
 
         notesSvg.appendChild(element);
       }
+      
+      log(`렌더링 완료: ${state.recordedNotes.length}개 노트 (범위: ${state.deviceProfile.keyboardMin}-${state.deviceProfile.keyboardMax})`);
     }
 
     // ===== MIDI 입력 처리 =====
     function handleNoteOn(note) {
-      log(`MIDI Note Object:`, note);
-      log(`Note properties: number=${note.number}, identifier=${note.identifier}, attack=${note.attack}, rawAttack=${note.rawAttack}`);
-
-      if (state.transport !== 'recording') return;
+      const midiNote = note.number || note.identifier || 60;
+      const channel = note.channel || 1;
+      
+      log(`MIDI In: note=${midiNote}, channel=${channel}, attack=${note.attack}`);
+      
+      // 위자드 활성화 시 위자드로 라우팅
+      if (state.wizard.active) {
+        handleWizardNote(midiNote, channel);
+        return;
+      }
+      
+      const velocity = Math.round((note.attack || note.rawAttack || 0.5) * 127);
+      const isDrumPad = (channel === 10);
+      
+      // 녹음 중이 아닐 때 - 미리보기 노트 표시
+      if (state.transport !== 'recording') {
+        showPreviewNote(midiNote, velocity, isDrumPad);
+        
+        // Tone.js 재생은 여전히 작동
+        if (state.toneEnabled && state.sampler) {
+          const octave = Math.floor(midiNote / 12) - 1;
+          const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+          const noteName = noteNames[midiNote % 12] + octave;
+          state.sampler.triggerAttackRelease(noteName, '8n', undefined, velocity / 127);
+        }
+        return;
+      }
 
       const currentTime = (performance.now() - state.recordStartTime) / 1000;
       if (currentTime > state.maxDuration) {
         stopRecording();
         return;
       }
+      
+      // 드럼 노트 추적
+      if (isDrumPad) {
+        state.deviceProfile.drumNotes.add(midiNote);
+      }
+      
+      // === 키보드 범위 동적 확장 ===
+      let rangeChanged = false;
+      if (!isDrumPad) {
+        if (midiNote < state.deviceProfile.keyboardMin) {
+          state.deviceProfile.keyboardMin = midiNote;
+          rangeChanged = true;
+          log(`범위 확장: 최저음 → ${midiNote}`);
+        }
+        if (midiNote > state.deviceProfile.keyboardMax) {
+          state.deviceProfile.keyboardMax = midiNote;
+          rangeChanged = true;
+          log(`범위 확장: 최고음 → ${midiNote}`);
+        }
+      }
 
-      const midiNote = note.number || note.identifier || note.rawValue || 60;
-      const velocity = Math.round((note.attack || note.rawAttack || 0.5) * 127);
-
-      log(`Parsed: midiNote=${midiNote}, velocity=${velocity}`);
-
-      const isDrumPad = midiNote >= 36 && midiNote <= 43;
       const layer = isDrumPad ? 'drumpad' : 'keyboard';
-
-      const noteData = { time: currentTime, midiNote, velocity, layer };
+      const noteData = { time: currentTime, midiNote, velocity, layer, channel };
       state.recordedNotes.push(noteData);
-      log(`Recorded: midiNote=${midiNote} vel:${velocity} layer:${layer}`);
+      log(`녹음: ${layer} note=${midiNote} vel=${velocity} ch=${channel}`);
+
+      // 범위가 변경되었으면 기존 노트들 전부 재배치
+      if (rangeChanged) {
+        renderNotes();
+      }
 
       // 실시간 시각화
       const x = currentTime * state.pixelsPerSecond;
-      const y = getYByPitch(midiNote);
+      const y = getYByPitch(midiNote, isDrumPad);
       const pattern = getVisualPattern(midiNote, isDrumPad);
 
-      if (!pattern) { log(`ERROR: No pattern found for note ${midiNote}`); return; }
+      if (!pattern) { 
+        log(`ERROR: No pattern found for note ${midiNote}`); 
+        return; 
+      }
 
-      const element = createSVGElement(pattern, x, y, velocity);
-      element.setAttribute('data-midi', noteData.midiNote);
-      element.setAttribute('data-time', noteData.time);
-      element.setAttribute('data-velocity', noteData.velocity);
-      element.setAttribute('data-layer', noteData.layer);
+      const element = createSVGElement(pattern, x, y, velocity, false, midiNote);
+      element.setAttribute('data-midi', midiNote);
+      element.setAttribute('data-time', currentTime);
+      element.setAttribute('data-velocity', velocity);
+      element.setAttribute('data-layer', layer);
+      element.setAttribute('data-channel', channel);
       element.classList.add('note');
       notesSvg.appendChild(element);
 
@@ -471,7 +786,31 @@
       }
     }
 
-    function handleControlChange(e) { log(`CC ${e.controller.number}: ${e.rawValue} (${e.value.toFixed(2)})`); }
+    // 미리보기 노트 표시 (녹음 중이 아닐 때)
+    function showPreviewNote(midiNote, velocity, isDrumPad) {
+      // 화면 중앙 X 위치 계산
+      const centerX = timeline.scrollLeft + timeline.clientWidth / 2;
+      const y = getYByPitch(midiNote, isDrumPad);
+      
+      const pattern = getVisualPattern(midiNote, isDrumPad);
+      if (!pattern) return;
+      
+      const element = createSVGElement(pattern, centerX, y, velocity, false, midiNote);
+      element.classList.add('preview'); // 미리보기 애니메이션
+      element.setAttribute('data-preview', 'true');
+      notesSvg.appendChild(element);
+      
+      // 1.5초 후 자동 제거
+      setTimeout(() => {
+        if (element.parentNode) {
+          element.remove();
+        }
+      }, 1500);
+    }
+
+    function handleControlChange(e) { 
+      log(`CC ${e.controller.number}: ${e.rawValue} (${e.value.toFixed(2)})`); 
+    }
 
     // ======= PC 키보드 매핑 =======
     const PC_PIANO = {
@@ -479,42 +818,83 @@
       KeyY:68, KeyH:69, KeyU:70, KeyJ:71, KeyK:72, KeyO:73, KeyL:74, KeyP:75,
       Semicolon:76, Quote:77
     };
-    const PC_DRUMS = { Digit1:36, Digit2:37, Digit3:38, Digit4:39, Digit5:40, Digit6:41, Digit7:42, Digit8:43 };
+    const PC_DRUMS = { 
+      Digit1:36, Digit2:37, Digit3:38, Digit4:39, 
+      Digit5:40, Digit6:41, Digit7:42, Digit8:43 
+    };
 
-    function isTypingTarget(el){ return ['INPUT','SELECT','TEXTAREA'].includes(el.tagName); }
+    function isTypingTarget(el){ 
+      return ['INPUT','SELECT','TEXTAREA'].includes(el.tagName); 
+    }
 
     window.addEventListener('keydown', (e) => {
       if (isTypingTarget(e.target)) return;
       if (e.repeat) return;
 
-      // 컨트롤 키 (옥타브/벨로시티)
-      if (e.code === 'KeyZ') { state.pc.octave = Math.max(1, state.pc.octave - 1); log('PC Octave ↓', state.pc.octave); e.preventDefault(); return; }
-      if (e.code === 'KeyX') { state.pc.octave = Math.min(7, state.pc.octave + 1); log('PC Octave ↑', state.pc.octave); e.preventDefault(); return; }
-      if (e.code === 'Minus') { state.pc.velocity = Math.max(1, state.pc.velocity - 8); log('PC Velocity', state.pc.velocity); e.preventDefault(); return; }
-      if (e.code === 'Equal') { state.pc.velocity = Math.min(127, state.pc.velocity + 8); log('PC Velocity', state.pc.velocity); e.preventDefault(); return; }
+      // 컨트롤 키
+      if (e.code === 'KeyZ') { 
+        state.pc.octave = Math.max(1, state.pc.octave - 1); 
+        log('PC Octave ↓', state.pc.octave); 
+        e.preventDefault(); 
+        return; 
+      }
+      if (e.code === 'KeyX') { 
+        state.pc.octave = Math.min(7, state.pc.octave + 1); 
+        log('PC Octave ↑', state.pc.octave); 
+        e.preventDefault(); 
+        return; 
+      }
+      if (e.code === 'Minus') { 
+        state.pc.velocity = Math.max(1, state.pc.velocity - 8); 
+        log('PC Velocity', state.pc.velocity); 
+        e.preventDefault(); 
+        return; 
+      }
+      if (e.code === 'Equal') { 
+        state.pc.velocity = Math.min(127, state.pc.velocity + 8); 
+        log('PC Velocity', state.pc.velocity); 
+        e.preventDefault(); 
+        return; 
+      }
 
       let midi = null;
-      if (PC_PIANO[e.code] != null) midi = PC_PIANO[e.code] + (state.pc.octave - 4) * 12;
-      else if (PC_DRUMS[e.code] != null) midi = PC_DRUMS[e.code];
+      let channel = 1;
+      
+      if (PC_PIANO[e.code] != null) {
+        midi = PC_PIANO[e.code] + (state.pc.octave - 4) * 12;
+        channel = 1;
+      } else if (PC_DRUMS[e.code] != null) {
+        midi = PC_DRUMS[e.code];
+        channel = 10; // 드럼 채널
+      }
 
       if (midi == null) return;
-
-      // 요청사항: 녹음 중에만 PC 키보드 입력 반응
-      if (state.transport !== 'recording') return;
 
       const vel = e.shiftKey ? 120 : (e.altKey ? 80 : state.pc.velocity);
       state.pc.pressed.add(e.code);
 
       // WebMIDI note 객체 형태로 흉내
-      handleNoteOn({ number: midi, identifier: midi, attack: vel/127, rawAttack: vel/127 });
+      handleNoteOn({ 
+        number: midi, 
+        identifier: midi, 
+        attack: vel/127, 
+        rawAttack: vel/127,
+        channel: channel
+      });
       e.preventDefault();
     });
 
-    window.addEventListener('keyup', (e) => { state.pc.pressed.delete(e.code); });
+    window.addEventListener('keyup', (e) => { 
+      state.pc.pressed.delete(e.code); 
+    });
 
     // ===== 녹음 =====
     async function startRecording() {
       if (state.transport !== 'idle') return;
+      if (!state.deviceProfile.calibrated) {
+        alert('먼저 MIDI 범위 설정을 완료해주세요.');
+        return;
+      }
 
       state.transport = 'recording';
       state.recordStartTime = performance.now();
@@ -527,6 +907,7 @@
       saveBtn.disabled = true;
       clearBtn.disabled = true;
       stopBtn.disabled = false;
+      recalibrateBtn.disabled = true;
 
       updateTimeline();
 
@@ -536,7 +917,10 @@
         timer.textContent = formatTime(remaining);
 
         if (remaining <= 30) timer.classList.add('warning');
-        if (remaining <= 10) { timer.classList.remove('warning'); timer.classList.add('danger'); }
+        if (remaining <= 10) { 
+          timer.classList.remove('warning'); 
+          timer.classList.add('danger'); 
+        }
         if (remaining <= 0) { stopRecording(); }
       }, 100);
 
@@ -555,8 +939,18 @@
       saveBtn.disabled = state.recordedNotes.length === 0;
       clearBtn.disabled = state.recordedNotes.length === 0;
       stopBtn.disabled = true;
+      recalibrateBtn.disabled = false;
       timer.textContent = '0:00';
       timer.classList.remove('warning', 'danger');
+
+      // 확장된 범위를 프로필에 저장
+      if (state.deviceProfile.deviceKey && state.deviceProfile.deviceKey !== 'pc-keyboard') {
+        saveDeviceProfile(state.deviceProfile.deviceKey, {
+          keyboardMin: state.deviceProfile.keyboardMin,
+          keyboardMax: state.deviceProfile.keyboardMax
+        });
+        log(`프로필 업데이트: ${state.deviceProfile.keyboardMin}-${state.deviceProfile.keyboardMax}`);
+      }
 
       updateTimeline();
       renderNotes();
@@ -577,6 +971,7 @@
       saveBtn.disabled = true;
       clearBtn.disabled = true;
       stopBtn.disabled = false;
+      recalibrateBtn.disabled = true;
       playhead.classList.add('active');
 
       const sortedNotes = [...state.recordedNotes].sort((a, b) => a.time - b.time);
@@ -587,7 +982,10 @@
           if (state.transport !== 'playing') return;
 
           const elements = notesSvg.querySelectorAll(`[data-time="${note.time}"]`);
-          elements.forEach(el => { el.classList.add('replay'); setTimeout(() => el.classList.remove('replay'), 300); });
+          elements.forEach(el => { 
+            el.classList.add('replay'); 
+            setTimeout(() => el.classList.remove('replay'), 300); 
+          });
 
           if (state.toneEnabled && state.sampler) {
             const midiNote = note.midiNote;
@@ -599,9 +997,14 @@
 
           if (state.midiOutput) {
             try {
-              state.midiOutput.playNote(note.midiNote, 'all', { attack: note.velocity / 127, duration: 200 });
+              state.midiOutput.playNote(note.midiNote, 'all', { 
+                attack: note.velocity / 127, 
+                duration: 200 
+              });
               log(`MIDI Out: ${note.midiNote} vel:${note.velocity}`);
-            } catch (e) { log(`MIDI Out 실패: ${e.message}`); }
+            } catch (e) { 
+              log(`MIDI Out 실패: ${e.message}`); 
+            }
           }
         }, delay);
         state.playScheduledNotes.push(timeoutId);
@@ -615,7 +1018,9 @@
         timeline.scrollLeft = Math.max(0, x - timeline.clientWidth / 2);
         if (elapsed < Math.max(...sortedNotes.map(n => n.time)) + 1) {
           requestAnimationFrame(animatePlayhead);
-        } else { stopPlayback(); }
+        } else { 
+          stopPlayback(); 
+        }
       }
       requestAnimationFrame(animatePlayhead);
       log('재생 시작');
@@ -632,6 +1037,7 @@
       saveBtn.disabled = false;
       clearBtn.disabled = false;
       stopBtn.disabled = true;
+      recalibrateBtn.disabled = false;
       playhead.classList.remove('active');
       log('재생 중지');
     }
@@ -642,12 +1048,15 @@
       svgData.setAttribute('data-bpm', '120');
       svgData.setAttribute('data-duration', Math.max(0, ...state.recordedNotes.map(n => n.time)));
       svgData.setAttribute('data-pixels-per-second', state.pixelsPerSecond);
+      svgData.setAttribute('data-keyboard-min', state.deviceProfile.keyboardMin);
+      svgData.setAttribute('data-keyboard-max', state.deviceProfile.keyboardMax);
+      
       const svgString = new XMLSerializer().serializeToString(svgData);
       const blob = new Blob([svgString], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `midi-visual-${Date.now()}.svg`;
+      a.download = `chirpchord-${Date.now()}.svg`;
       a.click();
       URL.revokeObjectURL(url);
       log('저장 완료');
@@ -660,25 +1069,84 @@
           const parser = new DOMParser();
           const doc = parser.parseFromString(e.target.result, 'image/svg+xml');
           const svg = doc.documentElement;
+          
+          // 프로필 정보 복원
+          const keyboardMin = parseInt(svg.getAttribute('data-keyboard-min')) || 48;
+          const keyboardMax = parseInt(svg.getAttribute('data-keyboard-max')) || 72;
+          state.deviceProfile.keyboardMin = keyboardMin;
+          state.deviceProfile.keyboardMax = keyboardMax;
+          state.deviceProfile.calibrated = true;
+          
           state.recordedNotes = [];
+          state.deviceProfile.drumNotes.clear();
+          
           const notes = svg.querySelectorAll('.note');
           notes.forEach(note => {
+            const layer = note.getAttribute('data-layer');
+            const midiNote = parseInt(note.getAttribute('data-midi'));
+            
+            if (layer === 'drumpad') {
+              state.deviceProfile.drumNotes.add(midiNote);
+            }
+            
             state.recordedNotes.push({
               time: parseFloat(note.getAttribute('data-time')),
-              midiNote: parseInt(note.getAttribute('data-midi')),
+              midiNote: midiNote,
               velocity: parseInt(note.getAttribute('data-velocity')),
-              layer: note.getAttribute('data-layer')
+              layer: layer,
+              channel: parseInt(note.getAttribute('data-channel')) || (layer === 'drumpad' ? 10 : 1)
             });
           });
+          
           updateTimeline();
           renderNotes();
           playBtn.disabled = false;
           saveBtn.disabled = false;
           clearBtn.disabled = false;
-          log(`불러오기 완료: ${state.recordedNotes.length} 노트`);
-        } catch (e) { log(`불러오기 실패: ${e.message}`); }
+          recordBtn.disabled = false;
+          recalibrateBtn.disabled = false;
+          
+          log(`불러오기 완료: ${state.recordedNotes.length} 노트 (범위: ${keyboardMin}-${keyboardMax})`);
+        } catch (e) { 
+          log(`불러오기 실패: ${e.message}`); 
+        }
       };
       reader.readAsText(file);
+    }
+
+    // ===== MIDI 입력 장치 선택 =====
+    async function selectMidiInput(input) {
+      if (state.midiInput) {
+        state.midiInput.removeListener();
+      }
+      
+      state.midiInput = input;
+      state.midiInput.addListener('noteon', e => handleNoteOn(e.note));
+      state.midiInput.addListener('controlchange', handleControlChange);
+      
+      const deviceKey = getDeviceKey(input);
+      state.deviceProfile.deviceKey = deviceKey;
+      
+      log(`MIDI Input 선택: ${input.name}`);
+      
+      // 프로필 로드
+      const profile = loadDeviceProfile(deviceKey);
+      
+      if (profile) {
+        state.deviceProfile.keyboardMin = profile.keyboardMin;
+        state.deviceProfile.keyboardMax = profile.keyboardMax;
+        state.deviceProfile.calibrated = true;
+        recordBtn.disabled = false;
+        recalibrateBtn.disabled = false;
+        log(`프로필 로드: ${profile.keyboardMin} ~ ${profile.keyboardMax}`);
+      } else {
+        // 프로필 없음 - 위자드 강제 실행
+        state.deviceProfile.calibrated = false;
+        recordBtn.disabled = true;
+        recalibrateBtn.disabled = true;
+        log('프로필 없음 - 위자드 시작');
+        setTimeout(() => startWizard(), 500);
+      }
     }
 
     // ===== 초기화 =====
@@ -699,13 +1167,21 @@
         if (WebMidi.inputs.length > 0) {
           const firstInput = WebMidi.inputs[0];
           midiInput.value = firstInput.id;
-          state.midiInput = firstInput;
-          state.midiInput.addListener('noteon', e => handleNoteOn(e.note));
-          state.midiInput.addListener('controlchange', handleControlChange);
-          log(`MIDI Input 자동 선택: ${firstInput.name}`);
+          await selectMidiInput(firstInput);
+        } else {
+          // MIDI 장치 없음 - PC 키보드로 폴백
+          log('MIDI 입력 장치 없음 - PC 키보드 모드');
+          state.deviceProfile.keyboardMin = 48; // C3
+          state.deviceProfile.keyboardMax = 72; // C5
+          state.deviceProfile.calibrated = true;
+          state.deviceProfile.deviceKey = 'pc-keyboard';
+          recordBtn.disabled = false;
+          recalibrateBtn.disabled = true; // PC 키보드 모드에서는 재보정 불가
+          loading.innerHTML = '🎹 <strong>PC 키보드 모드</strong><br>MIDI 장치가 연결되지 않았습니다.<br>키보드로 연주 가능 (A~P: 건반, 1~8: 드럼)';
+          setTimeout(() => { loading.style.display = 'none'; }, 4000);
         }
 
-        // MIDI 출력 장치 (있다면)
+        // MIDI 출력 장치
         if (WebMidi.outputs.length > 0) {
           state.midiOutput = WebMidi.outputs[0];
           log(`MIDI Output: ${state.midiOutput.name}`);
@@ -731,34 +1207,110 @@
         log('Tone.js 준비 완료');
 
         loading.style.display = 'none';
-        recordBtn.disabled = true; // WebMidi 준비 후, 톤도 불려오고 나서 활성
-        recordBtn.disabled = false;
-
         updateTimeline();
+        
       } catch (e) {
-        log(`초기화 실패: ${e.message}`);
-        loading.textContent = '초기화 실패. MIDI 장치를 확인하세요.';
+        log(`WebMIDI 초기화 실패 (${e.message}) - PC 키보드 모드로 전환`);
+        
+        // WebMIDI 없어도 PC 키보드로 동작
+        state.deviceProfile.keyboardMin = 48; // C3
+        state.deviceProfile.keyboardMax = 72; // C5
+        state.deviceProfile.calibrated = true;
+        state.deviceProfile.deviceKey = 'pc-keyboard';
+        
+        // Tone.js는 여전히 로드 시도
+        try {
+          state.sampler = new Tone.Sampler({
+            urls: {
+              A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
+              A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3",
+              A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3",
+              A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3",
+              A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3",
+              A5: "A5.mp3", C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3",
+              A6: "A6.mp3", C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3",
+              A7: "A7.mp3", C8: "C8.mp3"
+            },
+            baseUrl: "https://tonejs.github.io/audio/salamander/"
+          }).toDestination();
+          
+          await Tone.loaded();
+          log('Tone.js 준비 완료');
+        } catch (toneError) {
+          log(`Tone.js 로드 실패: ${toneError.message}`);
+        }
+        
+        recordBtn.disabled = false;
+        recalibrateBtn.disabled = true;
+        loading.innerHTML = '🎹 <strong>PC 키보드 모드</strong><br>WebMIDI를 사용할 수 없습니다.<br>키보드로 연주 가능 (A~P: 건반, 1~8: 드럼)';
+        setTimeout(() => { loading.style.display = 'none'; }, 4000);
+        updateTimeline();
       }
     }
 
     // ===== 이벤트 리스너 =====
-    recordBtn.addEventListener('click', () => { if (state.transport === 'recording') { stopRecording(); } else { startRecording(); } });
-    playBtn.addEventListener('click', () => { if (state.transport === 'playing') { stopPlayback(); } else { startPlayback(); } });
-    stopBtn.addEventListener('click', () => { if (state.transport === 'recording') { stopRecording(); } else if (state.transport === 'playing') { stopPlayback(); } });
-
-    midiInput.addEventListener('change', () => {
-      const inputId = midiInput.value; if (!inputId) return;
-      if (state.midiInput) { state.midiInput.removeListener(); }
-      state.midiInput = WebMidi.getInputById(inputId);
-      state.midiInput.addListener('noteon', e => handleNoteOn(e.note));
-      state.midiInput.addListener('controlchange', handleControlChange);
-      log(`MIDI Input 선택: ${state.midiInput.name}`);
+    recordBtn.addEventListener('click', () => { 
+      if (state.transport === 'recording') { 
+        stopRecording(); 
+      } else { 
+        startRecording(); 
+      } 
+    });
+    
+    playBtn.addEventListener('click', () => { 
+      if (state.transport === 'playing') { 
+        stopPlayback(); 
+      } else { 
+        startPlayback(); 
+      } 
+    });
+    
+    stopBtn.addEventListener('click', () => { 
+      if (state.transport === 'recording') { 
+        stopRecording(); 
+      } else if (state.transport === 'playing') { 
+        stopPlayback(); 
+      } 
     });
 
-    toneToggle.addEventListener('change', () => { state.toneEnabled = toneToggle.checked; toneIcon.textContent = state.toneEnabled ? '🔊' : '🔇'; log(`Tone.js: ${state.toneEnabled ? 'ON' : 'OFF'}`); });
+    midiInput.addEventListener('change', async () => {
+      const inputId = midiInput.value; 
+      if (!inputId) return;
+      const input = WebMidi.getInputById(inputId);
+      await selectMidiInput(input);
+    });
+
+    toneToggle.addEventListener('change', () => { 
+      state.toneEnabled = toneToggle.checked; 
+      toneIcon.textContent = state.toneEnabled ? '🔊' : '🔇'; 
+      toneIcon.title = state.toneEnabled ? '사운드 On' : '사운드 Off';
+      log(`Tone.js: ${state.toneEnabled ? 'ON' : 'OFF'}`); 
+    });
+
+    labelToggle.addEventListener('change', () => { 
+      state.showNoteLabels = labelToggle.checked; 
+      labelIcon.textContent = state.showNoteLabels ? '🏷️' : '🔖'; 
+      labelIcon.title = state.showNoteLabels ? '음계 레이블 표시 중' : '음계 레이블 숨김';
+      log(`음계 레이블: ${state.showNoteLabels ? 'ON' : 'OFF'}`);
+      // 기존 노트들 다시 렌더링
+      renderNotes();
+    });
+
+    recalibrateBtn.addEventListener('click', () => {
+      if (state.transport !== 'idle') {
+        alert('녹음/재생 중에는 재보정할 수 없습니다.');
+        return;
+      }
+      startWizard();
+    });
+
     saveBtn.addEventListener('click', saveToSVG);
     loadBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { loadFromSVG(e.target.files[0]); } });
+    fileInput.addEventListener('change', (e) => { 
+      if (e.target.files.length > 0) { 
+        loadFromSVG(e.target.files[0]); 
+      } 
+    });
 
     clearBtn.addEventListener('click', () => {
       if (confirm('모든 녹음을 지우시겠습니까?')) {
@@ -773,10 +1325,23 @@
     });
 
     debugToggle.addEventListener('click', () => {
-      if (debug.classList.contains('hidden')) { debug.classList.remove('hidden'); debug.classList.add('visible'); }
-      else { debug.classList.remove('visible'); debug.classList.add('hidden'); }
-      if (debug.classList.contains('visible')) { debugContent.textContent = state.debugLog.join('\n'); debugContent.scrollTop = debugContent.scrollHeight; }
+      if (debug.classList.contains('hidden')) { 
+        debug.classList.remove('hidden'); 
+        debug.classList.add('visible');
+        debugToggle.textContent = '🐞 디버그';
+      } else { 
+        debug.classList.remove('visible'); 
+        debug.classList.add('hidden');
+        debugToggle.textContent = '🐛 디버그';
+      }
+      if (debug.classList.contains('visible')) { 
+        debugContent.textContent = state.debugLog.join('\n'); 
+        debugContent.scrollTop = debugContent.scrollHeight; 
+      }
     });
+
+    wizardSkip.addEventListener('click', skipWizard);
+    wizardCancel.addEventListener('click', cancelWizard);
 
     // 시작
     init();
