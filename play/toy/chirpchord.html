@@ -65,19 +65,30 @@
 
     .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; opacity: 0.9; text-align: center; line-height: 1.6; max-width: 400px; }
 
-    /* 위자드 모달 */
+    /* 모달 (위자드 + 설정) */
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal.hidden { display: none; }
     .modal-content { background: #1a1a1a; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
     .modal-content h2 { margin-bottom: 20px; font-size: 24px; }
     .modal-content h3 { font-size: 18px; margin: 20px 0 10px 0; color: #3498db; }
     .modal-content p { margin: 10px 0; opacity: 0.9; }
+    
+    /* 위자드 스타일 */
     .wizard-step { margin: 20px 0; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; }
     .wizard-step.hidden { display: none; }
     .wizard-status { font-size: 16px; margin-top: 10px; padding: 10px; background: rgba(52, 152, 219, 0.2); border-radius: 6px; text-align: center; }
     .wizard-status.success { background: rgba(46, 204, 113, 0.2); }
-    .wizard-buttons { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
     .wizard-tip { margin-top: 15px; padding: 10px; background: rgba(241, 196, 15, 0.1); border-left: 3px solid #f1c40f; font-size: 13px; opacity: 0.8; }
+    
+    /* 설정 모달 스타일 */
+    .settings-section { margin: 20px 0; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+    .settings-row label { font-size: 15px; opacity: 0.9; }
+    .settings-row select { min-width: 120px; }
+    .settings-info { font-size: 13px; opacity: 0.7; margin-top: 8px; padding: 8px; background: rgba(52, 152, 219, 0.1); border-radius: 4px; }
+    .settings-action { margin-top: 12px; }
+    
+    .modal-buttons { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
   </style>
 </head>
 <body>
@@ -104,7 +115,7 @@
       <span id="labelIcon" title="음계 레이블 숨김">🔖</span>
     </label>
 
-    <button id="recalibrateBtn" class="btn" disabled>⚙️ 재보정</button>
+    <button id="settingsBtn" class="btn" disabled>⚙️ 설정</button>
     <button id="saveBtn" class="btn" disabled>💾 저장</button>
     <button id="loadBtn" class="btn">📂 불러오기</button>
     <input type="file" id="fileInput" accept=".svg" style="display: none;">
@@ -146,9 +157,52 @@
         💡 팁: 실제로 사용할 범위를 설정하면 더 보기 좋습니다
       </div>
       
-      <div class="wizard-buttons">
+      <div class="modal-buttons">
         <button id="wizardSkip" class="btn">건너뛰기 (기본값)</button>
         <button id="wizardCancel" class="btn">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설정 모달 -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>⚙️ 설정</h2>
+      
+      <div class="settings-section">
+        <h3>🎵 녹음 설정</h3>
+        <div class="settings-row">
+          <label>최대 녹음 시간</label>
+          <select id="maxDurationSelect">
+            <option value="30">30초</option>
+            <option value="60">1분</option>
+            <option value="90">1분 30초</option>
+            <option value="180">3분</option>
+            <option value="300">5분</option>
+          </select>
+        </div>
+        <div class="settings-info">
+          ⏱️ 녹음 중 이 시간을 초과하면 자동으로 정지됩니다
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🎹 MIDI 설정</h3>
+        <div class="settings-row">
+          <label>현재 MIDI 범위</label>
+          <span id="currentRangeDisplay">-</span>
+        </div>
+        <div class="settings-action">
+          <button id="recalibrateFromSettings" class="btn">🎹 MIDI 범위 재설정하기</button>
+        </div>
+        <div class="settings-info">
+          🎛️ MIDI 컨트롤러의 최저음/최고음을 다시 설정합니다
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="settingsCancel" class="btn">취소</button>
+        <button id="settingsSave" class="btn primary">저장</button>
       </div>
     </div>
   </div>
@@ -169,7 +223,7 @@
 
       // 녹음
       recordStartTime: 0,
-      maxDuration: 180, // 3분 = 180초
+      maxDuration: 90, // 기본값 90초로 변경
       recordedNotes: [], // { time, midiNote, velocity, duration?, layer, channel }
 
       // 재생
@@ -229,7 +283,7 @@
     const toneIcon = document.getElementById('toneIcon');
     const labelToggle = document.getElementById('labelToggle');
     const labelIcon = document.getElementById('labelIcon');
-    const recalibrateBtn = document.getElementById('recalibrateBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
     const saveBtn = document.getElementById('saveBtn');
     const loadBtn = document.getElementById('loadBtn');
     const fileInput = document.getElementById('fileInput');
@@ -243,12 +297,22 @@
     const gridSvg = document.getElementById('grid');
     const notesSvg = document.getElementById('notes');
     const playhead = document.getElementById('playhead');
+    
+    // 위자드 모달
     const wizardModal = document.getElementById('wizardModal');
     const wizardDevice = document.getElementById('wizardDevice');
     const wizardStep1 = document.getElementById('wizardStep1');
     const wizardStep2 = document.getElementById('wizardStep2');
     const wizardSkip = document.getElementById('wizardSkip');
     const wizardCancel = document.getElementById('wizardCancel');
+    
+    // 설정 모달
+    const settingsModal = document.getElementById('settingsModal');
+    const maxDurationSelect = document.getElementById('maxDurationSelect');
+    const currentRangeDisplay = document.getElementById('currentRangeDisplay');
+    const recalibrateFromSettings = document.getElementById('recalibrateFromSettings');
+    const settingsCancel = document.getElementById('settingsCancel');
+    const settingsSave = document.getElementById('settingsSave');
 
     // ===== 유틸리티 =====
     function log(...args) {
@@ -307,12 +371,85 @@
       }
     }
 
+    // 앱 설정 로드/저장
+    function loadAppSettings() {
+      try {
+        const settings = JSON.parse(localStorage.getItem('chirpchord-settings') || '{}');
+        return {
+          maxDuration: settings.maxDuration || 90,
+          gridSeconds: settings.gridSeconds || 1,
+          pixelsPerSecond: settings.pixelsPerSecond || 100
+        };
+      } catch (e) {
+        log('설정 로드 실패:', e.message);
+        return { maxDuration: 90, gridSeconds: 1, pixelsPerSecond: 100 };
+      }
+    }
+
+    function saveAppSettings(settings) {
+      try {
+        localStorage.setItem('chirpchord-settings', JSON.stringify(settings));
+        log('설정 저장 완료:', settings);
+      } catch (e) {
+        log('설정 저장 실패:', e.message);
+      }
+    }
+
+    // ===== 설정 모달 =====
+    function openSettingsModal() {
+      if (state.transport !== 'idle') {
+        alert('녹음/재생 중에는 설정을 변경할 수 없습니다.');
+        return;
+      }
+      
+      // 현재 값 표시
+      maxDurationSelect.value = state.maxDuration.toString();
+      
+      // MIDI 범위 표시
+      if (state.deviceProfile.calibrated) {
+        const minName = midiToNoteName(state.deviceProfile.keyboardMin);
+        const maxName = midiToNoteName(state.deviceProfile.keyboardMax);
+        currentRangeDisplay.textContent = `${minName} ~ ${maxName} (MIDI ${state.deviceProfile.keyboardMin}-${state.deviceProfile.keyboardMax})`;
+      } else {
+        currentRangeDisplay.textContent = '미설정';
+      }
+      
+      settingsModal.classList.remove('hidden');
+      log('설정 모달 열림');
+    }
+
+    function closeSettingsModal() {
+      settingsModal.classList.add('hidden');
+      log('설정 모달 닫힘');
+    }
+
+    function saveSettings() {
+      const newMaxDuration = parseInt(maxDurationSelect.value);
+      
+      if (newMaxDuration !== state.maxDuration) {
+        state.maxDuration = newMaxDuration;
+        log(`최대 녹음 시간 변경: ${newMaxDuration}초`);
+        updateTimeline();
+      }
+      
+      saveAppSettings({
+        maxDuration: state.maxDuration,
+        gridSeconds: state.gridSeconds,
+        pixelsPerSecond: state.pixelsPerSecond
+      });
+      
+      closeSettingsModal();
+    }
+
     // ===== 위자드 =====
     function startWizard() {
       state.wizard.active = true;
       state.wizard.step = 0;
       state.wizard.minNote = null;
       state.wizard.maxNote = null;
+      
+      // 설정 모달 닫기
+      settingsModal.classList.add('hidden');
       
       wizardModal.classList.remove('hidden');
       wizardDevice.innerHTML = `연결된 장치: <strong>${state.midiInput?.name || '알 수 없음'}</strong>`;
@@ -389,7 +526,7 @@
       wizardModal.classList.add('hidden');
       recordBtn.disabled = false;
       playBtn.disabled = state.recordedNotes.length === 0;
-      recalibrateBtn.disabled = false;
+      settingsBtn.disabled = false;
       
       log(`위자드 완료: ${state.wizard.minNote} ~ ${state.wizard.maxNote}`);
       
@@ -418,7 +555,7 @@
         // 하단 25% 영역 (Y: 75% ~ 100%)
         const drumTop = H * 0.75;
         const drumHeight = H * 0.25;
-        const padding = 60; // 40 → 60으로 증가
+        const padding = 60;
         
         // 감지된 드럼 노트들을 정렬하여 인덱스 찾기
         const drumNotes = Array.from(state.deviceProfile.drumNotes).sort((a, b) => a - b);
@@ -438,7 +575,7 @@
       } else {
         // 상단 75% 영역 (Y: 0% ~ 75%)
         const keyboardHeight = H * 0.75;
-        const padding = 50; // 30 → 50으로 증가
+        const padding = 50;
         
         const min = state.deviceProfile.keyboardMin || 48;
         const max = state.deviceProfile.keyboardMax || 72;
@@ -907,7 +1044,7 @@
       saveBtn.disabled = true;
       clearBtn.disabled = true;
       stopBtn.disabled = false;
-      recalibrateBtn.disabled = true;
+      settingsBtn.disabled = true;
 
       updateTimeline();
 
@@ -939,7 +1076,7 @@
       saveBtn.disabled = state.recordedNotes.length === 0;
       clearBtn.disabled = state.recordedNotes.length === 0;
       stopBtn.disabled = true;
-      recalibrateBtn.disabled = false;
+      settingsBtn.disabled = false;
       timer.textContent = '0:00';
       timer.classList.remove('warning', 'danger');
 
@@ -971,7 +1108,7 @@
       saveBtn.disabled = true;
       clearBtn.disabled = true;
       stopBtn.disabled = false;
-      recalibrateBtn.disabled = true;
+      settingsBtn.disabled = true;
       playhead.classList.add('active');
 
       const sortedNotes = [...state.recordedNotes].sort((a, b) => a.time - b.time);
@@ -1037,7 +1174,7 @@
       saveBtn.disabled = false;
       clearBtn.disabled = false;
       stopBtn.disabled = true;
-      recalibrateBtn.disabled = false;
+      settingsBtn.disabled = false;
       playhead.classList.remove('active');
       log('재생 중지');
     }
@@ -1104,7 +1241,7 @@
           saveBtn.disabled = false;
           clearBtn.disabled = false;
           recordBtn.disabled = false;
-          recalibrateBtn.disabled = false;
+          settingsBtn.disabled = false;
           
           log(`불러오기 완료: ${state.recordedNotes.length} 노트 (범위: ${keyboardMin}-${keyboardMax})`);
         } catch (e) { 
@@ -1137,13 +1274,13 @@
         state.deviceProfile.keyboardMax = profile.keyboardMax;
         state.deviceProfile.calibrated = true;
         recordBtn.disabled = false;
-        recalibrateBtn.disabled = false;
+        settingsBtn.disabled = false;
         log(`프로필 로드: ${profile.keyboardMin} ~ ${profile.keyboardMax}`);
       } else {
         // 프로필 없음 - 위자드 강제 실행
         state.deviceProfile.calibrated = false;
         recordBtn.disabled = true;
-        recalibrateBtn.disabled = true;
+        settingsBtn.disabled = true;
         log('프로필 없음 - 위자드 시작');
         setTimeout(() => startWizard(), 500);
       }
@@ -1151,6 +1288,13 @@
 
     // ===== 초기화 =====
     async function init() {
+      // 앱 설정 로드
+      const settings = loadAppSettings();
+      state.maxDuration = settings.maxDuration;
+      state.gridSeconds = settings.gridSeconds;
+      state.pixelsPerSecond = settings.pixelsPerSecond;
+      log(`설정 로드: maxDuration=${state.maxDuration}초`);
+      
       try {
         await WebMidi.enable();
         log('WebMIDI 활성화 완료');
@@ -1176,7 +1320,7 @@
           state.deviceProfile.calibrated = true;
           state.deviceProfile.deviceKey = 'pc-keyboard';
           recordBtn.disabled = false;
-          recalibrateBtn.disabled = true; // PC 키보드 모드에서는 재보정 불가
+          settingsBtn.disabled = false;
           loading.innerHTML = '🎹 <strong>PC 키보드 모드</strong><br>MIDI 장치가 연결되지 않았습니다.<br>키보드로 연주 가능 (A~P: 건반, 1~8: 드럼)';
           setTimeout(() => { loading.style.display = 'none'; }, 4000);
         }
@@ -1241,7 +1385,7 @@
         }
         
         recordBtn.disabled = false;
-        recalibrateBtn.disabled = true;
+        settingsBtn.disabled = false;
         loading.innerHTML = '🎹 <strong>PC 키보드 모드</strong><br>WebMIDI를 사용할 수 없습니다.<br>키보드로 연주 가능 (A~P: 건반, 1~8: 드럼)';
         setTimeout(() => { loading.style.display = 'none'; }, 4000);
         updateTimeline();
@@ -1296,11 +1440,11 @@
       renderNotes();
     });
 
-    recalibrateBtn.addEventListener('click', () => {
-      if (state.transport !== 'idle') {
-        alert('녹음/재생 중에는 재보정할 수 없습니다.');
-        return;
-      }
+    settingsBtn.addEventListener('click', openSettingsModal);
+    settingsCancel.addEventListener('click', closeSettingsModal);
+    settingsSave.addEventListener('click', saveSettings);
+    recalibrateFromSettings.addEventListener('click', () => {
+      closeSettingsModal();
       startWizard();
     });
 
