@@ -1,530 +1,637 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>나는 몇 번째 신기한 생물일까?</title>
-<style>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>나는 몇 번째 신기한 생물일까?</title>
+  <style>
     @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
+    * { box-sizing: border-box; }
     body {
-        display: grid;
-        text-align: center;
-        font-family: sans-serif;
-        user-select: none;
-        touch-action: pan-x pan-y;
+      display: grid;
+      text-align: center;
+      font-family: sans-serif;
+      user-select: none;
+      touch-action: pan-x pan-y;
+      margin: 0; 
+      padding: 0; /* 수정: 10px -> 0 (모바일 오버플로우 핵심 원인) */
+      background: #f8f9fa;
     }
 
-    #h1 {
-        margin-top: 20px;
-        margin-bottom: 10px;
-        font-size: 32px;
-        font-family: 'Jua', sans-serif;
+    #h1 { margin-top: 20px; margin-bottom: 10px; font-size: 32px; font-family: 'Jua', sans-serif; color: #333; }
+
+    #find-range { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    #find-range input { font-size: 18px; padding: 5px; border: 2px solid #ddd; border-radius: 5px; transition: border-color 0.3s; }
+    #find-range input:focus { outline: none; border-color: #4a90e2; }
+    #find-range .button { display: inline-block; font-size: 18px; padding: 8px 16px; background-color: rgb(250, 233, 136); border-radius: 5px; border: 2px solid rgb(247, 225, 98); cursor: pointer; user-select: none; transition: all 0.2s; }
+    #find-range .button:hover { background-color: rgb(247, 225, 98); transform: translateY(-2px); }
+    #find-range .button:active { transform: translateY(0); }
+
+    #hint { margin-top: 20px; margin-bottom: 10px; font-size: 24px; color: #555; }
+    #challenge { margin-top: 5px; margin-bottom: 10px; font-size: 18px; color: #666; }
+    #challenge .highlight { color: #e74c3c; font-weight: bold; }
+
+    #min, #max { width: 60px; text-align: center; }
+    #number { font-size: 28px; width: 120px; text-align: center; padding: 8px; border: 2px solid #ddd; border-radius: 5px; }
+    #number:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 5px rgba(74, 144, 226, 0.3); }
+
+    .input-section { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+
+    #guess { font-size: 28px; display: inline-block; padding: 10px 20px; background-color: rgb(170, 226, 244); border-radius: 5px; border: 2px solid rgb(77, 185, 218); cursor: pointer; user-select: none; transition: all 0.2s; }
+    #guess:hover { background-color: rgb(77, 185, 218); transform: translateY(-2px); }
+    #guess:active { transform: translateY(0); }
+
+    #lowhigh { margin-top: 15px; font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; color: #555; }
+    #g-low, #g-high { display: inline-block; width: 50px; height: 50px; }
+    #g-low img, #g-high img { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; }
+
+    /* 범위 문장 버튼 */
+    #range-sentence { margin-top: 6px; font-size: 16px; color: #5c6b8a; cursor: pointer; display: none; align-items: center; gap: 8px; justify-content: center; padding: 8px 12px; border-radius: 10px; user-select: none; border: 1px dashed #cfd8ff; background: #f6f8ff; }
+    #range-sentence:hover { background: #eef2ff; }
+    #range-sentence:active { transform: scale(.98); }
+
+    /* 클릭 가능한 경계 숫자 스타일 */
+    .range {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 6px 12px;
+      min-width: 44px;
+      border-radius: 999px;
+      border: 1.5px solid #e8eaf6;
+      background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+      box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 6px 12px rgba(0,0,0,.06);
+      transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+      font-weight: 700;
+    }
+    .range:hover { transform: translateY(-1px) scale(1.03); }
+    .range:active { transform: translateY(0) scale(.98); }
+    /* 개별 톤 */
+    #low { background: linear-gradient(180deg, #eaf3ff 0%, #f4f8ff 100%); border-color: #cfe1ff; }
+    #mid { background: linear-gradient(180deg, #f4f7ff 0%, #f9fbff 100%); border-color: #dfe7ff; }
+    #high { background: linear-gradient(180deg, #ffecec 0%, #fff5f5 100%); border-color: #ffd6d6; }
+    /* 토글 활성 시 색 강조 */
+    .range.active-low { background: rgba(74,144,226,.14); color: #2e63aa; box-shadow: 0 0 0 3px rgba(74,144,226,.12); }
+    .range.active-high { background: rgba(231,76,60,.14); color: #b83427; box-shadow: 0 0 0 3px rgba(231,76,60,.12); }
+    /* 귀여운 방향 아이콘 */
+    #low::before { content: '◀'; font-size: 12px; margin-right: 6px; opacity: .6; }
+    #high::after { content: '▶'; font-size: 12px; margin-left: 6px; opacity: .6; }
+
+    /* 100차트 그리드 스타일 */
+    #grid-toggle-btn {
+      margin: 15px auto; padding: 10px 20px; font-size: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-weight: bold;
+    }
+    #grid-toggle-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+
+    #grid-container { margin: 20px auto; max-width: 600px; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+    #grid-container.hidden { display: none; }
+    #number-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-top: 10px; }
+    .grid-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: all 0.25s ease; border: 1px solid #ddd; position: relative; }
+    .grid-cell:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .grid-cell.disabled { background-color: #e0e0e0; color: #999; cursor: not-allowed; }
+    .grid-cell.enabled { color: white; font-weight: bold; }
+    .grid-cell.empty { background: transparent; border: none; cursor: default; }
+    .grid-cell.empty:hover { transform: none; box-shadow: none; }
+
+    /* 정답/경계 마킹 */
+    .grid-cell.correct { border: 2px solid #ffd700; box-shadow: 0 0 0 3px rgba(255,215,0,.45); animation: pulse 1s ease-in-out 3; color: #222; }
+    .grid-cell.mark-low { outline: 3px solid #4a90e2; }
+    .grid-cell.mark-high { outline: 3px solid #e74c3c; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+    #creature-container { margin-top: 5px; justify-self: center; width: 100%; max-width: 390px; display: flex; justify-content: center; }
+    #creature { width: 390px; height: 390px; overflow: hidden; transition: all 2s ease; border: 1px solid #dbdbdb; background: white; border-radius: 200px; }
+    #g-creature { transition: all 2s ease; image-rendering: auto; }
+
+    #judge { margin-top: 15px; font-size: 24px; height: 31px; color: #333; font-weight: bold; }
+    .creature-name { font-family: 'Jua', sans-serif; font-size: 32px; margin-bottom: 8px; margin-top: 15px; color: #333; }
+    .creature-desc { font-size: 16px; margin-bottom: 5px; color: #666; }
+    .creature-author { font-size: 14px; color: #999; font-style: italic; }
+
+    #box { margin-top: 30px; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; max-width: 600px; justify-self: center; width: 100%; }
+    .captured { display: flex; flex-direction: column; align-items: center; padding: 5px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+    .captured:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .captured img { width: 78px; height: 78px; object-fit: contain; border-radius: 5px; }
+    .captured label { font-size: 10px; text-align: center; margin-top: 3px; color: #666; }
+
+    @media (max-width: 768px) {
+      #h1 { font-size: 24px; }
+      #creature-container { max-width: 280px; }
+      #creature { width: 280px; height: 280px; }
+      #number { font-size: 24px; width: 100px; }
+      #guess { font-size: 24px; padding: 8px 16px; }
+      .mp .button { font-size: 16px; padding: 6px 10px; }
+      #hint { font-size: 20px; }
+      #challenge { font-size: 16px; }
+      #lowhigh { font-size: 20px; }
+      #g-low, #g-high { width: 40px; height: 40px; }
+      .creature-name { font-size: 24px; }
+      .creature-desc { font-size: 14px; }
+      #box { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; }
+      .captured img { width: 70px; height: 70px; }
+      #grid-container { max-width: 95%; padding: 10px; }
+      .grid-cell { font-size: 10px; }
     }
 
-    #find-range input {
-        font-size: 18px;
+    button:focus, input:focus, .button:focus, .range:focus { outline: 2px solid #4a90e2; outline-offset: 2px; }
+    .loading { color: #999; font-style: italic; }
+    
+    /* === v3 overrides: dynamic gap, centering, mobile sizes === */
+    /* (수정/추가된 반응형 레이아웃) */
+    :root {
+        --col-gap: clamp(24px, 2.5vw, 32px);
+        --chart-col: clamp(320px, 35vw, 420px);
+        --panel-max: 720px;
     }
 
-    #find-range .button {
-        display: inline-block;
-        font-size: 18px;
-        padding: 5px;
-        background-color: rgb(250, 233, 136);
-        box-sizing: border-box;
-        border-radius: 3px;
-        border: 1px solid rgb(247, 225, 98);
-        cursor: pointer;
-        user-select: none;
+    body {
+        overflow-x: hidden;
     }
 
-    #hint {
-        margin-top: 20px;
-        margin-bottom: 10px;
-        font-size: 24px;
+    #layout {
+        display: block;
+        width: 100%;
+        max-width: 1100px; /* 1200px -> 1100px (데스크탑 2열시 중앙 정렬) */
+        margin: 0 auto;
+        padding: 0 12px;
     }
 
-    #challenge {
-        margin-top: 5px;
-        margin-bottom: 10px;
-        font-size: 18px;
+    /* Single-column centering */
+    #layout:not(.two-col) #right-pane {
+        max-width: var(--panel-max);
+        margin: 0 auto;
     }
 
-    #min, #max {
-        width: 50px;
-        text-align: center;
+    #layout:not(.two-col) #grid-container {
+        margin: 0 auto;
     }
 
-    #number {
-        font-size: 28px;
-        width: 100px;
-        text-align: center;
+    #layout:not(.two-col) #creature-container, #layout:not(.two-col) #creature-info, #layout:not(.two-col) #box, #layout:not(.two-col) #judge {
+        max-width: var(--panel-max);
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    .mp {
-        margin-top: 10px;
-        font-family: monospace;
+    /* 모바일 기본 폭 개선 */
+    @media (max-width: 768px) {
+        #layout { max-width: 640px; padding: 0 10px; }
+        #box { max-width: 640px; }
     }
 
-    .mp .button {
-        display: inline-block;
-        font-size: 20px;
-        padding: 5px;
-        background-color: aquamarine;
-        box-sizing: border-box;
-        border-radius: 3px;
-        border: 1px solid rgb(31, 238, 169);
-        cursor: pointer;
-        user-select: none;
+    @media (min-width: 1024px) {
+        #layout.two-col {
+            display: grid;
+            grid-template-columns: var(--chart-col) minmax(0, var(--panel-max));
+            gap: var(--col-gap);
+            align-items: start;
+            justify-content: center; /* 2열 블럭을 중앙 정렬 */
+        }
+
+        #grid-container {
+            margin: 0;
+            width: var(--chart-col);
+            max-width: 420px;
+        }
+
+        #right-pane {
+            margin-top: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: var(--panel-max);
+            margin-inline: auto; align-items: center;
+        }
+
+        #number-grid {
+            gap: 4px;
+        }
     }
 
-    #guess {
-        font-size: 28px;
-        display: inline-block;
-        padding: 5px;
-        background-color: rgb(170, 226, 244);
-        box-sizing: border-box;
-        border-radius: 3px;
-        border: 1px solid rgb(77, 185, 218);
-        cursor: pointer;
-        user-select: none;
+    /* 태블릿 (중간 크기) */
+    @media (min-width: 600px) and (max-width: 1023px) {
+        #grid-container {
+            width: clamp(320px, 100%, 520px); /* 92vw -> 100% (패딩 계산) */
+        }
+
+        #number-grid {
+            gap: 3px;
+        }
+
+        .grid-cell {
+            font-size: 11px;
+        }
     }
 
-    #lowhigh {
-        margin-top: 10px;
-        font-size: 24px;
-    }
+    /* 작은 모바일 */
+    @media (max-width: 599px) {
+        #grid-container {
+            width: clamp(280px, 100%, 340px); /* 92vw -> 100%, 360px -> 340px (더 작게) */
+        }
 
-    #g-low, #g-high {
-        display: inline-block;
-        width: 39px;
-        height: 39px;
-    }
+        #number-grid {
+            gap: 2px;
+        }
 
-    #creature {
-        margin-top: 5px;
-        justify-self: center;
-        width: 390px;
-        height: 390px;
-        box-sizing: border-box;
-        border-radius: 200px;
-        overflow: hidden;
-        transition: 2s all;
-    }
+        .grid-cell {
+            font-size: 10px;
+        }
 
-    #g-creature {
-        transition: 2s all;
-    }
-
-    #judge {
-        margin-top: 10px;
-        font-size: 24px;
-        height: 31px;
-    }
-
-    .creature-name {
-        font-family: 'Jua', sans-serif;
-        font-size: 32px;
-        margin-bottom: 5px;
-    }
-
-    .creature-desc {
-        font-size: 16px;
-        margin-bottom: 5px;
-    }
-
-    #box {
-        margin-top: 20px;
+        #right-pane {
+            max-width: min(var(--panel-max), 100%);
+            margin-inline: auto; 
+        }
     }
     
-    .captured {
-        display: inline-block;
-        margin: 3px;
-        width: 80px;
-    }
-
-    .captured img {
-        width: 78px;
-        height: 78px;
-    }
-
-    .captured label {
-        font-size: 10px;
-    }
-</style>
+  </style>
+</head>
 <body>
-    <div id="h1">나는 몇 번째 신기한 생물일까?</div>
-    <div id="find-range">
-        <input id="min" type="number" step="1" value="1">
-        <div class="button" id="new-game">찾기</div>
-        <input id="max" type="number" step="1" value="122">
-    </div>
-    <div id="hint">1 부터 100 중에 하나입니다.</div>
-    <div id="challenge"><span id="n-th">0</span>차 도전, 남은 도전: <span id="remain">10</span></div>
-    <div>
-        <input id="number" type="number" step="1" value="0">
-        <div id="guess">일까?</div>
-    </div>
-    <div>
-        <div id="plus" class="mp">
-            <div class="button" id="p1">+ 1</div>
-            <div class="button" id="p5">+ 5</div>
-            <div class="button" id="p10">+ 10</div>
-            <div class="button" id="p50">+ 50</div>
-            <div class="button" id="p100">+ 100</div>
-        </div>
-        <div id="minus" class="mp">
-            <div class="button" id="m1">− 1</div>
-            <div class="button" id="m5">− 5</div>
-            <div class="button" id="m10">− 10</div>
-            <div class="button" id="m50">− 50</div>
-            <div class="button" id="m100">− 100</div>
-        </div>
-    </div>
-    <div id="lowhigh">
-        <span id="g-low"></span>
-        <span class="range" id="low">?</span> &lt; 
-        <span class="range" id="mid">?</span> &lt; 
-        <span class="range" id="high">?</span>
-        <span id="g-high"></span>
-    </div>
-    <div id="judge"></div>
+  <div id="h1">나는 몇 번째 신기한 생물일까?</div>
+
+  <div id="find-range">
+    <input id="min" type="number" step="1" value="1" min="1" />
+    <div class="button" id="new-game" tabindex="0">찾기</div>
+    <input id="max" type="number" step="1" value="125" min="1" />
+  </div>
+
+  <div id="hint">1 부터 125 중에 하나입니다.</div>
+  <div id="challenge">
+    <span id="n-th">0</span>차 도전,
+    남은 도전: <span id="remain" class="highlight">10</span>
+  </div>
+
+  <div class="input-section">
+    <input id="number" type="number" step="1" value="0" min="1" />
+    <div id="guess" tabindex="0">일까?</div>
+  </div>
+
+  <div id="lowhigh" aria-label="경계 숫자 미리보기 토글">
+    <span id="g-low"></span>
+    <span class="range" id="low" title="왼쪽 경계 미리보기 토글" role="button" tabindex="0">?</span> &lt;
+    <span class="range" id="mid">?</span> &lt;
+    <span class="range" id="high" title="오른쪽 경계 미리보기 토글" role="button" tabindex="0">?</span>
+    <span id="g-high"></span>
+  </div>
+
+  <div id="range-sentence" role="button" tabindex="0" aria-live="polite" aria-label="현재 범위를 다시 말해주기"></div>
+
+  <button id="grid-toggle-btn">🔢 숫자 차트 보기</button>
+
+  <div id="layout">
+    <div id="grid-container" class="hidden">
+    <div id="number-grid" aria-label="숫자 차트 (클릭 시 바로 추측)"></div>
+  </div>
+    <div id="right-pane">
+      <div id="judge"></div>
+  <div id="creature-container">
     <div id="creature">
-        <canvas id="g-creature"></canvas>
+      <canvas id="g-creature"></canvas>
     </div>
-    <div id="creature-info"></div>
-    <div id="box"></div>
-</body>
-<script>
-    let el_min = document.querySelector('#min');
-    let el_max = document.querySelector('#max');
-    let el_hint = document.querySelector('#hint');
-    let el_nth = document.querySelector('#n-th');
-    let el_remain = document.querySelector('#remain');
-    let el_number = document.querySelector('#number');
-    let el_judge = document.querySelector('#judge');
-    let el_low = document.querySelector('#low');
-    let el_mid = document.querySelector('#mid');
-    let el_high = document.querySelector('#high');
-    let el_creature = document.querySelector('#creature');
-    let el_creature_info = document.querySelector('#creature-info');
-    let el_box = document.querySelector('#box');
+  </div>
+  <div id="creature-info"></div>
+  <div id="box"></div>
+    </div></div><script>
+'use strict';
+// DOM 요소
+const el_min = document.querySelector('#min');
+const el_max = document.querySelector('#max');
+const el_hint = document.querySelector('#hint');
+const el_nth = document.querySelector('#n-th');
+const el_remain = document.querySelector('#remain');
+const el_number = document.querySelector('#number');
+const el_judge = document.querySelector('#judge');
+const el_low = document.querySelector('#low');
+const el_mid = document.querySelector('#mid');
+const el_high = document.querySelector('#high');
+const el_creature = document.querySelector('#creature');
+const el_creature_info = document.querySelector('#creature-info');
+const el_box = document.querySelector('#box');
+const g_low = document.querySelector('#g-low');
+const g_high = document.querySelector('#g-high');
+const grid_toggle_btn = document.querySelector('#grid-toggle-btn');
+const grid_container = document.querySelector('#grid-container');
+const number_grid = document.querySelector('#number-grid');
+const el_range_sentence = document.querySelector('#range-sentence');
+const layout = document.querySelector('#layout');
 
-    let g_low = document.querySelector('#g-low');
-    let g_high = document.querySelector('#g-high');
+// 캔버스
+const g_creature = document.querySelector('#g-creature').getContext('2d');
+function updateCanvasSize() {
+  const size = window.innerWidth <= 768 ? 280 : 390;
+  g_creature.canvas.width = size;
+  g_creature.canvas.height = size;
+}
+updateCanvasSize();
+window.addEventListener('resize', () => { updateCanvasSize(); updateLayoutMode(); });
+window.addEventListener('orientationchange', updateLayoutMode); // (추가) 가로/세로 변경시에도 레이아웃 업데이트
 
-    let g_creature = document.querySelector('#g-creature').getContext('2d');
-    g_creature.canvas.width = 390;
-    g_creature.canvas.height = 390;
-    let g_small = document.createElement('canvas').getContext('2d');
-    g_small.canvas.width = 10;
-    g_small.canvas.height = 10;
-    g_small.canvas.style['image-rendering'] = 'pixelated';
+const g_small = document.createElement('canvas').getContext('2d');
+g_small.canvas.width = 10; g_small.canvas.height = 10;
 
-    let bt_new_game = document.querySelector('#new-game');
-    let bt_guess = document.querySelector('#guess');
+const bt_new_game = document.querySelector('#new-game');
+const bt_guess = document.querySelector('#guess');
 
-    let utter = new SpeechSynthesisUtterance();
-    if(utter) {
-        utter.lang = 'ko';
+// TTS
+let utter = new SpeechSynthesisUtterance();
+if (utter) utter.lang = 'ko';
+
+// 게임 상태
+let the_number = 0, to_num = 0, num = 0, is_rolling = false, nth = 0;
+let challenge_limit = 10; let current_low = 0, current_high = 0;
+let correctNumber = null; // 정답 하이라이트용
+let lowPreviewOn = false, highPreviewOn = false; // 경계 토글 상태
+
+// 데이터
+let creature_data = {}; let data_loaded = false; let MAX_CREATURES = 125; // 기본값
+const TSV_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/data/data.tsv';
+const BASE_IMAGE_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/assets/';
+
+// 레이아웃 모드 토글 (숫자 차트 보임 + 데스크탑 + 가로모드에서만 2열)
+function updateLayoutMode() {
+  const gridVisible = !grid_container.classList.contains('hidden');
+  const wideEnough = window.innerWidth >= 1024;
+  // (수정) 가로 모드 감지 로직 (더 안정적)
+  const landscape = window.matchMedia('(orientation: landscape)').matches;
+  
+  // (수정) 데스크탑에서는 가로/세로 여부와 관계없이 2열을 활성화할 수 있도록
+  // 모바일/태블릿에서만 가로모드를 2열 조건으로 사용 (선택사항)
+  // 여기서는 원래 로직(데스크탑 + 가로모드)을 유지
+  const enableTwoCol = gridVisible && wideEnough && landscape; 
+  
+  if (enableTwoCol) {
+    layout.classList.add('two-col');
+  } else {
+    layout.classList.remove('two-col');
+  }
+}
+
+// 그리드 토글
+grid_toggle_btn.addEventListener('click', () => {
+  grid_container.classList.toggle('hidden');
+  grid_toggle_btn.textContent = grid_container.classList.contains('hidden') ? '🔢 숫자 차트 보기' : '🔢 숫자 차트 숨기기';
+  updateLayoutMode();
+});
+
+// 무지개 그라데이션 색상
+function getRainbowColor(index, total) {
+  const hue = (index / Math.max(total, 1)) * 360; return `hsl(${hue}, 80%, 60%)`;
+}
+
+// 그리드 생성
+function createGrid() {
+  number_grid.innerHTML = '';
+  const rows = Math.ceil(MAX_CREATURES / 10);
+  const totalCells = rows * 10;
+  for (let i = 1; i <= totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    if (i <= MAX_CREATURES) {
+      cell.textContent = i; cell.dataset.number = i; cell.tabIndex = 0;
+      cell.addEventListener('click', () => {
+        if (!cell.classList.contains('disabled')) {
+          el_number.value = i; to_num = i; is_rolling = false; guess();
+        }
+      });
+      cell.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cell.click(); }
+      });
+    } else {
+      cell.classList.add('empty');
     }
+    number_grid.appendChild(cell);
+  }
+}
 
-    Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('.button')).forEach(el => {
-        el.addEventListener('click', (e) => {
-            let n = parseInt(e.target.id.split('m')[1]);
-            if(is_rolling) {
-                to_num = to_num - n;
-            }
-            else {
-                to_num = parseInt(el_number.value) - n;
-            }
-            is_rolling = true;
-        });
-    });
+// 경계/정답 마킹 적용
+function applyMarksToCell(cell, n, low, high) {
+  cell.classList.remove('mark-low', 'mark-high', 'correct');
+  if (correctNumber && n === correctNumber) cell.classList.add('correct');
+  if (lowPreviewOn && n === low) cell.classList.add('mark-low');
+  if (highPreviewOn && n === high) cell.classList.add('mark-high');
+}
 
-    Array.prototype.slice.call(document.querySelector('#plus').querySelectorAll('.button')).forEach(el => {
-        el.addEventListener('click', (e) => {
-            let n = parseInt(e.target.id.split('p')[1]);
-            if(is_rolling) {
-                to_num = to_num + n;
-            }
-            else {
-                to_num = parseInt(el_number.value) + n;
-            }
-            is_rolling = true;
-        });
-    });
-
-    let the_number = 0;
-    let to_num = 0;
-    let num = 0;
-    let is_rolling = false;
-
-    let nth = 0;
-    let challenge_limit = 10;
-
-    // 생물 데이터
-    let creature_data = {};
-    let data_loaded = false;
-
-    // TSV 데이터를 URL에서 fetch
-    const TSV_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/data/data.tsv';
-    const BASE_IMAGE_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/assets/';
-
-    async function loadCreatureData() {
-        try {
-            const response = await fetch(TSV_URL);
-            const tsvText = await response.text();
-            
-            const lines = tsvText.trim().split('\n');
-            // 첫 줄(헤더) 제외
-            for (let i = 1; i < lines.length; i++) {
-                const parts = lines[i].split('\t');
-                if (parts.length >= 4) {
-                    const filename = parts[0].normalize('NFC'); // NFC 정규화
-                    const desc = parts[2];
-                    const className = parts[3];
-                    
-                    // 파일명에서 이름 추출 (확장자 제거)
-                    const name = filename.replace('.png', '').split('_').slice(1).join('_');
-                    
-                    creature_data[i] = {
-                        name: name,
-                        desc: desc,
-                        class: className,
-                        filename: filename
-                    };
-                }
-            }
-            data_loaded = true;
-            console.log(`Loaded ${Object.keys(creature_data).length} creatures`);
-        } catch (error) {
-            console.error('Failed to load creature data:', error);
-            alert('데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요.');
-        }
+// 그리드 업데이트
+function updateGrid(low, high) {
+  const cells = number_grid.querySelectorAll('.grid-cell');
+  const rangeSize = Math.max(high - low, 1);
+  cells.forEach(cell => {
+    const n = parseInt(cell.dataset.number);
+    if (isNaN(n)) return;
+    if (n < low || n > high) {
+      cell.classList.add('disabled'); cell.classList.remove('enabled');
+      cell.style.background = '#e0e0e0';
+    } else {
+      cell.classList.remove('disabled'); cell.classList.add('enabled');
+      const position = n - low; cell.style.background = getRainbowColor(position, rangeSize);
     }
+    applyMarksToCell(cell, n, current_low, current_high);
+  });
+}
 
-    function getImageURL(number) {
-        if (!creature_data[number]) return '';
-        // NFC 정규화된 파일명을 URL 인코딩
-        return BASE_IMAGE_URL + encodeURIComponent(creature_data[number].filename);
+// TSV 데이터 로드
+async function loadCreatureData() {
+  try {
+    const response = await fetch(TSV_URL);
+    const tsvText = await response.text();
+    const lines = tsvText.trim().split('\n'); let index = 1;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim(); if (!line) continue;
+      const parts = line.split('\t');
+      if (parts.length >= 4) {
+        let filename = parts[0].trim().normalize('NFC');
+        const desc = parts[2].trim(); let className = parts[3].trim();
+        if (!filename.endsWith('.png')) filename += '.png';
+        const filenameParts = filename.replace('.png', '').split('_');
+        const author = filenameParts[0]; const name = filenameParts.slice(1).join('_');
+        if (className.endsWith('반')) { className = className.slice(0, -1); }
+        creature_data[index] = { name, desc, class: className, author, filename };
+        index++;
+      }
     }
+    MAX_CREATURES = Object.keys(creature_data).length;
+    el_max.value = MAX_CREATURES; el_max.max = MAX_CREATURES; el_min.max = MAX_CREATURES; el_number.max = MAX_CREATURES;
+    createGrid();
+    data_loaded = true;
+  } catch (error) {
+    console.error('❌ Failed to load creature data:', error);
+    alert('데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요.');
+  }
+}
 
-    function restart() {
-        if (!data_loaded) {
-            alert('데이터를 불러오는 중입니다. 잠시만 기다려주세요.');
-            setTimeout(restart, 500);
-            return;
-        }
+function getImageURL(number) { return creature_data[number] ? BASE_IMAGE_URL + encodeURIComponent(creature_data[number].filename) : ''; }
 
-        g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
-        g_low.innerHTML = '';
-        g_high.innerHTML = '';
-        let min = parseInt(el_min.value);
-        let max = parseInt(el_max.value);
-        if(min > max) {
-            el_min.value = max;
-            el_max.value = min;
-            min = parseInt(el_min.value);
-            max = parseInt(el_max.value);
-        }
-        el_low.textContent = min - 1;
-        el_mid.textContent = '?';
-        el_high.textContent = max + 1;
+function loadBlurredImage(number) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      g_small.clearRect(0, 0, 10, 10); g_small.drawImage(img, 0, 0, 10, 10);
+      g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
+      g_creature.drawImage(g_small.canvas, 0, 0, g_creature.canvas.width, g_creature.canvas.height);
+      g_creature.canvas.style.filter = 'blur(5px) grayscale(1) brightness(0.5) contrast(5)';
+      g_creature.canvas.style.transform = `rotate(${Math.random() * 360}deg)`; resolve();
+    };
+    img.onerror = reject; img.src = getImageURL(number);
+  });
+}
 
-        the_number = min + Math.floor(Math.random() * (max - min + 1));
+function loadFullImage(number) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
+      const scale = Math.min(g_creature.canvas.width / img.width, g_creature.canvas.height / img.height);
+      const x = (g_creature.canvas.width - img.width * scale) / 2; const y = (g_creature.canvas.height - img.height * scale) / 2;
+      g_creature.drawImage(img, x, y, img.width * scale, img.height * scale);
+      setTimeout(() => { g_creature.canvas.style.filter = ''; g_creature.canvas.style.transform = 'rotate(0deg)'; }, 100); resolve();
+    };
+    img.onerror = reject; img.src = getImageURL(number);
+  });
+}
 
-        el_hint.textContent = `${min} 부터 ${max} 중에 하나입니다.`;
-        el_number.value = 0;
-        el_judge.textContent = 'ㅤ';
+// 경계 이미지 미리보기 업데이트 (토글 상태 반영)
+function updateBoundaryPreview() {
+  g_low.innerHTML = '';
+  g_high.innerHTML = '';
+  if (lowPreviewOn && current_low >= 1 && creature_data[current_low]) {
+    const imgL = new Image();
+    imgL.src = getImageURL(current_low);
+    imgL.style.transition = '0.3s all';
+    g_low.appendChild(imgL);
+  }
+  if (highPreviewOn && current_high >= 1 && creature_data[current_high]) {
+    const imgH = new Image();
+    imgH.src = getImageURL(current_high);
+    imgH.style.transition = '0.3s all';
+    g_high.appendChild(imgH);
+  }
+  el_low.classList.toggle('active-low', lowPreviewOn);
+  el_high.classList.toggle('active-high', highPreviewOn);
+}
 
-        if (creature_data[the_number]) {
-            const hiddenClass = '?';
-            el_creature_info.innerHTML = `
-                <div class="creature-name">?</div>
-                <div class="creature-desc">${hiddenClass} 반</div>
-            `;
-        }
+// 범위 문장 업데이트 & 읽어주기
+function buildRangeSentence() {
+  const validLow = current_low >= 1 && current_low <= MAX_CREATURES;
+  const validHigh = current_high >= 1 && current_high <= MAX_CREATURES;
+  if (validLow && validHigh) return `${current_low} 보다 크고, ${current_high} 보다 작다`;
+  if (validLow && !validHigh) return `${current_low} 보다 크다`;
+  if (!validLow && validHigh) return `${current_high} 보다 작다`;
+  return '';
+}
+function updateRangeSentence() {
+  const text = buildRangeSentence();
+  el_range_sentence.textContent = text;
+  el_range_sentence.style.display = text ? 'inline-flex' : 'none';
+}
+function speakRangeSentence() {
+  const text = el_range_sentence.textContent.trim();
+  if (text && utter) { utter.text = text; speechSynthesis.speak(utter); }
+}
 
-        el_creature.style.borderRadius = '200px';
-        el_creature.style.border = '1px solid #dbdbdb';
+async function restart() {
+  if (!data_loaded) {
+    alert('데이터를 불러오는 중입니다. 잠시만 기다려주세요.');
+    return;
+  }
+  g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
+  g_low.innerHTML = ''; g_high.innerHTML = '';
+  let min = parseInt(el_min.value); let max = parseInt(el_max.value);
+  if (min > max) { [el_min.value, el_max.value] = [max, min]; [min, max] = [max, min]; }
+  current_low = min - 1; current_high = max + 1; correctNumber = null; lowPreviewOn = false; highPreviewOn = false;
+  el_low.textContent = current_low; el_mid.textContent = '?'; el_high.textContent = current_high;
+  the_number = min + Math.floor(Math.random() * (max - min + 1));
+  el_hint.textContent = `${min} 부터 ${max} 중에 하나입니다.`; el_number.value = Math.floor((min + max) / 2); el_judge.textContent = '';
+  if (creature_data[the_number]) { el_creature_info.innerHTML = `<div class="creature-name">?</div><div class="creature-desc">? 반</div>`; }
+  el_creature.style.borderRadius = '200px'; el_creature.style.border = '1px solid #dbdbdb';
+  to_num = 0; num = 0; nth = 1;
+  const d = max - min; challenge_limit = d <= 20 ? 8 : (d <= 100 ? 15 : 20);
+  el_nth.textContent = nth; el_remain.textContent = challenge_limit - 1;
+  updateGrid(min, max); updateBoundaryPreview(); updateRangeSentence();
+  try { await loadBlurredImage(the_number); } catch (error) { console.error('Failed to load image:', error); }
+}
 
-        to_num = 0;
-        num = 0;
-        nth = 1;
-        let d = max - min;
-        if(d > 100) {
-            challenge_limit = 20;
-        }
-        else if(d > 20) {
-            challenge_limit = 15;
-        }
-        else {
-            challenge_limit = 8;
-        }
-        el_nth.textContent = nth;
-        el_remain.textContent = challenge_limit - 1;
+async function guess() {
+  if (!data_loaded) { alert('데이터를 불러오는 중입니다.'); return; }
+  is_rolling = false; const number = parseInt(el_number.value);
+  if (isNaN(number) || number < 1 || number > MAX_CREATURES) { alert(`1부터 ${MAX_CREATURES} 사이의 숫자를 입력해주세요.`); return; }
 
-        let img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = getImageURL(the_number);
-
-        g_small.clearRect(0, 0, g_small.canvas.width, g_small.canvas.height);
-        img.addEventListener('load', (e) => {
-            g_small.drawImage(e.target, 0, 0, g_small.canvas.width, g_small.canvas.height);
-            g_creature.drawImage(g_small.canvas, 0, 0, g_creature.canvas.width, g_creature.canvas.height);
-            g_creature.canvas.style.filter = 'blur(5px) grayscale(1) brightness(0.5) contrast(5)';
-            g_creature.canvas.style.transform = `rotate(${Math.random()*360}deg)`;
-        });
-        img.addEventListener('error', () => {
-            console.error('Failed to load image:', img.src);
-        });
+  if (number < the_number) {
+    el_judge.textContent = `${number} 보다 큽니다.`; current_low = number; el_low.textContent = number;
+    updateGrid(current_low, current_high); updateBoundaryPreview(); updateRangeSentence();
+    if (utter) { utter.text = el_judge.textContent; speechSynthesis.speak(utter); }
+  } else if (number > the_number) {
+    el_judge.textContent = `${number} 보다 작습니다.`; current_high = number; el_high.textContent = number;
+    updateGrid(current_low, current_high); updateBoundaryPreview(); updateRangeSentence();
+    if (utter) { utter.text = el_judge.textContent; speechSynthesis.speak(utter); }
+  } else {
+    el_judge.innerHTML = `🎉 맞아요! ${number}번 생물은`;
+    el_mid.textContent = number; correctNumber = number; // 정답 하이라이트
+    el_creature.style.borderRadius = '20px'; el_creature.style.border = '1px solid transparent';
+    try { await loadFullImage(the_number); } catch (error) { console.error('Failed to load full image:', error); }
+    if (creature_data[number]) {
+      const data = creature_data[number];
+      el_creature_info.innerHTML = `<div class="creature-name">${data.name}</div><div class="creature-desc">${data.desc}</div><div class="creature-author">${data.class} 반 | 작가: ${data.author}</div>`;
+      const el = document.createElement('div'); el.className = 'captured';
+      el.innerHTML = `<img src='${getImageURL(the_number)}'><label>${the_number}번, 도전:${nth}</label><label>${data.name}</label>`;
+      el_box.insertBefore(el, el_box.firstElementChild);
+      if (utter) { utter.text = `맞아요! ${number}번 생물은 ${data.name}! ${data.class}반, 작가 ${data.author}`; speechSynthesis.speak(utter); }
     }
+    updateGrid(current_low, current_high);
+  }
 
-    function loadMidImage(e) {
-        g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
-        g_creature.drawImage(e.target, 0, 0);
-        setTimeout(() => {
-            g_creature.canvas.style.filter = '';
-            g_creature.canvas.style.transform = `rotate(0deg)`;
-        }, 100);
+  nth += 1; el_nth.textContent = nth; el_remain.textContent = challenge_limit - nth;
+  if (number !== the_number && nth === challenge_limit) {
+    el_judge.textContent = `💨 ${the_number}번 생물이 도망갔습니다.`;
+    if (creature_data[the_number]) {
+      const data = creature_data[the_number];
+      el_creature_info.innerHTML = `<div class="creature-name">${data.name}</div><div class="creature-desc">${data.desc}</div><div class="creature-author">${data.class} 반 | 작가: ${data.author}</div>`;
     }
+    try { await loadFullImage(the_number); el_creature.style.borderRadius = '20px'; el_creature.style.border = '1px solid transparent'; } catch (error) { console.error('Failed to load full image:', error); }
+    setTimeout(restart, 5000);
+    if (utter) { utter.text = `${the_number}번 생물이 도망갔습니다.`; speechSynthesis.speak(utter); }
+  }
+}
 
-    function guess() {
-        if (!data_loaded) {
-            alert('데이터를 불러오는 중입니다.');
-            return;
-        }
+// 입력 제한
+el_min.addEventListener('input', (e) => { let n = parseInt(e.target.value); n = Math.max(Math.min(n, MAX_CREATURES), 1); e.target.value = isNaN(n) ? 1 : n; });
+el_max.addEventListener('input', (e) => { let n = parseInt(e.target.value); n = Math.max(Math.min(n, MAX_CREATURES), 1); e.target.value = isNaN(n) ? MAX_CREATURES : n; });
+el_number.addEventListener('input', (e) => { is_rolling = false; let n = parseInt(e.target.value); if (!isNaN(n)) { to_num = Math.max(1, Math.min(MAX_CREATURES, n)); } });
 
-        is_rolling = false;
-        let number = parseInt(el_number.value);
+// 경계 숫자 클릭/키보드 토글 → 미리보기 & 그리드 위치 마킹
+function toggleLowPreview() {
+  if (el_low.textContent !== '?' && current_low >= 1) { lowPreviewOn = !lowPreviewOn; updateBoundaryPreview(); updateRangeSentence(); updateGrid(current_low, current_high); }
+}
+function toggleHighPreview() {
+  if (el_high.textContent !== '?' && current_high >= 1) { highPreviewOn = !highPreviewOn; updateBoundaryPreview(); updateRangeSentence(); updateGrid(current_low, current_high); }
+}
+el_low.addEventListener('click', toggleLowPreview);
+el_high.addEventListener('click', toggleHighPreview);
+el_low.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLowPreview(); } });
+el_high.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHighPreview(); } });
 
-        let img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = getImageURL(number);
+// 기타 이벤트
+bt_new_game.addEventListener('click', restart);
+bt_guess.addEventListener('click', guess);
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); guess(); } });
+el_range_sentence.addEventListener('click', speakRangeSentence);
+el_range_sentence.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); speakRangeSentence(); } });
+document.addEventListener('touchmove', e => { if (e.scale !== 1) { e.preventDefault(); } }, { passive: false });
 
-        if(number < the_number) {
-            el_judge.textContent = `${number} 보다 큽니다.`;
-            el_low.textContent = number;
-            if(creature_data[number]) {
-                g_low.innerHTML = `<img src="${img.src}" style="width: 39px; height: 39px; filter: blur(5px); transition: 2s all; opacity: 0">`;
-                setTimeout(() => {
-                    g_low.querySelector('img').style.filter = '';
-                    g_low.querySelector('img').style.opacity = 1;
-                }, 1);
-            }
-            if(utter) {
-                utter.text = el_judge.textContent;
-                speechSynthesis.speak(utter);
-            }
-        }
-        else if(number > the_number) {
-            el_judge.textContent = `${number} 보다 작습니다.`;
-            el_high.textContent = number;
-            if(creature_data[number]) {
-                g_high.innerHTML = `<img src="${img.src}" style="width: 39px; height: 39px; filter: blur(5px); transition: 2s all; opacity: 0">`;
-                setTimeout(() => {
-                    g_high.querySelector('img').style.filter = '';
-                    g_high.querySelector('img').style.opacity = 1;
-                }, 1);
-            }
-            if(utter) {
-                utter.text = el_judge.textContent;
-                speechSynthesis.speak(utter);
-            }
-        }
-        else if(number === the_number) {
-            const correctImg = new Image();
-            correctImg.src = getImageURL(20); // 피카츄 대신 다른 이미지로 교체 가능
-            el_judge.innerHTML = `맞아요! ${number}번 생물은`;
-            el_mid.textContent = number;
+function loop() {
+  if (is_rolling) {
+    num += (to_num - num) * 0.1; const n = Math.round(num); el_number.value = n;
+    if (Math.abs(n - to_num) < 0.5) { el_number.value = to_num; is_rolling = false; }
+  }
+  requestAnimationFrame(loop);
+}
 
-            el_creature.style.borderRadius = '0px';
-            el_creature.style.border = '1px solid transparent';
-            
-            let mainImg = new Image();
-            mainImg.crossOrigin = 'anonymous';
-            mainImg.src = getImageURL(the_number);
-            mainImg.addEventListener('load', loadMidImage);
-
-            if (creature_data[number]) {
-                el_creature_info.innerHTML = `
-                    <div class="creature-name">${creature_data[number].name}</div>
-                    <div class="creature-desc">${creature_data[number].desc}</div>
-                    <div class="creature-desc">${creature_data[number].class} 반</div>
-                `;
-            }
-
-            let el = document.createElement('div');
-            el.className = 'captured';
-            el.innerHTML = `<img src='${mainImg.src}'><label>${the_number}번, 도전:${nth}</label><br><label>${creature_data[number].name}</label>`;
-            el_box.insertBefore(el, el_box.firstElementChild);
-
-            if(utter && creature_data[number]) {
-                utter.text = `맞아요! ${number}, 번 생물은 ${creature_data[number].name}! ${creature_data[number].class}반`;
-                speechSynthesis.speak(utter);
-            }
-        }
-
-        nth += 1;
-        el_nth.textContent = nth;
-        el_remain.textContent = challenge_limit - nth;
-
-        if(number !== the_number && nth === challenge_limit) {
-            el_judge.textContent = `💨 ${the_number}번 생물이 도망갔습니다.`;
-            setTimeout(restart, 4000);
-
-            if(utter) {
-                utter.text = `${the_number}, 번 생물이 도망갔습니다.`;
-                speechSynthesis.speak(utter);
-            }
-        }
-    }
-
-    el_min.addEventListener('input', (e) => {
-        let n = parseInt(e.target.value);
-        n = Math.max(Math.min(n, 122), 1);
-        e.target.value = n;
-    });
-
-    el_max.addEventListener('input', (e) => {
-        let n = parseInt(e.target.value);
-        n = Math.max(Math.min(n, 122), 1);
-        e.target.value = n;
-    });
-
-    el_number.addEventListener('input', (e) => {
-        is_rolling = false;
-        to_num = parseInt(el_number.value);
-    });
-
-    bt_new_game.addEventListener('click', () => {
-        restart();
-    });
-
-    bt_guess.addEventListener('click', () => {
-        guess();
-    });
-
-    window.document.addEventListener('touchmove', e => {
-        if(e.scale !== 1) {
-            e.preventDefault();
-        }
-    }, {passive: false});
-
-    function loop() {
-        if(is_rolling) {
-            num += (to_num - num) * 0.1;
-            let n = Math.round(num);
-            el_number.value = n;
-            if(n === to_num) {
-                is_rolling = false;
-            }
-        }
-        requestAnimationFrame(loop);
-    }
-
-    // 페이지 로드 시 데이터 불러오기
-    loadCreatureData().then(() => {
-        restart();
-        loop();
-    });
+// 초기화
+(async function init() {
+  el_creature_info.innerHTML = '<div class="loading">데이터를 불러오는 중...</div>';
+  await loadCreatureData(); await restart(); updateLayoutMode(); loop();
+})();
 </script>
+</body>
+</html>
