@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>나는 몇 번째 신기한 생물일까?</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+    body {
+        display: grid;
+        text-align: center;
+        font-family: sans-serif;
+        user-select: none;
+        touch-action: pan-x pan-y;
+    }
+
+    #h1 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 32px;
+        font-family: 'Jua', sans-serif;
+    }
+
+    #find-range input {
+        font-size: 18px;
+    }
+
+    #find-range .button {
+        display: inline-block;
+        font-size: 18px;
+        padding: 5px;
+        background-color: rgb(250, 233, 136);
+        box-sizing: border-box;
+        border-radius: 3px;
+        border: 1px solid rgb(247, 225, 98);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #hint {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 24px;
+    }
+
+    #challenge {
+        margin-top: 5px;
+        margin-bottom: 10px;
+        font-size: 18px;
+    }
+
+    #min, #max {
+        width: 50px;
+        text-align: center;
+    }
+
+    #number {
+        font-size: 28px;
+        width: 100px;
+        text-align: center;
+    }
+
+    .mp {
+        margin-top: 10px;
+        font-family: monospace;
+    }
+
+    .mp .button {
+        display: inline-block;
+        font-size: 20px;
+        padding: 5px;
+        background-color: aquamarine;
+        box-sizing: border-box;
+        border-radius: 3px;
+        border: 1px solid rgb(31, 238, 169);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #guess {
+        font-size: 28px;
+        display: inline-block;
+        padding: 5px;
+        background-color: rgb(170, 226, 244);
+        box-sizing: border-box;
+        border-radius: 3px;
+        border: 1px solid rgb(77, 185, 218);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #lowhigh {
+        margin-top: 10px;
+        font-size: 24px;
+    }
+
+    #g-low, #g-high {
+        display: inline-block;
+        width: 39px;
+        height: 39px;
+    }
+
+    #creature {
+        margin-top: 5px;
+        justify-self: center;
+        width: 390px;
+        height: 390px;
+        box-sizing: border-box;
+        border-radius: 200px;
+        overflow: hidden;
+        transition: 2s all;
+    }
+
+    #g-creature {
+        transition: 2s all;
+    }
+
+    #judge {
+        margin-top: 10px;
+        font-size: 24px;
+        height: 31px;
+    }
+
+    .creature-name {
+        font-family: 'Jua', sans-serif;
+        font-size: 32px;
+        margin-bottom: 5px;
+    }
+
+    .creature-desc {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+
+    #box {
+        margin-top: 20px;
+    }
+    
+    .captured {
+        display: inline-block;
+        margin: 3px;
+        width: 80px;
+    }
+
+    .captured img {
+        width: 78px;
+        height: 78px;
+    }
+
+    .captured label {
+        font-size: 10px;
+    }
+</style>
+<body>
+    <div id="h1">나는 몇 번째 신기한 생물일까?</div>
+    <div id="find-range">
+        <input id="min" type="number" step="1" value="1">
+        <div class="button" id="new-game">찾기</div>
+        <input id="max" type="number" step="1" value="122">
+    </div>
+    <div id="hint">1 부터 100 중에 하나입니다.</div>
+    <div id="challenge"><span id="n-th">0</span>차 도전, 남은 도전: <span id="remain">10</span></div>
+    <div>
+        <input id="number" type="number" step="1" value="0">
+        <div id="guess">일까?</div>
+    </div>
+    <div>
+        <div id="plus" class="mp">
+            <div class="button" id="p1">+ 1</div>
+            <div class="button" id="p5">+ 5</div>
+            <div class="button" id="p10">+ 10</div>
+            <div class="button" id="p50">+ 50</div>
+            <div class="button" id="p100">+ 100</div>
+        </div>
+        <div id="minus" class="mp">
+            <div class="button" id="m1">− 1</div>
+            <div class="button" id="m5">− 5</div>
+            <div class="button" id="m10">− 10</div>
+            <div class="button" id="m50">− 50</div>
+            <div class="button" id="m100">− 100</div>
+        </div>
+    </div>
+    <div id="lowhigh">
+        <span id="g-low"></span>
+        <span class="range" id="low">?</span> &lt; 
+        <span class="range" id="mid">?</span> &lt; 
+        <span class="range" id="high">?</span>
+        <span id="g-high"></span>
+    </div>
+    <div id="judge"></div>
+    <div id="creature">
+        <canvas id="g-creature"></canvas>
+    </div>
+    <div id="creature-info"></div>
+    <div id="box"></div>
+</body>
+<script>
+    let el_min = document.querySelector('#min');
+    let el_max = document.querySelector('#max');
+    let el_hint = document.querySelector('#hint');
+    let el_nth = document.querySelector('#n-th');
+    let el_remain = document.querySelector('#remain');
+    let el_number = document.querySelector('#number');
+    let el_judge = document.querySelector('#judge');
+    let el_low = document.querySelector('#low');
+    let el_mid = document.querySelector('#mid');
+    let el_high = document.querySelector('#high');
+    let el_creature = document.querySelector('#creature');
+    let el_creature_info = document.querySelector('#creature-info');
+    let el_box = document.querySelector('#box');
+
+    let g_low = document.querySelector('#g-low');
+    let g_high = document.querySelector('#g-high');
+
+    let g_creature = document.querySelector('#g-creature').getContext('2d');
+    g_creature.canvas.width = 390;
+    g_creature.canvas.height = 390;
+    let g_small = document.createElement('canvas').getContext('2d');
+    g_small.canvas.width = 10;
+    g_small.canvas.height = 10;
+    g_small.canvas.style['image-rendering'] = 'pixelated';
+
+    let bt_new_game = document.querySelector('#new-game');
+    let bt_guess = document.querySelector('#guess');
+
+    let utter = new SpeechSynthesisUtterance();
+    if(utter) {
+        utter.lang = 'ko';
+    }
+
+    Array.prototype.slice.call(document.querySelector('#minus').querySelectorAll('.button')).forEach(el => {
+        el.addEventListener('click', (e) => {
+            let n = parseInt(e.target.id.split('m')[1]);
+            if(is_rolling) {
+                to_num = to_num - n;
+            }
+            else {
+                to_num = parseInt(el_number.value) - n;
+            }
+            is_rolling = true;
+        });
+    });
+
+    Array.prototype.slice.call(document.querySelector('#plus').querySelectorAll('.button')).forEach(el => {
+        el.addEventListener('click', (e) => {
+            let n = parseInt(e.target.id.split('p')[1]);
+            if(is_rolling) {
+                to_num = to_num + n;
+            }
+            else {
+                to_num = parseInt(el_number.value) + n;
+            }
+            is_rolling = true;
+        });
+    });
+
+    let the_number = 0;
+    let to_num = 0;
+    let num = 0;
+    let is_rolling = false;
+
+    let nth = 0;
+    let challenge_limit = 10;
+
+    // 생물 데이터
+    let creature_data = {};
+    let data_loaded = false;
+
+    // TSV 데이터를 URL에서 fetch
+    const TSV_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/data/data.tsv';
+    const BASE_IMAGE_URL = 'https://www.hanmiu.cc/play/evt/25_creatures/assets/';
+
+    async function loadCreatureData() {
+        try {
+            const response = await fetch(TSV_URL);
+            const tsvText = await response.text();
+            
+            const lines = tsvText.trim().split('\n');
+            // 첫 줄(헤더) 제외
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split('\t');
+                if (parts.length >= 4) {
+                    const filename = parts[0].normalize('NFC'); // NFC 정규화
+                    const desc = parts[2];
+                    const className = parts[3];
+                    
+                    // 파일명에서 이름 추출 (확장자 제거)
+                    const name = filename.replace('.png', '').split('_').slice(1).join('_');
+                    
+                    creature_data[i] = {
+                        name: name,
+                        desc: desc,
+                        class: className,
+                        filename: filename
+                    };
+                }
+            }
+            data_loaded = true;
+            console.log(`Loaded ${Object.keys(creature_data).length} creatures`);
+        } catch (error) {
+            console.error('Failed to load creature data:', error);
+            alert('데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요.');
+        }
+    }
+
+    function getImageURL(number) {
+        if (!creature_data[number]) return '';
+        // NFC 정규화된 파일명을 URL 인코딩
+        return BASE_IMAGE_URL + encodeURIComponent(creature_data[number].filename);
+    }
+
+    function restart() {
+        if (!data_loaded) {
+            alert('데이터를 불러오는 중입니다. 잠시만 기다려주세요.');
+            setTimeout(restart, 500);
+            return;
+        }
+
+        g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
+        g_low.innerHTML = '';
+        g_high.innerHTML = '';
+        let min = parseInt(el_min.value);
+        let max = parseInt(el_max.value);
+        if(min > max) {
+            el_min.value = max;
+            el_max.value = min;
+            min = parseInt(el_min.value);
+            max = parseInt(el_max.value);
+        }
+        el_low.textContent = min - 1;
+        el_mid.textContent = '?';
+        el_high.textContent = max + 1;
+
+        the_number = min + Math.floor(Math.random() * (max - min + 1));
+
+        el_hint.textContent = `${min} 부터 ${max} 중에 하나입니다.`;
+        el_number.value = 0;
+        el_judge.textContent = 'ㅤ';
+
+        if (creature_data[the_number]) {
+            const hiddenClass = '?';
+            el_creature_info.innerHTML = `
+                <div class="creature-name">?</div>
+                <div class="creature-desc">${hiddenClass} 반</div>
+            `;
+        }
+
+        el_creature.style.borderRadius = '200px';
+        el_creature.style.border = '1px solid #dbdbdb';
+
+        to_num = 0;
+        num = 0;
+        nth = 1;
+        let d = max - min;
+        if(d > 100) {
+            challenge_limit = 20;
+        }
+        else if(d > 20) {
+            challenge_limit = 15;
+        }
+        else {
+            challenge_limit = 8;
+        }
+        el_nth.textContent = nth;
+        el_remain.textContent = challenge_limit - 1;
+
+        let img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = getImageURL(the_number);
+
+        g_small.clearRect(0, 0, g_small.canvas.width, g_small.canvas.height);
+        img.addEventListener('load', (e) => {
+            g_small.drawImage(e.target, 0, 0, g_small.canvas.width, g_small.canvas.height);
+            g_creature.drawImage(g_small.canvas, 0, 0, g_creature.canvas.width, g_creature.canvas.height);
+            g_creature.canvas.style.filter = 'blur(5px) grayscale(1) brightness(0.5) contrast(5)';
+            g_creature.canvas.style.transform = `rotate(${Math.random()*360}deg)`;
+        });
+        img.addEventListener('error', () => {
+            console.error('Failed to load image:', img.src);
+        });
+    }
+
+    function loadMidImage(e) {
+        g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
+        g_creature.drawImage(e.target, 0, 0);
+        setTimeout(() => {
+            g_creature.canvas.style.filter = '';
+            g_creature.canvas.style.transform = `rotate(0deg)`;
+        }, 100);
+    }
+
+    function guess() {
+        if (!data_loaded) {
+            alert('데이터를 불러오는 중입니다.');
+            return;
+        }
+
+        is_rolling = false;
+        let number = parseInt(el_number.value);
+
+        let img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = getImageURL(number);
+
+        if(number < the_number) {
+            el_judge.textContent = `${number} 보다 큽니다.`;
+            el_low.textContent = number;
+            if(creature_data[number]) {
+                g_low.innerHTML = `<img src="${img.src}" style="width: 39px; height: 39px; filter: blur(5px); transition: 2s all; opacity: 0">`;
+                setTimeout(() => {
+                    g_low.querySelector('img').style.filter = '';
+                    g_low.querySelector('img').style.opacity = 1;
+                }, 1);
+            }
+            if(utter) {
+                utter.text = el_judge.textContent;
+                speechSynthesis.speak(utter);
+            }
+        }
+        else if(number > the_number) {
+            el_judge.textContent = `${number} 보다 작습니다.`;
+            el_high.textContent = number;
+            if(creature_data[number]) {
+                g_high.innerHTML = `<img src="${img.src}" style="width: 39px; height: 39px; filter: blur(5px); transition: 2s all; opacity: 0">`;
+                setTimeout(() => {
+                    g_high.querySelector('img').style.filter = '';
+                    g_high.querySelector('img').style.opacity = 1;
+                }, 1);
+            }
+            if(utter) {
+                utter.text = el_judge.textContent;
+                speechSynthesis.speak(utter);
+            }
+        }
+        else if(number === the_number) {
+            const correctImg = new Image();
+            correctImg.src = getImageURL(20); // 피카츄 대신 다른 이미지로 교체 가능
+            el_judge.innerHTML = `맞아요! ${number}번 생물은`;
+            el_mid.textContent = number;
+
+            el_creature.style.borderRadius = '0px';
+            el_creature.style.border = '1px solid transparent';
+            
+            let mainImg = new Image();
+            mainImg.crossOrigin = 'anonymous';
+            mainImg.src = getImageURL(the_number);
+            mainImg.addEventListener('load', loadMidImage);
+
+            if (creature_data[number]) {
+                el_creature_info.innerHTML = `
+                    <div class="creature-name">${creature_data[number].name}</div>
+                    <div class="creature-desc">${creature_data[number].desc}</div>
+                    <div class="creature-desc">${creature_data[number].class} 반</div>
+                `;
+            }
+
+            let el = document.createElement('div');
+            el.className = 'captured';
+            el.innerHTML = `<img src='${mainImg.src}'><label>${the_number}번, 도전:${nth}</label><br><label>${creature_data[number].name}</label>`;
+            el_box.insertBefore(el, el_box.firstElementChild);
+
+            if(utter && creature_data[number]) {
+                utter.text = `맞아요! ${number}, 번 생물은 ${creature_data[number].name}! ${creature_data[number].class}반`;
+                speechSynthesis.speak(utter);
+            }
+        }
+
+        nth += 1;
+        el_nth.textContent = nth;
+        el_remain.textContent = challenge_limit - nth;
+
+        if(number !== the_number && nth === challenge_limit) {
+            el_judge.textContent = `💨 ${the_number}번 생물이 도망갔습니다.`;
+            setTimeout(restart, 4000);
+
+            if(utter) {
+                utter.text = `${the_number}, 번 생물이 도망갔습니다.`;
+                speechSynthesis.speak(utter);
+            }
+        }
+    }
+
+    el_min.addEventListener('input', (e) => {
+        let n = parseInt(e.target.value);
+        n = Math.max(Math.min(n, 122), 1);
+        e.target.value = n;
+    });
+
+    el_max.addEventListener('input', (e) => {
+        let n = parseInt(e.target.value);
+        n = Math.max(Math.min(n, 122), 1);
+        e.target.value = n;
+    });
+
+    el_number.addEventListener('input', (e) => {
+        is_rolling = false;
+        to_num = parseInt(el_number.value);
+    });
+
+    bt_new_game.addEventListener('click', () => {
+        restart();
+    });
+
+    bt_guess.addEventListener('click', () => {
+        guess();
+    });
+
+    window.document.addEventListener('touchmove', e => {
+        if(e.scale !== 1) {
+            e.preventDefault();
+        }
+    }, {passive: false});
+
+    function loop() {
+        if(is_rolling) {
+            num += (to_num - num) * 0.1;
+            let n = Math.round(num);
+            el_number.value = n;
+            if(n === to_num) {
+                is_rolling = false;
+            }
+        }
+        requestAnimationFrame(loop);
+    }
+
+    // 페이지 로드 시 데이터 불러오기
+    loadCreatureData().then(() => {
+        restart();
+        loop();
+    });
+</script>
