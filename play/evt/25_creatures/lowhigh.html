@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>나는 몇 번째 신기한 생물일까?</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
@@ -15,12 +16,78 @@
       user-select: none;
       touch-action: pan-x pan-y;
       margin: 0; 
-      padding: 0; /* 1. 모바일 오버플로우 방지 */
+      padding: 0;
       background: #f8f9fa;
-      overflow-x: hidden; /* 2. 가로 스크롤바 강제 숨김 */
+      overflow-x: hidden;
     }
 
     #h1 { margin-top: 20px; margin-bottom: 10px; font-size: 32px; font-family: 'Jua', sans-serif; color: #333; }
+
+    /* 프리셋 UI */
+    #preset-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 15px 0 10px 0;
+      padding: 10px;
+    }
+    #preset-section label {
+      font-size: 14px;
+      color: #666;
+      font-weight: bold;
+    }
+    .preset-btn {
+      font-size: 14px;
+      padding: 6px 12px;
+      background: linear-gradient(180deg, #f0f4ff 0%, #e8efff 100%);
+      border: 1.5px solid #d0deff;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    .preset-btn:hover {
+      background: linear-gradient(180deg, #e0eaff 0%, #d8e5ff 100%);
+      transform: translateY(-1px);
+    }
+    .preset-btn:active {
+      transform: translateY(0);
+    }
+    #shuffle-btn {
+      font-size: 14px;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    #shuffle-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    #shuffle-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .shuffle-feedback {
+      font-size: 18px;
+      color: #667eea;
+      margin: 10px 0;
+      font-weight: bold;
+      animation: fadeInOut 2s ease-in-out;
+    }
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
 
     #find-range { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
     #find-range input { font-size: 18px; padding: 5px; border: 2px solid #ddd; border-radius: 5px; transition: border-color 0.3s; }
@@ -47,15 +114,10 @@
     #g-low, #g-high { display: inline-block; width: 50px; height: 50px; }
     #g-low img, #g-high img { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; }
 
-    #range-sentence { margin-top: 6px; font-size: 16px; color: #5c6b8a; cursor: pointer; display: none; align-items: center; gap: 8px; justify-content: center; padding: 8px 12px; border-radius: 10px; user-select: none; border: 1px dashed #cfd8ff; background: #f6f8ff; }
-    #range-sentence:hover { background: #eef2ff; }
-    #range-sentence:active { transform: scale(.98); }
-
     .range {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
       padding: 6px 12px;
       min-width: 44px;
       border-radius: 999px;
@@ -65,13 +127,9 @@
       transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
       font-weight: 700;
     }
-    .range:hover { transform: translateY(-1px) scale(1.03); }
-    .range:active { transform: translateY(0) scale(.98); }
     #low { background: linear-gradient(180deg, #eaf3ff 0%, #f4f8ff 100%); border-color: #cfe1ff; }
     #mid { background: linear-gradient(180deg, #f4f7ff 0%, #f9fbff 100%); border-color: #dfe7ff; }
     #high { background: linear-gradient(180deg, #ffecec 0%, #fff5f5 100%); border-color: #ffd6d6; }
-    .range.active-low { background: rgba(74,144,226,.14); color: #2e63aa; box-shadow: 0 0 0 3px rgba(74,144,226,.12); }
-    .range.active-high { background: rgba(231,76,60,.14); color: #b83427; box-shadow: 0 0 0 3px rgba(231,76,60,.12); }
     #low::before { content: '◀'; font-size: 12px; margin-right: 6px; opacity: .6; }
     #high::after { content: '▶'; font-size: 12px; margin-left: 6px; opacity: .6; }
 
@@ -84,7 +142,6 @@
 
     #grid-container { 
       margin: 20px auto; 
-      /* max-width: 600px; */ /* v3에서 제어하므로 이 줄 제거 */
       padding: 15px; 
       background: white; 
       border-radius: 12px; 
@@ -97,8 +154,6 @@
     .grid-cell:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     .grid-cell.disabled { background-color: #e0e0e0; color: #999; cursor: not-allowed; }
     .grid-cell.enabled { color: white; font-weight: bold; }
-    .grid-cell.empty { background: transparent; border: none; cursor: default; }
-    .grid-cell.empty:hover { transform: none; box-shadow: none; }
 
     .grid-cell.correct { border: 2px solid #ffd700; box-shadow: 0 0 0 3px rgba(255,215,0,.45); animation: pulse 1s ease-in-out 3; color: #222; }
     .grid-cell.mark-low { outline: 3px solid #4a90e2; }
@@ -112,11 +167,25 @@
     #judge { 
       margin-top: 15px; 
       font-size: 24px; 
-      min-height: 31px; /* 3. height -> min-height (힌트 2줄 방지) */
+      min-height: 31px;
       color: #333; 
       font-weight: bold;
-      word-break: keep-all; /* 4. 힌트 줄바꿈 개선 */
+      word-break: keep-all;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: background 0.2s;
     }
+    #judge:hover {
+      background: #f0f4ff;
+    }
+    #judge::after {
+      content: ' 🔊';
+      font-size: 18px;
+      opacity: 0.6;
+      margin-left: 5px;
+    }
+    
     .creature-name { font-family: 'Jua', sans-serif; font-size: 32px; margin-bottom: 8px; margin-top: 15px; color: #333; }
     .creature-desc { font-size: 16px; margin-bottom: 5px; color: #666; }
     .creature-author { font-size: 14px; color: #999; font-style: italic; }
@@ -127,7 +196,6 @@
     .captured img { width: 78px; height: 78px; object-fit: contain; border-radius: 5px; }
     .captured label { font-size: 10px; text-align: center; margin-top: 3px; color: #666; }
 
-    /* 기존 모바일 (768px) 스타일 */
     @media (max-width: 768px) {
       #h1 { font-size: 24px; }
       #creature-container { max-width: 280px; }
@@ -143,19 +211,19 @@
       .creature-desc { font-size: 14px; }
       #box { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; }
       .captured img { width: 70px; height: 70px; }
-      /* #grid-container { max-width: 95%; padding: 10px; } */ /* v3에서 제어 */
       .grid-cell { font-size: 10px; }
+      #preset-section { font-size: 12px; padding: 8px; }
+      .preset-btn { font-size: 12px; padding: 5px 10px; }
+      #shuffle-btn { font-size: 12px; padding: 5px 12px; }
     }
 
     button:focus, input:focus, .button:focus, .range:focus { outline: 2px solid #4a90e2; outline-offset: 2px; }
     .loading { color: #999; font-style: italic; }
-    
 
-    /* === v3 overrides: dynamic gap, centering, mobile sizes === */
     :root {
         --col-gap: clamp(24px, 2.5vw, 32px);
         --chart-col: clamp(320px, 35vw, 420px);
-        --panel-max: 100%; /* 5. panel-max 원래대로 복원 (이미지 크기 복원) -> 100%로 바꿔야 문제 해결 */
+        --panel-max: 100%;
     }
 
     #layout {
@@ -163,10 +231,9 @@
         width: 100%;
         max-width: 1100px;
         margin: 0 auto;
-        padding: 0 12px; /* body 대신 여기서 좌우 여백 */
+        padding: 0 12px;
     }
 
-    /* 1열일 때 (기본) 중앙 정렬 */
     #layout:not(.two-col) #right-pane {
         max-width: var(--panel-max);
         margin: 0 auto;
@@ -185,13 +252,11 @@
         margin-right: auto;
     }
 
-    /* 모바일 기본 폭 개선 (768px 미만) */
     @media (max-width: 768px) {
         #layout { max-width: 640px; padding: 0 10px; }
         #box { max-width: 640px; }
     }
 
-    /* 데스크탑 2열 (1024px 이상) */
     @media (min-width: 1024px) {
         #layout.two-col {
             display: grid;
@@ -222,10 +287,9 @@
         }
     }
 
-    /* 6. 태블릿 (600px ~ 1023px) - clamp() 최소값 제거 */
     @media (min-width: 600px) and (max-width: 1023px) {
         #grid-container {
-            width: 100%; /* clamp(320px, 100%, 520px) -> 100% */
+            width: 100%;
             max-width: 520px;
         }
 
@@ -238,10 +302,9 @@
         }
     }
 
-    /* 7. 작은 모바일 (599px 이하) - clamp() 최소값 제거 */
     @media (max-width: 599px) {
         #grid-container {
-            width: 100%; /* clamp(280px, 100%, 340px) -> 100% */
+            width: 100%;
             max-width: 340px;
         }
 
@@ -264,6 +327,12 @@
 <body>
   <div id="h1">나는 몇 번째 신기한 생물일까?</div>
 
+  <div id="preset-section">
+    <div id="preset-buttons"></div>
+    <button id="shuffle-btn" disabled title="다시 섞기" aria-label="다시 섞기">🔀</button>
+  </div>
+  <div id="shuffle-feedback"></div>
+
   <div id="find-range">
     <input id="min" type="number" step="1" value="1" min="1" />
     <div class="button" id="new-game" tabindex="0">찾기</div>
@@ -281,15 +350,13 @@
     <div id="guess" tabindex="0">일까?</div>
   </div>
 
-  <div id="lowhigh" aria-label="경계 숫자 미리보기 토글">
+  <div id="lowhigh" aria-label="경계 숫자 미리보기">
     <span id="g-low"></span>
-    <span class="range" id="low" title="왼쪽 경계 미리보기 토글" role="button" tabindex="0">?</span> &lt;
-    <span class="range" id="mid">?</span> &lt;
-    <span class="range" id="high" title="오른쪽 경계 미리보기 토글" role="button" tabindex="0">?</span>
+    <span class="range" id="low">?</span> <span id="symbol-low">&lt;</span>
+    <span class="range" id="mid">?</span> <span id="symbol-high">&lt;</span>
+    <span class="range" id="high">?</span>
     <span id="g-high"></span>
   </div>
-
-  <div id="range-sentence" role="button" tabindex="0" aria-live="polite" aria-label="현재 범위를 다시 말해주기"></div>
 
   <button id="grid-toggle-btn">🔢 숫자 차트 보기</button>
 
@@ -306,7 +373,10 @@
       </div>
       <div id="creature-info"></div>
       <div id="box"></div>
-    </div></div><script>
+    </div>
+  </div>
+
+  <script>
 'use strict';
 // DOM 요소
 const el_min = document.querySelector('#min');
@@ -319,6 +389,8 @@ const el_judge = document.querySelector('#judge');
 const el_low = document.querySelector('#low');
 const el_mid = document.querySelector('#mid');
 const el_high = document.querySelector('#high');
+const el_symbol_low = document.querySelector('#symbol-low');
+const el_symbol_high = document.querySelector('#symbol-high');
 const el_creature = document.querySelector('#creature');
 const el_creature_info = document.querySelector('#creature-info');
 const el_box = document.querySelector('#box');
@@ -327,18 +399,43 @@ const g_high = document.querySelector('#g-high');
 const grid_toggle_btn = document.querySelector('#grid-toggle-btn');
 const grid_container = document.querySelector('#grid-container');
 const number_grid = document.querySelector('#number-grid');
-const el_range_sentence = document.querySelector('#range-sentence');
 const layout = document.querySelector('#layout');
+const preset_buttons = document.querySelector('#preset-buttons');
+const shuffle_btn = document.querySelector('#shuffle-btn');
+const shuffle_feedback = document.querySelector('#shuffle-feedback');
 
 // 캔버스
 const g_creature = document.querySelector('#g-creature').getContext('2d');
+let currentImageData = null; // 캔버스 이미지 저장용
+
 function updateCanvasSize() {
-  // CSS가 @media 쿼리로 #creature 크기를 이미 제어하고 있으므로,
-  // JS는 캔버스의 *해상도*만 맞춰줍니다.
   const size = window.innerWidth <= 768 ? 280 : 390;
-  g_creature.canvas.width = size;
-  g_creature.canvas.height = size;
+  const oldWidth = g_creature.canvas.width;
+  const oldHeight = g_creature.canvas.height;
+  
+  // 크기가 실제로 변경될 때만 처리
+  if (oldWidth !== size || oldHeight !== size) {
+    // 현재 이미지 저장
+    if (currentImageData) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = oldWidth;
+      tempCanvas.height = oldHeight;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(g_creature.canvas, 0, 0);
+      
+      // 캔버스 크기 변경
+      g_creature.canvas.width = size;
+      g_creature.canvas.height = size;
+      
+      // 이미지 다시 그리기
+      g_creature.drawImage(tempCanvas, 0, 0, oldWidth, oldHeight, 0, 0, size, size);
+    } else {
+      g_creature.canvas.width = size;
+      g_creature.canvas.height = size;
+    }
+  }
 }
+
 updateCanvasSize();
 window.addEventListener('resize', () => { updateCanvasSize(); updateLayoutMode(); });
 window.addEventListener('orientationchange', updateLayoutMode); 
@@ -351,13 +448,62 @@ const bt_guess = document.querySelector('#guess');
 
 // TTS
 let utter = new SpeechSynthesisUtterance();
-if (utter) utter.lang = 'ko';
+if (utter) {
+  utter.lang = 'ko-KR';
+  // 더 자연스러운 음성 찾기
+  window.speechSynthesis.onvoiceschanged = () => {
+    const voices = window.speechSynthesis.getVoices();
+    const koreanVoice = voices.find(voice => 
+      voice.lang.startsWith('ko') && 
+      (voice.name.includes('Google') || voice.name.includes('Premium') || voice.name.includes('Enhanced'))
+    ) || voices.find(voice => voice.lang.startsWith('ko'));
+    
+    if (koreanVoice) {
+      utter.voice = koreanVoice;
+    }
+  };
+}
 
 // 게임 상태
 let the_number = 0, to_num = 0, num = 0, is_rolling = false, nth = 0;
 let challenge_limit = 10; let current_low = 0, current_high = 0;
 let correctNumber = null; 
-let lowPreviewOn = false, highPreviewOn = false; 
+let game_in_progress = false; // 게임 진행 중 플래그
+
+// 셔플 맵 (게임상 번호 → 원본 번호)
+let shuffled_map = {};
+
+// Confetti 효과
+function triggerConfetti() {
+  const duration = 3000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+  function randomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+    });
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+    });
+  }, 250);
+}
 
 // 데이터
 let creature_data = {}; let data_loaded = false; let MAX_CREATURES = 125; 
@@ -391,27 +537,111 @@ function getRainbowColor(index, total) {
   const hue = (index / Math.max(total, 1)) * 360; return `hsl(${hue}, 80%, 60%)`;
 }
 
-// 그리드 생성
+// 셔플 함수
+function shuffleCreatures() {
+  const numbers = Array.from({length: MAX_CREATURES}, (_, i) => i + 1);
+  
+  // Fisher-Yates 셔플
+  for (let i = numbers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+  }
+  
+  // 맵핑 생성: 게임상 번호 → 원본 번호
+  shuffled_map = {};
+  numbers.forEach((original, index) => {
+    shuffled_map[index + 1] = original;
+  });
+  
+  // 피드백 표시
+  shuffle_feedback.textContent = '🎉 신기한 생물들이 찾아와 줄을 섰다!';
+  shuffle_feedback.classList.add('shuffle-feedback');
+  setTimeout(() => {
+    shuffle_feedback.textContent = '';
+    shuffle_feedback.classList.remove('shuffle-feedback');
+  }, 2000);
+}
+
+// 프리셋 버튼 생성 (스마트 라운딩)
+function generatePresets(max) {
+  const presets = [];
+  
+  if (max <= 20) {
+    presets.push(5, 10, 15, max);
+  } else if (max <= 50) {
+    presets.push(5, 10, 20, 30, max);
+  } else if (max <= 100) {
+    presets.push(10, 25, 50, 75, max);
+  } else if (max <= 200) {
+    presets.push(20, 50, 100, 150, max);
+  } else {
+    // 더 큰 범위
+    const step = Math.ceil(max / 5);
+    const rounded_step = Math.ceil(step / 10) * 10; // 10 단위로 반올림
+    for (let i = 1; i <= 4; i++) {
+      presets.push(rounded_step * i);
+    }
+    presets.push(max);
+  }
+  
+  // 중복 제거 및 정렬
+  return [...new Set(presets)].filter(p => p > 0 && p <= max).sort((a, b) => a - b);
+}
+
+function updatePresetButtons() {
+  const max = parseInt(el_max.value);
+  const presets = generatePresets(max);
+  
+  preset_buttons.innerHTML = '';
+  presets.forEach(preset => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.textContent = preset;
+    btn.addEventListener('click', () => {
+      el_max.value = preset;
+      createGrid();
+      if (game_in_progress) {
+        updateGrid(current_low, current_high);
+      }
+    });
+    preset_buttons.appendChild(btn);
+  });
+}
+
+// 그리드 생성 (범위에 맞게)
 function createGrid() {
   number_grid.innerHTML = '';
-  const rows = Math.ceil(MAX_CREATURES / 10);
+  const min = parseInt(el_min.value);
+  const max = parseInt(el_max.value);
+  const rangeSize = max - min + 1;
+  const rows = Math.ceil(rangeSize / 10);
   const totalCells = rows * 10;
-  for (let i = 1; i <= totalCells; i++) {
+  
+  for (let i = 0; i < totalCells; i++) {
     const cell = document.createElement('div');
     cell.className = 'grid-cell';
-    if (i <= MAX_CREATURES) {
-      cell.textContent = i; cell.dataset.number = i; cell.tabIndex = 0;
+    const cellNumber = min + i;
+    
+    if (cellNumber <= max) {
+      cell.textContent = cellNumber;
+      cell.dataset.number = cellNumber;
+      cell.tabIndex = 0;
       cell.addEventListener('click', () => {
         if (!cell.classList.contains('disabled')) {
-          el_number.value = i; to_num = i; is_rolling = false; guess();
+          el_number.value = cellNumber;
+          to_num = cellNumber;
+          is_rolling = false;
+          guess();
         }
       });
       cell.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cell.click(); }
+        if (e.key === 'Enter' || e.key === ' ') { 
+          e.preventDefault(); 
+          cell.click(); 
+        }
       });
-    } else {
-      cell.classList.add('empty');
     }
+    
     number_grid.appendChild(cell);
   }
 }
@@ -420,17 +650,16 @@ function createGrid() {
 function applyMarksToCell(cell, n, low, high) {
   cell.classList.remove('mark-low', 'mark-high', 'correct');
   if (correctNumber && n === correctNumber) cell.classList.add('correct');
-  if (lowPreviewOn && n === low) cell.classList.add('mark-low');
-  if (highPreviewOn && n === high) cell.classList.add('mark-high');
+  if (n === low) cell.classList.add('mark-low');
+  if (n === high) cell.classList.add('mark-high');
 }
 
 // 그리드 업데이트
 function updateGrid(low, high) {
-  const min = parseInt(el_min.value); // 그리드 비활성화 기준
+  const min = parseInt(el_min.value);
   const max = parseInt(el_max.value);
   const cells = number_grid.querySelectorAll('.grid-cell');
 
-  // current_low/high가 min/max 경계를 벗어나지 않게 처리
   const displayLow = Math.max(low, min - 1);
   const displayHigh = Math.min(high, max + 1);
   
@@ -440,8 +669,6 @@ function updateGrid(low, high) {
     const n = parseInt(cell.dataset.number);
     if (isNaN(n)) return;
 
-    // n이 displayLow/High (보이는 범위) 밖이거나,
-    // n이 min/max (게임 범위) 밖이면 비활성화
     if (n <= displayLow || n >= displayHigh || n < min || n > max) { 
       cell.classList.add('disabled'); cell.classList.remove('enabled');
       cell.style.background = '#e0e0e0';
@@ -476,17 +703,30 @@ async function loadCreatureData() {
     }
     MAX_CREATURES = Object.keys(creature_data).length;
     el_max.value = MAX_CREATURES; el_max.max = MAX_CREATURES; el_min.max = MAX_CREATURES; el_number.max = MAX_CREATURES;
+    
+    // 프리셋 버튼 생성
+    updatePresetButtons();
+    
+    // 초기 셔플
+    shuffleCreatures();
+    
     createGrid();
     data_loaded = true;
+    
+    // 다시 섞기 버튼 활성화
+    shuffle_btn.disabled = false;
   } catch (error) {
     console.error('❌ Failed to load creature data:', error);
     alert('데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요.');
   }
 }
 
-function getImageURL(number) { return creature_data[number] ? BASE_IMAGE_URL + encodeURIComponent(creature_data[number].filename) : ''; }
+function getImageURL(gameNumber) {
+  const originalNumber = shuffled_map[gameNumber] || gameNumber;
+  return creature_data[originalNumber] ? BASE_IMAGE_URL + encodeURIComponent(creature_data[originalNumber].filename) : '';
+}
 
-function loadBlurredImage(number) {
+function loadBlurredImage(gameNumber) {
   return new Promise((resolve, reject) => {
     const img = new Image(); img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -494,13 +734,15 @@ function loadBlurredImage(number) {
       g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
       g_creature.drawImage(g_small.canvas, 0, 0, g_creature.canvas.width, g_creature.canvas.height);
       g_creature.canvas.style.filter = 'blur(5px) grayscale(1) brightness(0.5) contrast(5)';
-      g_creature.canvas.style.transform = `rotate(${Math.random() * 360}deg)`; resolve();
+      g_creature.canvas.style.transform = `rotate(${Math.random() * 360}deg)`;
+      currentImageData = true; // 이미지 로드됨 표시
+      resolve();
     };
-    img.onerror = reject; img.src = getImageURL(number);
+    img.onerror = reject; img.src = getImageURL(gameNumber);
   });
 }
 
-function loadFullImage(number) {
+function loadFullImage(gameNumber) {
   return new Promise((resolve, reject) => {
     const img = new Image(); img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -508,67 +750,78 @@ function loadFullImage(number) {
       const scale = Math.min(g_creature.canvas.width / img.width, g_creature.canvas.height / img.height);
       const x = (g_creature.canvas.width - img.width * scale) / 2; const y = (g_creature.canvas.height - img.height * scale) / 2;
       g_creature.drawImage(img, x, y, img.width * scale, img.height * scale);
-      setTimeout(() => { g_creature.canvas.style.filter = ''; g_creature.canvas.style.transform = 'rotate(0deg)'; }, 100); resolve();
+      setTimeout(() => { g_creature.canvas.style.filter = ''; g_creature.canvas.style.transform = 'rotate(0deg)'; }, 100);
+      currentImageData = true; // 이미지 로드됨 표시
+      resolve();
     };
-    img.onerror = reject; img.src = getImageURL(number);
+    img.onerror = reject; img.src = getImageURL(gameNumber);
   });
 }
 
-// 경계 이미지 미리보기 업데이트
+// 경계 이미지 자동 표시
 function updateBoundaryPreview() {
   g_low.innerHTML = '';
   g_high.innerHTML = '';
-  if (lowPreviewOn && current_low >= 1 && creature_data[current_low]) {
+  
+  // 항상 표시
+  if (current_low >= 1 && shuffled_map[current_low] && creature_data[shuffled_map[current_low]]) {
     const imgL = new Image();
     imgL.src = getImageURL(current_low);
     imgL.style.transition = '0.3s all';
     g_low.appendChild(imgL);
   }
-  if (highPreviewOn && current_high >= 1 && creature_data[current_high]) {
+  
+  if (current_high >= 1 && shuffled_map[current_high] && creature_data[shuffled_map[current_high]]) {
     const imgH = new Image();
     imgH.src = getImageURL(current_high);
     imgH.style.transition = '0.3s all';
     g_high.appendChild(imgH);
   }
-  el_low.classList.toggle('active-low', lowPreviewOn);
-  el_high.classList.toggle('active-high', highPreviewOn);
 }
 
-// 8. TTS 힌트 수정 (항상 min/max 범위 포함)
+// 경계 기호 업데이트 (< 또는 ≤)
+function updateBoundarySymbols() {
+  const min = parseInt(el_min.value);
+  const max = parseInt(el_max.value);
+  
+  // 양쪽 다 범위 밖인지 확인 (시작 상태)
+  const bothOutOfRange = (current_low < min) && (current_high > max);
+  
+  if (bothOutOfRange) {
+    // 시작 상태: 양쪽 다 <
+    el_symbol_low.innerHTML = '&lt;';
+    el_symbol_high.innerHTML = '&lt;';
+  } else {
+    // 개별 체크
+    el_symbol_low.innerHTML = (current_low < min) ? '&le;' : '&lt;';
+    el_symbol_high.innerHTML = (current_high > max) ? '&le;' : '&lt;';
+  }
+}
+
 function buildRangeSentence() {
     const min = parseInt(el_min.value);
     const max = parseInt(el_max.value);
 
-    // current_low/high가 아직 게임 범위 밖(초기값)인지 확인
-    // (current_low는 min보다 1 작게 시작)
     const low_is_active = (current_low >= min); 
-    // (current_high는 max보다 1 크게 시작)
     const high_is_active = (current_high <= max); 
 
     if (low_is_active && high_is_active) {
-        // 1. 둘 다 활성화: (예: 50 ~ 100)
         return `${current_low} 보다 크고, ${current_high} 보다 작다`;
     } else if (low_is_active && !high_is_active) {
-        // 2. Low만 활성화: (예: 50 ~ 125)
-        return `${current_low} 보다 크고, ${max} 보다 작다`;
+        return `${current_low} 보다 크고, ${max} 보다 같거나 작다`;
     } else if (!low_is_active && high_is_active) {
-        // 3. High만 활성화: (예: 1 ~ 100)
-        return `${min} 보다 크고, ${current_high} 보다 작다`;
+        return `${min} 보다 같거나 크고, ${current_high} 보다 작다`;
     } else {
-        // 4. 둘 다 비활성화: (게임 시작 상태, 1 ~ 125)
         return `${min} 부터 ${max} 중에 하나입니다.`;
     }
 }
-function updateRangeSentence() {
-  const text = buildRangeSentence();
-  el_range_sentence.textContent = text;
-  // 정답 맞췄거나, 초기 힌트와 중복일 땐 숨기기
-  const hintText = `${parseInt(el_min.value)} 부터 ${parseInt(el_max.value)} 중에 하나입니다.`;
-  el_range_sentence.style.display = (correctNumber || text === hintText) ? 'none' : 'inline-flex';
-}
-function speakRangeSentence() {
-  const text = el_range_sentence.textContent.trim();
-  if (text && utter) { utter.text = text; speechSynthesis.speak(utter); }
+
+function speakJudge() {
+  const text = el_judge.textContent.replace('🔊', '').trim();
+  if (text && utter) { 
+    utter.text = text; 
+    speechSynthesis.speak(utter); 
+  }
 }
 
 async function restart() {
@@ -576,15 +829,18 @@ async function restart() {
     alert('데이터를 불러오는 중입니다. 잠시만 기다려주세요.');
     return;
   }
+  
   g_creature.clearRect(0, 0, g_creature.canvas.width, g_creature.canvas.height);
+  currentImageData = null;
   g_low.innerHTML = ''; g_high.innerHTML = '';
+  
   let min = parseInt(el_min.value); let max = parseInt(el_max.value);
   if (min > max) { [el_min.value, el_max.value] = [max, min]; [min, max] = [max, min]; }
   
-  current_low = min - 1; // 9. low/high 초기화 (min/max 기준)
+  current_low = min - 1;
   current_high = max + 1; 
   
-  correctNumber = null; lowPreviewOn = false; highPreviewOn = false;
+  correctNumber = null;
   el_low.textContent = current_low; el_mid.textContent = '?'; el_high.textContent = current_high;
   the_number = min + Math.floor(Math.random() * (max - min + 1));
   
@@ -592,17 +848,23 @@ async function restart() {
   el_hint.textContent = hintText; 
   
   el_number.value = Math.floor((min + max) / 2); 
-  el_judge.textContent = ''; // 10. 시작 시 메인 힌트는 비움
+  el_judge.textContent = '';
   
-  if (creature_data[the_number]) { el_creature_info.innerHTML = `<div class="creature-name">?</div><div class="creature-desc">? 반</div>`; }
+  const originalNumber = shuffled_map[the_number];
+  if (creature_data[originalNumber]) { 
+    el_creature_info.innerHTML = `<div class="creature-name">?</div><div class="creature-desc">? 반</div>`; 
+  }
   el_creature.style.borderRadius = '200px'; el_creature.style.border = '1px solid #dbdbdb';
   to_num = 0; num = 0; nth = 1;
   const d = max - min; challenge_limit = d <= 20 ? 8 : (d <= 100 ? 15 : 20);
   el_nth.textContent = nth; el_remain.textContent = challenge_limit - 1;
   
-  updateGrid(current_low, current_high); // 11. 그리드 업데이트 (min/max가 아닌 current 사용)
-  updateBoundaryPreview(); 
-  updateRangeSentence(); // range-sentence 업데이트
+  game_in_progress = true;
+  shuffle_btn.disabled = true; // 게임 중에는 섞기 비활성화
+  
+  updateGrid(current_low, current_high);
+  updateBoundaryPreview();
+  updateBoundarySymbols(); // 기호 업데이트
   
   try { await loadBlurredImage(the_number); } catch (error) { console.error('Failed to load image:', error); }
 }
@@ -614,19 +876,16 @@ async function guess() {
   const min = parseInt(el_min.value);
   const max = parseInt(el_max.value);
   
-  // 12. 기본 유효성 검사
   if (isNaN(number) || number < min || number > max) { 
       alert(`${min}부터 ${max} 사이의 숫자를 입력해주세요.`); 
       return; 
   }
 
-  // 13. 현재 범위 밖의 숫자인지 검사
   if (number <= current_low || number >= current_high) {
       alert('현재 범위 안의 숫자를 입력해주세요.');
       return;
   }
 
-  /* 14. TTS 힌트 로직 (buildRangeSentence 헬퍼 함수 재사용) */
   if (number < the_number) {
     current_low = number; 
     el_low.textContent = number;
@@ -636,7 +895,8 @@ async function guess() {
 
     updateGrid(current_low, current_high);
     updateBoundaryPreview();
-    updateRangeSentence(); 
+    updateBoundarySymbols(); // 기호 업데이트
+    
     if (utter) {
         utter.text = rangeText; 
         speechSynthesis.speak(utter);
@@ -650,22 +910,26 @@ async function guess() {
     
     updateGrid(current_low, current_high);
     updateBoundaryPreview();
-    updateRangeSentence(); 
+    updateBoundarySymbols(); // 기호 업데이트
+    
     if (utter) {
         utter.text = rangeText; 
         speechSynthesis.speak(utter);
     }
   } else {
     // 정답
+    const originalNumber = shuffled_map[number];
     el_judge.innerHTML = `🎉 맞아요! ${number}번 생물은`;
     el_mid.textContent = number; correctNumber = number; 
     el_creature.style.borderRadius = '20px'; el_creature.style.border = '1px solid transparent';
-    
-    el_range_sentence.style.display = 'none'; // 정답 맞추면 보조 힌트 숨김
+
+    // Confetti 효과!
+    triggerConfetti();
 
     try { await loadFullImage(the_number); } catch (error) { console.error('Failed to load full image:', error); }
-    if (creature_data[number]) {
-      const data = creature_data[number];
+    
+    if (creature_data[originalNumber]) {
+      const data = creature_data[originalNumber];
       el_creature_info.innerHTML = `<div class="creature-name">${data.name}</div><div class="creature-desc">${data.desc}</div><div class="creature-author">${data.class} 반 | 작가: ${data.author}</div>`;
       const el = document.createElement('div'); el.className = 'captured';
       el.innerHTML = `<img src='${getImageURL(the_number)}'><label>${the_number}번, 도전:${nth}</label><label>${data.name}</label>`;
@@ -673,44 +937,78 @@ async function guess() {
       if (utter) { utter.text = `맞아요! ${number}번 생물은 ${data.name}! ${data.class}반, 작가 ${data.author}`; speechSynthesis.speak(utter); }
     }
     updateGrid(current_low, current_high);
+    updateBoundarySymbols(); // 기호 업데이트
+    
+    game_in_progress = false;
+    shuffle_btn.disabled = false; // 게임 끝나면 섞기 활성화
   }
 
   nth += 1; el_nth.textContent = nth; el_remain.textContent = challenge_limit - nth;
+  
   if (number !== the_number && nth === challenge_limit) {
+    const originalNumber = shuffled_map[the_number];
     el_judge.textContent = `💨 ${the_number}번 생물이 도망갔습니다.`;
-    el_range_sentence.style.display = 'none'; // 실패 시 보조 힌트 숨김
     
-    if (creature_data[the_number]) {
-      const data = creature_data[the_number];
+    if (creature_data[originalNumber]) {
+      const data = creature_data[originalNumber];
       el_creature_info.innerHTML = `<div class="creature-name">${data.name}</div><div class="creature-desc">${data.desc}</div><div class="creature-author">${data.class} 반 | 작가: ${data.author}</div>`;
     }
     try { await loadFullImage(the_number); el_creature.style.borderRadius = '20px'; el_creature.style.border = '1px solid transparent'; } catch (error) { console.error('Failed to load full image:', error); }
+    
+    updateBoundarySymbols(); // 기호 업데이트
+    
+    game_in_progress = false;
+    shuffle_btn.disabled = false; // 게임 끝나면 섞기 활성화
+    
     setTimeout(restart, 5000);
     if (utter) { utter.text = `${the_number}번 생물이 도망갔습니다.`; speechSynthesis.speak(utter); }
   }
 }
 
-// 입력 제한
-el_min.addEventListener('input', (e) => { let n = parseInt(e.target.value); n = Math.max(Math.min(n, MAX_CREATURES), 1); e.target.value = isNaN(n) ? 1 : n; });
-el_max.addEventListener('input', (e) => { let n = parseInt(e.target.value); n = Math.max(Math.min(n, MAX_CREATURES), 1); e.target.value = isNaN(n) ? MAX_CREATURES : n; });
-el_number.addEventListener('input', (e) => { is_rolling = false; let n = parseInt(e.target.value); if (!isNaN(n)) { to_num = Math.max(1, Math.min(MAX_CREATURES, n)); } });
+// min/max 변경 시 바로 적용
+el_min.addEventListener('input', (e) => { 
+  let n = parseInt(e.target.value); 
+  n = Math.max(Math.min(n, MAX_CREATURES), 1); 
+  e.target.value = isNaN(n) ? 1 : n; 
+  
+  createGrid();
+  if (game_in_progress) {
+    restart();
+  }
+});
 
-// 경계 숫자 클릭/키보드 토글
-function toggleLowPreview() {
-  if (el_low.textContent !== '?' && current_low >= parseInt(el_min.value)) { lowPreviewOn = !lowPreviewOn; updateBoundaryPreview(); updateRangeSentence(); updateGrid(current_low, current_high); }
-}
-function toggleHighPreview() {
-  if (el_high.textContent !== '?' && current_high <= parseInt(el_max.value)) { highPreviewOn = !highPreviewOn; updateBoundaryPreview(); updateRangeSentence(); updateGrid(current_low, current_high); }
-}
-el_low.addEventListener('click', toggleLowPreview);
-el_high.addEventListener('click', toggleHighPreview);
-el_low.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLowPreview(); } });
-el_high.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHighPreview(); } });
+el_max.addEventListener('input', (e) => { 
+  let n = parseInt(e.target.value); 
+  n = Math.max(Math.min(n, MAX_CREATURES), 1); 
+  e.target.value = isNaN(n) ? MAX_CREATURES : n; 
+  
+  updatePresetButtons();
+  createGrid();
+  if (game_in_progress) {
+    restart();
+  }
+});
+
+el_number.addEventListener('input', (e) => { 
+  is_rolling = false; 
+  let n = parseInt(e.target.value); 
+  if (!isNaN(n)) { 
+    to_num = Math.max(1, Math.min(MAX_CREATURES, n)); 
+  } 
+});
+
+// 다시 섞기 버튼
+shuffle_btn.addEventListener('click', () => {
+  if (!game_in_progress) {
+    shuffleCreatures();
+    restart();
+  }
+});
 
 // 기타 이벤트
 bt_new_game.addEventListener('click', restart);
 bt_guess.addEventListener('click', guess);
-// 15. Enter 키 로직 수정 (input에서만)
+
 document.addEventListener('keydown', (e) => { 
     if (e.key === 'Enter') {
         if (document.activeElement === el_number) {
@@ -725,8 +1023,16 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
-el_range_sentence.addEventListener('click', speakRangeSentence);
-el_range_sentence.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); speakRangeSentence(); } });
+
+// judge 클릭 시 TTS
+el_judge.addEventListener('click', speakJudge);
+el_judge.addEventListener('keydown', (e) => { 
+  if (e.key === 'Enter' || e.key === ' ') { 
+    e.preventDefault(); 
+    speakJudge(); 
+  } 
+});
+
 document.addEventListener('touchmove', e => { if (e.scale !== 1) { e.preventDefault(); } }, { passive: false });
 
 function loop() {
@@ -740,7 +1046,10 @@ function loop() {
 // 초기화
 (async function init() {
   el_creature_info.innerHTML = '<div class="loading">데이터를 불러오는 중...</div>';
-  await loadCreatureData(); await restart(); updateLayoutMode(); loop();
+  await loadCreatureData(); 
+  await restart(); 
+  updateLayoutMode(); 
+  loop();
 })();
 </script>
 </body>
