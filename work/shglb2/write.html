@@ -1,0 +1,796 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>생활기록부</title>
+<style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, 'Malgun Gothic', sans-serif; background: #f0f4f8; }
+
+    .small { font-size: 0.8em; }
+
+    table { width: 100%; border: 1px solid black; border-collapse: collapse; }
+    td { border: 1px solid black; padding: 5px; text-align: center; }
+    td:first-child { width: 100px; }
+    td.학적-action-cell {
+        width: 32px; border: none; padding: 0 2px;
+        background: transparent;
+    }
+
+    #ui {
+        position: fixed; left: 0; top: 0; width: 100%; z-index: 100;
+        padding: 14px 20px; background: #e8f4f8;
+        border-bottom: 2px solid #b0d4e3;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .ui-row { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ui-row:last-child { margin-bottom: 0; }
+    .ui-row label { font-weight: 600; font-size: 0.9em; white-space: nowrap; }
+    .ui-hint { font-size: 0.85em; color: #456; }
+
+    button {
+        padding: 5px 12px; border: 1px solid #aaa; border-radius: 4px;
+        background: #fff; cursor: pointer; font-size: 0.85em;
+        transition: background 0.15s;
+    }
+    button:hover { background: #e0e0e0; }
+    button.btn-primary { background: #3b82f6; color: #fff; border-color: #2563eb; }
+    button.btn-primary:hover { background: #2563eb; }
+    button.btn-danger { color: #c00; border-color: #c00; }
+    button.btn-danger:hover { background: #fee; }
+    button.btn-sm { padding: 2px 7px; font-size: 0.8em; }
+
+    select, input[type="text"], textarea {
+        padding: 4px 8px; border: 1px solid #aaa; border-radius: 4px; font-size: 0.9em;
+    }
+
+    .ui-divider { color: #bbb; margin: 0 4px; user-select: none; }
+    .file-ops { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    .page {
+        margin: 50px auto; width: 800px;
+        background: #fff; padding: 30px; border-radius: 8px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    }
+    .page h2 { margin-top: 0; font-size: 1.15em; color: #1a3a5c; }
+    .page h3 { font-size: 1em; margin: 16px 0 6px; }
+
+    .control {
+        display: flex; gap: 6px; align-items: center;
+        margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0;
+    }
+    .control-sep { color: #ccc; margin: 0 6px; user-select: none; }
+
+    .사진파일명 { width: 99px; height: 127px; }
+    .download { margin-bottom: 0; }
+
+    .학적-add-wrap { margin-top: 6px; text-align: right; }
+    .remove-hakjeok {
+        padding: 1px 6px; font-size: 0.85em; line-height: 1;
+        background: #fff; border: 1px solid #ccc; border-radius: 3px;
+        cursor: pointer; color: #c00;
+    }
+    .remove-hakjeok:hover { background: #fee; }
+    .학적-row { background: #fafcff; }
+
+    @media print { #ui { display: none; } .page { box-shadow: none; } }
+</style>
+<body>
+    <div id="ui">
+        <div class="ui-row">
+            <span class="ui-hint">하늘색 빈 공간에 <b>tsv / json</b> 파일 또는 이미지 파일을 드래그 드롭하세요.</span>
+            <a href="https://good-pike-738.notion.site/2023-9e5dd137c57142619627e6c713d993ea" target="_blank" style="font-size:0.85em;">기재 요령</a>
+        </div>
+        <div class="ui-row">
+            <label>연령</label>
+            <select id="age">
+                <option value="3">3세</option>
+                <option value="4">4세</option>
+                <option value="5">5세</option>
+            </select>
+            <label>반</label>
+            <input id="class-name" type="text" value="" style="width: 80px">
+            <label>담임</label>
+            <input id="teacher-name" type="text" value="" style="width: 80px">
+            <input type="checkbox" class="by-age" title="현재 연령만 표시">
+        </div>
+        <div class="ui-row">
+            <label>어린이 이름:</label>
+            <textarea id="children" style="width: 360px; resize: vertical;" spellcheck="false" rows="1"></textarea>
+            <button id="add" class="btn-primary">추가</button>
+        </div>
+        <div class="ui-row file-ops">
+            <button id="download_tsv">tsv 다운로드</button>
+            <button id="download_json">json 다운로드</button>
+            <span class="ui-divider">|</span>
+            <button id="load">자동 저장 불러오기</button>
+            <span class="ui-divider">|</span>
+            <button id="clear" class="btn-danger">전부 비우기</button>
+        </div>
+    </div>
+    <div id="pages"></div>
+</body>
+<script src="build_page.js"></script>
+<script src="build_hml.js"></script>
+<script src="jamo.js"></script>
+<script>
+    let parser = new DOMParser();
+    let g = document.createElement('canvas').getContext('2d');
+    
+    // Base fields (non-학적)
+    let base_fields_pre = ["어린이이름","사진파일명","어린이성별","주민등록번호","주소1","주소2","주소3","주소4","대장3세","반3세","담임3세","대장4세","반4세","담임4세","대장5세","반5세","담임5세"];
+    let base_fields_post = ["수업일3세","출석일3세","결석일질병3세","결석일기타3세","결석일미인정3세","결석일소계3세","출결특기3세","수업일4세","출석일4세","결석일질병4세","결석일기타4세","결석일미인정4세","결석일소계4세","출결특기4세","수업일5세","출석일5세","결석일질병5세","결석일기타5세","결석일미인정5세","결석일소계5세","출결특기5세","검사일3세","키3세","몸무게3세","검사일4세","키4세","몸무게4세","검사일5세","키5세","몸무게5세","검진일3세","검진기관3세","검진특기3세","검진일4세","검진기관4세","검진특기4세","검진일5세","검진기관5세","검진특기5세","발달상황3세","발달상황4세","발달상황5세"];
+    
+    function get_all_fields(maxHakjeok) {
+        maxHakjeok = Math.max(maxHakjeok || 4, 4);
+        let fields = base_fields_pre.slice();
+        for(let i = 1; i <= maxHakjeok; i++) {
+            fields.push('학적날짜'+i, '학적내용'+i, '학적특기'+i);
+        }
+        return fields.concat(base_fields_post);
+    }
+    
+    let check_document_number_strings = '대장3세,대장4세,대장5세'.split(',');
+    let check_name_strings = '어린이이름,담임3세,담임4세,담임5세,검진기관3세,검진기관4세,검진기관5세'.split(',');
+    let check_cname_strings = '반3세,반4세,반5세'.split(',');
+    let check_date_strings = '어린이생년월일,검사일3세,검사일4세,검사일5세,검진일3세,검진일4세,검진일5세'.split(',');
+    let check_metric_strings = '키3세,몸무게3세,키4세,몸무게4세,키5세,몸무게5세'.split(',');
+    let check_attend_strings = '수업일3세,결석일질병3세,결석일기타3세,결석일미인정3세,수업일4세,결석일질병4세,결석일기타4세,결석일미인정4세,수업일5세,결석일질병5세,결석일기타5세,결석일미인정5세'.split(',');
+    let check_develop_strings = '발달상황3세,발달상황4세,발달상황5세'.split(',');
+    let register_strings = '입학,재학,재입학,편입학,전입학,전출,휴학,면제,유예,복학,재취학,자퇴,퇴학,수료,졸업'.split(',');
+    
+    let el_ui = document.querySelector('#ui');
+    let el_children = document.querySelector('#children'); 
+    let download_link = document.createElement('a');
+    let reader = new FileReader();
+    let photo_holders = [];
+    let timeout_id = -1;
+    
+    // ===== Date check: dynamic 학적날짜 fields =====
+    function is_date_field(className) {
+        if(check_date_strings.includes(className)) return true;
+        if(/^학적날짜\d+$/.test(className)) return true;
+        return false;
+    }
+    
+    // ===== File reading =====
+    function read_tsv(file) {
+        clear_all_pages();
+        reader.readAsText(file);
+        reader.onload = function() {
+            parseAll(reader.result);
+        };
+    }
+    
+    function read_json(file) {
+        clear_all_pages();
+        let r = new FileReader();
+        r.readAsText(file);
+        r.onload = function() {
+            try {
+                let data = JSON.parse(r.result);
+                if(Array.isArray(data)) {
+                    for(let item of data) {
+                        build_page_from_json(item);
+                    }
+                } else {
+                    build_page_from_json(data);
+                }
+                arrange_pages();
+            } catch(e) {
+                alert('JSON 파일 파싱 오류: ' + e.message);
+            }
+        };
+    }
+    
+    function build_page_from_json(obj) {
+        // Convert JSON object to cols/infos arrays
+        let hakjeok = obj['학적사항'] || [];
+        let maxH = Math.max(hakjeok.length, 4);
+        let all_fields = get_all_fields(maxH);
+        
+        let infos = [];
+        for(let field of all_fields) {
+            let m = field.match(/^학적(날짜|내용|특기)(\d+)$/);
+            if(m) {
+                let type = m[1];
+                let idx = parseInt(m[2]) - 1;
+                let key = type === '날짜' ? '날짜' : type === '내용' ? '내용' : '특기';
+                infos.push(hakjeok[idx] ? (hakjeok[idx][key] || '') : '');
+            } else {
+                infos.push(obj[field] !== undefined ? String(obj[field]) : '');
+            }
+        }
+        build_page(all_fields, infos);
+    }
+    
+    function read_photo(file, holder) {
+        if(holder) {
+            if(holder.textContent.length > 0) {
+                holder.setAttribute('alt', holder.textContent);
+            }
+            holder.textContent = '';
+            let img = new Image();
+            img.className = 'photo';
+            img.src = URL.createObjectURL(file);
+            holder.appendChild(img);
+        }
+        else {
+            for(let photo_holder of photo_holders) {
+                let for_mac_file = '';
+                for(let i = 0; i < photo_holder.textContent.length; i++) {
+                    let ch = photo_holder.textContent[i];
+                    let decompo = decomposeHangul(ch);
+                    if(decompo.length > 0) {
+                        for(let j = 0; j < decompo.length; j++) for_mac_file += decompo[j];
+                    }
+                    else {
+                        for_mac_file += ch;
+                    }
+                }
+                if(photo_holder.textContent === file.name || for_mac_file === file.name) {
+                    if(photo_holder.textContent.length > 0) {
+                        photo_holder.setAttribute('alt', photo_holder.textContent);
+                    }
+                    photo_holder.textContent = '';
+                    let img = new Image();
+                    img.className = 'photo';
+                    img.src = URL.createObjectURL(file);
+                    photo_holder.appendChild(img);
+                }
+            }
+        }
+    }
+    
+    function clear_all_pages() {
+        let pages = document.querySelectorAll('.page');
+        for(let page of pages) page.remove();
+        let hrs = document.querySelectorAll('hr');
+        for(let hr of hrs) hr.remove();
+    }
+    
+    // ===== Drag & Drop =====
+    function dropHandler(ev) {
+        ev.preventDefault();
+        
+        if(ev.target.className === '사진파일명') {
+            if (ev.dataTransfer.items) {
+                for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                    if (ev.dataTransfer.items[i].kind === 'file') {
+                        let file = ev.dataTransfer.items[i].getAsFile();
+                        let ext = file.name.split('.').pop().toLowerCase();
+                        if(ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+                            read_photo(file, ev.target);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            if (ev.dataTransfer.items) {
+                photo_holders = Array.prototype.slice.call(document.querySelectorAll('.사진파일명'));
+                for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                    if (ev.dataTransfer.items[i].kind === 'file') {
+                        let file = ev.dataTransfer.items[i].getAsFile();
+                        let ext = file.name.split('.').pop().toLowerCase();
+                        if(ext === 'tsv') read_tsv(file);
+                        if(ext === 'json') read_json(file);
+                        if(ext === 'jpg' || ext === 'jpeg' || ext === 'png') read_photo(file);
+                    }
+                }
+            }
+        }
+    }
+    
+    document.body.addEventListener('drop', dropHandler); 
+    document.body.addEventListener('dragover', function(ev) { ev.preventDefault(); });
+    
+    // ===== Validation =====
+    function check_trim(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            if(text[0] === ' ' || text[text.length - 1] === ' ' || /\s{2,}/.test(text)) return false;
+        }
+        return true;
+    }
+    
+    function check_name(el) {
+        let text = el.textContent;
+        return text.length === 0 || text.split(' ').length === 1;
+    }
+
+    function check_cname(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            if(text.split(' ').length !== 1 || text[text.length - 1] !== '반') return false;
+        }
+        return true;
+    }
+    
+    function check_document_number(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let ts = text.split('-');
+            if(ts.length !== 2 || ts[0].length !== 4 || ts[1].length !== 4) return false;
+            if(isNaN(parseInt(ts[0])) || isNaN(parseInt(ts[1]))) return false;
+        }
+        return true;
+    }
+    
+    function check_date(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let ts = text.split('.');
+            if(ts.length !== 4 || text.split(' ').length !== 3) return false;
+            if(ts[0].length !== 4) return false;
+            if(ts[1].length < 2 || ts[1].length > 3) return false;
+            if(ts[2].length < 2 || ts[2].length > 3) return false;
+            if(ts[1].trim()[0] === '0') return false;
+            if(ts[2].trim()[0] === '0') return false;
+        }
+        return true;
+    }
+    
+    function check_metric(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let ts = text.split('.');
+            if(ts.length !== 2 || ts[1].length !== 1) return false;
+            if(text.includes(' ')) return false;
+        }
+        return true;
+    }
+
+    function check_register(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let ts = text.split(' ');
+            if(ts.length !== 3 || !register_strings.includes(ts[2])) return false;
+        }
+        return true;
+    }
+
+    function check_attend(el) {
+        let text = el.textContent;
+        let tds = Array.from(el.parentElement.querySelectorAll('td'));
+        if(tds[1].textContent !== '') {
+            if(tds[3].textContent === '') tds[3].textContent = '0';
+            if(tds[4].textContent === '') tds[4].textContent = '0';
+            if(tds[5].textContent === '') tds[5].textContent = '0';
+        }
+        if(text.length > 0) {
+            let td1 = tds[1].textContent !== '' ? parseInt(tds[1].textContent) : 0;
+            let td3 = tds[3].textContent !== '' ? parseInt(tds[3].textContent) : 0;
+            let td4 = tds[4].textContent !== '' ? parseInt(tds[4].textContent) : 0;
+            let td5 = tds[5].textContent !== '' ? parseInt(tds[5].textContent) : 0;
+            let td6 = td3 + td4 + td5;
+            let td2 = td1 - td6;
+            tds[2].textContent = td2;
+            tds[6].textContent = td6;
+            if(isNaN(parseInt(text))) return false;
+        }
+        return true;
+    }
+    
+    function check_develop(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let num_sentences = text.split('.').length - 1;
+            let el_info = el.parentElement.firstElementChild.querySelector('.small');
+            if(el_info) el_info.innerHTML = '<br>글자수: ' + text.length + '<br>문장수: ' + num_sentences;
+            if(text.length < 430 || text.length > 500) return false;
+            let tr = text.trim();
+            if(tr[tr.length - 1] !== '.') return false;
+        }
+        return true;
+    }
+
+    function isValidKoreanSSN(ssn) {
+        if(!/^\d{6}-\d{7}$/.test(ssn)) return false;
+        let digits = ssn.replace('-', '').split('').map(Number);
+        let multipliers = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+        let sum = digits.slice(0, 12).reduce(function(acc, d, i) { return acc + d * multipliers[i]; }, 0);
+        return (11 - (sum % 11)) % 10 === digits[12];
+    }
+
+    function check_ssn(el) {
+        let text = el.textContent;
+        if(text.length > 0) {
+            let valid = isValidKoreanSSN(text);
+            el.style.backgroundColor = valid ? '' : 'yellow';
+            return valid;
+        }
+        el.style.backgroundColor = '';
+        return true;
+    }
+    
+    function check_all(el) {
+        let is_valid = true;
+        let cn = el.className;
+        
+        if(check_document_number_strings.includes(cn)) is_valid = is_valid && check_document_number(el);
+        if(check_name_strings.includes(cn)) is_valid = is_valid && check_name(el);
+        if(check_cname_strings.includes(cn)) is_valid = is_valid && check_cname(el);
+        if(cn === '주민등록번호') is_valid = is_valid && check_ssn(el);
+        if(cn === '어린이성별') {
+            if(el.textContent.length > 0) is_valid = is_valid && (el.textContent === '남' || el.textContent === '여');
+        }
+        if(is_date_field(cn)) is_valid = is_valid && check_date(el);
+        if(cn.match(/^학적내용\d+$/)) is_valid = is_valid && check_register(el);
+        if(check_metric_strings.includes(cn)) is_valid = is_valid && check_metric(el);
+        if(check_attend_strings.includes(cn)) is_valid = is_valid && check_attend(el);
+        if(check_develop_strings.includes(cn)) is_valid = is_valid && check_develop(el);
+        is_valid = is_valid && check_trim(el);
+        
+        if(cn !== '주민등록번호') {
+            el.style.backgroundColor = is_valid ? 'white' : 'yellow';
+        }
+    }
+    
+    // ===== Data model: page → JSON object =====
+    function page_to_json(el_page) {
+        let obj = {};
+        let tds = Array.from(el_page.querySelectorAll('td')).filter(function(el) {
+            return el.className && !el.className.includes('학적-action');
+        });
+        
+        let hakjeok = [];
+        for(let td of tds) {
+            let cn = td.className;
+            let m = cn.match(/^학적(날짜|내용|특기)(\d+)$/);
+            if(m) {
+                let type = m[1];
+                let idx = parseInt(m[2]) - 1;
+                while(hakjeok.length <= idx) hakjeok.push({날짜:'', 내용:'', 특기:''});
+                let key = type === '날짜' ? '날짜' : type === '내용' ? '내용' : '특기';
+                hakjeok[idx][key] = td.textContent.trim();
+            } else {
+                if(td.getAttribute('alt')) {
+                    obj[cn] = td.getAttribute('alt');
+                } else {
+                    obj[cn] = td.textContent.trim();
+                }
+            }
+        }
+        
+        // Remove trailing empty 학적 entries
+        while(hakjeok.length > 0) {
+            let last = hakjeok[hakjeok.length - 1];
+            if(!last.날짜 && !last.내용 && !last.특기) hakjeok.pop();
+            else break;
+        }
+        obj['학적사항'] = hakjeok;
+        
+        return obj;
+    }
+    
+    // ===== TSV build/parse =====
+    function get_max_hakjeok() {
+        let max = 4;
+        let pages = document.querySelectorAll('.page');
+        for(let page of pages) {
+            let count = get_hakjeok_count(page);
+            if(count > max) max = count;
+        }
+        return max;
+    }
+    
+    function build_tsv() {
+        let maxH = get_max_hakjeok();
+        let all_fields = get_all_fields(maxH);
+        let lines = [all_fields.join('\t')];
+        let pages = document.querySelectorAll('.page');
+        for(let page of pages) {
+            let line = [];
+            for(let field of all_fields) {
+                let el_field = page.querySelector('.' + field);
+                if(el_field) {
+                    if(el_field.getAttribute('alt')) {
+                        line.push(el_field.getAttribute('alt'));  
+                    } else {
+                        line.push(el_field.textContent);
+                    }
+                } else {
+                    line.push('');
+                }
+            }
+            lines.push(line.join('\t'));
+        }
+        return lines.join('\n');
+    }
+    
+    function build_json() {
+        let pages = document.querySelectorAll('.page');
+        let arr = [];
+        for(let page of pages) {
+            arr.push(page_to_json(page));
+        }
+        return JSON.stringify(arr, null, 2);
+    }
+    
+    function save_state() {
+        localStorage.setItem('tsv', build_tsv());
+        localStorage.setItem('age', document.querySelector('#age').value);
+        localStorage.setItem('class-name', document.querySelector('#class-name').value);
+        localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
+    }
+    
+    function download_file(filename, content, mime) {
+        mime = mime || 'text/plain';
+        download_link.download = filename;
+        download_link.href = 'data:' + mime + ';charset=UTF-8,' + encodeURIComponent(content);
+        download_link.click();
+    }
+    
+    function download_tsv() {
+        save_state();
+        download_file('생활기록부.tsv', build_tsv());
+    }
+    
+    function download_json() {
+        save_state();
+        download_file('생활기록부.json', build_json(), 'application/json');
+    }
+    
+    async function download_hml(el_page) {
+        let d = {};
+        let tds = Array.from(el_page.querySelectorAll('td')).filter(function(el) {
+            return el.className && !el.className.includes('학적-action');
+        });
+        for(let td of tds) {
+            d[td.className] = td.textContent.trim();
+        }
+        
+        let img = el_page.querySelector('.photo');
+        if(img) {
+            await img.decode();
+            g.canvas.width = img.width;
+            g.canvas.height = img.height;
+            g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+            g.drawImage(img, 0, 0);
+            d['사진'] = g.canvas.toDataURL('image/png').slice(22); 
+        }
+        
+        let hml = build_hml(d);
+        let nth = String(Array.from(document.querySelectorAll('.page')).indexOf(el_page) + 1).padStart(2, '0');
+        download_file(
+            nth + '_' + d['어린이이름'] + '_' + (d['주민등록번호'] || '').split('-')[0] + '.hml',
+            hml
+        );
+    }
+    
+    // ===== TSV parse =====
+    function parseAll(tsv) {
+        let lines = tsv.split('\n');
+        let cols = lines.shift().split('\t').map(function(x) { return x.trim(); });
+        for(let line of lines) {
+            if(line.trim().length === 0) continue;
+            let infos = line.split('\t').map(function(x) { return x.trim(); });
+            build_page(cols, infos);
+        }
+        arrange_pages();
+    }
+    
+    function arrange_pages() {
+        let hrs = document.querySelector('#pages').querySelectorAll('hr');
+        for(let hr of hrs) hr.remove();
+
+        let pages = Array.from(document.querySelector('#pages').querySelectorAll('.page'));
+        if(pages.length > 0) {
+            for(let i = 0; i < pages.length; i++) {
+                pages[i].style.marginTop = (i === 0) 
+                    ? (document.querySelector('#ui').getBoundingClientRect().height + 30) + 'px'
+                    : '30px';
+            }
+        }
+        for(let i = 0; i < pages.length - 1; i++) {
+            let hr = document.createElement('hr');
+            hr.style.border = 'none';
+            hr.style.borderTop = '2px dashed #ccc';
+            hr.style.margin = '0 auto';
+            hr.style.width = '800px';
+            pages[i].insertAdjacentElement('afterend', hr);
+        }
+    }
+    
+    // ===== Auto-save on input =====
+    window.addEventListener('input', function(e) {
+        if(e.target.tagName === 'TD') {
+            clearTimeout(timeout_id);
+            timeout_id = setTimeout(save_state, 2000);
+            check_all(e.target);
+        }
+    });
+    
+    // ===== Click events =====
+    window.addEventListener('click', function(e) {
+        let t = e.target;
+        
+        // Move up
+        if(t.className === 'go-up') {
+            let el_page = t.closest('.page');
+            let all_pages = Array.from(document.querySelector('#pages').querySelectorAll('.page'));
+            let prev_page = all_pages[all_pages.indexOf(el_page) - 1];
+            if(prev_page) prev_page.insertAdjacentElement('beforebegin', el_page);
+            arrange_pages();
+            t.scrollIntoView();
+        }
+        
+        // Move down
+        if(t.className === 'go-down') {
+            let el_page = t.closest('.page');
+            let all_pages = Array.from(document.querySelector('#pages').querySelectorAll('.page'));
+            let next_page = all_pages[all_pages.indexOf(el_page) + 1];
+            if(next_page) next_page.insertAdjacentElement('afterend', el_page);
+            arrange_pages();
+            t.scrollIntoView();
+        }
+        
+        // Download HML
+        if(t.className === 'download') {
+            download_hml(t.closest('.page'));
+        }
+        
+        // Remove page
+        if(t.className === 'remove') {
+            let el_page = t.closest('.page');
+            let name = el_page.querySelector('.어린이이름').textContent;
+            if(window.confirm('정말 ' + name + ' 생기부를 삭제하겠습니까? 파일을 저장했는지 확인하세요.')) {
+                el_page.remove();
+                arrange_pages();
+            }
+        }
+        
+        // Add 학적 row
+        if(t.className === 'add-hakjeok') {
+            let el_page = t.closest('.page');
+            let currentCount = get_hakjeok_count(el_page);
+            if(currentCount >= 15) {
+                alert('학적사항은 최대 15행까지 추가할 수 있습니다.');
+                return;
+            }
+            add_hakjeok_row(el_page, currentCount + 1, '', '', '');
+        }
+        
+        // Remove 학적 row
+        if(t.className === 'remove-hakjeok') {
+            let tr = t.closest('tr');
+            let el_page = t.closest('.page');
+            tr.remove();
+            renumber_hakjeok_rows(el_page);
+        }
+        
+        // Clear all
+        if(t.id === 'clear') {
+            if(window.confirm('정말 비우겠습니까?')) {
+                clear_all_pages();
+                arrange_pages();
+            }
+        }
+        
+        // Load from localStorage
+        if(t.id === 'load') {
+            if(window.confirm('정말 불러오겠습니까?')) {
+                let tsv = localStorage.getItem('tsv');
+                document.querySelector('#age').value = localStorage.getItem('age') || '3';
+                document.querySelector('#class-name').value = localStorage.getItem('class-name') || '';
+                document.querySelector('#teacher-name').value = localStorage.getItem('teacher-name') || '';
+                if(tsv) {
+                    clear_all_pages();
+                    parseAll(tsv);
+                }
+            }
+        }
+        
+        // Download buttons
+        if(t.id === 'download_tsv') download_tsv();
+        if(t.id === 'download_json') download_json();
+        
+        // Add children
+        if(t.id === 'add') {
+            let lines = el_children.value.split('\n').filter(function(x) { return x.length > 0; });
+            if(lines.length === 1) {
+                let members = el_children.value.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x.length > 0; });
+                for(let member of members) {
+                    let all_fields = get_all_fields(4);
+                    let infos = Array(all_fields.length).fill('');
+                    infos[all_fields.indexOf('어린이이름')] = member;
+                    let age = document.querySelector('#age').value;
+                    infos[all_fields.indexOf('반'+age+'세')] = document.querySelector('#class-name').value.trim();
+                    infos[all_fields.indexOf('담임'+age+'세')] = document.querySelector('#teacher-name').value.trim();
+                    build_page(all_fields, infos);
+                }
+                arrange_pages();    
+            }
+            else if(lines.length > 1) {
+                for(let line of lines) {
+                    let cols = line.split('\t').map(function(x) { return x.trim(); });
+                    let all_fields = get_all_fields(4);
+                    let infos = Array(all_fields.length).fill('');
+                    infos[all_fields.indexOf('어린이이름')] = cols[1];
+                    infos[all_fields.indexOf('어린이성별')] = cols[2];
+                    infos[all_fields.indexOf('사진파일명')] = cols[1] + '.jpg';
+                    let bday = cols[3].split('.').map(function(x) { return x.trim(); });
+                    infos[all_fields.indexOf('주민등록번호')] = bday[0].substring(2,4) + bday[1].padStart(2, '0') + bday[2].padStart(2, '0') + '-';
+                    let age = document.querySelector('#age').value;
+                    if(cols[0]) infos[all_fields.indexOf('대장'+age+'세')] = cols[0];
+                    infos[all_fields.indexOf('반'+age+'세')] = document.querySelector('#class-name').value.trim();
+                    infos[all_fields.indexOf('담임'+age+'세')] = document.querySelector('#teacher-name').value.trim();
+                    build_page(all_fields, infos);
+                }
+                arrange_pages();
+            }
+        }
+        
+        // Date apply button
+        if(t.className === 'date-apply') {
+            let el = t.parentElement;
+            let input = el.querySelector('input');
+            let date = input.value;
+            if(date.length === 10) {
+                let tds = Array.from(el.parentElement.querySelectorAll('td'));
+                let td = tds[tds.length - 3] || tds[tds.length - 2]; // account for action cell
+                // Find the date td (the one being edited)
+                let ymd = date.split('-');
+                el.textContent = parseInt(ymd[0]) + '. ' + parseInt(ymd[1]) + '. ' + parseInt(ymd[2]) + '.';
+                el.setAttribute('contenteditable', 'true');
+                el.focus();
+            }
+            check_all(el);
+        }
+        
+        // Focus toggles
+        if(t.className && t.className.length === 7) {
+            let ts = t.className.split('-');
+            if(ts[0] === 'focus') {
+                let n = parseInt(ts[1]);
+                for(let i = 1; i <= 7; i++) {
+                    let sections = Array.from(document.querySelector('#pages').querySelectorAll('.section-'+i));
+                    if(t.checked) {
+                        for(let s of sections) s.style.display = (n === i) ? '' : 'none';
+                        document.querySelectorAll('.'+t.className).forEach(function(x) { x.checked = true; });
+                    }
+                    else {
+                        for(let s of sections) s.style.display = '';
+                        document.querySelectorAll('.'+t.className).forEach(function(x) { x.checked = false; });
+                    }
+                }
+            }
+        }
+        
+        // By-age toggle
+        if(t.className === 'by-age') {
+            let age = parseInt(document.querySelector('#age').value);
+            if(t.checked) {
+                for(let i = 3; i <= 5; i++) {
+                    document.querySelectorAll('.age-'+i).forEach(function(x) {
+                        x.style.display = (i === age) ? '' : 'none';
+                    });
+                }
+            }
+            else {
+                for(let i = 3; i <= 5; i++) {
+                    document.querySelectorAll('.age-'+i).forEach(function(x) { x.style.display = ''; });
+                }
+            }
+        }
+    });
+    
+    // ===== Double-click: date picker, address lookup =====
+    window.addEventListener('dblclick', function(e) {
+        let el = e.target;
+        if(is_date_field(el.className)) {
+            if(el.textContent.length === 0) {
+                el.innerHTML = '<input type="date"><button class="date-apply">적용</button>';
+                el.querySelector('input').focus();
+                el.setAttribute('contenteditable', 'false');
+            }
+        }
+        if(el.className && el.className.includes('주소')) {
+            if(el.textContent.length > 0) {
+                let a = document.createElement('a');
+                a.href = 'https://map.kakao.com/link/search/' + el.textContent;
+                a.target = '_blank';
+                a.click();
+            }
+        }
+    });
+</script>
