@@ -144,7 +144,6 @@
     let el_children = document.querySelector('#children'); 
     let download_link = document.createElement('a');
     let reader = new FileReader();
-    let photo_holders = [];
     let timeout_id = -1;
     
     // ===== Date check: dynamic 학적날짜 fields =====
@@ -205,42 +204,73 @@
         build_page(all_fields, infos);
     }
     
+    function mac_decompose(text) {
+        let result = '';
+        for(let i = 0; i < text.length; i++) {
+            let ch = text[i];
+            let decompo = decomposeHangul(ch);
+            if(decompo.length > 0) {
+                for(let j = 0; j < decompo.length; j++) result += decompo[j];
+            } else {
+                result += ch;
+            }
+        }
+        return result;
+    }
+    
+    function set_photo(holder, dataUrl) {
+        if(!holder) return;
+        if(holder.textContent.length > 0) {
+            holder.setAttribute('alt', holder.textContent);
+        }
+        holder.textContent = '';
+        let img = new Image();
+        img.className = 'photo';
+        img.src = dataUrl;
+        holder.appendChild(img);
+    }
+    
     function read_photo(file, holder) {
-        if(holder) {
-            if(holder.textContent.length > 0) {
-                holder.setAttribute('alt', holder.textContent);
-            }
-            holder.textContent = '';
-            let img = new Image();
-            img.className = 'photo';
-            img.src = URL.createObjectURL(file);
-            holder.appendChild(img);
-        }
-        else {
-            for(let photo_holder of photo_holders) {
-                let for_mac_file = '';
-                for(let i = 0; i < photo_holder.textContent.length; i++) {
-                    let ch = photo_holder.textContent[i];
-                    let decompo = decomposeHangul(ch);
-                    if(decompo.length > 0) {
-                        for(let j = 0; j < decompo.length; j++) for_mac_file += decompo[j];
+        let r2 = new FileReader();
+        r2.onload = function() {
+            let dataUrl = r2.result;
+            if(holder) {
+                set_photo(holder, dataUrl);
+            } else {
+                let nameNoExt = file.name.replace(/\.[^.]+$/, '');
+                let pages = document.querySelectorAll('.page');
+                for(let page of pages) {
+                    let photoEl = page.querySelector('.사진파일명');
+                    let nameEl = page.querySelector('.어린이이름');
+                    if(!photoEl) continue;
+                    
+                    let matched = false;
+                    
+                    // Match by 사진파일명 text
+                    if(!photoEl.querySelector('.photo')) {
+                        let holderText = photoEl.textContent.trim();
+                        if(holderText && (holderText === file.name || mac_decompose(holderText) === file.name)) {
+                            matched = true;
+                        }
                     }
-                    else {
-                        for_mac_file += ch;
+                    
+                    // Match by 어린이이름 (without extension)
+                    if(!matched && nameEl) {
+                        let childName = nameEl.textContent.trim();
+                        if(childName && (childName === nameNoExt || mac_decompose(childName) === nameNoExt)) {
+                            matched = true;
+                        }
+                    }
+                    
+                    if(matched) {
+                        set_photo(photoEl, dataUrl);
                     }
                 }
-                if(photo_holder.textContent === file.name || for_mac_file === file.name) {
-                    if(photo_holder.textContent.length > 0) {
-                        photo_holder.setAttribute('alt', photo_holder.textContent);
-                    }
-                    photo_holder.textContent = '';
-                    let img = new Image();
-                    img.className = 'photo';
-                    img.src = URL.createObjectURL(file);
-                    photo_holder.appendChild(img);
-                }
             }
-        }
+            clearTimeout(timeout_id);
+            timeout_id = setTimeout(save_state, 2000);
+        };
+        r2.readAsDataURL(file);
     }
     
     function clear_all_pages() {
@@ -269,7 +299,6 @@
         }
         else {
             if (ev.dataTransfer.items) {
-                photo_holders = Array.prototype.slice.call(document.querySelectorAll('.사진파일명'));
                 for (let i = 0; i < ev.dataTransfer.items.length; i++) {
                     if (ev.dataTransfer.items[i].kind === 'file') {
                         let file = ev.dataTransfer.items[i].getAsFile();
@@ -509,11 +538,51 @@
         return JSON.stringify(arr, null, 2);
     }
     
+    function save_photos() {
+        let photos = {};
+        let pages = document.querySelectorAll('.page');
+        for(let page of pages) {
+            let nameEl = page.querySelector('.어린이이름');
+            let img = page.querySelector('.photo');
+            if(nameEl && img && img.src && img.src.startsWith('data:')) {
+                let name = nameEl.textContent.trim();
+                if(name) photos[name] = img.src;
+            }
+        }
+        try {
+            localStorage.setItem('photos', JSON.stringify(photos));
+        } catch(e) {
+            console.warn('사진 저장 실패 (용량 초과 가능):', e);
+        }
+    }
+    
+    function load_photos() {
+        let raw = localStorage.getItem('photos');
+        if(!raw) return;
+        try {
+            let photos = JSON.parse(raw);
+            let pages = document.querySelectorAll('.page');
+            for(let page of pages) {
+                let nameEl = page.querySelector('.어린이이름');
+                let photoEl = page.querySelector('.사진파일명');
+                if(nameEl && photoEl && !photoEl.querySelector('.photo')) {
+                    let name = nameEl.textContent.trim();
+                    if(name && photos[name]) {
+                        set_photo(photoEl, photos[name]);
+                    }
+                }
+            }
+        } catch(e) {
+            console.warn('사진 불러오기 실패:', e);
+        }
+    }
+    
     function save_state() {
         localStorage.setItem('tsv', build_tsv());
         localStorage.setItem('age', document.querySelector('#age').value);
         localStorage.setItem('class-name', document.querySelector('#class-name').value);
         localStorage.setItem('teacher-name', document.querySelector('#teacher-name').value);
+        save_photos();
     }
     
     function download_file(filename, content, mime) {
@@ -817,6 +886,7 @@
                 if(tsv) {
                     clear_all_pages();
                     parseAll(tsv);
+                    load_photos();
                 }
             }
         }
