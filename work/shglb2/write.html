@@ -100,6 +100,8 @@
         <div class="ui-row file-ops">
             <button id="download_tsv">tsv 다운로드</button>
             <button id="download_json">json 다운로드</button>
+            <button id="download_hml_zip" class="btn-primary">hml 전체 zip 다운로드</button>
+            <button id="download_hml_merged">hml 합본 다운로드</button>
             <span class="ui-divider">|</span>
             <button id="load">자동 저장 불러오기</button>
             <span class="ui-divider">|</span>
@@ -108,6 +110,7 @@
     </div>
     <div id="pages"></div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="build_page.js"></script>
 <script src="build_hml.js"></script>
 <script src="jamo.js"></script>
@@ -530,7 +533,44 @@
         download_file('생활기록부.json', build_json(), 'application/json');
     }
     
-    async function download_hml(el_page) {
+    async function download_hml_zip() {
+        let pages = Array.from(document.querySelectorAll('.page'));
+        if(pages.length === 0) {
+            alert('다운로드할 생기부가 없습니다.');
+            return;
+        }
+        
+        let btn = document.querySelector('#download_hml_zip');
+        btn.disabled = true;
+        btn.textContent = '생성 중...';
+        
+        try {
+            let zip = new JSZip();
+            
+            for(let i = 0; i < pages.length; i++) {
+                let d = await collect_page_data(pages[i]);
+                let hml = build_hml(d);
+                let nth = String(i + 1).padStart(2, '0');
+                let ssn_prefix = (d['주민등록번호'] || '').split('-')[0];
+                let filename = nth + '_' + (d['어린이이름'] || '이름없음') + '_' + ssn_prefix + '.hml';
+                zip.file(filename, hml);
+            }
+            
+            let blob = await zip.generateAsync({type: 'blob'});
+            let url = URL.createObjectURL(blob);
+            download_link.download = '생활기록부_hml.zip';
+            download_link.href = url;
+            download_link.click();
+            setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
+        } catch(e) {
+            alert('ZIP 생성 오류: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'hml 전체 zip 다운로드';
+        }
+    }
+    
+    async function collect_page_data(el_page) {
         let d = {};
         let tds = Array.from(el_page.querySelectorAll('td')).filter(function(el) {
             return el.className && !el.className.includes('학적-action');
@@ -538,7 +578,6 @@
         for(let td of tds) {
             d[td.className] = td.textContent.trim();
         }
-        
         let img = el_page.querySelector('.photo');
         if(img) {
             await img.decode();
@@ -546,9 +585,111 @@
             g.canvas.height = img.height;
             g.clearRect(0, 0, g.canvas.width, g.canvas.height);
             g.drawImage(img, 0, 0);
-            d['사진'] = g.canvas.toDataURL('image/png').slice(22); 
+            d['사진'] = g.canvas.toDataURL('image/png').slice(22);
+        } else {
+            d['사진'] = '';
+        }
+        return d;
+    }
+    
+    async function download_hml_merged() {
+        let pages = Array.from(document.querySelectorAll('.page'));
+        if(pages.length === 0) {
+            alert('합본할 생기부가 없습니다.');
+            return;
         }
         
+        let btn = document.querySelector('#download_hml_merged');
+        btn.disabled = true;
+        btn.textContent = '합본 생성 중...';
+        
+        try {
+            let n = pages.length;
+            
+            // Collect data and generate individual HMLs
+            let hmls = [];
+            let photos = [];
+            for(let i = 0; i < n; i++) {
+                let d = await collect_page_data(pages[i]);
+                photos.push(d['사진'] || '');
+                hmls.push(build_hml(d));
+            }
+            
+            // === Extract HEAD from first HML ===
+            let firstHml = hmls[0];
+            let headStart = firstHml.indexOf('<HEAD');
+            let headEnd = firstHml.indexOf('</HEAD>') + '</HEAD>'.length;
+            let head = firstHml.substring(0, headEnd);
+            
+            // Update SecCnt
+            head = head.replace(/SecCnt="\d+"/, 'SecCnt="' + n + '"');
+            
+            // Update BINDATALIST: expand to N items
+            let blStart = head.indexOf('<BINDATALIST');
+            let blEnd = head.indexOf('</BINDATALIST>') + '</BINDATALIST>'.length;
+            let newBl = '<BINDATALIST Count="' + n + '">';
+            for(let i = 1; i <= n; i++) {
+                newBl += '<BINITEM BinData="' + i + '" Format="jpg" Type="Embedding"/>';
+            }
+            newBl += '</BINDATALIST>';
+            head = head.substring(0, blStart) + newBl + head.substring(blEnd);
+            
+            // === Extract and adjust each SECTION ===
+            let sectionsHml = '';
+            for(let i = 0; i < n; i++) {
+                let hml = hmls[i];
+                let secStart = hml.indexOf('<SECTION');
+                let secEnd = hml.indexOf('</SECTION>') + '</SECTION>'.length;
+                let section = hml.substring(secStart, secEnd);
+                
+                // Update Section Id
+                section = section.replace(/<SECTION Id="\d+"/, '<SECTION Id="' + i + '"');
+                
+                // Update BinItem reference to point to this section's photo
+                section = section.replace(/BinItem="\d+"/, 'BinItem="' + (i + 1) + '"');
+                
+                // Update BinData reference in BINDATA tag if present inside section
+                // (shouldn't be, but just in case)
+                
+                // Make InstIds unique per section to avoid conflicts in 한/글
+                // Offset each section's InstIds by i * 100000
+                if(i > 0) {
+                    let offset = i * 100000;
+                    section = section.replace(/InstId="(\d+)"/g, function(match, id) {
+                        return 'InstId="' + (parseInt(id) + offset) + '"';
+                    });
+                    section = section.replace(/InstID="(\d+)"/g, function(match, id) {
+                        return 'InstID="' + (parseInt(id) + offset) + '"';
+                    });
+                }
+                
+                sectionsHml += section;
+            }
+            
+            // === Build TAIL with all photos ===
+            let tail = '<TAIL><BINDATASTORAGE>';
+            for(let i = 0; i < n; i++) {
+                let photoSize = photos[i] ? Math.ceil(photos[i].length * 3 / 4) : 0;
+                tail += '<BINDATA Encoding="Base64" Id="' + (i + 1) + '" Size="' + photoSize + '">' + photos[i] + '</BINDATA>';
+            }
+            tail += '</BINDATASTORAGE>';
+            tail += '<SCRIPTCODE Type="JScript" Version="1.0"><SCRIPTHEADER></SCRIPTHEADER><SCRIPTSOURCE></SCRIPTSOURCE></SCRIPTCODE></TAIL></HWPML>';
+            
+            // === Combine ===
+            let merged = head + '<BODY>' + sectionsHml + '</BODY>' + tail;
+            
+            download_file('생활기록부_합본.hml', merged);
+        } catch(e) {
+            alert('합본 생성 오류: ' + e.message);
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'hml 합본 다운로드';
+        }
+    }
+    
+    async function download_hml(el_page) {
+        let d = await collect_page_data(el_page);
         let hml = build_hml(d);
         let nth = String(Array.from(document.querySelectorAll('.page')).indexOf(el_page) + 1).padStart(2, '0');
         download_file(
@@ -683,6 +824,8 @@
         // Download buttons
         if(t.id === 'download_tsv') download_tsv();
         if(t.id === 'download_json') download_json();
+        if(t.id === 'download_hml_zip') download_hml_zip();
+        if(t.id === 'download_hml_merged') download_hml_merged();
         
         // Add children
         if(t.id === 'add') {
