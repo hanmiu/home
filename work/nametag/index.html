@@ -387,7 +387,7 @@ body {
 .data-table .cb-cell { width: 30px; }
 .data-table .name-cell { min-width: 70px; }
 .data-table .select-cell { min-width: 75px; }
-.data-table .check-cell { width: 40px; }
+.check-cell.data-table  { width: 40px; }
 .data-table .action-cell { width: 40px; }
 
 /* ===== CHECKBOX GRID (for format selection) ===== */
@@ -1282,7 +1282,7 @@ function updateTableHeaders() {
   if (showVehicleCols) {
     html += '<th class="select-cell">등원</th>';
     html += '<th class="select-cell">하원</th>';
-    html += '<th class="check-cell">방과</th>';
+    html += '<th class="check-cell">방과후</th>';
   }
   html += '<th class="action-cell"></th>';
   html += '</tr>';
