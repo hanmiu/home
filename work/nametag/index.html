@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>이름표 통합 관리</title>
+<title>한미 이름표 통합 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&family=Gaegu:wght@400;700&family=Hi+Melody&family=Gamja+Flower&family=Cute+Font&family=Nanum+Gothic:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -646,7 +646,7 @@ body {
 }
 
 .shoe .name {
-  margin-top: 0.8cm;
+  margin-top: 1.0cm;
   text-align: center;
   font-size: 2cm;
   letter-spacing: 0.2cm;
@@ -914,7 +914,7 @@ body {
   <!-- ===== SIDEBAR ===== -->
   <div id="sidebar">
     <div id="sidebar-header">
-      <h1><span>🏷️</span> 이름표 통합 관리</h1>
+      <h1><span>🏷️</span>한미 이름표 통합 관리</h1>
     </div>
     <div id="sidebar-content">
 
@@ -984,7 +984,7 @@ body {
         <div class="section-title">어린이 명단</div>
         <div class="guide-tip">이름을 띄어쓰기 또는 콤마로 구분하여 입력 후 [명단 생성]을 누르세요.</div>
         <div class="input-group">
-          <textarea id="inp-names" placeholder="예: 강호둥 박기래 신진나 전환희" rows="3"></textarea>
+          <textarea id="inp-names" placeholder="예: 강수한 박진희 신진영 최환희" rows="3"></textarea>
         </div>
         <div class="btn-group mt-8">
           <button class="btn btn-primary btn-sm" onclick="generateTable()">명단 생성</button>
@@ -994,7 +994,7 @@ body {
       <!-- DATA TABLE -->
       <div class="section" id="table-section" style="display:none">
         <div class="section-title">명단 편집</div>
-        <div class="guide-tip" id="table-guide">셀을 클릭하고 드래그하여 값 복제 · Tab으로 셀 이동 · 드롭다운으로 차량 선택</div>
+        <div class="guide-tip" id="table-guide">Tab으로 셀 이동 · 드롭다운으로 차량 선택</div>
         <div class="data-table-wrapper">
           <table class="data-table" id="data-table">
             <thead></thead>
@@ -1011,8 +1011,8 @@ body {
       <div class="section">
         <div class="section-title">실행</div>
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="doGenerate()">🖨️ 생성</button>
-          <button class="btn" onclick="doPrint()">인쇄</button>
+          <button class="btn btn-primary" onclick="doGenerate()">📛 생성</button>
+          <button class="btn" onclick="doPrint()">🖨️ 인쇄</button>
           <button class="btn" onclick="openSettings()" title="설정">⚙️</button>
         </div>
       </div>
@@ -1144,7 +1144,7 @@ const DEFAULT_SETTINGS = {
     { code: '고', name: '고래', tel: '010-7241-6567', color: '#d7f2ff' },
     { code: '백', name: '백곰', tel: '010-7231-6567', color: '#ffe8f1' },
     { code: '유', name: '유니콘', tel: '010-3059-6567', color: '#feffa3' },
-    { code: '병', name: '병아리', tel: '010-1234-1234', color: '#FFE0B2' },
+    { code: '병', name: '병아리', tel: '010-____-____', color: '#FFE0B2' },
     { code: '개', name: '개인', tel: '031-975-6567', color: '#d9b8fa' },
   ],
   fonts: {
@@ -1506,7 +1506,7 @@ function buildCircleTag(stage, datum) {
     if (v) {
       colorOut = v.color;
       telOut = v.tel;
-      const ho = carOut.length >= 2 ? carOut[1] + '호' : '';
+      const ho = carOut.length >= 2 ? carOut[1] + '호 ' : '';
       carOutLabel = v.name + ' ' + ho + spStr + ' 하원';
     }
   }
