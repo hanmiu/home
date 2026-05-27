@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>꽃병 만들기</title>
+  <style>
+    :root {
+      --paper: #fffdf7;
+      --ink: #20322f;
+      --muted: #60736e;
+      --line: #dce7df;
+      --leaf: #2f7d5c;
+      --leaf-dark: #235f47;
+      --petal: #e85d75;
+      --title-gradient: linear-gradient(100deg, #20322f 0%, #2f7d5c 52%, #e85d75 100%);
+      --petal-soft: #ffe6ec;
+      --sky: #e8f3ff;
+      --worktop: #f5f1e8;
+      --shadow: 0 18px 50px rgba(24, 52, 45, 0.12);
+      --radius: 8px;
+    }
+
+    body[data-preset="atelier"] {
+      --paper: #fffdf7;
+      --ink: #20322f;
+      --muted: #60736e;
+      --line: #dce7df;
+      --leaf: #2f7d5c;
+      --leaf-dark: #235f47;
+      --petal: #e85d75;
+      --title-gradient: linear-gradient(100deg, #20322f 0%, #2f7d5c 52%, #e85d75 100%);
+      --sky: #e8f3ff;
+      --shadow: 0 18px 50px rgba(24, 52, 45, 0.12);
+    }
+
+    body[data-preset="garden"] {
+      --paper: #fbfff8;
+      --ink: #17382d;
+      --muted: #5d7569;
+      --line: #d4e9d5;
+      --leaf: #3f8b46;
+      --leaf-dark: #2d6733;
+      --petal: #f07f61;
+      --title-gradient: linear-gradient(100deg, #17382d 0%, #3f8b46 58%, #f07f61 100%);
+      --sky: #edf7dc;
+      --shadow: 0 18px 50px rgba(40, 88, 46, 0.12);
+    }
+
+    body[data-preset="studio"] {
+      --paper: #fbfaf8;
+      --ink: #252b34;
+      --muted: #6a717c;
+      --line: #dcdfe5;
+      --leaf: #536f9f;
+      --leaf-dark: #3d5277;
+      --petal: #c75f80;
+      --title-gradient: linear-gradient(100deg, #252b34 0%, #536f9f 58%, #c75f80 100%);
+      --sky: #eef2f9;
+      --shadow: 0 18px 50px rgba(37, 43, 52, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.3)),
+        linear-gradient(135deg, #f9f4e8, #e8f3ee 48%, #f7f0f6);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .app {
+      width: min(1280px, calc(100vw - 48px));
+      margin: 24px auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .top-buttons {
+      display: flex;
+      justify-content: end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .top-buttons > .button {
+      justify-self: end;
+    }
+
+    .title-group h1 {
+      margin: 0;
+      font-size: clamp(1.85rem, 5vw, 3.9rem);
+      line-height: 0.96;
+      letter-spacing: 0;
+      width: fit-content;
+      color: transparent;
+      background: var(--title-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .title-group p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      padding: 4px 8px;
+      color: var(--muted);
+      font-size: 0.7rem;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .step.is-active {
+      border-color: rgba(47, 125, 92, 0.4);
+      background: #ffffff;
+      color: var(--leaf-dark);
+      box-shadow: 0 8px 26px rgba(47, 125, 92, 0.12);
+      font-weight: 750;
+    }
+
+    .stage-copy {
+      min-width: 0;
+    }
+
+    .stage-hint-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .stage-hint-row p {
+      margin: 0;
+    }
+
+    .workspace {
+      display: block;
+    }
+
+    .primary-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .lower-panels {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+      align-items: start;
+    }
+
+    .stage,
+    .panel {
+      border: 1px solid rgba(220, 231, 223, 0.9);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 247, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      overflow: hidden;
+    }
+
+    .stage-media {
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      background: #dfe9e5;
+      overflow: hidden;
+      container-type: size;
+    }
+
+    .stage-media > [hidden] {
+      display: none;
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .stage-header h2,
+    .panel h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    .stage-header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .camera-wrap,
+    .canvas-wrap {
+      position: relative;
+      background: #dfe9e5;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      max-height: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    video,
+    .ghost-frame,
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    video,
+    .ghost-frame {
+      object-fit: cover;
+    }
+
+    video.is-mirrored {
+      transform: scaleX(-1);
+    }
+
+    .ghost-frame {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+      transition: opacity 160ms ease;
+    }
+
+    .ghost-frame.is-visible {
+      opacity: 0.34;
+    }
+
+    .canvas-wrap {
+      background:
+        linear-gradient(45deg, #f8fbfa 25%, transparent 25%),
+        linear-gradient(-45deg, #f8fbfa 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f8fbfa 75%),
+        linear-gradient(-45deg, transparent 75%, #f8fbfa 75%);
+      background-color: #ecf4f1;
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
+    }
+
+    #workCanvas {
+      touch-action: none;
+      outline: none;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .button {
+      min-height: 42px;
+      border-radius: var(--radius);
+      padding: 0 14px;
+      background: #ffffff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      font-weight: 750;
+      box-shadow: 0 2px 0 rgba(24, 52, 45, 0.06);
+    }
+
+    .button:hover {
+      border-color: rgba(47, 125, 92, 0.44);
+    }
+
+    .button.primary {
+      background: var(--leaf);
+      color: #ffffff;
+      border-color: var(--leaf);
+    }
+
+    .button.primary:hover {
+      background: var(--leaf-dark);
+    }
+
+    .button.petal {
+      background: var(--petal);
+      color: #ffffff;
+      border-color: var(--petal);
+    }
+
+    .button.compact {
+      min-width: 42px;
+      padding: 0 10px;
+    }
+
+    .panel {
+      padding: 14px;
+    }
+
+    .panel-subtitle {
+      margin: 5px 0 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .flower-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      max-height: 478px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .flower-button {
+      min-height: 94px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      padding: 8px 6px;
+      color: var(--ink);
+      display: grid;
+      gap: 5px;
+      justify-items: center;
+      align-content: center;
+    }
+
+    .flower-button:hover,
+    .flower-button:focus-visible {
+      outline: 2px solid rgba(232, 93, 117, 0.25);
+      border-color: rgba(232, 93, 117, 0.5);
+    }
+
+    .flower-button img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .flower-button span {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    @media (min-width: 901px) {
+      body {
+        overflow: hidden;
+        padding: 24px;
+      }
+
+      .app {
+        width: min(1440px, 100%);
+        height: calc(100dvh - 48px);
+        margin: 0 auto;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .topbar {
+        margin-bottom: 10px;
+      }
+
+      .title-group h1 {
+        font-size: clamp(2.1rem, 3.8vw, 3.35rem);
+      }
+
+      .title-group p {
+        margin-top: 6px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 10px;
+        min-height: 0;
+      }
+
+      .primary-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+        gap: 12px;
+        min-height: 0;
+      }
+
+      .stage {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        min-height: 0;
+      }
+
+      .stage-media {
+        min-height: 0;
+      }
+
+      .camera-wrap,
+      .canvas-wrap {
+        min-height: 0;
+        width: min(100%, calc(100cqh * 16 / 9));
+      }
+
+      .primary-grid > .panel {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .flower-grid {
+        max-height: none;
+        min-height: 0;
+      }
+
+      .lower-panels {
+        margin-top: 0;
+        gap: 12px;
+      }
+    }
+
+    @media (min-width: 901px) and (max-height: 860px) {
+      .app {
+        width: 100%;
+        height: calc(100dvh - 36px);
+        margin: 0 auto;
+      }
+
+      body {
+        padding: 20px 16px 16px;
+      }
+
+      .topbar {
+        align-items: center;
+      }
+
+      .title-group h1 {
+        font-size: clamp(1.8rem, 3.6vw, 2.8rem);
+      }
+
+      .title-group p,
+      .panel-subtitle {
+        font-size: 0.8rem;
+      }
+
+      .step {
+        padding: 4px 7px;
+      }
+
+      .stage-header,
+      .toolbar,
+      .panel {
+        padding: 10px;
+      }
+
+      .button {
+        min-height: 38px;
+      }
+
+      .flower-button {
+        min-height: 78px;
+      }
+
+      .flower-button img {
+        width: 46px;
+        height: 46px;
+      }
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
+
+    .field input[type="text"] {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      padding: 0 11px;
+      color: var(--ink);
+    }
+
+    .field input[type="range"] {
+      width: 100%;
+      accent-color: var(--leaf);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .toggle-row input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--leaf);
+    }
+
+    .output-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .output-actions .button {
+      padding-inline: 10px;
+    }
+
+    .notice {
+      margin-top: 12px;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: var(--sky);
+      color: #305066;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .status {
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    #printArea {
+      display: none;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(22, 34, 31, 0.34);
+    }
+
+    .modal[hidden] {
+      display: none;
+    }
+
+    .countdown-strip {
+      flex: 1 0 100%;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(47, 125, 92, 0.26);
+      border-radius: var(--radius);
+      background: #ffffff;
+      padding: 8px 10px;
+    }
+
+    .countdown-strip[hidden] {
+      display: none;
+    }
+
+    .countdown-number {
+      min-width: 62px;
+      color: var(--leaf-dark);
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      line-height: 0.9;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .countdown-title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 850;
+    }
+
+    .countdown-message {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .settings-card {
+      width: min(560px, 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 24px 80px rgba(20, 35, 31, 0.22);
+      padding: 18px;
+    }
+
+    .settings-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .settings-card h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .preset-button {
+      min-height: 78px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      color: var(--ink);
+      padding: 10px;
+      text-align: left;
+    }
+
+    .preset-button strong,
+    .preset-button span {
+      display: block;
+    }
+
+    .preset-button span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .preset-button.is-selected {
+      border-color: var(--leaf);
+      box-shadow: 0 0 0 3px rgba(47, 125, 92, 0.15);
+    }
+
+    @media (max-width: 900px) {
+      .topbar {
+        display: block;
+      }
+
+      .steps {
+        margin-top: 2px;
+      }
+
+      .primary-grid,
+      .lower-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(100vw - 20px, 1180px);
+        margin: 10px auto;
+      }
+
+      .stage-header {
+        display: block;
+      }
+
+      .toolbar,
+      .panel {
+        padding: 10px;
+      }
+
+      .flower-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        max-height: 238px;
+      }
+
+      .output-actions,
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .flower-button {
+        min-height: 80px;
+      }
+
+      .flower-button img {
+        width: 46px;
+        height: 46px;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      body * {
+        visibility: hidden;
+      }
+
+      #printArea,
+      #printArea * {
+        visibility: visible;
+      }
+
+      #printArea {
+        display: block;
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+      }
+
+      #printArea svg {
+        width: 190mm;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body data-preset="atelier">
+  <main class="app">
+    <header class="topbar">
+      <div class="title-group">
+        <h1>꽃병 만들기</h1>
+        <p>배경과 꽃병을 같은 자리에서 찍고, 그 사이에 꽃을 꽂아 작업 기록을 만들어요.</p>
+      </div>
+      <div class="top-actions">
+        <div class="top-buttons">
+          <button class="button" id="fullscreenButton">⛶ 전체 화면</button>
+          <button class="button" id="settingsButton">⚙ 화면 설정</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <div class="primary-grid">
+        <div class="stage">
+          <div class="stage-header">
+            <div class="stage-copy">
+              <h2 id="stageTitle">빈 배경을 찍어주세요</h2>
+              <div class="stage-hint-row">
+                <p id="stageHint">꽃병을 놓을 자리를 비워두고 먼저 한 장 찍습니다.</p>
+                <nav class="steps" aria-label="작업 단계">
+                  <div class="step is-active" data-step="background">1. 배경</div>
+                  <div class="step" data-step="foreground">2. 꽃병</div>
+                  <div class="step" data-step="compose">3. 꽃 꽂기</div>
+                  <div class="step" data-step="print">4. 기록</div>
+                </nav>
+              </div>
+            </div>
+            <div class="status" id="statusText">카메라 준비 중...</div>
+          </div>
+
+          <div class="stage-media">
+            <div class="camera-wrap" id="cameraWrap">
+              <video id="camera" autoplay playsinline muted></video>
+              <img id="ghostFrame" class="ghost-frame" alt="">
+            </div>
+
+            <div class="canvas-wrap" id="canvasWrap" hidden>
+              <canvas id="workCanvas" tabindex="0" aria-label="꽃병 합성 캔버스"></canvas>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="countdown-strip" id="countdownStrip" hidden>
+              <div class="countdown-number" id="countdownNumber">3</div>
+              <div>
+                <div class="countdown-title" id="countdownTitle">촬영 준비</div>
+                <p class="countdown-message" id="countdownMessage">카메라를 바라봐주세요.</p>
+              </div>
+              <button class="button" id="countdownCancelButton">취소</button>
+            </div>
+            <button class="button primary" id="captureBackgroundButton">📷 배경 찍기</button>
+            <button class="button primary" id="captureForegroundButton" hidden>🏺 꽃병 찍기</button>
+            <button class="button" id="sequenceCaptureButton">⏱ 연속 촬영</button>
+            <button class="button" id="retakeButton" disabled>↺ 다시 찍기</button>
+            <button class="button petal" id="finishButton" disabled>🌸 기록 준비</button>
+          </div>
+        </div>
+
+        <section class="panel">
+          <h2>꽃 고르기</h2>
+          <p class="panel-subtitle">꽃을 누르면 사진 속 꽃병 뒤에 놓입니다.</p>
+          <div class="flower-grid" id="flowerGrid"></div>
+        </section>
+      </div>
+
+      <div class="lower-panels">
+        <section class="panel">
+          <h2>꽃 움직이기</h2>
+          <p class="panel-subtitle">선택한 꽃은 마우스로 끌고, 키보드로도 조정할 수 있어요.</p>
+          <div class="control-grid">
+            <button class="button compact" id="smallerButton" title="작게">−</button>
+            <button class="button compact" id="biggerButton" title="크게">＋</button>
+            <button class="button compact" id="rotateLeftButton" title="왼쪽으로 돌리기">↶</button>
+            <button class="button compact" id="rotateRightButton" title="오른쪽으로 돌리기">↷</button>
+            <button class="button compact" id="backwardButton" title="뒤로 보내기">↓</button>
+            <button class="button compact" id="forwardButton" title="앞으로 가져오기">↑</button>
+            <button class="button compact" id="deleteButton" title="삭제">✕</button>
+            <button class="button compact" id="duplicateButton" title="하나 더">＋🌸</button>
+          </div>
+          <div class="notice">키보드: ←/→ 회전, ↑/↓ 크기, Delete 삭제</div>
+        </section>
+
+        <section class="panel">
+          <h2>꽃병 레이어</h2>
+          <p class="panel-subtitle">꽃병은 불투명하게, 가장자리만 부드럽게 앞 레이어로 만듭니다.</p>
+          <div class="field">
+            <label for="maskThreshold">차영상 민감도</label>
+            <input id="maskThreshold" type="range" min="8" max="92" value="34">
+          </div>
+          <div class="field">
+            <label for="edgeFeather">가장자리 부드러움</label>
+            <input id="edgeFeather" type="range" min="0" max="7" value="3">
+          </div>
+          <div class="field">
+            <label for="speckleSize">작은 조각 제거</label>
+            <input id="speckleSize" type="range" min="0" max="1600" step="100" value="500">
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>작업 기록</h2>
+          <div class="field">
+            <label for="artTitle">작품 제목</label>
+            <input id="artTitle" type="text" maxlength="28" placeholder="예: 분홍 꽃병">
+          </div>
+          <div class="field">
+            <label for="artistName">이름</label>
+            <input id="artistName" type="text" maxlength="18" placeholder="선생님이 적어도 좋아요">
+          </div>
+          <div class="output-actions" style="margin-top: 12px;">
+            <button class="button primary" id="printButton" disabled>🖨 기록 인쇄</button>
+            <button class="button" id="downloadWorksheetButton" disabled>⬇ 기록 저장</button>
+            <button class="button" id="downloadImageButton" disabled>▣ 이미지 저장</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="settingsModal" hidden>
+    <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header>
+        <div>
+          <h2 id="settingsTitle">화면 설정</h2>
+          <p class="panel-subtitle">프리셋과 합성 값을 저장해 다음에 다시 불러옵니다.</p>
+        </div>
+        <button class="button compact" id="closeSettingsButton" aria-label="설정 닫기">✕</button>
+      </header>
+      <div class="field">
+        <label>프론트엔드 디자인 프리셋</label>
+        <div class="preset-grid" id="presetGrid">
+          <button class="preset-button" type="button" data-preset-option="atelier">
+            <strong>아틀리에</strong>
+            <span>종이와 작업대 느낌</span>
+          </button>
+          <button class="preset-button" type="button" data-preset-option="garden">
+            <strong>정원</strong>
+            <span>식물과 빛이 더 선명한 색</span>
+          </button>
+          <button class="preset-button" type="button" data-preset-option="studio">
+            <strong>기록실</strong>
+            <span>차분한 관찰 기록 톤</span>
+          </button>
+        </div>
+      </div>
+      <label class="toggle-row" for="cameraMirror">
+        <span>카메라 좌우 반전</span>
+        <input id="cameraMirror" type="checkbox">
+      </label>
+      <div class="field">
+        <label for="vasePlaceDelay">꽃병 놓기 안내 시간</label>
+        <input id="vasePlaceDelay" type="range" min="1" max="5" value="2">
+      </div>
+      <div class="field">
+        <label for="secondCountdownStart">두 번째 촬영 카운트다운 시작</label>
+        <input id="secondCountdownStart" type="range" min="3" max="8" value="5">
+      </div>
+      <div class="notice" id="sequenceTimingSummary">꽃병 안내 2초, 두 번째 카운트다운 5부터</div>
+      <div class="notice">저장되는 값: 디자인 프리셋, 카메라 좌우 반전, 차영상 민감도, 꽃병 가장자리, 작은 조각 제거, 연속 촬영 타이밍</div>
+      <div class="toolbar" style="padding-inline: 0; padding-bottom: 0;">
+        <button class="button primary" id="saveSettingsButton">저장하고 닫기</button>
+        <button class="button" id="resetSettingsButton">기본값</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+
+  <script>
+    const camera = document.getElementById('camera');
+    const ghostFrame = document.getElementById('ghostFrame');
+    const cameraWrap = document.getElementById('cameraWrap');
+    const canvasWrap = document.getElementById('canvasWrap');
+    const workCanvas = document.getElementById('workCanvas');
+    const ctx = workCanvas.getContext('2d');
+    const flowerGrid = document.getElementById('flowerGrid');
+    const statusText = document.getElementById('statusText');
+    const stageTitle = document.getElementById('stageTitle');
+    const stageHint = document.getElementById('stageHint');
+    const printArea = document.getElementById('printArea');
+
+    const captureBackgroundButton = document.getElementById('captureBackgroundButton');
+    const captureForegroundButton = document.getElementById('captureForegroundButton');
+    const sequenceCaptureButton = document.getElementById('sequenceCaptureButton');
+    const retakeButton = document.getElementById('retakeButton');
+    const finishButton = document.getElementById('finishButton');
+    const printButton = document.getElementById('printButton');
+    const downloadWorksheetButton = document.getElementById('downloadWorksheetButton');
+    const downloadImageButton = document.getElementById('downloadImageButton');
+
+    const maskThresholdInput = document.getElementById('maskThreshold');
+    const edgeFeatherInput = document.getElementById('edgeFeather');
+    const speckleSizeInput = document.getElementById('speckleSize');
+    const cameraMirrorInput = document.getElementById('cameraMirror');
+    const vasePlaceDelayInput = document.getElementById('vasePlaceDelay');
+    const secondCountdownStartInput = document.getElementById('secondCountdownStart');
+    const sequenceTimingSummary = document.getElementById('sequenceTimingSummary');
+    const artTitleInput = document.getElementById('artTitle');
+    const artistNameInput = document.getElementById('artistName');
+    const fullscreenButton = document.getElementById('fullscreenButton');
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsButton = document.getElementById('closeSettingsButton');
+    const saveSettingsButton = document.getElementById('saveSettingsButton');
+    const resetSettingsButton = document.getElementById('resetSettingsButton');
+    const presetButtons = [...document.querySelectorAll('[data-preset-option]')];
+    const countdownStrip = document.getElementById('countdownStrip');
+    const countdownTitle = document.getElementById('countdownTitle');
+    const countdownNumber = document.getElementById('countdownNumber');
+    const countdownMessage = document.getElementById('countdownMessage');
+    const countdownCancelButton = document.getElementById('countdownCancelButton');
+
+    const FLOWER_FILES = [
+      '꼬꼬 꽃.png',
+      '풍선 꽃.png',
+      '무지개꽃.png',
+      '사랑 꽃.png',
+      '알로에 꽃.png',
+      '쌍둥이꽃.png',
+      '람드레 꽃.png',
+      '엘리스 꽃.png',
+      '핑크 꽃.png',
+      '알록달록 꽃.png',
+      '양갈래 꽃.png',
+      '장미꽃.png'
+    ];
+
+    const state = {
+      step: 'background',
+      backgroundCanvas: null,
+      foregroundCanvas: null,
+      backgroundImage: null,
+      foregroundLayer: null,
+      flowers: [],
+      selectedId: null,
+      dragging: false,
+      dragOffset: { x: 0, y: 0 },
+      lastFlowerKind: null
+    };
+
+    const DEFAULT_ROTATION_RANGE = Math.PI / 12;
+    let flowerAnimationFrame = null;
+    let sequenceCaptureCancelled = false;
+    const SETTINGS_KEY = 'flowerVaseSettings';
+    const DEFAULT_SETTINGS = {
+      preset: 'atelier',
+      maskThreshold: 34,
+      edgeFeather: 3,
+      speckleSize: 500,
+      cameraMirror: true,
+      vasePlaceDelay: 2,
+      secondCountdownStart: 5
+    };
+
+    function loadSettings() {
+      try {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+      } catch (error) {
+        return { ...DEFAULT_SETTINGS };
+      }
+    }
+
+    function currentSettings() {
+      return {
+        preset: document.body.dataset.preset || DEFAULT_SETTINGS.preset,
+        maskThreshold: Number(maskThresholdInput.value),
+        edgeFeather: Number(edgeFeatherInput.value),
+        speckleSize: Number(speckleSizeInput.value),
+        cameraMirror: cameraMirrorInput.checked,
+        vasePlaceDelay: Number(vasePlaceDelayInput.value),
+        secondCountdownStart: Number(secondCountdownStartInput.value)
+      };
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(currentSettings()));
+    }
+
+    function applySettings(settings) {
+      const preset = ['atelier', 'garden', 'studio'].includes(settings.preset) ? settings.preset : DEFAULT_SETTINGS.preset;
+      document.body.dataset.preset = preset;
+      maskThresholdInput.value = settings.maskThreshold ?? DEFAULT_SETTINGS.maskThreshold;
+      edgeFeatherInput.value = settings.edgeFeather ?? DEFAULT_SETTINGS.edgeFeather;
+      speckleSizeInput.value = settings.speckleSize ?? DEFAULT_SETTINGS.speckleSize;
+      cameraMirrorInput.checked = Boolean(settings.cameraMirror);
+      vasePlaceDelayInput.value = settings.vasePlaceDelay;
+      secondCountdownStartInput.value = settings.secondCountdownStart;
+      camera.classList.toggle('is-mirrored', cameraMirrorInput.checked);
+      updateSequenceTimingSummary();
+      presetButtons.forEach((button) => {
+        button.classList.toggle('is-selected', button.dataset.presetOption === preset);
+      });
+      if (state.foregroundCanvas) buildForegroundLayer();
+      draw();
+    }
+
+    function updateSequenceTimingSummary() {
+      sequenceTimingSummary.textContent = `꽃병 안내 ${vasePlaceDelayInput.value}초, 두 번째 카운트다운 ${secondCountdownStartInput.value}부터`;
+    }
+
+    function toAssetUrl(fileName) {
+      return encodeURI(`assets/flower/${fileName}`);
+    }
+
+    function flowerCandidates(fileName) {
+      const nfc = fileName.normalize('NFC');
+      const nfd = fileName.normalize('NFD');
+      return [...new Set([nfc, nfd])].map(toAssetUrl);
+    }
+
+    function displayName(fileName) {
+      return fileName.replace(/\.png$/i, '').normalize('NFC');
+    }
+
+    function setStep(step) {
+      state.step = step;
+      document.querySelectorAll('.step').forEach((item) => {
+        item.classList.toggle('is-active', item.dataset.step === step);
+      });
+    }
+
+    function setStatus(message) {
+      statusText.textContent = message;
+    }
+
+    function updateFullscreenButton() {
+      fullscreenButton.textContent = document.fullscreenElement ? '↙ 전체 화면 나가기' : '⛶ 전체 화면';
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch (error) {
+        setStatus('브라우저에서 전체 화면을 허용해주세요');
+        console.error(error);
+      }
+    }
+
+    async function setupCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'environment'
+          },
+          audio: false
+        });
+        camera.srcObject = stream;
+        setStatus('카메라가 켜졌어요');
+      } catch (error) {
+        setStatus('카메라 권한을 확인해주세요');
+        stageHint.textContent = '카메라 권한을 허용한 뒤 새로고침해주세요. 주소는 localhost 또는 https여야 합니다.';
+        console.error(error);
+      }
+    }
+
+    function stopCamera() {
+      if (!camera.srcObject) return;
+      camera.srcObject.getTracks().forEach((track) => track.stop());
+      camera.srcObject = null;
+    }
+
+    function captureFrame(targetWidth, targetHeight) {
+      const width = targetWidth || 1280;
+      const height = targetHeight || 720;
+      const sourceWidth = camera.videoWidth || width;
+      const sourceHeight = camera.videoHeight || height;
+      const sourceAspect = sourceWidth / sourceHeight;
+      const targetAspect = width / height;
+      let sx = 0;
+      let sy = 0;
+      let sw = sourceWidth;
+      let sh = sourceHeight;
+
+      if (sourceAspect > targetAspect) {
+        sw = sourceHeight * targetAspect;
+        sx = (sourceWidth - sw) / 2;
+      } else if (sourceAspect < targetAspect) {
+        sh = sourceWidth / targetAspect;
+        sy = (sourceHeight - sh) / 2;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const captureCtx = canvas.getContext('2d');
+      if (cameraMirrorInput.checked) {
+        captureCtx.translate(width, 0);
+        captureCtx.scale(-1, 1);
+      }
+      captureCtx.drawImage(camera, sx, sy, sw, sh, 0, 0, width, height);
+      return canvas;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function runCountdown(title, message, start = 3) {
+      countdownStrip.hidden = false;
+      countdownCancelButton.hidden = false;
+      countdownTitle.textContent = title;
+      countdownMessage.textContent = message;
+
+      for (let number = start; number >= 1; number -= 1) {
+        if (sequenceCaptureCancelled) return false;
+        countdownNumber.textContent = String(number);
+        await sleep(850);
+      }
+
+      countdownNumber.textContent = '찰칵!';
+      await sleep(260);
+      return !sequenceCaptureCancelled;
+    }
+
+    async function waitForForegroundReady() {
+      countdownStrip.hidden = false;
+      countdownTitle.textContent = '꽃병을 놓아주세요';
+      countdownNumber.textContent = '🏺';
+      countdownMessage.textContent = '같은 자리에 꽃병을 놓아주세요. 곧 두 번째 촬영을 시작합니다.';
+      countdownCancelButton.hidden = false;
+      await sleep(Number(vasePlaceDelayInput.value) * 1000);
+      return !sequenceCaptureCancelled;
+    }
+
+    function finishCountdownFlow() {
+      countdownStrip.hidden = true;
+    }
+
+    async function runSequenceCapture() {
+      if (!camera.videoWidth) {
+        setStatus('카메라가 아직 준비 중이에요');
+        return;
+      }
+
+      sequenceCaptureCancelled = false;
+      sequenceCaptureButton.disabled = true;
+      captureBackgroundButton.disabled = true;
+      captureForegroundButton.disabled = true;
+      setStatus('연속 촬영을 시작합니다');
+
+      try {
+        const backgroundReady = await runCountdown('첫 번째 사진', '꽃병이 없는 빈 배경을 찍습니다.');
+        if (!backgroundReady) return;
+        await captureBackground();
+
+        const foregroundReady = await waitForForegroundReady();
+        if (!foregroundReady || sequenceCaptureCancelled) return;
+
+        const secondReady = await runCountdown('두 번째 사진', '꽃병이 있는 사진을 찍습니다.', Number(secondCountdownStartInput.value));
+        if (!secondReady) return;
+        await captureForeground();
+      } finally {
+        finishCountdownFlow();
+        sequenceCaptureButton.disabled = false;
+        captureBackgroundButton.disabled = false;
+        captureForegroundButton.disabled = false;
+      }
+    }
+
+    function canvasToImage(canvas) {
+      return new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.src = canvas.toDataURL('image/png');
+      });
+    }
+
+    async function captureBackground() {
+      if (!camera.videoWidth) {
+        setStatus('카메라가 아직 준비 중이에요');
+        return;
+      }
+
+      state.backgroundCanvas = captureFrame();
+      state.backgroundImage = await canvasToImage(state.backgroundCanvas);
+      ghostFrame.src = state.backgroundCanvas.toDataURL('image/png');
+      ghostFrame.classList.add('is-visible');
+      setStep('foreground');
+      stageTitle.textContent = '같은 구도에 꽃병을 놓고 찍어주세요';
+      stageHint.textContent = '반투명한 첫 사진에 맞춰 꽃병을 놓으면 합성이 더 자연스럽습니다.';
+      captureBackgroundButton.hidden = true;
+      captureForegroundButton.hidden = false;
+      sequenceCaptureButton.hidden = true;
+      retakeButton.disabled = false;
+      setStatus('배경 저장 완료');
+    }
+
+    async function captureForeground() {
+      if (!state.backgroundCanvas) return;
+
+      state.foregroundCanvas = captureFrame(state.backgroundCanvas.width, state.backgroundCanvas.height);
+      buildForegroundLayer();
+      resizeWorkCanvas();
+      stopCamera();
+      cameraWrap.hidden = true;
+      canvasWrap.hidden = false;
+      ghostFrame.classList.remove('is-visible');
+      setStep('compose');
+      stageTitle.textContent = '꽃을 골라 꽃병에 꽂아보세요';
+      stageHint.textContent = '꽃을 누르고 캔버스에서 위치와 크기를 조절합니다.';
+      captureForegroundButton.hidden = true;
+      sequenceCaptureButton.hidden = true;
+      finishButton.disabled = false;
+      printButton.disabled = false;
+      downloadWorksheetButton.disabled = false;
+      downloadImageButton.disabled = false;
+      setStatus('꽃병 레이어 생성 완료');
+      workCanvas.focus();
+      draw();
+    }
+
+    function resetAll() {
+      stopCamera();
+      state.backgroundCanvas = null;
+      state.foregroundCanvas = null;
+      state.backgroundImage = null;
+      state.foregroundLayer = null;
+      state.flowers = [];
+      state.selectedId = null;
+      state.lastFlowerKind = null;
+      cameraWrap.hidden = false;
+      canvasWrap.hidden = true;
+      ghostFrame.removeAttribute('src');
+      ghostFrame.classList.remove('is-visible');
+      captureBackgroundButton.hidden = false;
+      captureForegroundButton.hidden = true;
+      sequenceCaptureButton.hidden = false;
+      retakeButton.disabled = true;
+      finishButton.disabled = true;
+      printButton.disabled = true;
+      downloadWorksheetButton.disabled = true;
+      downloadImageButton.disabled = true;
+      setStep('background');
+      stageTitle.textContent = '빈 배경을 찍어주세요';
+      stageHint.textContent = '꽃병을 놓을 자리를 비워두고 먼저 한 장 찍습니다.';
+      setupCamera();
+      draw();
+    }
+
+    function estimateColorOffset(bgData, fgData) {
+      let sampleR = 0;
+      let sampleG = 0;
+      let sampleB = 0;
+      let sampleCount = 0;
+      let fallbackR = 0;
+      let fallbackG = 0;
+      let fallbackB = 0;
+      let fallbackCount = 0;
+
+      for (let i = 0; i < fgData.length; i += 64) {
+        const r = fgData[i] - bgData[i];
+        const g = fgData[i + 1] - bgData[i + 1];
+        const b = fgData[i + 2] - bgData[i + 2];
+        const rawDiff = Math.abs(r) * 0.34 + Math.abs(g) * 0.42 + Math.abs(b) * 0.24;
+        fallbackR += r;
+        fallbackG += g;
+        fallbackB += b;
+        fallbackCount += 1;
+
+        if (rawDiff < 34) {
+          sampleR += r;
+          sampleG += g;
+          sampleB += b;
+          sampleCount += 1;
+        }
+      }
+
+      const count = sampleCount > 64 ? sampleCount : fallbackCount || 1;
+      return {
+        r: (sampleCount > 64 ? sampleR : fallbackR) / count,
+        g: (sampleCount > 64 ? sampleG : fallbackG) / count,
+        b: (sampleCount > 64 ? sampleB : fallbackB) / count
+      };
+    }
+
+    function dilateMask(mask, width, height) {
+      const output = new Uint8Array(mask.length);
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const index = y * width + x;
+          let value = 0;
+          for (let oy = -1; oy <= 1 && !value; oy += 1) {
+            const ny = y + oy;
+            if (ny < 0 || ny >= height) continue;
+            for (let ox = -1; ox <= 1; ox += 1) {
+              const nx = x + ox;
+              if (nx >= 0 && nx < width && mask[ny * width + nx]) {
+                value = 1;
+                break;
+              }
+            }
+          }
+          output[index] = value;
+        }
+      }
+      return output;
+    }
+
+    function erodeMask(mask, width, height) {
+      const output = new Uint8Array(mask.length);
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          let value = 1;
+          for (let oy = -1; oy <= 1 && value; oy += 1) {
+            const ny = y + oy;
+            if (ny < 0 || ny >= height) {
+              value = 0;
+              break;
+            }
+            for (let ox = -1; ox <= 1; ox += 1) {
+              const nx = x + ox;
+              if (nx < 0 || nx >= width || !mask[ny * width + nx]) {
+                value = 0;
+                break;
+              }
+            }
+          }
+          output[y * width + x] = value;
+        }
+      }
+      return output;
+    }
+
+    function closeMask(mask, width, height, iterations) {
+      let result = mask;
+      for (let i = 0; i < iterations; i += 1) result = dilateMask(result, width, height);
+      for (let i = 0; i < iterations; i += 1) result = erodeMask(result, width, height);
+      return result;
+    }
+
+    function removeSmallComponents(mask, width, height, minArea) {
+      if (!minArea) return mask;
+      const output = new Uint8Array(mask.length);
+      const visited = new Uint8Array(mask.length);
+      const queue = new Int32Array(mask.length);
+
+      for (let start = 0; start < mask.length; start += 1) {
+        if (!mask[start] || visited[start]) continue;
+        let head = 0;
+        let tail = 0;
+        queue[tail] = start;
+        tail += 1;
+        visited[start] = 1;
+
+        while (head < tail) {
+          const index = queue[head];
+          head += 1;
+          const x = index % width;
+          const y = Math.floor(index / width);
+
+          for (let oy = -1; oy <= 1; oy += 1) {
+            const ny = y + oy;
+            if (ny < 0 || ny >= height) continue;
+            for (let ox = -1; ox <= 1; ox += 1) {
+              if (!ox && !oy) continue;
+              const nx = x + ox;
+              if (nx < 0 || nx >= width) continue;
+              const next = ny * width + nx;
+              if (mask[next] && !visited[next]) {
+                visited[next] = 1;
+                queue[tail] = next;
+                tail += 1;
+              }
+            }
+          }
+        }
+
+        if (tail >= minArea) {
+          for (let i = 0; i < tail; i += 1) output[queue[i]] = 1;
+        }
+      }
+
+      return output;
+    }
+
+    function fillMaskHoles(mask, width, height) {
+      const outside = new Uint8Array(mask.length);
+      const queue = new Int32Array(mask.length);
+      let head = 0;
+      let tail = 0;
+
+      function pushIfOutside(index) {
+        if (!mask[index] && !outside[index]) {
+          outside[index] = 1;
+          queue[tail] = index;
+          tail += 1;
+        }
+      }
+
+      for (let x = 0; x < width; x += 1) {
+        pushIfOutside(x);
+        pushIfOutside((height - 1) * width + x);
+      }
+      for (let y = 0; y < height; y += 1) {
+        pushIfOutside(y * width);
+        pushIfOutside(y * width + width - 1);
+      }
+
+      while (head < tail) {
+        const index = queue[head];
+        head += 1;
+        const x = index % width;
+        const y = Math.floor(index / width);
+        if (x > 0) pushIfOutside(index - 1);
+        if (x < width - 1) pushIfOutside(index + 1);
+        if (y > 0) pushIfOutside(index - width);
+        if (y < height - 1) pushIfOutside(index + width);
+      }
+
+      const output = new Uint8Array(mask.length);
+      for (let i = 0; i < mask.length; i += 1) output[i] = mask[i] || !outside[i] ? 1 : 0;
+      return output;
+    }
+
+    function blurAlpha(mask, width, height, radius) {
+      const alpha = new Uint8ClampedArray(mask.length);
+      for (let i = 0; i < mask.length; i += 1) alpha[i] = mask[i] ? 255 : 0;
+      if (!radius) return alpha;
+
+      let source = alpha;
+      for (let pass = 0; pass < radius; pass += 1) {
+        const output = new Uint8ClampedArray(source.length);
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            let sum = 0;
+            let count = 0;
+            for (let oy = -1; oy <= 1; oy += 1) {
+              const ny = y + oy;
+              if (ny < 0 || ny >= height) continue;
+              for (let ox = -1; ox <= 1; ox += 1) {
+                const nx = x + ox;
+                if (nx < 0 || nx >= width) continue;
+                sum += source[ny * width + nx];
+                count += 1;
+              }
+            }
+            output[y * width + x] = sum / count;
+          }
+        }
+        source = output;
+      }
+      return source;
+    }
+
+    function buildForegroundLayer() {
+      if (!state.backgroundCanvas || !state.foregroundCanvas) return;
+
+      const width = state.backgroundCanvas.width;
+      const height = state.backgroundCanvas.height;
+      const bg = state.backgroundCanvas.getContext('2d').getImageData(0, 0, width, height);
+      const fg = state.foregroundCanvas.getContext('2d').getImageData(0, 0, width, height);
+      const threshold = Number(maskThresholdInput.value);
+      const edgeFeather = Number(edgeFeatherInput.value);
+      const offset = estimateColorOffset(bg.data, fg.data);
+      let mask = new Uint8Array(width * height);
+
+      for (let i = 0, p = 0; i < fg.data.length; i += 4, p += 1) {
+        const dr = Math.abs(fg.data[i] - bg.data[i] - offset.r);
+        const dg = Math.abs(fg.data[i + 1] - bg.data[i + 1] - offset.g);
+        const db = Math.abs(fg.data[i + 2] - bg.data[i + 2] - offset.b);
+        const diff = dr * 0.34 + dg * 0.42 + db * 0.24;
+        mask[p] = diff > threshold ? 1 : 0;
+      }
+
+      mask = closeMask(mask, width, height, 2);
+      mask = fillMaskHoles(mask, width, height);
+      mask = removeSmallComponents(mask, width, height, Number(speckleSizeInput.value));
+      mask = dilateMask(mask, width, height);
+
+      let solidMask = mask;
+      for (let i = 0; i < edgeFeather; i += 1) solidMask = erodeMask(solidMask, width, height);
+      const featheredAlpha = blurAlpha(mask, width, height, edgeFeather);
+
+      const layerData = new ImageData(width, height);
+      for (let i = 0, p = 0; i < fg.data.length; i += 4, p += 1) {
+        const alpha = solidMask[p] ? 255 : featheredAlpha[p];
+        layerData.data[i] = fg.data[i];
+        layerData.data[i + 1] = fg.data[i + 1];
+        layerData.data[i + 2] = fg.data[i + 2];
+        layerData.data[i + 3] = alpha < 18 ? 0 : alpha;
+      }
+
+      const layer = document.createElement('canvas');
+      layer.width = width;
+      layer.height = height;
+      layer.getContext('2d').putImageData(layerData, 0, 0);
+      state.foregroundLayer = layer;
+      draw();
+    }
+
+    function resizeWorkCanvas() {
+      if (!state.backgroundCanvas) return;
+      workCanvas.width = state.backgroundCanvas.width;
+      workCanvas.height = state.backgroundCanvas.height;
+    }
+
+    function loadFlowerImage(fileName) {
+      return new Promise((resolve, reject) => {
+        const candidates = flowerCandidates(fileName);
+        const image = new Image();
+        let index = 0;
+        image.onload = () => resolve(image);
+        image.onerror = () => {
+          index += 1;
+          if (index >= candidates.length) {
+            reject(new Error(`꽃 이미지를 찾을 수 없습니다: ${fileName}`));
+            return;
+          }
+          image.src = candidates[index];
+        };
+        image.src = candidates[index];
+      });
+    }
+
+    async function addFlower(fileName, options = {}) {
+      if (!state.backgroundCanvas) {
+        setStatus('먼저 배경과 꽃병을 찍어주세요');
+        return;
+      }
+
+      try {
+        const image = await loadFlowerImage(fileName);
+        const size = options.size || workCanvas.height * 0.5;
+        const initialRotation = options.rotation ?? ((Math.random() * 2 - 1) * DEFAULT_ROTATION_RANGE);
+        const flower = {
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+          fileName,
+          image,
+          x: options.x ?? (workCanvas.width / 2 - size / 2),
+          y: options.y ?? (workCanvas.height * 0.36 - size / 2),
+          size,
+          targetSize: options.targetSize || size,
+          rotation: initialRotation,
+          targetRotation: options.targetRotation ?? initialRotation
+        };
+        state.flowers.push(flower);
+        state.selectedId = flower.id;
+        state.lastFlowerKind = fileName;
+        setStatus(`${displayName(fileName)} 추가`);
+        draw();
+        workCanvas.focus();
+      } catch (error) {
+        setStatus('꽃 이미지를 불러오지 못했어요');
+        console.error(error);
+      }
+    }
+
+    function selectedFlower() {
+      return state.flowers.find((flower) => flower.id === state.selectedId) || null;
+    }
+
+    function scheduleFlowerAnimation() {
+      if (!flowerAnimationFrame) {
+        flowerAnimationFrame = requestAnimationFrame(animateFlowers);
+      }
+    }
+
+    function animateFlowers() {
+      let shouldContinue = false;
+
+      state.flowers.forEach((flower) => {
+        const targetSize = flower.targetSize ?? flower.size;
+        const targetRotation = flower.targetRotation ?? flower.rotation;
+        const sizeDelta = targetSize - flower.size;
+        const rotationDelta = targetRotation - flower.rotation;
+
+        if (Math.abs(sizeDelta) > 0.08) {
+          const centerX = flower.x + flower.size / 2;
+          const centerY = flower.y + flower.size / 2;
+          flower.size += sizeDelta * 0.1;
+          flower.x = centerX - flower.size / 2;
+          flower.y = centerY - flower.size / 2;
+          shouldContinue = true;
+        } else {
+          flower.size = targetSize;
+        }
+
+        if (Math.abs(rotationDelta) > 0.002) {
+          flower.rotation += rotationDelta * 0.1;
+          shouldContinue = true;
+        } else {
+          flower.rotation = targetRotation;
+        }
+      });
+
+      draw();
+      flowerAnimationFrame = shouldContinue ? requestAnimationFrame(animateFlowers) : null;
+    }
+
+    function draw(includeSelection = true) {
+      ctx.clearRect(0, 0, workCanvas.width, workCanvas.height);
+
+      if (!state.backgroundCanvas) {
+        ctx.fillStyle = '#ecf4f1';
+        ctx.fillRect(0, 0, workCanvas.width || 640, workCanvas.height || 480);
+        return;
+      }
+
+      ctx.drawImage(state.backgroundCanvas, 0, 0, workCanvas.width, workCanvas.height);
+
+      state.flowers.forEach((flower) => {
+        ctx.save();
+        ctx.translate(flower.x + flower.size / 2, flower.y + flower.size / 2);
+        ctx.rotate(flower.rotation);
+        ctx.drawImage(flower.image, -flower.size / 2, -flower.size / 2, flower.size, flower.size);
+
+        if (includeSelection && flower.id === state.selectedId) {
+          ctx.strokeStyle = 'rgba(232, 93, 117, 0.92)';
+          ctx.lineWidth = Math.max(3, workCanvas.width * 0.004);
+          ctx.setLineDash([10, 7]);
+          ctx.strokeRect(-flower.size / 2, -flower.size / 2, flower.size, flower.size);
+        }
+        ctx.restore();
+      });
+
+      if (state.foregroundLayer) {
+        ctx.save();
+        ctx.drawImage(state.foregroundLayer, 0, 0, workCanvas.width, workCanvas.height);
+        ctx.restore();
+      }
+    }
+
+    function pointerPosition(event) {
+      const rect = workCanvas.getBoundingClientRect();
+      const point = event.touches ? event.touches[0] : event;
+      return {
+        x: (point.clientX - rect.left) * (workCanvas.width / rect.width),
+        y: (point.clientY - rect.top) * (workCanvas.height / rect.height)
+      };
+    }
+
+    function hitTestFlower(point) {
+      for (let i = state.flowers.length - 1; i >= 0; i -= 1) {
+        const flower = state.flowers[i];
+        const cx = flower.x + flower.size / 2;
+        const cy = flower.y + flower.size / 2;
+        const dx = point.x - cx;
+        const dy = point.y - cy;
+        const rotatedX = dx * Math.cos(-flower.rotation) - dy * Math.sin(-flower.rotation);
+        const rotatedY = dx * Math.sin(-flower.rotation) + dy * Math.cos(-flower.rotation);
+        if (Math.abs(rotatedX) <= flower.size / 2 && Math.abs(rotatedY) <= flower.size / 2) {
+          return flower;
+        }
+      }
+      return null;
+    }
+
+    function startDrag(event) {
+      if (!state.backgroundCanvas) return;
+      event.preventDefault();
+      const point = pointerPosition(event);
+      const flower = hitTestFlower(point);
+      if (!flower) {
+        state.selectedId = null;
+        draw();
+        return;
+      }
+      state.selectedId = flower.id;
+      state.dragging = true;
+      state.dragOffset = { x: point.x - flower.x, y: point.y - flower.y };
+      draw();
+      workCanvas.focus();
+    }
+
+    function moveDrag(event) {
+      if (!state.dragging) return;
+      event.preventDefault();
+      const flower = selectedFlower();
+      if (!flower) return;
+      const point = pointerPosition(event);
+      flower.x = point.x - state.dragOffset.x;
+      flower.y = point.y - state.dragOffset.y;
+      draw();
+    }
+
+    function endDrag() {
+      state.dragging = false;
+    }
+
+    function updateSelected(mutator) {
+      const flower = selectedFlower();
+      if (!flower) return;
+      mutator(flower);
+      scheduleFlowerAnimation();
+    }
+
+    function scaleSelected(multiplier) {
+      updateSelected((flower) => {
+        const currentTarget = flower.targetSize ?? flower.size;
+        flower.targetSize = Math.max(36, Math.min(workCanvas.width * 0.7, currentTarget * multiplier));
+      });
+    }
+
+    function rotateSelected(delta) {
+      updateSelected((flower) => {
+        flower.targetRotation = (flower.targetRotation ?? flower.rotation) + delta;
+      });
+    }
+
+    function deleteSelected() {
+      if (!state.selectedId) return;
+      state.flowers = state.flowers.filter((flower) => flower.id !== state.selectedId);
+      state.selectedId = null;
+      draw();
+    }
+
+    function moveLayer(offset) {
+      const index = state.flowers.findIndex((flower) => flower.id === state.selectedId);
+      if (index < 0) return;
+      const newIndex = Math.max(0, Math.min(state.flowers.length - 1, index + offset));
+      const [flower] = state.flowers.splice(index, 1);
+      state.flowers.splice(newIndex, 0, flower);
+      draw();
+    }
+
+    async function duplicateSelected() {
+      const flower = selectedFlower();
+      if (!flower) {
+        if (state.lastFlowerKind) await addFlower(state.lastFlowerKind);
+        return;
+      }
+      await addFlower(flower.fileName, {
+        x: flower.x + 26,
+        y: flower.y + 22,
+        size: flower.size,
+        targetSize: flower.targetSize ?? flower.size,
+        rotation: flower.rotation + 0.08,
+        targetRotation: (flower.targetRotation ?? flower.rotation) + 0.08
+      });
+    }
+
+    function currentImageDataUrl() {
+      const previous = state.selectedId;
+      state.selectedId = null;
+      draw(false);
+      const url = workCanvas.toDataURL('image/png');
+      state.selectedId = previous;
+      draw();
+      return url;
+    }
+
+    function escapeXml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function todayString() {
+      const date = new Date();
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function worksheetSvg() {
+      const imageUrl = currentImageDataUrl();
+      const title = escapeXml(artTitleInput.value.trim() || '꽃병 만들기');
+      const artist = escapeXml(artistNameInput.value.trim());
+      const date = todayString();
+
+      return `
+<svg width="210mm" height="297mm" viewBox="0 0 595 842" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="595" height="842" fill="#ffffff"/>
+  <text x="50" y="70" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif" font-size="32" font-weight="800" fill="#20322f">🌸 ${title}</text>
+  <text x="50" y="102" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif" font-size="15" fill="#60736e">🏺 ${artist ? `이름: ${artist} · ` : ''}${date}</text>
+  <image x="50" y="126" width="495" height="278" preserveAspectRatio="xMidYMid meet" xlink:href="${imageUrl}"/>
+  <text x="50" y="475" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif" font-size="22" font-weight="800" fill="#20322f">✏️ 다시 떠오른 모양을 그려요</text>
+  <rect x="50" y="500" width="495" height="286" rx="14" fill="#ffffff" stroke="#cbded3" stroke-width="2" stroke-dasharray="10 9"/>
+</svg>`.trim();
+    }
+
+    function downloadText(content, fileName, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadDataUrl(dataUrl, fileName) {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    function printWorksheet() {
+      printArea.innerHTML = worksheetSvg();
+      setStep('print');
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          printArea.innerHTML = '';
+          setStep('compose');
+        }, 250);
+      }, 80);
+    }
+
+    function populateFlowers() {
+      FLOWER_FILES.forEach((fileName) => {
+        const button = document.createElement('button');
+        const image = document.createElement('img');
+        const label = document.createElement('span');
+        const candidates = flowerCandidates(fileName);
+        let candidateIndex = 0;
+
+        button.className = 'flower-button';
+        button.type = 'button';
+        button.title = displayName(fileName);
+        image.alt = displayName(fileName);
+        image.draggable = false;
+        image.onerror = () => {
+          candidateIndex += 1;
+          if (candidateIndex < candidates.length) image.src = candidates[candidateIndex];
+        };
+        image.src = candidates[candidateIndex];
+        label.textContent = displayName(fileName);
+        button.append(image, label);
+        button.addEventListener('click', () => addFlower(fileName));
+        flowerGrid.appendChild(button);
+      });
+    }
+
+    captureBackgroundButton.addEventListener('click', captureBackground);
+    captureForegroundButton.addEventListener('click', captureForeground);
+    sequenceCaptureButton.addEventListener('click', runSequenceCapture);
+    retakeButton.addEventListener('click', resetAll);
+    finishButton.addEventListener('click', printWorksheet);
+    printButton.addEventListener('click', printWorksheet);
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    downloadWorksheetButton.addEventListener('click', () => {
+      const safeTitle = (artTitleInput.value.trim() || '꽃병만들기').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+      downloadText(worksheetSvg(), `${safeTitle}_${todayString()}.svg`, 'image/svg+xml');
+    });
+    downloadImageButton.addEventListener('click', () => {
+      const safeTitle = (artTitleInput.value.trim() || '꽃병합성').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+      downloadDataUrl(currentImageDataUrl(), `${safeTitle}_${todayString()}.png`);
+    });
+
+    settingsButton.addEventListener('click', () => {
+      settingsModal.hidden = false;
+    });
+    closeSettingsButton.addEventListener('click', () => {
+      settingsModal.hidden = true;
+    });
+    settingsModal.addEventListener('click', (event) => {
+      if (event.target === settingsModal) settingsModal.hidden = true;
+    });
+    countdownCancelButton.addEventListener('click', () => {
+      sequenceCaptureCancelled = true;
+      finishCountdownFlow();
+      setStatus('연속 촬영을 취소했어요');
+    });
+    saveSettingsButton.addEventListener('click', () => {
+      saveSettings();
+      settingsModal.hidden = true;
+      setStatus('설정을 저장했어요');
+    });
+    resetSettingsButton.addEventListener('click', () => {
+      applySettings({ ...DEFAULT_SETTINGS });
+      saveSettings();
+      setStatus('기본 설정으로 돌아왔어요');
+    });
+    presetButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applySettings({ ...currentSettings(), preset: button.dataset.presetOption });
+        saveSettings();
+      });
+    });
+
+    maskThresholdInput.addEventListener('input', () => {
+      buildForegroundLayer();
+      saveSettings();
+    });
+    edgeFeatherInput.addEventListener('input', () => {
+      buildForegroundLayer();
+      saveSettings();
+    });
+    speckleSizeInput.addEventListener('input', () => {
+      buildForegroundLayer();
+      saveSettings();
+    });
+    cameraMirrorInput.addEventListener('change', () => {
+      camera.classList.toggle('is-mirrored', cameraMirrorInput.checked);
+      saveSettings();
+    });
+    vasePlaceDelayInput.addEventListener('input', () => {
+      updateSequenceTimingSummary();
+      saveSettings();
+    });
+    secondCountdownStartInput.addEventListener('input', () => {
+      updateSequenceTimingSummary();
+      saveSettings();
+    });
+
+    document.getElementById('smallerButton').addEventListener('click', () => scaleSelected(0.88));
+    document.getElementById('biggerButton').addEventListener('click', () => scaleSelected(1.14));
+    document.getElementById('rotateLeftButton').addEventListener('click', () => rotateSelected(-0.16));
+    document.getElementById('rotateRightButton').addEventListener('click', () => rotateSelected(0.16));
+    document.getElementById('backwardButton').addEventListener('click', () => moveLayer(-1));
+    document.getElementById('forwardButton').addEventListener('click', () => moveLayer(1));
+    document.getElementById('deleteButton').addEventListener('click', deleteSelected);
+    document.getElementById('duplicateButton').addEventListener('click', duplicateSelected);
+
+    workCanvas.addEventListener('mousedown', startDrag);
+    workCanvas.addEventListener('mousemove', moveDrag);
+    workCanvas.addEventListener('mouseup', endDrag);
+    workCanvas.addEventListener('mouseleave', endDrag);
+    workCanvas.addEventListener('touchstart', startDrag, { passive: false });
+    workCanvas.addEventListener('touchmove', moveDrag, { passive: false });
+    workCanvas.addEventListener('touchend', endDrag);
+
+    document.addEventListener('keydown', (event) => {
+      if (state.step !== 'compose' || !selectedFlower()) return;
+      if (event.target.matches('input, textarea')) return;
+
+      const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '=', '-', '_', '[', ']', 'Delete', 'Backspace'];
+      if (!handledKeys.includes(event.key)) return;
+
+      event.preventDefault();
+      if (event.key === 'ArrowUp') scaleSelected(1.08);
+      if (event.key === 'ArrowDown') scaleSelected(0.92);
+      if (event.key === 'ArrowLeft') rotateSelected(-0.12);
+      if (event.key === 'ArrowRight') rotateSelected(0.12);
+      if (event.key === '+' || event.key === '=') scaleSelected(1.08);
+      if (event.key === '-' || event.key === '_') scaleSelected(0.92);
+      if (event.key === '[') rotateSelected(-0.12);
+      if (event.key === ']') rotateSelected(0.12);
+      if (event.key === 'Delete' || event.key === 'Backspace') deleteSelected();
+    });
+
+    window.addEventListener('resize', draw);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !settingsModal.hidden) settingsModal.hidden = true;
+    });
+
+    applySettings(loadSettings());
+    populateFlowers();
+    setupCamera();
+  </script>
+</body>
+</html>
