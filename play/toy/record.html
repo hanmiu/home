@@ -1398,7 +1398,8 @@
         const features = extractGlyphFeaturesFromVisualFrames(chunk);
         const energy = Math.min(1, features.volume * 0.64 + features.peak * 0.48 + features.roughness * 0.16);
         const onset = Math.max(0, energy - previousEnergy * 0.78);
-        const silent = features.volume <= 0.055 && features.peak <= 0.11 && energy <= 0.075;
+        const audible = (features.volume > 0.085 && energy > 0.12) || features.peak > 0.24;
+        const silent = !audible;
         glyphTrack.push({
           glyph: silent ? null : createSoundGlyph(features, glyphTrack.length),
           energy,
