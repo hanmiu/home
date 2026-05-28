@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>이야기 녹음</title>
+  <title>한미 이야기 녹음</title>
   <style>
     :root {
       --paper: #fffaf2;
@@ -161,10 +161,8 @@
 
     .input-wrap {
       display: grid;
-      gap: 5px;
     }
 
-    .input-wrap label,
     .mini-label {
       color: var(--muted);
       font-size: 0.75rem;
@@ -342,12 +340,16 @@
     .wave-caption {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 12px;
       padding: 0 11px 9px;
       color: var(--muted);
       font-size: 0.78rem;
       font-weight: 800;
+    }
+
+    .wave-caption span:first-child {
+      display: none;
     }
 
     .controls {
@@ -426,7 +428,6 @@
     }
 
     .latest-row,
-    .history-row,
     .bottom-section {
       display: flex;
       align-items: center;
@@ -442,8 +443,7 @@
       gap: 3px;
     }
 
-    .latest-title strong,
-    .history-row strong {
+    .latest-title strong {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -451,7 +451,6 @@
     }
 
     .latest-title small,
-    .history-row small,
     .empty {
       color: var(--muted);
       font-size: 0.78rem;
@@ -466,8 +465,7 @@
       font-weight: 950;
     }
 
-    .latest-buttons,
-    .history-actions {
+    .latest-buttons {
       display: flex;
       gap: 6px;
       align-items: center;
@@ -482,30 +480,18 @@
       white-space: nowrap;
     }
 
-    .small-button.listen {
+    .small-button.listen,
+    .small-button.dark {
       background: #26322f;
       border-color: #26322f;
       color: #fff;
     }
 
-    .history {
-      display: none;
-      max-height: 100px;
-      overflow: auto;
-      padding-top: 8px;
-      border-top: 1px solid var(--line);
-    }
-
-    .history.is-open {
-      display: grid;
-      gap: 6px;
-    }
-
     .listen-drawer {
       display: none;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-items: stretch;
       border: 1px solid var(--line);
       border-radius: 12px;
       background: #fff;
@@ -516,29 +502,29 @@
       display: grid;
     }
 
-    .pattern {
-      width: 112px;
-      aspect-ratio: 1;
-      border-radius: 10px;
-      padding: 6px;
-      border: 1px solid var(--line);
-      background: #f9faf7;
-      display: grid;
-      grid-template-columns: repeat(16, 1fr);
-      grid-template-rows: repeat(16, 1fr);
-      gap: 2px;
+    .listen-drawer.is-single {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
     }
 
-    .pattern-cell {
-      border-radius: 2px;
-      background: #ecefeb;
-      transition: background 90ms linear, opacity 90ms linear;
+    .listen-drawer.is-single .pattern {
+      width: 64px;
+    }
+
+    .pattern {
+      width: 100%;
+      height: 64px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      display: block;
+      image-rendering: pixelated;
     }
 
     .audio-box {
       min-width: 0;
       display: grid;
-      gap: 7px;
+      gap: 6px;
     }
 
     audio {
@@ -550,7 +536,7 @@
       border-radius: var(--radius);
       padding: 12px;
       display: grid;
-      grid-template-columns: auto auto auto minmax(0, 1fr);
+      grid-template-columns: auto auto minmax(0, 1fr);
       gap: 9px;
       align-items: center;
     }
@@ -667,6 +653,10 @@
       border: 0;
     }
 
+    .is-hidden {
+      display: none !important;
+    }
+
     @media (max-width: 980px) {
       .app {
         width: min(760px, calc(100vw - 28px));
@@ -729,7 +719,7 @@
   <main class="app">
     <header class="topbar">
       <div class="brand">
-        <h1>이야기 녹음</h1>
+        <h1>한미 이야기 녹음</h1>
         <small>의논하기와 이야기 만들기를 따로 녹음합니다.</small>
       </div>
       <div class="top-actions">
@@ -741,8 +731,7 @@
 
     <section class="setbar" aria-label="현재 녹음 세트">
       <div class="input-wrap">
-        <label for="groupName">모둠 이름</label>
-        <input class="group-input" id="groupName" type="text" autocomplete="off" placeholder="예: 하늘팀">
+        <input class="group-input" id="groupName" type="text" autocomplete="off" placeholder="모둠 이름 예: 하늘팀" aria-label="모둠 이름">
       </div>
       <div class="set-summary">
         <span id="setLabel">세트 1</span>
@@ -820,7 +809,6 @@
     <footer class="bottombar">
       <button class="action-button complete" id="completeButton" type="button">모두 완성</button>
       <button class="action-button" id="newSetButton" type="button">새로 시작</button>
-      <button class="action-button zip" id="zipButton" type="button">ZIP 저장 <span aria-hidden="true">·</span> 최신만</button>
       <div class="saved-strip" id="savedStrip" aria-label="완성된 세트"></div>
     </footer>
   </main>
@@ -842,10 +830,22 @@
           <option value="m4a">m4a 우선</option>
           <option value="webm">webm 우선</option>
         </select>
+        <label for="spectrogramSpeed">스크롤 속도</label>
+        <select id="spectrogramSpeed">
+          <option value="0.5">천천히</option>
+          <option value="1">보통</option>
+          <option value="1.5">조금 빠르게</option>
+          <option value="2">빠르게</option>
+        </select>
+        <label for="glyphMode">글리프 표시</label>
+        <select id="glyphMode">
+          <option value="strip">흐르는 띠</option>
+          <option value="single">한 글리프</option>
+        </select>
       </div>
       <div class="dialog-actions">
         <button class="small-button" value="cancel" type="submit">취소</button>
-        <button class="small-button listen" id="saveSettings" value="default" type="submit">저장</button>
+        <button class="small-button dark" id="saveSettings" value="default" type="submit">저장</button>
       </div>
     </form>
   </dialog>
@@ -859,8 +859,30 @@
     const DEFAULT_SETTINGS = {
       discussionLimit: 10,
       storyLimit: 10,
-      formatPreference: "auto"
+      formatPreference: "auto",
+      spectrogramSpeed: 1,
+      glyphMode: "strip"
     };
+
+    const WAVE_SAMPLE_INTERVAL_MS = 32;
+    const SPECTROGRAM_BINS = 72;
+    const SPECTROGRAM_VISIBLE_COLUMNS = 1400;
+    const GLYPH_SOURCE_INTERVAL_MS = 80;
+    const GLYPH_SINGLE_INTERVAL_MS = 240;
+    const GLYPH_STRIP_INTERVAL_MS = 720;
+    const GLYPH_SILENCE_HOLD_MS = 320;
+    const GLYPH_LIVE_RMS_FLOOR = 0.014;
+    const GLYPH_LIVE_RMS_SOFT_FLOOR = 0.01;
+    const SPECTROGRAM_PALETTE = [
+      "rgba(69, 38, 118, 0.26)",
+      "#6044b5",
+      "#2368c9",
+      "#1597c1",
+      "#10a994",
+      "#78bf42",
+      "#e0c43b",
+      "#df7b4f"
+    ];
 
     const elements = {
       nowChip: document.getElementById("nowChip"),
@@ -870,6 +892,8 @@
       discussionLimit: document.getElementById("discussionLimit"),
       storyLimit: document.getElementById("storyLimit"),
       formatPreference: document.getElementById("formatPreference"),
+      spectrogramSpeed: document.getElementById("spectrogramSpeed"),
+      glyphMode: document.getElementById("glyphMode"),
       saveSettings: document.getElementById("saveSettings"),
       groupName: document.getElementById("groupName"),
       setLabel: document.getElementById("setLabel"),
@@ -877,7 +901,6 @@
       message: document.getElementById("message"),
       completeButton: document.getElementById("completeButton"),
       newSetButton: document.getElementById("newSetButton"),
-      zipButton: document.getElementById("zipButton"),
       savedStrip: document.getElementById("savedStrip")
     };
 
@@ -916,6 +939,7 @@
     let audioContext = null;
     let analyser = null;
     let sampleData = null;
+    let frequencyData = null;
     let tickHandle = null;
     let renderHandle = null;
 
@@ -1017,7 +1041,8 @@
 
     function hasUndownloadedRecordings() {
       return ["discussion", "story"].some((section) => {
-        return state.activeSet[section].some((item) => !state.savedDownloadKeys.has(item.key));
+        const latest = getLatest(section);
+        return latest && !state.savedDownloadKeys.has(latest.key);
       });
     }
 
@@ -1066,14 +1091,17 @@
       }
 
       try {
+        closePlayback();
         const audioType = getSupportedAudioType();
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 1024;
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.28;
         source.connect(analyser);
         sampleData = new Uint8Array(analyser.fftSize);
+        frequencyData = new Uint8Array(analyser.frequencyBinCount);
 
         const chunks = [];
         recorder = new MediaRecorder(stream, audioType.mimeType ? { mimeType: audioType.mimeType } : undefined);
@@ -1087,8 +1115,8 @@
           startedAt: now,
           resumeAt: performance.now(),
           recordedMs: 0,
-          samples: [],
-          markers: [],
+          segments: [createWaveSegment()],
+          visualFrames: [],
           isPaused: false
         };
 
@@ -1117,7 +1145,10 @@
       if (recorder.state !== "recording") return;
 
       state.current.recordedMs += performance.now() - state.current.resumeAt;
-      state.current.markers.push(state.current.samples.length);
+      const activeSegment = getActiveSegment(state.current);
+      if (activeSegment) {
+        activeSegment.durationMs += performance.now() - state.current.resumeAt;
+      }
       state.current.isPaused = true;
       recorder.pause();
       setMessage(`${SECTION_META[section].title} 녹음을 잠깐 멈췄습니다.`);
@@ -1132,6 +1163,7 @@
       if (recorder.state !== "paused") return;
 
       state.current.resumeAt = performance.now();
+      state.current.segments.push(createWaveSegment());
       state.current.isPaused = false;
       recorder.resume();
       setMessage(`${SECTION_META[section].title} 녹음을 이어갑니다.`);
@@ -1145,6 +1177,10 @@
       }
       if (recorder.state === "recording") {
         state.current.recordedMs += performance.now() - state.current.resumeAt;
+        const activeSegment = getActiveSegment(state.current);
+        if (activeSegment) {
+          activeSegment.durationMs += performance.now() - state.current.resumeAt;
+        }
       }
       recorder.stop();
       stopLoops();
@@ -1158,6 +1194,9 @@
       const blob = new Blob(current.chunks, { type: current.audioType.blobType });
       const url = URL.createObjectURL(blob);
       const fileName = buildFileName(section, current.versionNumber, current.audioType.extension, createdAt);
+      const segments = normalizeSegments(current.segments);
+      const visualFrames = current.visualFrames.slice();
+      const glyphTrack = createGlyphTrack(visualFrames);
       const recording = {
         key: `${state.activeSet.id}-${section}-${current.versionNumber}`,
         section,
@@ -1167,8 +1206,11 @@
         fileName,
         createdAt,
         durationMs: current.recordedMs,
-        samples: normalizeSamples(current.samples),
-        markers: current.markers.slice(),
+        segments,
+        visualFrames,
+        glyphFrames: glyphTrack.map((entry) => entry.glyph),
+        glyphTrack,
+        glyphFrameInterval: GLYPH_SOURCE_INTERVAL_MS,
         extension: current.audioType.extension
       };
 
@@ -1191,12 +1233,13 @@
       }
       analyser = null;
       sampleData = null;
+      frequencyData = null;
     }
 
     function startLoops() {
       stopLoops();
-      tickHandle = window.setInterval(sampleRecording, 90);
-      renderHandle = window.setInterval(render, 240);
+      tickHandle = window.setInterval(sampleRecording, WAVE_SAMPLE_INTERVAL_MS);
+      renderHandle = window.setInterval(render, 120);
     }
 
     function stopLoops() {
@@ -1207,8 +1250,9 @@
     }
 
     function sampleRecording() {
-      if (!state.current || state.current.isPaused || !analyser || !sampleData) return;
+      if (!state.current || state.current.isPaused || !analyser || !sampleData || !frequencyData) return;
       analyser.getByteTimeDomainData(sampleData);
+      analyser.getByteFrequencyData(frequencyData);
       let sum = 0;
       let peak = 0;
       for (let i = 0; i < sampleData.length; i += 1) {
@@ -1218,40 +1262,209 @@
       }
       const rms = Math.sqrt(sum / sampleData.length);
       const value = Math.min(1, Math.max(rms * 4.2, peak * 0.85, 0.035));
-      state.current.samples.push(value);
+      const segment = getActiveSegment(state.current);
+      if (segment) {
+        const frame = compressFrequencyFrame(frequencyData);
+        segment.samples.push(value);
+        segment.frames.push(frame);
+        state.current.visualFrames.push({
+          frame: Array.from(frame),
+          segmentIndex: Math.max(0, state.current.segments.length - 1)
+        });
+        if (state.current.visualFrames.length > SPECTROGRAM_VISIBLE_COLUMNS) {
+          state.current.visualFrames.splice(0, state.current.visualFrames.length - SPECTROGRAM_VISIBLE_COLUMNS);
+        }
+      }
       if (state.current.recordedMs + performance.now() - state.current.resumeAt >= getLimitMs(state.current.section)) {
         finishRecording(state.current.section);
       }
     }
 
-    function normalizeSamples(samples) {
-      if (samples.length <= 360) return samples.slice();
-      const target = 360;
-      const bucket = samples.length / target;
-      const result = [];
-      for (let i = 0; i < target; i += 1) {
-        const start = Math.floor(i * bucket);
-        const end = Math.max(start + 1, Math.floor((i + 1) * bucket));
-        const slice = samples.slice(start, end);
-        result.push(Math.max(...slice));
-      }
-      return result;
+    function createWaveSegment() {
+      return { samples: [], frames: [], durationMs: 0 };
     }
 
-    function getDisplaySamples(section) {
+    function getActiveSegment(current) {
+      return current && current.segments[current.segments.length - 1];
+    }
+
+    function normalizeSegments(segments) {
+      return segments
+        .filter((segment) => segment.frames.length || segment.samples.length || segment.durationMs > 0)
+        .map((segment) => ({
+          samples: segment.samples.slice(),
+          frames: segment.frames.map((frame) => Array.from(frame)),
+          durationMs: Math.max(0, segment.durationMs)
+        }));
+    }
+
+    function getDisplaySegments(section) {
       if (state.current && state.current.section === section) {
         return {
-          samples: normalizeSamples(state.current.samples),
-          markers: state.current.markers,
-          active: true
+          segments: normalizeSegments(state.current.segments),
+          visualFrames: state.current.visualFrames,
+          active: true,
+          paused: state.current.isPaused
         };
       }
       const latest = getLatest(section);
       return {
-        samples: latest ? latest.samples : [],
-        markers: latest ? latest.markers : [],
-        active: false
+        segments: latest ? latest.segments : [],
+        visualFrames: latest ? latest.visualFrames || [] : [],
+        active: false,
+        paused: false
       };
+    }
+
+    function downsample(values, targetCount) {
+      if (!values.length || targetCount <= 0) return [];
+      if (values.length === targetCount) return values.slice();
+      const result = [];
+      const bucket = values.length / targetCount;
+      for (let i = 0; i < targetCount; i += 1) {
+        const start = Math.floor(i * bucket);
+        const end = Math.max(start + 1, Math.floor((i + 1) * bucket));
+        let max = 0;
+        for (let j = start; j < end && j < values.length; j += 1) {
+          if (values[j] > max) max = values[j];
+        }
+        result.push(max);
+      }
+      return result;
+    }
+
+    function compressFrequencyFrame(source) {
+      const result = new Uint8Array(SPECTROGRAM_BINS);
+      const usableBins = Math.max(8, Math.floor(source.length * 0.62));
+      for (let i = 0; i < SPECTROGRAM_BINS; i += 1) {
+        const startRatio = Math.pow(i / SPECTROGRAM_BINS, 1.72);
+        const endRatio = Math.pow((i + 1) / SPECTROGRAM_BINS, 1.72);
+        const start = Math.min(usableBins - 1, 1 + Math.floor(startRatio * usableBins));
+        const end = Math.max(start + 1, Math.min(usableBins, 1 + Math.floor(endRatio * usableBins)));
+        let peak = 0;
+        let sum = 0;
+        for (let j = start; j < end; j += 1) {
+          const value = source[j];
+          sum += value;
+          if (value > peak) peak = value;
+        }
+        const avg = sum / (end - start);
+        const mixed = Math.max(peak * 0.82, avg * 1.2);
+        result[i] = Math.max(0, Math.min(255, Math.round(mixed)));
+      }
+      return result;
+    }
+
+    function downsampleFrames(frames, targetCount) {
+      if (!frames.length || targetCount <= 0) return [];
+      const result = [];
+      const bucket = frames.length / targetCount;
+      for (let i = 0; i < targetCount; i += 1) {
+        const start = Math.floor(i * bucket);
+        const end = Math.max(start + 1, Math.floor((i + 1) * bucket));
+        const merged = new Uint8Array(SPECTROGRAM_BINS);
+        let count = 0;
+        for (let j = start; j < end && j < frames.length; j += 1) {
+          const frame = frames[j];
+          count += 1;
+          for (let bin = 0; bin < SPECTROGRAM_BINS; bin += 1) {
+            if (frame[bin] > merged[bin]) merged[bin] = frame[bin];
+          }
+        }
+        if (count > 0) result.push(merged);
+      }
+      return result;
+    }
+
+    function downsampleVisualFrames(entries, targetCount) {
+      if (!entries.length || targetCount <= 0) return [];
+      return entries.slice(-targetCount);
+    }
+
+    function spectrogramColor(value) {
+      if (value < 12) return null;
+      const boosted = Math.pow(value / 255, 0.72);
+      const index = Math.max(0, Math.min(SPECTROGRAM_PALETTE.length - 1, Math.floor(boosted * SPECTROGRAM_PALETTE.length)));
+      return SPECTROGRAM_PALETTE[index];
+    }
+
+    function createGlyphTrack(visualFrames) {
+      if (!visualFrames.length) return [];
+      const framesPerGlyph = Math.max(1, Math.round(GLYPH_SOURCE_INTERVAL_MS / WAVE_SAMPLE_INTERVAL_MS));
+      const glyphTrack = [];
+      let previousEnergy = 0;
+      for (let start = 0; start < visualFrames.length; start += framesPerGlyph) {
+        const chunk = visualFrames.slice(start, start + framesPerGlyph);
+        const features = extractGlyphFeaturesFromVisualFrames(chunk);
+        const energy = Math.min(1, features.volume * 0.64 + features.peak * 0.48 + features.roughness * 0.16);
+        const onset = Math.max(0, energy - previousEnergy * 0.78);
+        const silent = features.volume <= 0.055 && features.peak <= 0.11 && energy <= 0.075;
+        glyphTrack.push({
+          glyph: silent ? null : createSoundGlyph(features, glyphTrack.length),
+          energy,
+          onset,
+          silent
+        });
+        previousEnergy = energy;
+      }
+      return glyphTrack;
+    }
+
+    function createGlyphFrames(visualFrames) {
+      return createGlyphTrack(visualFrames).map((entry) => entry.glyph);
+    }
+
+    function extractGlyphFeaturesFromVisualFrames(entries) {
+      const bins = new Array(SPECTROGRAM_BINS).fill(0);
+      entries.forEach((entry) => {
+        const frame = entry.frame || [];
+        for (let i = 0; i < SPECTROGRAM_BINS; i += 1) {
+          const value = frame[i] || 0;
+          if (value > bins[i]) bins[i] = value;
+        }
+      });
+
+      const bandValues = [0, 0, 0, 0];
+      const bandCounts = [0, 0, 0, 0];
+      let total = 0;
+      let weighted = 0;
+      let peak = 0;
+      for (let i = 0; i < bins.length; i += 1) {
+        const value = bins[i] / 255;
+        const band = Math.min(3, Math.floor(i / (bins.length / 4)));
+        bandValues[band] += value;
+        bandCounts[band] += 1;
+        total += value;
+        weighted += value * i;
+        if (value > peak) peak = value;
+      }
+
+      for (let i = 0; i < bandValues.length; i += 1) {
+        bandValues[i] = bandValues[i] / Math.max(1, bandCounts[i]);
+      }
+
+      let changes = 0;
+      for (let i = 1; i < bins.length; i += 1) {
+        changes += Math.abs(bins[i] - bins[i - 1]) / 255;
+      }
+
+      const volume = Math.min(1, total / bins.length * 2.4);
+      const brightness = bandValues[2] + bandValues[3];
+      const warmth = bandValues[0] + bandValues[1] * 0.5;
+      const centroid = weighted / Math.max(1, total) / bins.length;
+      const roughness = Math.min(1, changes / 18);
+      const seed = Math.floor((volume * 1009) + (brightness * 917) + (warmth * 619) + (centroid * 1223) + (roughness * 421) + (peak * 811));
+      return { bandValues, volume, brightness, warmth, centroid, roughness, peak, seed };
+    }
+
+    function calculateRms(timeValues) {
+      if (!timeValues || !timeValues.length) return 0;
+      let sum = 0;
+      for (let i = 0; i < timeValues.length; i += 1) {
+        const centered = (timeValues[i] - 128) / 128;
+        sum += centered * centered;
+      }
+      return Math.sqrt(sum / timeValues.length);
     }
 
     function drawWave(section) {
@@ -1268,39 +1481,48 @@
 
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, width, height);
-      const display = getDisplaySamples(section);
-      const samples = display.samples;
-      const mid = height * 0.52;
-      const barCount = Math.max(24, Math.min(samples.length || 48, Math.floor(width / (5 * dpr))));
-      const gap = 2 * dpr;
-      const barWidth = Math.max(2 * dpr, (width - gap * (barCount - 1)) / barCount);
-      const color = section === "discussion" ? "#d78367" : "#6e9fc7";
-      const faint = section === "discussion" ? "rgba(215, 131, 103, 0.18)" : "rgba(110, 159, 199, 0.18)";
+      const display = getDisplaySegments(section);
+      const visualFrames = display.visualFrames;
+      const hasSpectrogram = visualFrames.length > 0;
+      const columnWidth = Math.max(1, Number(state.settings.spectrogramSpeed || DEFAULT_SETTINGS.spectrogramSpeed) * dpr);
+      const step = columnWidth;
+      const bgA = "#ffffff";
+      const bgB = "rgba(0, 0, 0, 0.88)";
+      const verticalPadding = Math.max(18 * dpr, height * 0.16);
+      const spectrumTop = verticalPadding;
+      const spectrumHeight = Math.max(1, height - verticalPadding * 2);
 
-      for (let i = 0; i < barCount; i += 1) {
-        const value = samples.length
-          ? samples[Math.floor(i * samples.length / barCount)]
-          : 0.035 + Math.sin(i * 0.85) * 0.008;
-        const h = Math.max(5 * dpr, value * height * 0.72);
-        const x = i * (barWidth + gap);
-        const y = mid - h / 2;
-        ctx.fillStyle = samples.length ? color : faint;
-        roundRect(ctx, x, y, barWidth, h, Math.min(6 * dpr, barWidth / 2));
-        ctx.fill();
+      if (!hasSpectrogram) {
+        return;
       }
 
-      if (samples.length) {
-        ctx.strokeStyle = "rgba(38, 50, 47, 0.24)";
-        ctx.lineWidth = Math.max(1, dpr);
-        const maxIndex = Math.max(...display.markers, 0);
-        display.markers.forEach((marker) => {
-          const x = (marker / Math.max(samples.length, maxIndex, 1)) * width;
-          ctx.beginPath();
-          ctx.moveTo(x, height * 0.17);
-          ctx.lineTo(x, height * 0.84);
-          ctx.stroke();
-        });
+      const targetColumns = Math.floor(width / step);
+      const frames = downsampleVisualFrames(visualFrames, targetColumns);
+      const startX = Math.max(0, width - frames.length * step);
+      const binHeight = spectrumHeight / SPECTROGRAM_BINS;
+
+      frames.forEach((entry, index) => {
+        const x = Math.floor(startX + index * step);
+        ctx.fillStyle = entry.segmentIndex % 2 === 0 ? bgA : bgB;
+        ctx.fillRect(x, 0, columnWidth, height);
+        for (let bin = 0; bin < SPECTROGRAM_BINS; bin += 1) {
+          const value = entry.frame[bin];
+          const color = spectrogramColor(value);
+          if (!color) continue;
+          const y = Math.floor(spectrumTop + spectrumHeight - (bin + 1) * binHeight);
+          ctx.fillStyle = color;
+          ctx.fillRect(x, y, columnWidth, Math.ceil(binHeight) + 1);
+        }
+      });
+
+    }
+
+    function getSegmentCount(section) {
+      if (state.current && state.current.section === section) {
+        return normalizeSegments(state.current.segments).length;
       }
+      const latest = getLatest(section);
+      return latest ? latest.segments.length : 0;
     }
 
     function roundRect(ctx, x, y, width, height, radius) {
@@ -1335,7 +1557,7 @@
       panel.waveLabel.textContent = isCurrent
         ? state.current.isPaused ? "멈춘 상태입니다. 이어 녹음을 누르면 계속됩니다." : "녹음 중인 소리가 누적됩니다."
         : latest ? `${latest.fileName}` : "녹음되면 파형이 채워집니다.";
-      const chunks = isCurrent ? state.current.markers.length + 1 : latest ? latest.markers.length + 1 : 0;
+      const chunks = getSegmentCount(section);
       panel.chunkLabel.textContent = `구간 ${chunks}`;
       panel.buttons.start.disabled = Boolean(state.current);
       panel.buttons.pause.disabled = !isCurrent || state.current.isPaused;
@@ -1351,7 +1573,9 @@
       }
       const latest = list[list.length - 1];
       const duration = formatDuration(latest.durationMs);
-      const previous = list.slice(0, -1).reverse();
+      const canListen = section === "story";
+      const glyphMode = state.settings.glyphMode || DEFAULT_SETTINGS.glyphMode;
+      const listenModeClass = glyphMode === "single" ? "is-single" : "is-strip";
       return `
         <div class="latest-row">
           <div class="latest-title">
@@ -1359,27 +1583,16 @@
             <small>${duration} · ${escapeHtml(latest.fileName)}</small>
           </div>
           <div class="latest-buttons">
-            <button class="small-button listen" type="button" data-listen="${section}" data-version="${latest.versionNumber}">듣기</button>
+            <button class="small-button listen ${canListen ? "" : "is-hidden"}" type="button" data-listen="${section}" data-version="${latest.versionNumber}" ${canListen ? "" : "tabindex=\"-1\" aria-hidden=\"true\""}>듣기</button>
             <button class="small-button" type="button" data-download="${section}" data-version="${latest.versionNumber}">내려받기</button>
-            ${previous.length ? `<button class="small-button" type="button" data-history="${section}">이전 ${previous.length}</button>` : ""}
           </div>
         </div>
-        <div class="listen-drawer ${state.playback && state.playback.section === section ? "is-open" : ""}" data-listen-drawer="${section}">
-          <div class="pattern" data-pattern="${section}">${Array.from({ length: 256 }, () => '<span class="pattern-cell"></span>').join("")}</div>
+        <div class="listen-drawer ${listenModeClass} ${canListen && state.playback && state.playback.section === section ? "is-open" : ""} ${canListen ? "" : "is-hidden"}" data-listen-drawer="${section}">
+          <canvas class="pattern" width="760" height="64" data-pattern="${section}" aria-label="소리 글리프 패턴"></canvas>
           <div class="audio-box">
             <strong id="${section}ListenTitle">${escapeHtml(SECTION_META[section].title)} 듣기</strong>
             <audio controls src="${latest.url}" data-audio="${section}"></audio>
           </div>
-        </div>
-        <div class="history" data-history-list="${section}">
-          ${previous.map((item) => `
-            <div class="history-row">
-              <strong>v${String(item.versionNumber).padStart(2, "0")} · ${formatDuration(item.durationMs)}</strong>
-              <div class="history-actions">
-                <button class="small-button" type="button" data-download="${section}" data-version="${item.versionNumber}">내려받기</button>
-              </div>
-            </div>
-          `).join("")}
         </div>
       `;
     }
@@ -1419,13 +1632,12 @@
       elements.dirtyChip.style.background = isDirty() ? "#fff0e8" : "#edf8f0";
       elements.completeButton.disabled = Boolean(state.current);
       elements.newSetButton.disabled = Boolean(state.current);
-      elements.zipButton.disabled = Boolean(state.current) || (!getLatest("discussion") && !getLatest("story"));
       renderPanel("discussion");
       renderPanel("story");
       renderSavedStrip();
     }
 
-    function completeSet() {
+    async function completeSet() {
       if (state.current) {
         setMessage("녹음 중입니다. 먼저 끝냄을 눌러 주세요.");
         return;
@@ -1440,7 +1652,8 @@
         completedAt: new Date()
       };
       state.completedSets.push(completed);
-      setMessage(`${completed.groupName} 세트를 완성 목록에 넣었습니다.`);
+      await downloadZip();
+      setMessage(`${completed.groupName} 세트를 완성 목록에 넣고 최신 버전을 ZIP으로 저장했습니다.`);
       render();
     }
 
@@ -1584,7 +1797,6 @@
     function handleVersionClick(event) {
       const listenButton = event.target.closest("[data-listen]");
       const downloadButton = event.target.closest("[data-download]");
-      const historyButton = event.target.closest("[data-history]");
 
       if (listenButton) {
         const section = listenButton.dataset.listen;
@@ -1604,22 +1816,17 @@
         }
         return;
       }
-
-      if (historyButton) {
-        const section = historyButton.dataset.history;
-        const list = panels.get(section).versions.querySelector(`[data-history-list="${section}"]`);
-        if (list) list.classList.toggle("is-open");
-      }
     }
 
     function openListen(section, recording) {
+      if (section !== "story") return;
       stopPlaybackVisualizer();
       state.playback = { section, recording };
       render();
       const drawer = panels.get(section).versions.querySelector(`[data-listen-drawer="${section}"]`);
       const audio = drawer.querySelector("audio");
-      const cells = [...drawer.querySelectorAll(".pattern-cell")];
-      startPlaybackVisualizer(audio, cells, section);
+      const canvas = drawer.querySelector("canvas");
+      startPlaybackVisualizer(audio, canvas, section);
       audio.play().catch(() => {});
       setMessage(`${SECTION_META[section].title} 최신 녹음을 듣습니다.`);
     }
@@ -1630,55 +1837,334 @@
       state.playback.cleanup = null;
     }
 
-    function startPlaybackVisualizer(audio, cells, section) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
-      const source = ctx.createMediaElementSource(audio);
-      const playbackAnalyser = ctx.createAnalyser();
-      playbackAnalyser.fftSize = 512;
-      const data = new Uint8Array(playbackAnalyser.frequencyBinCount);
-      source.connect(playbackAnalyser);
-      playbackAnalyser.connect(ctx.destination);
-      const palette = section === "discussion"
-        ? ["#f6d9cb", "#efb79f", "#d9886a", "#8f5940"]
-        : ["#dfeefd", "#b9d4ed", "#7da9cd", "#456d91"];
-      let raf = null;
+    function closePlayback() {
+      stopPlaybackVisualizer();
+      state.playback = null;
+    }
 
-      function paint() {
-        playbackAnalyser.getByteFrequencyData(data);
-        for (let x = 0; x < 16; x += 1) {
-          const bin = data[Math.floor(x * data.length / 16)] / 255;
-          const height = Math.max(1, Math.round(bin * 14));
-          for (let y = 0; y < 16; y += 1) {
-            const cell = cells[y * 16 + x];
-            const on = 15 - y < height;
-            cell.style.background = on ? palette[Math.min(palette.length - 1, Math.floor(bin * palette.length))] : "#eef0ed";
-            cell.style.opacity = on ? "1" : "0.62";
-          }
+    function refreshActivePlayback() {
+      if (!state.playback || state.playback.section !== "story") return;
+      const section = state.playback.section;
+      const audio = panels.get(section).versions.querySelector(`[data-listen-drawer="${section}"] audio`);
+      const currentTime = audio ? audio.currentTime : 0;
+      const wasPaused = audio ? audio.paused : true;
+      stopPlaybackVisualizer();
+      render();
+      const drawer = panels.get(section).versions.querySelector(`[data-listen-drawer="${section}"]`);
+      if (!drawer) return;
+      const nextAudio = drawer.querySelector("audio");
+      const canvas = drawer.querySelector("canvas");
+      nextAudio.currentTime = currentTime;
+      startPlaybackVisualizer(nextAudio, canvas, section);
+      if (!wasPaused) nextAudio.play().catch(() => {});
+    }
+
+    function startPlaybackVisualizer(audio, canvas, section) {
+      const recording = state.playback && state.playback.recording;
+      if (!recording) return;
+      if (!recording.glyphTrack || recording.glyphFrameInterval !== GLYPH_SOURCE_INTERVAL_MS) {
+        recording.glyphTrack = createGlyphTrack(recording.visualFrames || []);
+        recording.glyphFrames = recording.glyphTrack.map((entry) => entry.glyph);
+        recording.glyphFrameInterval = GLYPH_SOURCE_INTERVAL_MS;
+      }
+      const glyphMode = state.settings.glyphMode || DEFAULT_SETTINGS.glyphMode;
+      const glyphSize = 16;
+      const pixel = 4;
+      const gap = 4;
+      const glyphLimit = glyphMode === "single" ? 1 : 10;
+      const glyphInterval = glyphMode === "single" ? GLYPH_SINGLE_INTERVAL_MS : GLYPH_STRIP_INTERVAL_MS;
+      const canvasCtx = canvas.getContext("2d");
+      canvasCtx.imageSmoothingEnabled = false;
+      let raf = null;
+      let isCleanedUp = false;
+      let displayedSingleIndex = null;
+      let playbackContext = null;
+      let playbackSource = null;
+      let playbackAnalyser = null;
+      let playbackFrequency = null;
+      let playbackTime = null;
+      let liveGlyph = null;
+      let liveGlyphStamp = -Infinity;
+      let liveSoundStamp = -Infinity;
+      let previousLiveEnergy = 0;
+      let lastPositionMs = 0;
+
+      if (glyphMode === "single" && (window.AudioContext || window.webkitAudioContext)) {
+        try {
+          playbackContext = new (window.AudioContext || window.webkitAudioContext)();
+          playbackSource = playbackContext.createMediaElementSource(audio);
+          playbackAnalyser = playbackContext.createAnalyser();
+          playbackAnalyser.fftSize = 2048;
+          playbackAnalyser.smoothingTimeConstant = 0.12;
+          playbackSource.connect(playbackAnalyser);
+          playbackAnalyser.connect(playbackContext.destination);
+          playbackFrequency = new Uint8Array(playbackAnalyser.frequencyBinCount);
+          playbackTime = new Uint8Array(playbackAnalyser.fftSize);
+        } catch (error) {
+          console.warn("Playback analyzer is not available.", error);
+          playbackContext = null;
+          playbackSource = null;
+          playbackAnalyser = null;
+          playbackFrequency = null;
+          playbackTime = null;
         }
-        raf = requestAnimationFrame(paint);
       }
 
+      function getGlyphEntryAtTime(positionMs) {
+        const index = Math.max(0, Math.floor(positionMs / GLYPH_SOURCE_INTERVAL_MS));
+        return recording.glyphTrack[index] || null;
+      }
+
+      function getGlyphAtTime(positionMs) {
+        const entry = getGlyphEntryAtTime(positionMs);
+        return entry ? entry.glyph : null;
+      }
+
+      function resetLiveGlyph() {
+        liveGlyph = null;
+        liveGlyphStamp = -Infinity;
+        liveSoundStamp = -Infinity;
+        previousLiveEnergy = 0;
+        displayedSingleIndex = null;
+        lastPositionMs = 0;
+      }
+
+      function readGlyphs(positionMs) {
+        if (glyphMode === "single") {
+          if (positionMs + 120 < lastPositionMs) {
+            resetLiveGlyph();
+          }
+          lastPositionMs = positionMs;
+
+          if (playbackAnalyser && playbackFrequency && playbackTime) {
+            playbackAnalyser.getByteFrequencyData(playbackFrequency);
+            playbackAnalyser.getByteTimeDomainData(playbackTime);
+            const frame = compressFrequencyFrame(playbackFrequency);
+            const features = extractGlyphFeaturesFromVisualFrames([{ frame }]);
+            const rms = calculateRms(playbackTime);
+            const amplitude = Math.min(1, rms * 5.2);
+            const spectralEnergy = Math.min(1, features.volume * 0.55 + features.peak * 0.35);
+            const hasAmplitude = rms >= GLYPH_LIVE_RMS_FLOOR
+              || (rms >= GLYPH_LIVE_RMS_SOFT_FLOOR && features.peak > 0.14);
+            const energy = hasAmplitude ? Math.min(1, amplitude * 0.72 + spectralEnergy * 0.45) : 0;
+            const onset = Math.max(0, energy - previousLiveEnergy * 0.72);
+            const isSilent = !hasAmplitude || spectralEnergy < 0.035;
+            previousLiveEnergy = energy;
+
+            if (!isSilent) {
+              liveSoundStamp = positionMs;
+              const elapsed = positionMs - liveGlyphStamp;
+              const onsetCooldown = Math.max(150, glyphInterval * 0.62);
+              const hasFreshOnset = onset > 0.11 && elapsed >= onsetCooldown;
+              const hasSustainedEnergy = energy > 0.24 && elapsed >= glyphInterval;
+              const hasLongHold = elapsed >= glyphInterval * 2.1;
+              const shouldChangeGlyph = !liveGlyph
+                || hasFreshOnset
+                || hasSustainedEnergy
+                || hasLongHold;
+              if (shouldChangeGlyph) {
+                liveGlyph = createSoundGlyph(features, Math.floor(positionMs / glyphInterval));
+                liveGlyphStamp = positionMs;
+              }
+            } else if (positionMs - liveSoundStamp > 140) {
+              liveGlyph = null;
+            }
+
+            return {
+              glyphs: [liveGlyph],
+              scrollProgress: 0
+            };
+          }
+
+          const sourceIndex = Math.max(0, Math.floor(positionMs / GLYPH_SOURCE_INTERVAL_MS));
+          const entry = recording.glyphTrack[sourceIndex] || null;
+          if (!entry || entry.silent) {
+            const silenceHoldFrames = Math.max(1, Math.round(GLYPH_SILENCE_HOLD_MS / GLYPH_SOURCE_INTERVAL_MS));
+            const recentStart = Math.max(0, sourceIndex - silenceHoldFrames + 1);
+            const hasRecentSound = recording.glyphTrack
+              .slice(recentStart, sourceIndex + 1)
+              .some((item) => item && !item.silent && item.glyph);
+            if (displayedSingleIndex !== null && hasRecentSound) {
+              return {
+                glyphs: [(recording.glyphTrack[displayedSingleIndex] || {}).glyph || null],
+                scrollProgress: 0
+              };
+            }
+            displayedSingleIndex = null;
+            return { glyphs: [null], scrollProgress: 0 };
+          }
+          const minFrames = Math.max(1, Math.round(glyphInterval / GLYPH_SOURCE_INTERVAL_MS));
+          const isSeekBack = displayedSingleIndex !== null && sourceIndex < displayedSingleIndex;
+          const isFreshOnset = entry.onset > 0.16;
+          const isStale = displayedSingleIndex === null || sourceIndex - displayedSingleIndex >= minFrames;
+          if (isSeekBack || isFreshOnset || isStale) {
+            displayedSingleIndex = sourceIndex;
+          }
+          return {
+            glyphs: [(recording.glyphTrack[displayedSingleIndex] || entry).glyph],
+            scrollProgress: 0
+          };
+        }
+
+        const displayIndex = Math.max(0, Math.floor(positionMs / glyphInterval));
+        const glyphs = [];
+        for (let index = Math.max(0, displayIndex - glyphLimit + 1); index <= displayIndex; index += 1) {
+          glyphs.push(getGlyphAtTime(index * glyphInterval));
+        }
+        return {
+          glyphs,
+          scrollProgress: Math.min(1, (positionMs % glyphInterval) / glyphInterval)
+        };
+      }
+
+      function paint(keepGoing = true) {
+        if (isCleanedUp) return;
+        const canvasSize = syncPatternCanvas(canvas, canvasCtx);
+        const positionMs = audio.currentTime * 1000;
+        const { glyphs, scrollProgress } = readGlyphs(positionMs);
+        drawGlyphStrip(canvasCtx, glyphs, { glyphMode, glyphSize, pixel, gap, scrollProgress, width: canvasSize.width, height: canvasSize.height });
+        if (keepGoing && !audio.paused && !audio.ended) {
+          raf = requestAnimationFrame(() => paint(true));
+        } else {
+          raf = null;
+        }
+      }
+
+      paint(false);
+
       audio.addEventListener("play", () => {
-        ctx.resume().catch(() => {});
-        if (!raf) paint();
+        if (audio.currentTime < 0.12) resetLiveGlyph();
+        if (playbackContext) playbackContext.resume().catch(() => {});
+        if (!raf) paint(true);
+      });
+      audio.addEventListener("seeking", () => {
+        resetLiveGlyph();
       });
       audio.addEventListener("pause", () => {
         if (raf) cancelAnimationFrame(raf);
         raf = null;
+        paint(false);
       });
       audio.addEventListener("ended", () => {
         if (raf) cancelAnimationFrame(raf);
         raf = null;
+        resetLiveGlyph();
+        paint(false);
       });
 
       state.playback.cleanup = () => {
+        isCleanedUp = true;
         if (raf) cancelAnimationFrame(raf);
-        source.disconnect();
-        playbackAnalyser.disconnect();
-        ctx.close().catch(() => {});
+        if (playbackSource) playbackSource.disconnect();
+        if (playbackAnalyser) playbackAnalyser.disconnect();
+        if (playbackContext) playbackContext.close().catch(() => {});
       };
+    }
+
+    function seededRandom(seed) {
+      let value = seed >>> 0;
+      return () => {
+        value = (value * 1664525 + 1013904223) >>> 0;
+        return value / 4294967296;
+      };
+    }
+
+    function createSoundGlyph(features, index) {
+      const size = 16;
+      const grid = Array.from({ length: size }, () => Array(size).fill(false));
+      const rand = seededRandom(features.seed + index * 104729);
+      const symmetry = features.brightness > features.warmth ? "quad" : "vertical";
+      const module = 2 + Math.floor(features.roughness * 3);
+      const threshold = 0.68 - features.volume * 0.12;
+      const ringRadius = 3 + Math.floor(features.peak * 5);
+      const centerA = 5 + Math.floor(features.bandValues[0] * 5);
+      const centerB = 5 + Math.floor(features.bandValues[2] * 5);
+
+      function setPixel(x, y, value = true) {
+        if (x < 0 || y < 0 || x >= size || y >= size) return;
+        grid[y][x] = value || grid[y][x];
+        grid[y][size - 1 - x] = value || grid[y][size - 1 - x];
+        if (symmetry === "quad") {
+          grid[size - 1 - y][x] = value || grid[size - 1 - y][x];
+          grid[size - 1 - y][size - 1 - x] = value || grid[size - 1 - y][size - 1 - x];
+        }
+      }
+
+      for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < 8; x += 1) {
+          const wave = Math.sin((x + features.seed % 9) * 0.9) + Math.cos((y + index) * (0.45 + features.centroid));
+          const lattice = ((x * centerA + y * centerB + features.seed) % (3 + module)) === 0;
+          const diagonal = Math.abs((x + y + features.seed) % (5 + module) - module) < 1;
+          const ring = Math.abs(Math.hypot(x - 7.5, y - 7.5) - ringRadius) < 0.72 + features.peak * 0.6;
+          const noise = rand();
+          if (wave * 0.12 + noise * 0.42 + features.bandValues[(x + y) % 4] > threshold || (lattice && noise > 0.42) || (diagonal && features.roughness > 0.28) || ring) {
+            setPixel(x, y);
+          }
+        }
+      }
+
+      const bars = 1 + Math.floor(features.volume * 4);
+      for (let i = 0; i < bars; i += 1) {
+        const y = 2 + ((features.seed + i * 5) % 12);
+        const divisor = 2 + Math.floor(features.brightness * 3);
+        for (let x = 2; x < 14; x += 1) {
+          if ((x + i + index) % divisor === 0) setPixel(x, y);
+        }
+      }
+
+      for (let i = 0; i < 4 + Math.floor(features.roughness * 10); i += 1) {
+        const x = Math.floor(rand() * 8);
+        const y = Math.floor(rand() * 16);
+        if (rand() > 0.52) setPixel(x, y);
+      }
+
+      grid[7][7] = true;
+      grid[7][8] = true;
+      grid[8][7] = true;
+      grid[8][8] = features.peak > 0.28;
+      return grid;
+    }
+
+    function syncPatternCanvas(canvas, ctx) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      const backingWidth = Math.max(1, Math.round(width * dpr));
+      const backingHeight = Math.max(1, Math.round(height * dpr));
+      if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+        canvas.width = backingWidth;
+        canvas.height = backingHeight;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      return { width, height };
+    }
+
+    function drawGlyphStrip(ctx, glyphs, options) {
+      const { glyphMode, glyphSize, pixel, gap, scrollProgress, width, height } = options;
+      const glyphPixelSize = glyphSize * pixel;
+      const glyphStep = glyphPixelSize + gap;
+      const totalWidth = glyphs.length * glyphPixelSize + Math.max(0, glyphs.length - 1) * gap;
+      const startX = glyphMode === "single"
+        ? 0
+        : width - totalWidth + glyphStep - scrollProgress * glyphStep;
+      const startY = Math.floor((height - glyphPixelSize) / 2);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      glyphs.forEach((glyph, glyphIndex) => {
+        const originX = glyphMode === "single" ? 0 : startX + glyphIndex * (glyphPixelSize + gap);
+        if (!glyph) return;
+        ctx.fillStyle = "#151918";
+        for (let y = 0; y < glyphSize; y += 1) {
+          for (let x = 0; x < glyphSize; x += 1) {
+            if (!glyph[y][x]) continue;
+            ctx.fillRect(originX + x * pixel, startY + y * pixel, pixel, pixel);
+          }
+        }
+      });
     }
 
     elements.groupName.addEventListener("input", (event) => {
@@ -1703,7 +2189,6 @@
 
     elements.completeButton.addEventListener("click", completeSet);
     elements.newSetButton.addEventListener("click", startNewSet);
-    elements.zipButton.addEventListener("click", downloadZip);
     elements.fullscreenButton.addEventListener("click", async () => {
       try {
         if (getFullscreenElement()) {
@@ -1722,15 +2207,23 @@
       elements.discussionLimit.value = state.settings.discussionLimit;
       elements.storyLimit.value = state.settings.storyLimit;
       elements.formatPreference.value = state.settings.formatPreference;
+      elements.spectrogramSpeed.value = String(state.settings.spectrogramSpeed || DEFAULT_SETTINGS.spectrogramSpeed);
+      elements.glyphMode.value = state.settings.glyphMode || DEFAULT_SETTINGS.glyphMode;
       elements.settingsDialog.showModal();
     });
     elements.saveSettings.addEventListener("click", () => {
       state.settings.discussionLimit = Number(elements.discussionLimit.value) || DEFAULT_SETTINGS.discussionLimit;
       state.settings.storyLimit = Number(elements.storyLimit.value) || DEFAULT_SETTINGS.storyLimit;
       state.settings.formatPreference = elements.formatPreference.value;
+      state.settings.spectrogramSpeed = Number(elements.spectrogramSpeed.value) || DEFAULT_SETTINGS.spectrogramSpeed;
+      state.settings.glyphMode = elements.glyphMode.value || DEFAULT_SETTINGS.glyphMode;
       saveSettingsToStorage();
       setMessage("설정을 저장했습니다.");
-      render();
+      if (state.playback && state.playback.section === "story") {
+        refreshActivePlayback();
+      } else {
+        render();
+      }
     });
 
     window.addEventListener("beforeunload", (event) => {
