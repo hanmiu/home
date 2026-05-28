@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Stylish&display=swap" rel="stylesheet">
+  
+  <title>신기한 생물 사전 2026</title>
+  
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #ffffa6;
+    }
+    
+    #title {
+      width: 100vw;
+      height: 7vh;
+      background-image: url('./26_creatures/front/strange_creatures.png');
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+    
+    #notice {
+      text-align: center;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-family: 'Noto Serif KR';
+      font-size: 2vh;
+      color: deeppink;
+    }
+    
+    #info {
+      padding: 2vh;
+      font-family: 'Noto Serif KR';
+      font-size: 2.5vh;
+      color: black;
+      line-height: 1.5em;
+    }
+    
+    #map {
+      display: block;
+      width: 100vw;
+      height: 50vh;
+    }
+    
+    .ui {
+      text-align: center;
+    }
+    
+    .button {
+      display: inline-block;
+      position: relative;
+      left: -1px;
+      top: -1px;
+      box-sizing: border-box;
+      margin: 0.5vh;
+      margin-bottom: 1vh;
+      font-family: 'Stylish';
+      text-align: center;
+      font-size: 2.5vh;
+      background-color: azure;
+      color: #2f5f5f;
+      padding: 0.5vh 1vh 0.5vh 1vh;
+      border-radius: 1vh;
+      border: 1px solid #427979;
+      user-select: none;
+      -webkit-user-select: none;
+      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), inset 2px 2px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 2px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
+    
+    .button:active {
+      left: 0px;
+      top: 0px;
+      background-color: #c6d4d4;
+      box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .sbutton {
+      display: inline-block;
+      position: relative;
+      left: -1px;
+      top: -1px;
+      box-sizing: border-box;
+      margin: 0.5vh;
+      font-family: 'Stylish';
+      text-align: center;
+      font-size: 2.5vh;
+      background-color: azure;
+      color: #2f5f5f;
+      padding: 0.5vh;
+      border-radius: 1vh;
+      border: 1px solid #427979;
+      user-select: none;
+      -webkit-user-select: none;
+      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), inset 2px 2px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 2px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
+    
+    .sbutton:active {
+      left: 0px;
+      top: 0px;
+      background-color: #c6d4d4;
+      box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3),inset -2px -2px 2px rgba(255, 255, 255, 0.2), inset 2px 2px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .creat {
+      color: deeppink;
+    }
+    
+    #stage {
+      display: none;
+      position: fixed;
+      left: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 1);
+    }
+    
+    #video-bg {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+    
+    #webgl {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+    }
+    
+    #profile {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 82vw;
+      height: 20vh;
+      font-family: 'Stylish';
+      font-size: 3vh;
+      color: white;
+      text-shadow: 0px 0px 2px deeppink;
+      padding: 4vh 2vh 2vh 5vh;
+    }
+    
+    #dialog {
+      position: absolute;
+      left: 0px;
+      bottom: 0px;
+      height: 20vh;
+      font-family: 'Stylish';
+      font-size: 3vh;
+      color: white;
+      text-shadow: 0px 0px 2px deeppink;
+      padding: 2vh 2vh 2vh 5vh;
+    }
+    
+    .t-right {
+      text-align: right;
+    }
+    
+    #loading {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Stylish';
+      font-size: 4vh;
+      color: white;
+      text-shadow: 0px 0px 4px deeppink;
+      display: none;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 3vh;
+      height: 3vh;
+      border: 0.5vh solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 1vh;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="title"></div>
+  <div id="notice">안전 주의! 스마트폰을 보며 걷지 않기</div>
+  <div class="ui">
+    <div id="trace_on" class="button">현재 위치</div>
+  </div>
+  <div id="map"></div>
+  <div id="info">(준비중)</div>
+  
+  <div id="stage">
+    <video id="video-bg" autoplay playsinline muted></video>
+    <div id="webgl"></div>
+    <div id="loading">로딩중<span class="spinner"></span></div>
+    <div id="profile"></div>
+    <div id="dialog"></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+  
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+  <script>
+    'use strict';
+    
+    // ============================================================
+    // Josa 유틸리티 (인라인)
+    // ============================================================
+    const Josa = (() => {
+      const hasJong = (string) => {
+        const code = string.charCodeAt(string.length - 1);
+        return (code - 0xac00) % 28 > 0;
+      };
+      
+      const formats = {
+        '을/를': (s) => hasJong(s) ? '을' : '를',
+        '은/는': (s) => hasJong(s) ? '은' : '는',
+        '이/가': (s) => hasJong(s) ? '이' : '가',
+        '와/과': (s) => hasJong(s) ? '과' : '와'
+      };
+      
+      // 축약형도 처리
+      ['을', '를', '을를'].forEach(k => formats[k] = formats['을/를']);
+      ['은', '는', '은는'].forEach(k => formats[k] = formats['은/는']);
+      ['이', '가', '이가'].forEach(k => formats[k] = formats['이/가']);
+      ['와', '과', '와과'].forEach(k => formats[k] = formats['와/과']);
+      
+      return {
+        c: (word, format) => {
+          if (!formats[format]) throw new Error('Invalid format!');
+          return formats[format](word);
+        },
+        r: (word, format) => word + Josa.c(word, format)
+      };
+    })();
+    
+    // ============================================================
+    // 전역 변수
+    // ============================================================
+    const EVENT_CENTER = [37.6652983, 126.7768963];
+    const EVENT_AREA_RADIUS_M = 20;
+    const DEFAULT_MEET_RADIUS_M = 12;
+    const MIN_CREATURE_SEPARATION_M = 4;
+    const REPULSION_ITERATIONS = 10;
+    const QUERY_PARAMS = new URLSearchParams(location.search);
+    const HIDE_MARKERS = QUERY_PARAMS.get('hideMarkers') === '1';
+    const SIMULATE_CREATURE = (QUERY_PARAMS.get('meet') || QUERY_PARAMS.get('creature') || '').normalize('NFC');
+    
+    let map, markerHere, markerRange, markerEventArea, latlngHere;
+    let spots = [];
+    let dicSpots = {};
+    
+    const rangeMeet = {
+      max: DEFAULT_MEET_RADIUS_M,
+      now: DEFAULT_MEET_RADIUS_M
+    };
+    
+    let isTraceOn = false;
+    let pastTimestamp = 0;
+    let elapsedTime = 0;
+    let spotMarkers = []; // 생물 마커들을 추적
+    
+    // Three.js 변수
+    let camera, scene, renderer;
+    let creatureMesh = null;
+    let videoElement = null;
+    let isVideoInitiated = false;
+    
+    // DOM 요소
+    const el = {
+      traceOn: document.querySelector('#trace_on'),
+      map: document.querySelector('#map'),
+      info: document.querySelector('#info'),
+      stage: document.querySelector('#stage'),
+      videoBg: document.querySelector('#video-bg'),
+      webgl: document.querySelector('#webgl'),
+      profile: document.querySelector('#profile'),
+      dialog: document.querySelector('#dialog'),
+      loading: document.querySelector('#loading')
+    };
+    
+    // ============================================================
+    // 주기적 업데이트 클래스
+    // ============================================================
+    class Periodic {
+      constructor(seconds, callback) {
+        this.dur = seconds * 1000;
+        this.elapsed = 0;
+        this.callback = callback;
+      }
+      
+      update(diff) {
+        this.elapsed += diff;
+        if (this.elapsed >= this.dur) {
+          this.elapsed = 0;
+          this.callback();
+        }
+      }
+    }
+    
+    const periodics = {
+      movement: new Periodic(2, () => {
+        updateMovingCreatures(Date.now());
+      }),
+      trace: new Periodic(10, () => {
+        navigator.geolocation.getCurrentPosition(trace, errorTrace);
+        displayInfo();
+      })
+    };
+    
+    // ============================================================
+    // 맵 관련 함수
+    // ============================================================
+    async function initMap() {
+      latlngHere = EVENT_CENTER;
+      map = L.map('map').setView(latlngHere, 19);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+        tileSize: 512,
+        zoomOffset: -1
+      }).addTo(map);
+      
+      markerRange = L.circle(latlngHere, {
+        color: 'rgba(255, 255, 0, 0.5)',
+        fillColor: '#f03',
+        fillOpacity: 0.1,
+        radius: rangeMeet.now
+      }).addTo(map);
+
+      markerEventArea = L.circle(EVENT_CENTER, {
+        color: 'rgba(30, 110, 255, 0.35)',
+        fillColor: '#1e6eff',
+        fillOpacity: 0.06,
+        radius: EVENT_AREA_RADIUS_M
+      }).addTo(map);
+
+      markerHere = L.circleMarker(latlngHere, {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.25,
+        radius: 5
+      }).addTo(map);
+      
+      // 데이터 로드
+      await loadSpots();
+    }
+    
+    async function loadSpots() {
+      try {
+        const response = await fetch('./26_creatures/data/data_kj.tsv');
+        const text = await response.text();
+        parseSpots(text.split('\n'));
+      } catch (error) {
+        console.error('Failed to load spots:', error);
+      }
+    }
+    
+    function parseSpots(lines) {
+      const fields = lines.shift().split('\t').map(x => x.trim());
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) continue;
+        
+        const items = line.split('\t').map(x => x.trim());
+        const spot = {};
+        
+        for (let j = 0; j < fields.length; j++) {
+          spot[fields[j]] = items[j];
+        }
+        
+        spot.file = (spot.file || '').normalize('NFC');
+        spot.childName = (spot.child_name || '').normalize('NFC');
+        spot.creatureName = (spot.creature_name || '').normalize('NFC') || deriveCreatureName(spot.file);
+        spot.name = spot.creatureName;
+        spot.waypointsM = parseWaypoints(spot.waypoints_m);
+        spot.cycleSeconds = Number(spot.cycle_seconds) || 7200;
+        spot.phaseSeconds = Number(spot.phase_seconds) || 0;
+        spot.meetRadiusM = Number(spot.meet_radius_m) || DEFAULT_MEET_RADIUS_M;
+        spot.latlng = EVENT_CENTER;
+        
+        spots.push(spot);
+        if (spot.name) {
+          dicSpots[spot.name] = spot;
+        }
+      }
+
+      updateMovingCreatures(Date.now());
+      
+      if (!HIDE_MARKERS) {
+        for (const spot of spots) {
+          const marker = L.marker(spot.latlng).addTo(map).bindPopup(spot.creatureName);
+          spot.marker = marker;
+          spotMarkers.push(marker);
+        }
+      }
+
+      simulateCreatureMeetFromQuery();
+    }
+    
+    function deriveCreatureName(file) {
+      const stem = (file || '').replace(/\.png$/i, '');
+      const parts = stem.split('_');
+      return parts.length > 1 ? parts.slice(1).join('_') : stem || '이름 없는 생물';
+    }
+    
+    function parseWaypoints(text) {
+      return (text || '').split('|').filter(Boolean).map(point => {
+        const [x, y] = point.split(',').map(Number);
+        return [x, y];
+      });
+    }
+    
+    function meterOffsetToLatlng(centerLatlng, offsetM) {
+      const [lat, lng] = centerLatlng;
+      const [eastM, northM] = offsetM;
+      const deltaLat = northM / 111320;
+      const deltaLng = eastM / (111320 * Math.cos(lat * Math.PI / 180));
+      return [lat + deltaLat, lng + deltaLng];
+    }
+    
+    function pointOnLoop(spot, nowMs) {
+      const points = spot.waypointsM;
+      if (!points || points.length === 0) return [0, 0];
+      if (points.length === 1) return points[0];
+      
+      const segments = [];
+      let perimeter = 0;
+      for (let i = 0; i < points.length; i++) {
+        const start = points[i];
+        const end = points[(i + 1) % points.length];
+        const length = Math.hypot(end[0] - start[0], end[1] - start[1]);
+        segments.push({ start, end, length });
+        perimeter += length;
+      }
+      
+      const seconds = nowMs / 1000;
+      const cycle = spot.cycleSeconds;
+      let target = ((seconds + spot.phaseSeconds) % cycle) / cycle * perimeter;
+      for (const segment of segments) {
+        if (target <= segment.length) {
+          const ratio = segment.length === 0 ? 0 : target / segment.length;
+          return [
+            segment.start[0] + (segment.end[0] - segment.start[0]) * ratio,
+            segment.start[1] + (segment.end[1] - segment.start[1]) * ratio
+          ];
+        }
+        target -= segment.length;
+      }
+      return points[0];
+    }
+    
+    function clampOffsetToEventCircle(offset) {
+      const length = Math.hypot(offset[0], offset[1]);
+      if (length <= EVENT_AREA_RADIUS_M || length === 0) return offset;
+      const scale = EVENT_AREA_RADIUS_M / length;
+      return [offset[0] * scale, offset[1] * scale];
+    }
+    
+    function resolveCreatureCrowding(offsets) {
+      const adjusted = offsets.map(point => [...point]);
+      for (let iter = 0; iter < REPULSION_ITERATIONS; iter++) {
+        for (let i = 0; i < adjusted.length; i++) {
+          for (let j = i + 1; j < adjusted.length; j++) {
+            let dx = adjusted[i][0] - adjusted[j][0];
+            let dy = adjusted[i][1] - adjusted[j][1];
+            let dist = Math.hypot(dx, dy);
+            if (dist >= MIN_CREATURE_SEPARATION_M) continue;
+            if (dist < 0.001) {
+              const angle = (i * 91 + j * 47) * Math.PI / 180;
+              dx = Math.cos(angle) * 0.001;
+              dy = Math.sin(angle) * 0.001;
+              dist = 0.001;
+            }
+            const push = (MIN_CREATURE_SEPARATION_M - dist) * 0.45;
+            const ux = dx / dist;
+            const uy = dy / dist;
+            adjusted[i][0] += ux * push;
+            adjusted[i][1] += uy * push;
+            adjusted[j][0] -= ux * push;
+            adjusted[j][1] -= uy * push;
+          }
+        }
+        for (let i = 0; i < adjusted.length; i++) {
+          adjusted[i] = clampOffsetToEventCircle(adjusted[i]);
+        }
+      }
+      return adjusted;
+    }
+    
+    function updateMovingCreatures(nowMs) {
+      if (!spots.length) return;
+      const baseOffsets = spots.map(spot => pointOnLoop(spot, nowMs));
+      const offsets = resolveCreatureCrowding(baseOffsets);
+      for (let i = 0; i < spots.length; i++) {
+        const spot = spots[i];
+        spot.offsetM = offsets[i];
+        spot.latlng = meterOffsetToLatlng(EVENT_CENTER, offsets[i]);
+        if (spot.marker) {
+          spot.marker.setLatLng(spot.latlng);
+        }
+      }
+    }
+
+    function findSpotByQueryName(name) {
+      if (!name) return null;
+      const normalized = name.normalize('NFC');
+      return spots.find(spot =>
+        spot.creatureName === normalized ||
+        spot.name === normalized ||
+        spot.file.replace(/\.png$/i, '') === normalized ||
+        spot.file === normalized
+      );
+    }
+
+    function simulateCreatureMeetFromQuery() {
+      const spot = findSpotByQueryName(SIMULATE_CREATURE);
+      if (!spot) return;
+      isTraceOn = true;
+      updateMovingCreatures(Date.now());
+      goThere(spot.latlng);
+      spot.marker?.openPopup();
+    }
+    
+    function findNearestSpot() {
+      updateMovingCreatures(Date.now());
+      const list = spots.map(spot => ({
+        name: spot.name,
+        spot,
+        dist: map.distance(spot.latlng, latlngHere)
+      })).sort((a, b) => a.dist - b.dist);
+      
+      return list.slice(0, 3);
+    }
+    
+    function displayInfo() {
+      if (!isTraceOn) return;
+      
+      const res = findNearestSpot();
+      if (res.length === 0) return;
+      
+      const creats = res.filter(r => r.dist <= r.spot.meetRadiusM);
+      let toMeet = '';
+      
+      if (creats.length > 0) {
+        toMeet = creats.map(x => {
+          return `<button class="sbutton">${x.spot.creatureName}</button>`;
+        }).join(', ');
+        
+        if (creats.length === 1) {
+          const displayName = creats[0].spot.creatureName;
+          const josa = Josa.c(displayName, '을/를');
+          toMeet += `${josa} 클릭해서 만나 보세요.`;
+        } else {
+          toMeet += ` 중에 하나를 클릭해서 만나 보세요.`;
+        }
+      }
+      
+      const name = res[0].spot.creatureName;
+      const meetRadius = res[0].spot.meetRadiusM;
+      
+      rangeMeet.now = meetRadius;
+      markerRange.setRadius(rangeMeet.now);
+      
+      el.info.innerHTML = `현재 위치에서 가장 가까운 생물은 ${res[0].dist | 0}m 떨어져 있는 『<span class="creat">${name}</span>』입니다. ${rangeMeet.now}m 안으로 가까이 다가가면 만날 수 있습니다. ${toMeet}`;
+      
+      // 버튼 이벤트 재설정
+      const buttons = el.info.querySelectorAll('.sbutton');
+      buttons.forEach(bt => bt.onclick = onCreatureClick);
+    }
+    
+    function goThere(latlng) {
+      latlngHere = latlng;
+      map.setView(latlngHere, map.getZoom());
+      markerRange.setLatLng(latlngHere);
+      markerHere.setLatLng(latlngHere);
+      displayInfo();
+    }
+    
+    function trace(position) {
+      const newLatlng = [position.coords.latitude, position.coords.longitude];
+      goThere(newLatlng);
+    }
+    
+    function errorTrace() {
+      isTraceOn = false;
+      console.error('Trace error');
+      el.info.innerHTML = '스마트폰의 설정에서 브라우저의 위치 정보 사용을 켰는지 확인해 보세요.';
+    }
+    
+    // ============================================================
+    // Three.js AR 관련 함수
+    // ============================================================
+    function initThreeScene() {
+      // 카메라
+      camera = new THREE.PerspectiveCamera(
+        40, 
+        window.innerWidth / window.innerHeight, 
+        1, 
+        3000
+      );
+      camera.position.z = 6;
+      
+      // 씬
+      scene = new THREE.Scene();
+      
+      // 렌더러
+      renderer = new THREE.WebGLRenderer({ 
+        alpha: true, 
+        antialias: true 
+      });
+      
+      // 모바일 최적화: 픽셀 비율 제한
+      const pixelRatio = Math.min(window.devicePixelRatio, 2);
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      
+      el.webgl.appendChild(renderer.domElement);
+    }
+    
+    async function initCamera() {
+      if (isVideoInitiated) return;
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: 'environment' }
+        });
+        
+        el.videoBg.srcObject = stream;
+        await el.videoBg.play();
+        isVideoInitiated = true;
+        
+      } catch (error) {
+        console.error('Camera error:', error);
+        alert('카메라 접근 권한이 필요합니다.');
+      }
+    }
+    
+    async function loadCreature(name) {
+      showLoading(true);
+      
+      // 기존 생물 제거
+      if (creatureMesh) {
+        scene.remove(creatureMesh);
+        if (creatureMesh.geometry) creatureMesh.geometry.dispose();
+        if (creatureMesh.material) {
+          if (creatureMesh.material.map) creatureMesh.material.map.dispose();
+          creatureMesh.material.dispose();
+        }
+        creatureMesh = null;
+      }
+      
+      const spot = dicSpots[name];
+      
+      if (!spot || !spot.file) {
+        console.warn('Asset not found for:', name);
+        showLoading(false);
+        return;
+      }
+      
+      await createCreatureMesh(`./26_creatures/assets/kj/${encodeURIComponent(spot.file.normalize('NFC'))}`, spot);
+      
+      showLoading(false);
+    }
+    
+    async function createCreatureMesh(url, spot) {
+      return new Promise((resolve, reject) => {
+        const loader = new THREE.TextureLoader();
+        
+        loader.load(
+          url,
+          (texture) => {
+            // 1024x1024 텍스처에 밉맵 생성
+            texture.generateMipmaps = true;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            
+            // 투명도 처리
+            const material = new THREE.MeshBasicMaterial({
+              map: texture,
+              transparent: true,
+              alphaTest: 0.5,
+              side: THREE.DoubleSide
+            });
+            
+            // Quad 생성 (1:1 비율, 화면에 맞게 크기 조정)
+            // 카메라 FOV와 거리를 고려하여 화면의 60-70% 정도 차지하도록
+            const size = 1.5;
+            const geometry = new THREE.PlaneGeometry(size, size);
+            
+            creatureMesh = new THREE.Mesh(geometry, material);
+            scene.add(creatureMesh);
+            
+            resolve();
+          },
+          undefined,
+          (error) => {
+            console.error('Texture loading error:', error);
+            reject(error);
+          }
+        );
+      });
+    }
+    
+    function showLoading(show) {
+      el.loading.style.display = show ? 'block' : 'none';
+    }
+    
+    function animateCreature() {
+      if (!creatureMesh) return;
+      
+      const time = elapsedTime / 1000;
+      
+      // Y축 회전
+      creatureMesh.rotation.y = 0.2 * Math.PI * Math.sin(time);
+      
+      // 상하 움직임
+      const k = 0.5 + 0.5 * Math.sin(time * 4);
+      creatureMesh.position.y = k * k * 0.2 - 0.2;
+    }
+    
+    function render3D() {
+      animateCreature();
+      renderer.render(scene, camera);
+    }
+    
+    // ============================================================
+    // 뷰 모드 전환
+    // ============================================================
+    function changeViewMode(mode) {
+      if (mode === 'map') {
+        el.stage.style.display = 'none';
+        el.map.style.display = 'block';
+        if (el.videoBg.srcObject) {
+          el.videoBg.pause();
+        }
+      } else if (mode === '3d') {
+        if (!isVideoInitiated) {
+          initCamera();
+        }
+        el.stage.style.display = 'block';
+        el.map.style.display = 'none';
+        if (el.videoBg.srcObject) {
+          el.videoBg.play();
+        }
+      }
+    }
+    
+    // ============================================================
+    // 이벤트 핸들러
+    // ============================================================
+    async function meetCreature(spot) {
+      if (!spot) {
+        console.error('Spot not found');
+        return;
+      }
+      
+      const displayName = spot.creatureName;
+      console.log('Meet creature:', displayName);
+      changeViewMode('3d');
+      
+      const profileText = spot.file 
+        ? `${displayName}${Josa.c(displayName, '이/가')} 나타났다!`
+        : `${displayName}${Josa.c(displayName, '은/는')} 아직 준비중!`;
+      
+      el.profile.innerHTML = `${profileText} ${spot.childName ? `<div class="t-right">- ${spot.childName}의 생물</div>` : ''}`;
+      el.dialog.innerHTML = `${displayName}${Josa.c(displayName, '은/는')}... <br>${spot.desc}`;
+      
+      await loadCreature(spot.name);
+    }
+
+    async function onCreatureClick(e) {
+      if (!e.target.classList.contains('sbutton')) return;
+      
+      const displayName = e.target.textContent.trim().normalize('NFC');
+      const spot = dicSpots[displayName];
+      await meetCreature(spot);
+    }
+    
+    el.traceOn.onclick = () => {
+      isTraceOn = true;
+      navigator.geolocation.getCurrentPosition(trace, errorTrace);
+    };
+    
+    el.stage.onclick = () => {
+      changeViewMode('map');
+    };
+    
+    window.onresize = () => {
+      if (camera && renderer) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    };
+    
+    // ============================================================
+    // 메인 루프
+    // ============================================================
+    function loop(timestamp) {
+      if (timestamp) {
+        const diffTime = timestamp - pastTimestamp;
+        elapsedTime += diffTime;
+        pastTimestamp = timestamp;
+        
+        periodics.movement.update(diffTime);
+        
+        if (isTraceOn) {
+          periodics.trace.update(diffTime);
+        }
+        
+        if (el.stage.style.display === 'block') {
+          render3D();
+        }
+      }
+      
+      requestAnimationFrame(loop);
+    }
+    
+    // ============================================================
+    // 초기화
+    // ============================================================
+    function init() {
+      const params = new URLSearchParams(location.search.slice(1));
+      let desc = `<strong>신기한 생물들이 주변에 나타났습니다!</strong><br><br>『현재 위치』 버튼을 눌러 가까운 생물을 만나보세요.<br><br><small>버튼을 누른 후 '위치 정보'와 '카메라' 사용 권한을 허용해주세요.</small>`;
+      
+      switch (params.get('w')) {
+        case 'H1_5l6g':
+          desc = `시험판: 이야기가 있는 보물 찾기에서 얻은 스티커가 있는 경우입니다. '현재 위치' 버튼을 클릭해 보세요!<br><br>버튼을 누른 후 '위치 정보'와 '카메라' 사용 권한을 수락해 주셔야 작동합니다.`;
+          break;
+      }
+      
+      switch (params.get('k')) {
+        case '4545':
+          desc = `가능한가!?`;
+          break;
+      }
+      
+      el.info.innerHTML = desc;
+      
+      initMap();
+      initThreeScene();
+      loop();
+    }
+    
+    window.onload = init;
+  </script>
+</body>
+</html>
