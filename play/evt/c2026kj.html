@@ -285,6 +285,7 @@
     };
     
     let isTraceOn = false;
+    let isSimulatedLocation = false;
     let pastTimestamp = 0;
     let elapsedTime = 0;
     let spotMarkers = []; // 생물 마커들을 추적
@@ -332,7 +333,9 @@
         updateMovingCreatures(Date.now());
       }),
       trace: new Periodic(10, () => {
-        navigator.geolocation.getCurrentPosition(trace, errorTrace);
+        if (!isSimulatedLocation) {
+          navigator.geolocation.getCurrentPosition(trace, errorTrace);
+        }
         displayInfo();
       })
     };
@@ -378,7 +381,9 @@
     
     async function loadSpots() {
       try {
-        const response = await fetch('./26_creatures/data/data_kj.tsv');
+        const response = await fetch('./26_creatures/data/data_kj.tsv?v=20260529a', {
+          cache: 'no-store'
+        });
         const text = await response.text();
         parseSpots(text.split('\n'));
       } catch (error) {
@@ -548,6 +553,7 @@
       const spot = findSpotByQueryName(SIMULATE_CREATURE);
       if (!spot) return;
       isTraceOn = true;
+      isSimulatedLocation = true;
       updateMovingCreatures(Date.now());
       goThere(spot.latlng);
       spot.marker?.openPopup();
@@ -690,9 +696,14 @@
         return;
       }
       
-      await createCreatureMesh(`./26_creatures/assets/kj/${encodeURIComponent(spot.file.normalize('NFC'))}`, spot);
-      
-      showLoading(false);
+      try {
+        await createCreatureMesh(`./26_creatures/assets/kj/${encodeURIComponent(spot.file.normalize('NFC'))}`, spot);
+      } catch (error) {
+        console.error('Creature loading failed:', spot.file, error);
+        el.dialog.innerHTML = `${spot.creatureName}${Josa.c(spot.creatureName, '은/는')} 아직 불러오지 못했어요.<br><small>${spot.file}</small>`;
+      } finally {
+        showLoading(false);
+      }
     }
     
     async function createCreatureMesh(url, spot) {
@@ -811,6 +822,7 @@
     
     el.traceOn.onclick = () => {
       isTraceOn = true;
+      isSimulatedLocation = false;
       navigator.geolocation.getCurrentPosition(trace, errorTrace);
     };
     
