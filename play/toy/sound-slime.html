@@ -1,0 +1,1468 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sound Slime Canvas</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --panel: rgba(12, 12, 15, 0.64);
+  --line: rgba(255, 255, 255, 0.18);
+  --text: rgba(255, 255, 255, 0.88);
+  --muted: rgba(255, 255, 255, 0.56);
+  --accent: #f45d5d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  letter-spacing: 0;
+}
+
+button {
+  font: inherit;
+}
+
+#slimeCanvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  cursor: crosshair;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  color: var(--text);
+}
+
+.intro {
+  position: absolute;
+  left: clamp(18px, 4vw, 44px);
+  top: clamp(18px, 4vw, 44px);
+  max-width: min(320px, calc(100vw - 36px));
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease;
+}
+
+.intro.is-hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.record-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.record-orb {
+  width: 190px;
+  height: 190px;
+  display: grid;
+  place-items: center;
+  color: white;
+  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.16));
+}
+
+.record-orb svg {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  transform: rotate(-90deg);
+}
+
+.record-ring-bg,
+.record-ring {
+  fill: none;
+  stroke-width: 8;
+}
+
+.record-ring-bg {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+
+.record-ring {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 314;
+  stroke-dashoffset: 314;
+  transition: stroke-dashoffset 120ms linear;
+}
+
+.record-orb span {
+  width: 112px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 116px;
+  max-width: min(420px, calc(100vw - 36px));
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  line-height: 1.45;
+  transform: translateX(-50%);
+}
+
+.controls {
+  position: absolute;
+  right: clamp(14px, 3vw, 28px);
+  bottom: clamp(14px, 3vw, 28px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+}
+
+.controls.is-dim {
+  opacity: 0.2;
+  transform: translateY(8px);
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+  transform: none;
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-button svg rect {
+  fill: currentColor;
+  stroke: none;
+}
+
+.record-button {
+  background: rgba(244, 93, 93, 0.18);
+}
+
+.record-button:hover {
+  background: rgba(244, 93, 93, 0.28);
+}
+
+.record-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ff5b5b;
+  box-shadow: 0 0 20px rgba(255, 91, 91, 0.58);
+}
+
+.record-button.is-recording .record-dot {
+  animation: pulse 820ms ease-in-out infinite;
+}
+
+.mute-mark {
+  opacity: 0;
+}
+
+.is-muted .mute-mark {
+  opacity: 1;
+}
+
+.count-pill {
+  min-width: 46px;
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .intro {
+    right: 18px;
+    font-size: 13px;
+  }
+
+  .controls {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .controls.is-dim {
+    transform: translateX(-50%) translateY(8px);
+  }
+
+  .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .count-pill {
+    display: none;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <canvas id="slimeCanvas" aria-label="Sound Slime Canvas"></canvas>
+
+    <main class="overlay" aria-live="polite">
+      <section class="intro" id="intro">
+        <p>짧은 소리를 녹음하면 검은 캔버스 위에 소리 슬라임이 태어납니다.</p>
+      </section>
+
+      <section class="record-state" id="recordState" hidden>
+        <div class="record-orb" id="recordOrb">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="record-ring-bg" cx="60" cy="60" r="50" />
+            <circle class="record-ring" id="recordRing" cx="60" cy="60" r="50" />
+          </svg>
+          <span id="recordLabel">소리 알 준비 중</span>
+        </div>
+      </section>
+
+      <p class="toast" id="toast" role="status" hidden></p>
+
+      <nav class="controls" id="controls" aria-label="Sound Slime controls">
+        <button class="icon-button record-button" id="recordButton" type="button" aria-label="녹음 시작">
+          <span class="record-dot" aria-hidden="true"></span>
+        </button>
+        <button class="icon-button" id="stopButton" type="button" aria-label="전체 정지">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="7" y="7" width="10" height="10" rx="1.5"></rect>
+          </svg>
+        </button>
+        <button class="icon-button" id="muteButton" type="button" aria-label="음소거">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 10v4h4l6 5V5L8 10H4z"></path>
+            <path class="mute-mark" d="M18 9l3 3m0-3l-3 3"></path>
+          </svg>
+        </button>
+        <button class="icon-button" id="fullscreenButton" type="button" aria-label="전체화면">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path>
+          </svg>
+        </button>
+        <span class="count-pill" id="countPill">0/10</span>
+      </nav>
+    </main>
+
+    <script>
+const canvas = document.querySelector("#slimeCanvas");
+const ctx = canvas.getContext("2d");
+
+const intro = document.querySelector("#intro");
+const controls = document.querySelector("#controls");
+const recordButton = document.querySelector("#recordButton");
+const stopButton = document.querySelector("#stopButton");
+const muteButton = document.querySelector("#muteButton");
+const fullscreenButton = document.querySelector("#fullscreenButton");
+const countPill = document.querySelector("#countPill");
+const recordState = document.querySelector("#recordState");
+const recordLabel = document.querySelector("#recordLabel");
+const recordRing = document.querySelector("#recordRing");
+const recordOrb = document.querySelector("#recordOrb");
+const toast = document.querySelector("#toast");
+
+const MAX_SLIMES = 10;
+const RECORD_SECONDS = 5;
+const PREPARE_MS = 620;
+const COLLISION_SOUND_COOLDOWN = 600;
+const TAU = Math.PI * 2;
+const RING_LENGTH = 314;
+
+const palette = [
+  "#ff5b5b",
+  "#f4b63f",
+  "#315de8",
+  "#45e3a3",
+  "#a978ff",
+  "#ff8a3d",
+  "#36d9ff",
+  "#ff9ccf",
+  "#b9ff45",
+  "#f1f0e8",
+];
+
+const shapeTypes = ["wave", "pulse", "spike", "ribbon", "droplet"];
+
+let dpr = 1;
+let width = 0;
+let height = 0;
+let slimes = [];
+let particles = [];
+let lastTime = performance.now();
+let pointer = { x: 0, y: 0, active: false, movedAt: performance.now() };
+let hoveredSlime = null;
+let draggedSlime = null;
+let dragOffset = { x: 0, y: 0 };
+let mouseDown = null;
+let audio = null;
+let appState = "idle";
+let isMuted = false;
+let toastTimer = null;
+let nextSlimeId = 1;
+let recordStartedAt = 0;
+let stopRecordingEarly = null;
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  for (const slime of slimes) {
+    const margin = slime.radius * 1.4;
+    slime.x = clamp(slime.x, margin, width - margin);
+    slime.y = clamp(slime.y, margin, height - margin);
+  }
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function random(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function clamp01(v) {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function lerpHue(a, b, t) {
+  let diff = b - a;
+  while (diff > Math.PI) diff -= TAU;
+  while (diff < -Math.PI) diff += TAU;
+  return a + diff * t;
+}
+
+function srgbToLinear(c) {
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function linearToSrgb(c) {
+  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+}
+
+function hexToOklch(hex) {
+  const r = srgbToLinear(parseInt(hex.slice(1, 3), 16) / 255);
+  const g = srgbToLinear(parseInt(hex.slice(3, 5), 16) / 255);
+  const b = srgbToLinear(parseInt(hex.slice(5, 7), 16) / 255);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+  return { L, C: Math.hypot(A, B), H: Math.atan2(B, A) };
+}
+
+function oklchToLinearRgb(L, C, H) {
+  const A = Math.cos(H) * C;
+  const B = Math.sin(H) * C;
+  const l_ = L + 0.3963377774 * A + 0.2158037573 * B;
+  const m_ = L - 0.1055613458 * A - 0.0638541728 * B;
+  const s_ = L - 0.0894841775 * A - 1.291485548 * B;
+  const l = l_ * l_ * l_;
+  const m = m_ * m_ * m_;
+  const s = s_ * s_ * s_;
+  return {
+    r: 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    g: -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    b: -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  };
+}
+
+function inGamut(rgb) {
+  const e = 0.001;
+  return rgb.r >= -e && rgb.r <= 1 + e && rgb.g >= -e && rgb.g <= 1 + e && rgb.b >= -e && rgb.b <= 1 + e;
+}
+
+function oklchToCss(L, C, H) {
+  // Reduce chroma until the color fits inside sRGB so we never harshly clip.
+  let chroma = C;
+  let rgb = oklchToLinearRgb(L, chroma, H);
+  for (let i = 0; i < 16 && !inGamut(rgb); i += 1) {
+    chroma *= 0.93;
+    rgb = oklchToLinearRgb(L, chroma, H);
+  }
+  const r = Math.round(clamp01(linearToSrgb(rgb.r)) * 255);
+  const g = Math.round(clamp01(linearToSrgb(rgb.g)) * 255);
+  const b = Math.round(clamp01(linearToSrgb(rgb.b)) * 255);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function buildGradientStops(baseHex, features, count = 6) {
+  const base = hexToOklch(baseHex);
+  const dir = features.high >= features.low ? 1 : -1;
+  const rotDeg = clamp(38 + features.variation * 320, 32, 92);
+  const second = {
+    L: clamp(base.L + (features.loudness - 0.45) * 0.18, 0.4, 0.92),
+    C: base.C * (0.82 + features.high * 0.6),
+    H: base.H + ((rotDeg * Math.PI) / 180) * dir,
+  };
+  const stops = [];
+  for (let i = 0; i < count; i += 1) {
+    const t = i / (count - 1);
+    const L = lerp(base.L, second.L, t);
+    const C = lerp(base.C, second.C, t);
+    const H = lerpHue(base.H, second.H, t);
+    stops.push({ t, color: oklchToCss(L, C, H) });
+  }
+  return stops;
+}
+
+function showToast(message, duration = 2800) {
+  toast.textContent = message;
+  toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.hidden = true;
+  }, duration);
+}
+
+async function ensureAudio() {
+  if (audio) return audio;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass || !navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    throw new Error("이 브라우저에서는 마이크 또는 Web Audio API를 사용할 수 없습니다.");
+  }
+
+  const context = new AudioContextClass();
+  const masterGain = context.createGain();
+  const compressor = context.createDynamicsCompressor();
+  masterGain.gain.value = 0.86;
+  compressor.threshold.value = -18;
+  compressor.knee.value = 18;
+  compressor.ratio.value = 8;
+  compressor.attack.value = 0.005;
+  compressor.release.value = 0.16;
+  masterGain.connect(compressor);
+  compressor.connect(context.destination);
+
+  audio = {
+    context,
+    masterGain,
+    normalGain: 0.86,
+    recorderStream: null,
+    recorder: null,
+    micAnalyser: null,
+    micData: new Uint8Array(128),
+  };
+  return audio;
+}
+
+async function startRecordingFlow() {
+  if (appState === "preparingRecord" || appState === "recording" || appState === "processing") {
+    return;
+  }
+
+  try {
+    const audioState = await ensureAudio();
+    await audioState.context.resume();
+    if (!audioState.recorderStream) {
+      audioState.recorderStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      const micSource = audioState.context.createMediaStreamSource(audioState.recorderStream);
+      audioState.micAnalyser = audioState.context.createAnalyser();
+      audioState.micAnalyser.fftSize = 256;
+      micSource.connect(audioState.micAnalyser);
+      appState = "micReady";
+    }
+    await prepareRecording(audioState);
+  } catch (error) {
+    appState = "idle";
+    showToast(error.message || "마이크 권한을 확인해 주세요.");
+  }
+}
+
+async function prepareRecording(audioState) {
+  appState = "preparingRecord";
+  intro.classList.add("is-hidden");
+  recordButton.disabled = true;
+  recordButton.classList.add("is-recording");
+  recordState.hidden = false;
+  recordLabel.textContent = "소리 알 준비 중";
+  recordRing.style.strokeDashoffset = String(RING_LENGTH);
+  fadeMasterTo(0.06, 0.12);
+
+  await wait(PREPARE_MS);
+  await recordForDuration(audioState);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function waitForRecordingEnd() {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      stopRecordingEarly = null;
+      resolve();
+    }, RECORD_SECONDS * 1000);
+    stopRecordingEarly = () => {
+      clearTimeout(timer);
+      stopRecordingEarly = null;
+      resolve();
+    };
+  });
+}
+
+function fadeMasterTo(value, duration) {
+  if (!audio) return;
+  const now = audio.context.currentTime;
+  audio.masterGain.gain.cancelScheduledValues(now);
+  audio.masterGain.gain.setTargetAtTime(value, now, Math.max(0.01, duration / 3));
+}
+
+function restoreMasterGain() {
+  if (!audio) return;
+  fadeMasterTo(isMuted ? 0 : audio.normalGain, 0.22);
+}
+
+async function recordForDuration(audioState) {
+  appState = "recording";
+  recordLabel.textContent = "녹음 중";
+  recordStartedAt = performance.now();
+
+  const chunks = [];
+  const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    ? "audio/webm;codecs=opus"
+    : "";
+  const recorder = new MediaRecorder(audioState.recorderStream, mimeType ? { mimeType } : undefined);
+  audioState.recorder = recorder;
+
+  recorder.ondataavailable = (event) => {
+    if (event.data.size > 0) chunks.push(event.data);
+  };
+
+  const stopped = new Promise((resolve, reject) => {
+    recorder.onstop = resolve;
+    recorder.onerror = () => reject(new Error("녹음에 실패했습니다."));
+  });
+
+  recorder.start();
+  await waitForRecordingEnd();
+  if (recorder.state !== "inactive") recorder.stop();
+  await stopped;
+
+  appState = "processing";
+  recordLabel.textContent = "슬라임 생성 중";
+
+  try {
+    const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+    const arrayBuffer = await blob.arrayBuffer();
+    const decodedBuffer = await audioState.context.decodeAudioData(arrayBuffer.slice(0));
+    const trimmed = trimSilentEdges(decodedBuffer, audioState.context);
+    const features = analyzeBuffer(trimmed.buffer);
+    features.trim = trimmed.meta;
+    addSlime(trimmed.buffer, features);
+    showToast("새 소리 슬라임이 태어났습니다.", 1600);
+  } catch (error) {
+    showToast("녹음을 처리하지 못했습니다. 한 번 더 시도해 주세요.");
+  } finally {
+    appState = "idle";
+    recordButton.disabled = false;
+    recordButton.classList.remove("is-recording");
+    recordState.hidden = true;
+    audioState.recorder = null;
+    restoreMasterGain();
+    updateCount();
+  }
+}
+
+function analyzeBuffer(buffer) {
+  const sampleRate = buffer.sampleRate;
+  const samples = buffer.getChannelData(0);
+  let sum = 0;
+  let peak = 0;
+  let crossings = 0;
+  let deltas = 0;
+  let silent = 0;
+  let previous = samples[0] || 0;
+
+  const stride = Math.max(1, Math.floor(samples.length / 36000));
+  for (let i = 0; i < samples.length; i += stride) {
+    const v = samples[i];
+    const abs = Math.abs(v);
+    sum += abs * abs;
+    peak = Math.max(peak, abs);
+    if (abs < 0.012) silent += 1;
+    if ((v >= 0 && previous < 0) || (v < 0 && previous >= 0)) crossings += 1;
+    deltas += Math.abs(v - previous);
+    previous = v;
+  }
+
+  const count = Math.ceil(samples.length / stride);
+  const rms = Math.sqrt(sum / count);
+  const zeroRate = crossings / count;
+  const variation = deltas / count;
+  const silence = silent / count;
+  const lowEnergy = estimateBandEnergy(samples, sampleRate, 80, 280);
+  const midEnergy = estimateBandEnergy(samples, sampleRate, 300, 1800);
+  const highEnergy = estimateBandEnergy(samples, sampleRate, 1900, 6000);
+  const totalBand = lowEnergy + midEnergy + highEnergy || 1;
+
+  const low = lowEnergy / totalBand;
+  const mid = midEnergy / totalBand;
+  const high = highEnergy / totalBand;
+
+  return {
+    duration: buffer.duration,
+    rms,
+    peak,
+    zeroRate,
+    variation,
+    silence,
+    low,
+    mid,
+    high,
+    loudness: clamp(rms * 8, 0, 1),
+  };
+}
+
+function trimSilentEdges(buffer, context) {
+  const sampleRate = buffer.sampleRate;
+  const channelCount = buffer.numberOfChannels;
+  const frameSize = Math.max(256, Math.round(sampleRate * 0.018));
+  const hopSize = Math.max(128, Math.round(frameSize / 2));
+  const padSamples = Math.round(sampleRate * 0.08);
+  const minSamples = Math.round(sampleRate * 0.28);
+  const totalSamples = buffer.length;
+
+  let totalEnergy = 0;
+  let peak = 0;
+  let measured = 0;
+
+  for (let channel = 0; channel < channelCount; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < data.length; i += 1) {
+      const abs = Math.abs(data[i]);
+      totalEnergy += abs * abs;
+      peak = Math.max(peak, abs);
+      measured += 1;
+    }
+  }
+
+  const globalRms = Math.sqrt(totalEnergy / Math.max(1, measured));
+  const threshold = clamp(Math.max(0.006, globalRms * 0.38, peak * 0.018), 0.006, 0.032);
+  const frames = [];
+
+  for (let start = 0; start < totalSamples; start += hopSize) {
+    const end = Math.min(totalSamples, start + frameSize);
+    let frameEnergy = 0;
+    let framePeak = 0;
+    let count = 0;
+
+    for (let channel = 0; channel < channelCount; channel += 1) {
+      const data = buffer.getChannelData(channel);
+      for (let i = start; i < end; i += 1) {
+        const abs = Math.abs(data[i]);
+        frameEnergy += abs * abs;
+        framePeak = Math.max(framePeak, abs);
+        count += 1;
+      }
+    }
+
+    const rms = Math.sqrt(frameEnergy / Math.max(1, count));
+    frames.push({
+      start,
+      end,
+      audible: rms > threshold || framePeak > threshold * 2.8,
+    });
+  }
+
+  const first = frames.findIndex((frame) => frame.audible);
+  const last = findLastIndex(frames, (frame) => frame.audible);
+
+  if (first < 0 || last < 0) {
+    return {
+      buffer,
+      meta: {
+        applied: false,
+        startSeconds: 0,
+        endSeconds: buffer.duration,
+        rawDuration: buffer.duration,
+      },
+    };
+  }
+
+  const startSample = clamp(frames[first].start - padSamples, 0, totalSamples - 1);
+  const endSample = clamp(frames[last].end + padSamples, startSample + 1, totalSamples);
+  const trimmedLength = endSample - startSample;
+
+  if (trimmedLength < minSamples || trimmedLength >= totalSamples - hopSize) {
+    return {
+      buffer,
+      meta: {
+        applied: false,
+        startSeconds: 0,
+        endSeconds: buffer.duration,
+        rawDuration: buffer.duration,
+      },
+    };
+  }
+
+  const trimmedBuffer = context.createBuffer(channelCount, trimmedLength, sampleRate);
+  for (let channel = 0; channel < channelCount; channel += 1) {
+    const source = buffer.getChannelData(channel);
+    trimmedBuffer.copyToChannel(source.subarray(startSample, endSample), channel);
+  }
+
+  return {
+    buffer: trimmedBuffer,
+    meta: {
+      applied: true,
+      startSeconds: startSample / sampleRate,
+      endSeconds: endSample / sampleRate,
+      rawDuration: buffer.duration,
+    },
+  };
+}
+
+function findLastIndex(items, predicate) {
+  for (let i = items.length - 1; i >= 0; i -= 1) {
+    if (predicate(items[i], i)) return i;
+  }
+  return -1;
+}
+
+function estimateBandEnergy(samples, sampleRate, minHz, maxHz) {
+  const step = Math.max(1, Math.floor(samples.length / 2048));
+  let energy = 0;
+  let a = 0;
+  let b = 0;
+  const lowCoef = Math.exp((-2 * Math.PI * minHz) / sampleRate);
+  const highCoef = Math.exp((-2 * Math.PI * maxHz) / sampleRate);
+  for (let i = 0; i < samples.length; i += step) {
+    const x = samples[i];
+    a = lowCoef * a + (1 - lowCoef) * x;
+    b = highCoef * b + (1 - highCoef) * x;
+    energy += Math.abs(b - a);
+  }
+  return energy;
+}
+
+function addSlime(buffer, features) {
+  const visual = chooseVisual(features);
+  const gradientStops = buildGradientStops(visual.color, features);
+  const gradientAngle = random(0, TAU);
+  const radius = random(42, 74) + features.loudness * 24 + features.duration * 1.5;
+  const margin = radius * 1.5;
+  const angle = random(0, TAU);
+  const speed = random(9, 26) * (1 + features.high * 0.5);
+  const slime = {
+    id: nextSlimeId++,
+    buffer,
+    features,
+    type: visual.type,
+    color: visual.color,
+    gradientStops,
+    gradientAngle,
+    x: random(margin, Math.max(margin, width - margin)),
+    y: random(margin, Math.max(margin, height - margin)),
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    radius,
+    baseRadius: radius,
+    wobbleSeed: random(0, 1000),
+    shapePoints: createShapePoints(visual.type, features),
+    birth: 0,
+    leaving: false,
+    leave: 0,
+    hover: 0,
+    squash: 0,
+    dragged: false,
+    currentSource: null,
+    gainNode: null,
+    analyser: null,
+    analyserData: new Uint8Array(64),
+    playingLevel: 0,
+    startedAt: 0,
+    lastCollisionAt: new Map(),
+  };
+
+  slimes.push(slime);
+  emitBirth(slime);
+  while (slimes.filter((item) => !item.leaving).length > MAX_SLIMES) {
+    const oldest = slimes.find((item) => !item.leaving);
+    if (oldest) removeSlime(oldest);
+    else break;
+  }
+}
+
+function chooseVisual(features) {
+  let type = "wave";
+  if (features.high > 0.46 || features.peak > 0.78) type = "spike";
+  else if (features.low > 0.42 && features.silence < 0.45) type = "pulse";
+  else if (features.duration > 3.8 && features.variation < 0.045) type = "ribbon";
+  else if (features.variation > 0.075 || features.silence > 0.42) type = "droplet";
+
+  let paletteIndex = shapeTypes.indexOf(type);
+  if (features.low > features.mid && features.low > features.high) paletteIndex = 4;
+  if (features.mid > features.low && features.mid > features.high) paletteIndex = features.loudness > 0.52 ? 1 : 3;
+  if (features.high > features.low && features.high > features.mid) paletteIndex = features.loudness > 0.55 ? 6 : 2;
+  if (features.duration < 1.8 && features.peak > 0.5) paletteIndex = Math.random() > 0.5 ? 0 : 5;
+
+  return {
+    type,
+    color: palette[(paletteIndex + slimes.length * 2) % palette.length],
+  };
+}
+
+function createShapePoints(type, features) {
+  const count = type === "ribbon" ? 20 : type === "spike" ? 30 : 28;
+  return Array.from({ length: count }, (_, index) => {
+    const t = index / count;
+    let amp = random(-0.05, 0.05) + features.variation * 0.9;
+    if (type === "spike" && index % 4 === 0) amp += random(0.1, 0.22) * (0.7 + features.high);
+    if (type === "wave") amp += Math.sin(t * TAU * 3) * 0.06;
+    if (type === "pulse") amp += Math.sin(t * TAU * 2) * 0.05;
+    if (type === "droplet") amp += index % 5 === 0 ? 0.12 : -0.02;
+    return { t, amp, phase: random(0, TAU), speed: random(0.7, 1.8) };
+  });
+}
+
+function removeSlime(slime) {
+  slime.leaving = true;
+  slime.leave = 0;
+  stopSlime(slime);
+}
+
+function updateCount() {
+  const active = slimes.filter((slime) => !slime.leaving).length;
+  countPill.textContent = `${active}/${MAX_SLIMES}`;
+}
+
+function playSlime(slime) {
+  if (!audio || slime.leaving) return;
+  stopSlime(slime);
+
+  const source = audio.context.createBufferSource();
+  const gain = audio.context.createGain();
+  const analyser = audio.context.createAnalyser();
+  source.buffer = slime.buffer;
+  gain.gain.value = Math.max(0.2, 0.62 - slimes.length * 0.025);
+  analyser.fftSize = 128;
+
+  source.connect(gain);
+  gain.connect(analyser);
+  analyser.connect(audio.masterGain);
+  source.onended = () => {
+    if (slime.currentSource === source) {
+      slime.currentSource = null;
+      slime.gainNode = null;
+      slime.analyser = null;
+      slime.playingLevel = 0;
+    }
+  };
+
+  slime.currentSource = source;
+  slime.gainNode = gain;
+  slime.analyser = analyser;
+  slime.startedAt = audio.context.currentTime;
+  source.start();
+  intro.classList.add("is-hidden");
+}
+
+function stopSlime(slime) {
+  if (!slime.currentSource) return;
+  try {
+    slime.currentSource.stop();
+  } catch {
+    // Source may already be stopped by the browser.
+  }
+  slime.currentSource.disconnect();
+  slime.currentSource = null;
+  slime.gainNode = null;
+  slime.analyser = null;
+  slime.playingLevel = 0;
+}
+
+function stopAll() {
+  for (const slime of slimes) stopSlime(slime);
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  muteButton.classList.toggle("is-muted", isMuted);
+  muteButton.setAttribute("aria-label", isMuted ? "음소거 해제" : "음소거");
+  restoreMasterGain();
+}
+
+async function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    await document.documentElement.requestFullscreen?.();
+  } else {
+    await document.exitFullscreen?.();
+  }
+}
+
+function emitBirth(slime) {
+  for (let i = 0; i < 22; i += 1) {
+    const a = random(0, TAU);
+    const r = random(4, slime.radius * 0.35);
+    particles.push({
+      x: slime.x + Math.cos(a) * r,
+      y: slime.y + Math.sin(a) * r,
+      vx: Math.cos(a) * random(18, 90),
+      vy: Math.sin(a) * random(18, 90),
+      life: 1,
+      size: random(2, 6),
+      color: slime.color,
+    });
+  }
+}
+
+function update(dt, now) {
+  const seconds = Math.min(0.032, dt / 1000);
+  updateRecordVisual(now);
+  updateControlsVisibility(now);
+  updateHoverAndDrag();
+
+  for (const slime of slimes) {
+    updateSlimeAudioLevel(slime);
+    updateSlimeMotion(slime, seconds, now / 1000);
+  }
+  applySlimeForces(seconds, now);
+  updateParticles(seconds);
+  slimes = slimes.filter((slime) => slime.leave < 1);
+  updateCount();
+}
+
+function updateRecordVisual(now) {
+  if (appState === "recording") {
+    const progress = clamp((now - recordStartedAt) / (RECORD_SECONDS * 1000), 0, 1);
+    recordRing.style.strokeDashoffset = String(RING_LENGTH * (1 - progress));
+    const level = getMicLevel();
+    recordOrb.style.transform = `scale(${1 + level * 0.16})`;
+  } else if (appState === "preparingRecord") {
+    const beat = 1 + Math.sin(now * 0.012) * 0.035;
+    recordOrb.style.transform = `scale(${beat})`;
+  } else {
+    recordOrb.style.transform = "scale(1)";
+  }
+}
+
+function getMicLevel() {
+  if (!audio?.micAnalyser) return 0;
+  audio.micAnalyser.getByteTimeDomainData(audio.micData);
+  let sum = 0;
+  for (const value of audio.micData) {
+    const centered = (value - 128) / 128;
+    sum += centered * centered;
+  }
+  return clamp(Math.sqrt(sum / audio.micData.length) * 4, 0, 1);
+}
+
+function updateControlsVisibility(now) {
+  controls.classList.toggle("is-dim", now - pointer.movedAt > 2600 && appState === "idle");
+}
+
+function updateSlimeAudioLevel(slime) {
+  if (!slime.analyser) {
+    slime.playingLevel *= 0.88;
+    return;
+  }
+  slime.analyser.getByteFrequencyData(slime.analyserData);
+  let sum = 0;
+  for (const value of slime.analyserData) sum += value;
+  slime.playingLevel = clamp((sum / slime.analyserData.length / 255) * 2.1, 0, 1);
+}
+
+function updateSlimeMotion(slime, dt, time) {
+  slime.birth = clamp(slime.birth + dt * 1.4, 0, 1);
+  slime.hover += ((slime === hoveredSlime ? 1 : 0) - slime.hover) * 0.12;
+  slime.squash *= 0.9;
+
+  if (slime.leaving) {
+    slime.leave = clamp(slime.leave + dt * 0.7, 0, 1);
+    slime.vx *= 0.985;
+    slime.vy -= 12 * dt;
+  }
+
+  if (!slime.dragged) {
+    const wander = time * (0.5 + slime.features.mid) + slime.wobbleSeed;
+    slime.vx += Math.cos(wander * 1.7) * dt * 8;
+    slime.vy += Math.sin(wander * 1.3) * dt * 8;
+    slime.x += slime.vx * dt;
+    slime.y += slime.vy * dt;
+  }
+
+  const margin = slime.radius * 0.9;
+  if (slime.x < margin) slime.vx += (margin - slime.x) * dt * 12;
+  if (slime.x > width - margin) slime.vx -= (slime.x - (width - margin)) * dt * 12;
+  if (slime.y < margin) slime.vy += (margin - slime.y) * dt * 12;
+  if (slime.y > height - margin) slime.vy -= (slime.y - (height - margin)) * dt * 12;
+
+  const maxSpeed = 42 + slime.features.high * 32;
+  const speed = Math.hypot(slime.vx, slime.vy);
+  if (speed > maxSpeed) {
+    slime.vx = (slime.vx / speed) * maxSpeed;
+    slime.vy = (slime.vy / speed) * maxSpeed;
+  }
+  slime.vx *= 0.995;
+  slime.vy *= 0.995;
+}
+
+function applySlimeForces(dt, now) {
+  for (let i = 0; i < slimes.length; i += 1) {
+    const a = slimes[i];
+    if (a.leaving) continue;
+    for (let j = i + 1; j < slimes.length; j += 1) {
+      const b = slimes[j];
+      if (b.leaving) continue;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.max(1, Math.hypot(dx, dy));
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const desired = (a.radius + b.radius) * 0.96;
+      const attractRange = desired * 2.3;
+
+      if (dist < desired) {
+        const force = (desired - dist) * 2.4;
+        if (!a.dragged) {
+          a.vx -= nx * force * dt;
+          a.vy -= ny * force * dt;
+        }
+        if (!b.dragged) {
+          b.vx += nx * force * dt;
+          b.vy += ny * force * dt;
+        }
+        a.squash = Math.max(a.squash, force / desired);
+        b.squash = Math.max(b.squash, force / desired);
+        maybePlayCollision(a, b, force, now);
+      } else if (dist < attractRange) {
+        const force = (1 - dist / attractRange) * 4;
+        if (!a.dragged) {
+          a.vx += nx * force * dt;
+          a.vy += ny * force * dt;
+        }
+        if (!b.dragged) {
+          b.vx -= nx * force * dt;
+          b.vy -= ny * force * dt;
+        }
+      }
+    }
+  }
+}
+
+function maybePlayCollision(a, b, force, now) {
+  if (!audio || force < 18 || isMuted) return;
+  const key = b.id;
+  const last = a.lastCollisionAt.get(key) || 0;
+  if (now - last < COLLISION_SOUND_COOLDOWN) return;
+  a.lastCollisionAt.set(key, now);
+  b.lastCollisionAt.set(a.id, now);
+
+  const slime = Math.random() > 0.5 ? a : b;
+  const source = audio.context.createBufferSource();
+  const gain = audio.context.createGain();
+  const maxOffset = Math.max(0, slime.buffer.duration - 0.18);
+  const offset = random(0, maxOffset);
+  const duration = clamp(random(0.1, 0.36), 0.08, slime.buffer.duration);
+  source.buffer = slime.buffer;
+  gain.gain.value = 0.09;
+  source.connect(gain);
+  gain.connect(audio.masterGain);
+  source.start(0, offset, duration);
+}
+
+function updateHoverAndDrag() {
+  hoveredSlime = null;
+  if (draggedSlime) {
+    hoveredSlime = draggedSlime;
+    draggedSlime.x = pointer.x + dragOffset.x;
+    draggedSlime.y = pointer.y + dragOffset.y;
+    draggedSlime.vx = (draggedSlime.x - (draggedSlime.previousDragX ?? draggedSlime.x)) * 4;
+    draggedSlime.vy = (draggedSlime.y - (draggedSlime.previousDragY ?? draggedSlime.y)) * 4;
+    draggedSlime.previousDragX = draggedSlime.x;
+    draggedSlime.previousDragY = draggedSlime.y;
+    return;
+  }
+
+  if (!pointer.active) return;
+  for (let i = slimes.length - 1; i >= 0; i -= 1) {
+    const slime = slimes[i];
+    if (slime.leaving) continue;
+    if (pointHitsSlime(pointer.x, pointer.y, slime)) {
+      hoveredSlime = slime;
+      break;
+    }
+  }
+}
+
+function updateParticles(dt) {
+  particles = particles.filter((particle) => {
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vx *= 0.96;
+    particle.vy *= 0.96;
+    particle.life -= dt * 1.6;
+    return particle.life > 0;
+  });
+}
+
+function render(now) {
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, width, height);
+
+  drawAtmosphere(now / 1000);
+
+  const sorted = [...slimes].sort((a, b) => a.y - b.y);
+  for (const slime of sorted) drawSlime(slime, now / 1000);
+  drawParticles();
+}
+
+function drawAtmosphere(time) {
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  for (let i = 0; i < 32; i += 1) {
+    const x = ((i * 179 + Math.sin(time * 0.07 + i) * 40) % (width + 160)) - 80;
+    const y = ((i * 113 + Math.cos(time * 0.05 + i) * 34) % (height + 160)) - 80;
+    ctx.fillStyle = i % 3 === 0 ? "#151515" : "#0b0b0d";
+    ctx.beginPath();
+    ctx.arc(x, y, 1 + (i % 4), 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawSlime(slime, time) {
+  const birthEase = easeOutBack(slime.birth);
+  const leavingEase = 1 - easeInCubic(slime.leave);
+  const scale =
+    birthEase *
+    leavingEase *
+    (1 + Math.sin(time * 1.6 + slime.wobbleSeed) * 0.025 + slime.playingLevel * 0.28 + slime.hover * 0.08);
+  const radius = slime.radius * scale;
+  const alpha = clamp(leavingEase, 0, 1);
+
+  ctx.save();
+  ctx.translate(slime.x, slime.y);
+  ctx.rotate(Math.atan2(slime.vy, slime.vx) * 0.08);
+  ctx.globalAlpha = alpha;
+  ctx.shadowColor = slime.color;
+  ctx.shadowBlur = 16 + slime.playingLevel * 24 + slime.hover * 12;
+
+  if (slime.type === "ribbon") drawRibbonSlime(slime, radius, time);
+  else drawBlobSlime(slime, radius, time);
+
+  ctx.shadowBlur = 0;
+  if (slime.type === "pulse") drawPulseLines(slime, radius, time);
+  if (slime.type === "droplet") drawDroplets(slime, radius, time);
+  if (slime.type === "wave") drawWaveDots(slime, radius, time);
+  ctx.restore();
+}
+
+function drawBlobSlime(slime, radius, time) {
+  const points = slime.shapePoints.map((point) => {
+    const a = point.t * TAU;
+    const soundPush = slime.playingLevel * (slime.type === "spike" ? 0.3 : 0.18);
+    const wobble = Math.sin(time * point.speed * 2 + point.phase + slime.wobbleSeed) * 0.04;
+    const squash = slime.squash * Math.cos(a) * 0.14;
+    const r = radius * (1 + point.amp * 0.32 + wobble + soundPush + squash);
+    return { x: Math.cos(a) * r, y: Math.sin(a) * r };
+  });
+
+  ctx.beginPath();
+  const last = points[points.length - 1];
+  ctx.moveTo((last.x + points[0].x) / 2, (last.y + points[0].y) / 2);
+  for (let i = 0; i < points.length; i += 1) {
+    const current = points[i];
+    const next = points[(i + 1) % points.length];
+    ctx.quadraticCurveTo(current.x, current.y, (current.x + next.x) / 2, (current.y + next.y) / 2);
+  }
+  ctx.closePath();
+
+  const ang = slime.gradientAngle;
+  const gx = Math.cos(ang) * radius;
+  const gy = Math.sin(ang) * radius;
+  const gradient = ctx.createLinearGradient(-gx, -gy, gx, gy);
+  for (const stop of slime.gradientStops) gradient.addColorStop(stop.t, stop.color);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  ctx.globalAlpha *= 0.12 + slime.playingLevel * 0.16;
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+}
+
+function drawRibbonSlime(slime, radius, time) {
+  const length = radius * (2.4 + slime.features.duration * 0.12);
+  const thickness = radius * (0.5 + slime.playingLevel * 0.32);
+  ctx.beginPath();
+  for (let i = 0; i <= 28; i += 1) {
+    const t = i / 28;
+    const x = -length / 2 + t * length;
+    const y = Math.sin(t * TAU * 1.5 + time * 2 + slime.wobbleSeed) * thickness * 0.26;
+    const edge = y - thickness * (0.46 + Math.sin(t * TAU + time) * 0.08);
+    if (i === 0) ctx.moveTo(x, edge);
+    else ctx.lineTo(x, edge);
+  }
+  for (let i = 28; i >= 0; i -= 1) {
+    const t = i / 28;
+    const x = -length / 2 + t * length;
+    const y = Math.sin(t * TAU * 1.5 + time * 2 + slime.wobbleSeed) * thickness * 0.26;
+    const edge = y + thickness * (0.46 + Math.cos(t * TAU + time) * 0.08);
+    ctx.lineTo(x, edge);
+  }
+  ctx.closePath();
+  const ribbonGradient = ctx.createLinearGradient(-length / 2, 0, length / 2, 0);
+  for (const stop of slime.gradientStops) ribbonGradient.addColorStop(stop.t, stop.color);
+  ctx.fillStyle = ribbonGradient;
+  ctx.fill();
+  ctx.globalAlpha *= 0.28;
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(-length / 2, 0, thickness * 0.35, 0, TAU);
+  ctx.arc(length / 2, 0, thickness * 0.35, 0, TAU);
+  ctx.fill();
+}
+
+function drawPulseLines(slime, radius, time) {
+  ctx.strokeStyle = slime.color;
+  ctx.lineWidth = 2;
+  for (let i = 1; i <= 3; i += 1) {
+    ctx.globalAlpha = (0.22 - i * 0.04) * (1 + slime.playingLevel);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * (0.48 + i * 0.28 + slime.playingLevel * 0.18), 0, TAU);
+    ctx.stroke();
+  }
+}
+
+function drawDroplets(slime, radius, time) {
+  ctx.fillStyle = slime.color;
+  for (let i = 0; i < 5; i += 1) {
+    const a = (i / 5) * TAU + slime.wobbleSeed;
+    const r = radius * (0.55 + Math.sin(time + i) * 0.06);
+    ctx.globalAlpha = 0.52;
+    ctx.beginPath();
+    ctx.arc(Math.cos(a) * r, Math.sin(a) * r, radius * randomLike(slime.id, i) * 0.18 + 7, 0, TAU);
+    ctx.fill();
+  }
+}
+
+function drawWaveDots(slime, radius, time) {
+  ctx.fillStyle = slime.color;
+  ctx.globalAlpha = 0.42;
+  for (let i = 0; i < 4; i += 1) {
+    const x = radius * (0.62 + i * 0.22);
+    const y = Math.sin(time * 2.2 + i + slime.wobbleSeed) * radius * 0.14;
+    ctx.beginPath();
+    ctx.arc(x, y, radius * (0.08 - i * 0.008), 0, TAU);
+    ctx.fill();
+  }
+}
+
+function randomLike(seed, index) {
+  return 0.45 + ((Math.sin(seed * 98.17 + index * 31.1) + 1) / 2) * 0.65;
+}
+
+function drawParticles() {
+  for (const particle of particles) {
+    ctx.globalAlpha = particle.life;
+    ctx.fillStyle = particle.color;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.size * particle.life, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function pointHitsSlime(x, y, slime) {
+  const dx = x - slime.x;
+  const dy = y - slime.y;
+  return Math.hypot(dx, dy) < slime.radius * (1.08 + slime.playingLevel * 0.25);
+}
+
+function findSlimeAt(x, y) {
+  for (let i = slimes.length - 1; i >= 0; i -= 1) {
+    const slime = slimes[i];
+    if (!slime.leaving && pointHitsSlime(x, y, slime)) return slime;
+  }
+  return null;
+}
+
+function easeOutBack(x) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+}
+
+function easeInCubic(x) {
+  return x * x * x;
+}
+
+function loop(now) {
+  const dt = now - lastTime;
+  lastTime = now;
+  update(dt, now);
+  render(now);
+  requestAnimationFrame(loop);
+}
+
+function setPointer(event) {
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = event.clientX - rect.left;
+  pointer.y = event.clientY - rect.top;
+  pointer.active = true;
+  pointer.movedAt = performance.now();
+}
+
+canvas.addEventListener("pointermove", (event) => {
+  setPointer(event);
+});
+
+canvas.addEventListener("pointerleave", () => {
+  pointer.active = false;
+});
+
+canvas.addEventListener("pointerdown", (event) => {
+  setPointer(event);
+  const slime = findSlimeAt(pointer.x, pointer.y);
+  if (!slime) return;
+  mouseDown = { x: pointer.x, y: pointer.y, slime, at: performance.now() };
+  draggedSlime = slime;
+  slime.dragged = true;
+  dragOffset.x = slime.x - pointer.x;
+  dragOffset.y = slime.y - pointer.y;
+  canvas.setPointerCapture(event.pointerId);
+});
+
+canvas.addEventListener("pointerup", (event) => {
+  setPointer(event);
+  if (draggedSlime) {
+    const moved = mouseDown ? Math.hypot(pointer.x - mouseDown.x, pointer.y - mouseDown.y) : 0;
+    const slime = draggedSlime;
+    slime.dragged = false;
+    slime.previousDragX = null;
+    slime.previousDragY = null;
+    draggedSlime = null;
+    if (moved < 8) playSlime(slime);
+  }
+  mouseDown = null;
+  try {
+    canvas.releasePointerCapture(event.pointerId);
+  } catch {
+    // Pointer capture can already be released during browser gestures.
+  }
+});
+
+window.addEventListener("resize", resize);
+window.addEventListener("mousemove", () => {
+  pointer.movedAt = performance.now();
+});
+document.addEventListener("fullscreenchange", () => {
+  fullscreenButton.setAttribute("aria-label", document.fullscreenElement ? "전체화면 해제" : "전체화면");
+});
+
+recordButton.addEventListener("click", startRecordingFlow);
+stopButton.addEventListener("click", () => {
+  if (appState === "recording") {
+    stopRecordingEarly?.();
+  } else {
+    stopAll();
+  }
+});
+muteButton.addEventListener("click", toggleMute);
+fullscreenButton.addEventListener("click", () => {
+  toggleFullscreen().catch(() => showToast("전체화면 전환을 사용할 수 없습니다."));
+});
+
+resize();
+requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
