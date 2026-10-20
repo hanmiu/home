@@ -142,3 +142,29 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
   if (document.readyState === "complete") start(); else window.addEventListener("load", start);
   window.addEventListener("scroll", function () { if (!busy) { busy = true; requestAnimationFrame(update); } }, { passive: true });
 })();
+
+/* 마지막 장 자모 도안: 그림을 페이지 안에 넣고, 가끔 무작위로 한 마리만 사사삭(간격·모양 모두 무작위) */
+(function () {
+  var img = document.querySelector(".jamo img");
+  if (!img || !window.fetch || calm) return;
+  fetch(img.getAttribute("src")).then(function (r) { return r.text(); }).then(function (txt) {
+    var box = document.createElement("div");
+    box.innerHTML = txt;
+    var svg = box.querySelector("svg");
+    if (!svg) return;
+    svg.removeAttribute("width"); svg.removeAttribute("height");
+    svg.setAttribute("role", "img"); svg.setAttribute("aria-label", img.alt);
+    img.replaceWith(svg);
+    var critters = svg.querySelectorAll(".jp"), last = null;
+    function twitch() {
+      var c;
+      do { c = critters[Math.floor(Math.random() * critters.length)]; } while (critters.length > 1 && c === last);
+      last = c;
+      var k = "jt" + (1 + Math.floor(Math.random() * 3));
+      c.classList.add(k);
+      c.addEventListener("animationend", function done() { c.classList.remove(k); c.removeEventListener("animationend", done); });
+      setTimeout(twitch, 1800 + Math.random() * 4200);            // 1.8~6초 사이 무작위
+    }
+    setTimeout(twitch, 1200 + Math.random() * 2500);
+  }).catch(function () {});
+})();

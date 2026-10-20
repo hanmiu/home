@@ -180,7 +180,7 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 
 /* 마지막 장 자모 도안 */
 .jamo { margin: 0 auto 8px; max-width: 420px; }
-.jamo img { border-radius: 0; background: none; }
+.jamo img, .jamo svg { display: block; width: 100%; height: auto; border-radius: 0; background: none; }
 
 /* 9장 개념도(SVG) + 단계 보기 */
 .flowfig, .threadfig { margin: 16px auto; max-width: 520px; }
