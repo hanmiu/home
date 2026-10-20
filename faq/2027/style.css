@@ -235,3 +235,8 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
   .subsec .collage img { max-height: 300px; }
   #meals .collage img { max-height: 280px; }        /* 급식·간식 사진은 더 작게 */
 }
+
+/* 목차 배지: 홈페이지 메뉴처럼 오른쪽 끝에 몬스터(신기한 생물 사전 monster1~10, script.js 가 무작위 배정) */
+#toc li a { position: relative; padding-right: 48px; }
+#toc li a::after { content: ""; position: absolute; top: 50%; right: 2px; transform: translateY(-50%); width: 36px; height: 36px;
+  background: var(--creature-url, none) no-repeat right center / contain; pointer-events: none; opacity: .95; }
