@@ -168,3 +168,38 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
     setTimeout(twitch, 1200 + Math.random() * 2500);
   }).catch(function () {});
 })();
+
+/* 반짝임(메인 페이지 glitter 와 같은 색): 대상 요소 위에 장식용 복사본을 겹쳐 글자마다 시차를 두고 반짝임.
+   원래 글자·제목 구조는 그대로(복사본은 aria-hidden, 끝나면 제거) → 화면 읽기·검색·AI 에 영향 없음.
+   GLITTER 선택자에 맞는 요소가 화면에 처음 들어올 때 한 번, 무지개·금색 번갈아 */
+(function () {
+  var GLITTER = "section > h2";
+  if (calm || !("IntersectionObserver" in window)) return;
+  function letters(text) {
+    try { if (window.Intl && Intl.Segmenter) return Array.from(new Intl.Segmenter("ko", { granularity: "grapheme" }).segment(text), function (s) { return s.segment; }); } catch (e) {}
+    return Array.from(text);
+  }
+  function play(el, gold) {
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    var ov = document.createElement("span"), n = 0, chars = letters(el.textContent), total = 0;
+    ov.className = "glit"; ov.setAttribute("aria-hidden", "true");
+    var count = chars.filter(function (c) { return !/\s/.test(c); }).length || 1;
+    ov.innerHTML = chars.map(function (c) {
+      if (/\s/.test(c)) return c;
+      var h = Math.round(n / count * 360), i = n++;
+      return '<span class="' + (gold ? "g" : "r") + '" style="--i:' + i + ";--h:" + h + '">' + c.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span>";
+    }).join("");
+    el.appendChild(ov);
+    setTimeout(function () { ov.remove(); }, 1500 + n * 60 + 200);
+  }
+  var k = 0;
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      var gold = (e.target._gi % 2) === 1;
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { play(e.target, gold); });
+    });
+  }, { threshold: 0.8 });
+  document.querySelectorAll(GLITTER).forEach(function (el) { el._gi = k++; io.observe(el); });
+})();

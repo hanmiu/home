@@ -250,3 +250,11 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 .video { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 40px 0 0;
   border: 1px solid #e8e8e8; border-radius: 10px; }
 .video iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+/* 반짝임 복사본(script.js): 원래 글자와 똑같이 겹쳐 놓고 글자색만 잠깐 바뀜 */
+.glit { position: absolute; inset: 0; pointer-events: none; color: transparent; }
+.glit span { animation: 1.5s ease both; animation-delay: calc(var(--i) * .06s); }
+.glit .r { animation-name: glr; }
+.glit .g { animation-name: glg; }
+@keyframes glr { 0%, 100% { color: transparent; } 40% { color: hsl(var(--h) 100% 50%); } 55% { color: hsl(var(--h) 100% 60%); } }
+@keyframes glg { 0%, 100% { color: transparent; } 35% { color: hsl(45 90% 42%); } 50% { color: hsl(46 96% 58%); } 65% { color: hsl(44 88% 46%); } }
