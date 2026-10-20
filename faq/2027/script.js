@@ -129,11 +129,15 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
   });
 })();
 
-/* 목차 배지: 홈페이지 메뉴와 같은 몬스터 10종을 섞어 줄마다 하나씩(장식) */
+/* 표지 몬스터: 스크롤을 시작하면 오른쪽 위에서 빼꼼, 표지(목차)를 지나면 다시 숨음 */
 (function () {
-  var links = document.querySelectorAll("#toc li a");
-  var base = "/play/evt/20_creatures/assets/monster", n = [];
-  for (var i = 1; i <= 10; i++) n.push(i);
-  for (var k = n.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)), x = n[k]; n[k] = n[j]; n[j] = x; }
-  links.forEach(function (a, idx) { a.style.setProperty("--creature-url", 'url("' + base + n[idx % 10] + '.svg")'); });
+  var m = document.querySelector(".peek"), cover = document.querySelector(".cover");
+  if (!m || !cover) return;
+  var busy = false;
+  function update() {
+    busy = false;
+    var y = window.scrollY, end = cover.offsetTop + cover.offsetHeight - 120;
+    m.classList.toggle("on", y > 24 && y < end);
+  }
+  window.addEventListener("scroll", function () { if (!busy) { busy = true; requestAnimationFrame(update); } }, { passive: true });
 })();

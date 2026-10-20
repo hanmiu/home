@@ -237,7 +237,10 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
   #meals .collage img { max-height: 280px; }        /* 급식·간식 사진은 더 작게 */
 }
 
-/* 목차 배지: 홈페이지 메뉴처럼 오른쪽 끝에 몬스터(신기한 생물 사전 monster1~10, script.js 가 무작위 배정) */
-#toc li a { position: relative; padding-right: 48px; }
-#toc li a::after { content: ""; position: absolute; top: 50%; right: 2px; transform: translateY(-50%); width: 36px; height: 36px;
-  background: var(--creature-url, none) no-repeat right center / contain; pointer-events: none; opacity: .95; }
+
+/* 표지 몬스터: 카드 표지처럼 오른쪽 위 — 스크롤하면 화면 오른쪽 위에서 빼꼼(표지를 지나면 다시 숨음) */
+.peek { position: fixed; top: 8px; right: 0; width: 96px; height: auto; z-index: 5; pointer-events: none; background: none; border-radius: 0;
+  transform: translateX(110%) rotate(-18deg); transition: transform .5s cubic-bezier(.3,1.4,.5,1); }
+.peek.on { transform: translateX(28%) rotate(-18deg); }
+@media (min-width: 700px) { .peek { width: 120px; top: 14px; } }
+@media (prefers-reduced-motion: reduce) { .peek { transition: none; } }
