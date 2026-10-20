@@ -239,7 +239,7 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 
 
 /* 표지 몬스터: 카드 표지처럼 오른쪽 위 — 스크롤하면 화면 오른쪽 위에서 빼꼼(표지를 지나면 다시 숨음) */
-.peek { position: fixed; top: 8px; right: 0; width: 96px; height: auto; z-index: 5; pointer-events: none; background: none; border-radius: 0;
+.peek { position: fixed; top: -6px; right: 0; width: 80px; height: auto; z-index: 5; pointer-events: none; background: none; border-radius: 0;
   transform: translateX(110%) rotate(-18deg); transition: transform .5s cubic-bezier(.3,1.4,.5,1); }
 .peek.on { transform: translateX(28%) rotate(-18deg); }
 @media (min-width: 700px) { .peek { width: 120px; top: 14px; } }

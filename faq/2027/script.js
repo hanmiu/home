@@ -129,15 +129,16 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
   });
 })();
 
-/* 표지 몬스터: 스크롤을 시작하면 오른쪽 위에서 빼꼼, 표지(목차)를 지나면 다시 숨음 */
+/* 표지 몬스터: 페이지가 다 뜨면 오른쪽 위에서 빼꼼, 표지(목차)를 지나 내려가면 숨고 올라오면 다시 */
 (function () {
   var m = document.querySelector(".peek"), cover = document.querySelector(".cover");
   if (!m || !cover) return;
-  var busy = false;
+  var ready = false, busy = false;
   function update() {
     busy = false;
-    var y = window.scrollY, end = cover.offsetTop + cover.offsetHeight - 120;
-    m.classList.toggle("on", y > 24 && y < end);
+    m.classList.toggle("on", ready && window.scrollY < cover.offsetTop + cover.offsetHeight - 120);
   }
+  function start() { setTimeout(function () { ready = true; update(); }, 400); }
+  if (document.readyState === "complete") start(); else window.addEventListener("load", start);
   window.addEventListener("scroll", function () { if (!busy) { busy = true; requestAnimationFrame(update); } }, { passive: true });
 })();
