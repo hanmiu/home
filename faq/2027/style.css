@@ -130,6 +130,7 @@ blockquote cite { display: block; font: 500 14px var(--sans); color: var(--sub);
 .cycle li::before { content: counter(c) " "; color: var(--green); }
 .dialog { list-style: none; padding: 0 !important; }
 .dialog b { color: var(--sub); font-weight: 500; }
+.dialog .emo { width: 1.35em; height: 1.35em; vertical-align: -.3em; color: var(--ink); }
 
 /* 흐름이 있는 놀이 */
 .flow { list-style: none; margin: 10px 0; padding: 0; counter-reset: f; }
