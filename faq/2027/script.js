@@ -174,7 +174,8 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
    GLITTER 선택자에 맞는 요소가 화면에 처음 들어올 때 한 번, 무지개·금색 번갈아 */
 (function () {
   var GLITTER = "section > h2";
-  if (calm || !("IntersectionObserver" in window)) return;
+  // 색만 바뀌고 움직이지 않으므로 '동작 줄이기' 설정에서도 재생(움직임이 아닌 색 변화는 허용 범위)
+  if (!("IntersectionObserver" in window)) return;
   function letters(text) {
     try { if (window.Intl && Intl.Segmenter) return Array.from(new Intl.Segmenter("ko", { granularity: "grapheme" }).segment(text), function (s) { return s.segment; }); } catch (e) {}
     return Array.from(text);
