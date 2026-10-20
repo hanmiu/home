@@ -1,0 +1,35 @@
+# 한미유치원
+
+> 경기도 고양시 일산서구의 유치원. 1997년부터 레지오 에밀리아 접근에서 영감을 받아 어린이의 호기심과 생각에서 시작하는 놀이중심 교육과정을 운영합니다.
+
+- 주소: 경기도 고양시 일산서구 고양대로 686-8
+- 전화: 031-975-6567, 031-976-6567
+- 인스타그램: https://www.instagram.com/hanmiucw/
+- 유튜브: https://www.youtube.com/hanmiu
+
+## 입학 안내
+
+- [2027학년도 FAQ](https://www.hanmiu.cc/faq/2027/): 입학 전 가장 많이 물어보신 10가지 — 놀이중심 교육과정, 공간, 교사와 학급 정원, 만 3세 적응, 하루 일과와 통학차, 급식과 간식, 방과후과정, 연간 행사, 가정과의 소통
+- [2027학년도 FAQ (Markdown)](https://www.hanmiu.cc/faq/2027/faq-2027.md): 같은 내용의 Markdown 원문
+
+### 2027학년도 FAQ 바로가기
+
+- [교육과정과 교육방향 — 놀이로 어떻게 배우나요?](https://www.hanmiu.cc/faq/2027/#play-learning)
+- [교육환경과 공간](https://www.hanmiu.cc/faq/2027/#space)
+- [교사의 역할과 학급 구성(학급당 정원)](https://www.hanmiu.cc/faq/2027/#teachers)
+- [만 3세 생활과 적응](https://www.hanmiu.cc/faq/2027/#age3)
+- [하루 일과와 등·하원](https://www.hanmiu.cc/faq/2027/#daily-schedule)
+- [통학차 운행 지역과 방학 중 운영](https://www.hanmiu.cc/faq/2027/#bus)
+- [교육과정 — 흐름이 있는 놀이](https://www.hanmiu.cc/faq/2027/#curriculum)
+- [‘흐름이 있는 놀이’는 어떻게 진행하나요?](https://www.hanmiu.cc/faq/2027/#flow-play)
+- [함께 모이는 시간(안전교육 등)](https://www.hanmiu.cc/faq/2027/#gathering)
+- [급식과 간식](https://www.hanmiu.cc/faq/2027/#meals)
+- [방과후과정](https://www.hanmiu.cc/faq/2027/#after-school)
+- [연간 행사와 체험활동](https://www.hanmiu.cc/faq/2027/#events)
+- [가정과 함께 — 아이의 생활을 어떻게 알 수 있나요?](https://www.hanmiu.cc/faq/2027/#family)
+- [개별상담 · 공유모임 · 참여수업 · 부모교육](https://www.hanmiu.cc/faq/2027/#parent-programs)
+- [연락처](https://www.hanmiu.cc/faq/2027/#contact)
+
+## 참고
+
+- 숫자(정원·운영 시간·통학차·행사 등)는 FAQ에 적힌 기준 학년도의 정보이며 해마다 달라질 수 있습니다.

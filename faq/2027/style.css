@@ -1,0 +1,237 @@
+/* 한미유치원 2027 FAQ 웹 판본 — 카드와 같은 색·글꼴, 모바일 우선 */
+:root {
+  --bg: #FBF7EE; --ink: #1A1A1A; --sub: #6B6860; --line: #E6DFCF;
+  --lime: #C8F071; --green: #41B763; --card: #FFFFFF; --cardline: #EDE6D6; --warm: #F1EBDD;
+  --sans: "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --serif: "Noto Serif KR", "AppleMyungjo", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 500 17px/1.7 var(--sans); word-break: keep-all; overflow-wrap: break-word; }
+a { color: inherit; text-decoration: none; }                     /* 연두 밑줄은 강조(mark) 전용 — 링크에는 쓰지 않음 */
+a:hover { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--warm); }
+main { max-width: 760px; margin: 0 auto; padding: 0 18px 48px; }
+.top { max-width: 760px; margin: 0 auto; padding: 14px 18px; font-size: 14px; color: var(--sub); }
+.top a { text-decoration: none; }
+
+/* 표지 + 목차 */
+.cover { padding: 28px 0 8px; text-align: center; }
+.slogan { margin: 0; color: var(--green); font: 600 16px/1.6 var(--serif); }
+h1 { margin: 6px 0 4px; font: 400 clamp(34px, 9vw, 52px)/1.2 var(--serif); }
+h1 span { display: block; font: 700 20px/1.6 var(--sans); }
+.sub { margin: 0 0 20px; font-weight: 700; }
+#toc { text-align: left; border-top: 2px solid var(--ink); scroll-margin-top: 12px; }
+#toc ol { list-style: none; margin: 0; padding: 0; }
+#toc li a { display: flex; gap: 14px; padding: 11px 2px; border-bottom: 1px solid var(--line); text-decoration: none; }
+#toc li span { color: var(--sub); font-weight: 700; min-width: 1.6em; }
+
+/* 섹션 */
+section { padding: 44px 0 8px; scroll-margin-top: 8px; border-bottom: 1px solid var(--line); }
+.chapter { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
+.chapter span { display: inline-block; background: var(--lime); border-radius: 99px; padding: 0 10px; margin-right: 4px; }
+h2 { margin: 0 0 18px; font: 400 clamp(24px, 6.4vw, 32px)/1.45 var(--serif); }
+h3 { margin: 26px 0 8px; font-size: 18px; line-height: 1.5; }
+p { margin: 0 0 12px; }
+.lead { font-size: 20px; font-weight: 700; line-height: 1.6; }
+.lead a { text-decoration: none; }
+mark { background: linear-gradient(transparent 70%, var(--lime) 70%); color: inherit; font-weight: 700; }
+.note { color: var(--sub); font-size: 15px; }
+.eyebrow { margin: 0; color: var(--sub); font-size: 14px; font-weight: 700; }
+.tag { color: var(--sub); font-size: 14px; font-weight: 500; }
+.sechead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.sechead .chapter { margin: 0; }
+.tools { display: flex; gap: 6px; margin: 0; flex-shrink: 0; }
+.btn { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--cardline); border-radius: 50%;
+  background: #FEFCF7; color: var(--ink); text-decoration: none; font-size: 16px; }   /* 배경보다 한 톤 여린 크림 */
+.btn:hover, .btn:focus-visible { border-color: var(--green); }
+.btn:active { background: var(--warm); }
+.emo { font-family: "Noto Emoji", sans-serif; font-weight: 600; font-style: normal; margin-right: .3em; }
+.btn .emo { margin-right: 0; }
+
+/* 사진 */
+.gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 14px 0 6px; }
+.gallery figure { margin: 0; }
+.gallery figcaption { padding: 6px 2px 0; font-size: 15px; }
+.gallery figcaption span { color: var(--sub); font-size: 13px; }
+@media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
+.diagram, .collage { margin: 16px 0; }
+.diagram img { border: 1px solid var(--line); }
+.collage img, .captioned img { border-radius: 0; background: none; }        /* 카드에서 잘라 낸 그림(모서리 둥글림 포함) */
+a[data-zoom] { display: block; cursor: zoom-in; }
+
+/* 크게 보기 창 */
+#zoom { padding: 0; border: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh;
+  overflow: auto; }
+#zoom[open] { display: flex; align-items: center; justify-content: center; }
+#zoom::backdrop { background: rgba(20, 18, 14, .9); }
+#zoom img { width: 100%; max-width: 1400px; height: auto; max-height: none; border-radius: 0; background: none; }   /* 화면 폭에 맞춤, 더 크게는 두 손가락 확대 */
+@media (min-width: 900px) { #zoom img { width: auto; max-width: 94vw; max-height: 94vh; } }
+#zoom .close { position: fixed; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: #fff; color: var(--ink); font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.25); cursor: pointer; z-index: 2; }
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); margin: 0; padding: 8px 16px; border-radius: 99px;
+  background: var(--ink); color: #fff; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast.show { opacity: 1; }
+
+/* 상자·카드 */
+.box, .card, .subsec, .story { background: var(--card); border: 1px solid var(--cardline); border-radius: 18px; padding: 16px 18px; margin: 14px 0; }
+.box h3, .card h3, .subsec h3, .story h3 { margin-top: 2px; }
+.box p:last-child, .card p:last-child { margin-bottom: 0; }
+.cards { display: grid; gap: 10px; margin: 14px 0; }
+.cards .card { margin: 0; }
+.cards .card p { margin: 0 0 4px; }
+@media (min-width: 640px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 10px 0; padding: 0; }
+.chips li { background: var(--warm); border-radius: 99px; padding: 4px 12px; font-size: 15px; }
+
+/* 연표·정원·근속 */
+.facts { margin: 14px 0; }
+.facts div { display: flex; gap: 16px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.facts dt { font: 400 30px/1 var(--serif); min-width: 2.6em; }
+.facts dd { margin: 0; }
+.facts strong { display: block; }
+.facts span { color: var(--sub); font-size: 15px; }
+blockquote { margin: 20px 0 10px; padding: 2px 0 2px 16px; border-left: 4px solid var(--lime); font: 400 20px/1.6 var(--serif); }
+blockquote p { margin: 0; }
+blockquote cite { display: block; font: 500 14px var(--sans); color: var(--sub); font-style: normal; margin-top: 6px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; list-style: none; margin: 8px 0; padding: 0; }
+.stats li { background: var(--card); border: 1px solid var(--cardline); border-radius: 14px; padding: 10px 12px; }
+.stats span { display: block; color: var(--sub); font-size: 14px; }
+.stats strong { font: 400 26px/1.3 var(--serif); }
+.cols ul, .box ul:not(.chips), .story ul { padding-left: 1.2em; margin: 6px 0; }
+@media (min-width: 640px) { .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } }
+.bars { list-style: none; margin: 8px 0; padding: 0; }
+.bars li { display: grid; grid-template-columns: 5em 1fr 6.5em; gap: 10px; align-items: center; padding: 4px 0; font-size: 15px; }
+.bars span { color: var(--sub); }
+.bars i { display: block; height: 12px; width: var(--w); background: var(--line); border-radius: 99px; }
+.bars li:last-child i { background: var(--lime); }
+
+/* 하루 일과 */
+.schedule { list-style: none; margin: 10px 0; padding: 0; }
+.schedule > li { display: grid; grid-template-columns: 3.4em 1fr; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.schedule time { font-weight: 700; color: var(--sub); }
+.schedule .prog ul { margin: 2px 0 0; padding-left: 1.1em; }
+.schedule .commute { grid-column: 2; color: var(--sub); font-size: 15px; }
+.schedule .commute p { margin: 0; }
+.schedule .commute:empty, .schedule .prog:empty { display: none; }
+@media (min-width: 640px) { .schedule > li { grid-template-columns: 3.4em 1fr 1fr; } .schedule .commute { grid-column: 3; } }
+
+.kv { margin: 12px 0; }
+.kv div { display: flex; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.kv dt { font-weight: 700; min-width: 5.5em; flex-shrink: 0; }
+.kv dd { margin: 0; }
+
+/* 교육과정 순환·이야기 */
+.cycle { margin: 18px 0; padding: 16px; background: var(--card); border-radius: 18px; border: 1px solid var(--cardline); }
+.cycle .center { display: inline-block; background: var(--lime); border-radius: 99px; padding: 2px 14px; font-weight: 700; }
+.cycle ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; counter-reset: c; }
+.cycle li { counter-increment: c; border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-weight: 700; text-align: center; }
+.cycle li::before { content: counter(c) " "; color: var(--green); }
+.dialog { list-style: none; padding: 0 !important; }
+.dialog b { color: var(--sub); font-weight: 500; }
+
+/* 흐름이 있는 놀이 */
+.flow { list-style: none; margin: 10px 0; padding: 0; counter-reset: f; }
+.flow li { counter-increment: f; position: relative; padding: 10px 0 10px 40px; border-bottom: 1px solid var(--line); }
+.flow li::before { content: counter(f); position: absolute; left: 0; top: 10px; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--green); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; }
+.flow strong { display: block; }
+.flow span { color: var(--sub); font-size: 15px; }
+.lanes h3 { margin-top: 22px; }
+.lane { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.lane .when { display: block; font-weight: 700; font-size: 13px; margin-bottom: 4px; white-space: nowrap; }
+.lane img { border-radius: 8px; }
+.lane .pics { display: grid; gap: 4px; }
+.lane .pics.n2 { grid-template-columns: 1fr 1fr; }
+.lane figure { margin: 0; }
+.lane .pics.n2 img { aspect-ratio: 3 / 4; object-fit: cover; }
+.lane .pause { color: var(--sub); font-size: 12px; line-height: 1.5; border: 1px dashed var(--line); border-radius: 8px; padding: 6px; margin: 0; }
+@media (min-width: 640px) { .lane { gap: 10px; } .lane .when { font-size: 14px; } .lane .pause { font-size: 14px; padding: 10px; } }
+
+/* 연간 행사·가정 */
+.months { display: grid; gap: 4px 20px; }
+@media (min-width: 640px) { .months { grid-template-columns: 1fr 1fr; } }
+.months dl { margin: 0; }
+.months dl div { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.months dt { font-family: var(--serif); min-width: 2.6em; }
+.months dd { margin: 0; }
+.when { list-style: none; margin: 10px 0; padding: 0; }
+.when li { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.when h3 { margin: 2px 0 6px; }
+.steps { padding-left: 1.4em; }
+.steps li { padding: 3px 0; }
+
+/* 연락처 */
+.contact { margin: 10px 0 14px; }
+.contact div { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.contact dt { color: var(--sub); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.contact dd { margin: 0; text-align: right; font-weight: 700; }
+.icon { color: var(--sub); }
+
+footer { max-width: 760px; margin: 0 auto; padding: 18px 18px 40px; color: var(--sub); font-size: 14px; }
+footer p { margin: 0 0 4px; }
+
+/* 섹션 끝의 목록 마지막 줄 선이 섹션 구분선과 겹쳐 두 줄로 보이지 않게 */
+section > :last-child div:last-child, section > :last-child > li:last-child, section > dl:last-child > div:last-child,
+section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-child, .months > div:last-child dl div:last-child,
+.contact div:last-child { border-bottom: 0; }
+
+/* 마지막 장 자모 도안 */
+.jamo { margin: 0 auto 8px; max-width: 420px; }
+.jamo img { border-radius: 0; background: none; }
+
+/* 9장 개념도(SVG) + 단계 보기 */
+.flowfig, .threadfig { margin: 16px auto; max-width: 520px; }
+.flowsvg.h, .threadsvg.h { display: none; }
+@media (min-width: 700px) {            /* PC: 카드와 같은 가로형 */
+  .flowfig, .threadfig { max-width: 760px; }
+  .flowsvg.v, .threadsvg.v { display: none; }
+  .flowsvg.h, .threadsvg.h { display: block; }
+}
+.flowsvg, .threadsvg { display: block; width: 100%; height: auto; font-family: var(--sans); }
+.flowsvg text, .threadsvg text { font-family: var(--sans); }
+.flowsvg [data-step] { transition: opacity .35s; }
+.flowsvg.stepping [data-step]:not(.on) { opacity: .14; }
+.stepper { display: none; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 10px 0 4px; }
+.js .stepper { display: flex; }
+.stepper button { min-width: 36px; height: 36px; padding: 0 10px; border: 1px solid var(--cardline); border-radius: 99px;
+  background: #FEFCF7; color: var(--ink); font: 700 14px var(--sans); cursor: pointer; }
+.stepper button[aria-pressed="true"] { background: var(--lime); border-color: #9DBF4A; }
+.stepper .next { background: var(--green); border-color: var(--green); color: #fff; }
+.stepcap { min-height: 3.2em; margin: 6px 0 0; text-align: center; font-size: 15px; }
+.stepcap strong { display: block; }
+.stepcap span { color: var(--sub); font-size: 14px; }
+
+/* 9장 놀이 흐름(SVG): 선이 자라는 애니메이션 */
+.animfig.anim .fade { opacity: 0; transition: opacity .6s; }
+.animfig.anim.play .fade { opacity: 1; }
+.threadfig.anim.play .p { transition-delay: .7s; }
+.threadfig.anim.play .ph { transition-delay: 1.4s; }
+
+/* 8장 순환 도식 */
+.cyclefig { margin: 18px auto; max-width: 400px; }
+.cyclesvg { display: block; width: 100%; height: auto; }
+.cyclesvg text { font-family: var(--sans); }
+
+/* 마지막 장 인사: 작게, 가운데 */
+#contact h2 { text-align: center; font-size: clamp(20px, 5vw, 24px); margin-bottom: 22px; }
+
+/* 등·하원 띠(카드 bus_strip): 흐린 연두 바탕 */
+.busstrip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 16px 0; padding: 12px 18px;
+  background: #EAF4D2; border-radius: 16px; font-size: 16px; }
+.busstrip .emo { font-size: 20px; margin-right: 0; }
+.busstrip strong { font-size: 17px; }
+
+/* 7장 지도(SVG) */
+.mapfig { margin: 16px 0; }
+.mapfig svg { display: block; width: 100%; height: auto; font-family: var(--sans); }
+.sw { display: inline-block; width: 22px; height: 16px; border-radius: 5px; margin-right: 8px; vertical-align: -2px; border: 2px solid #9DBF4A; }
+.sw1 { background: #F3FCE0; } .sw2 { background: #DFF6AD; } .sw3 { background: var(--lime); border-style: dashed; }   /* 카드 범례: 흰 막 78%·42%·없음 */
+
+/* PC: 세로로 긴 사진 묶음(급식·공간 등)이 너무 커 보이지 않게 높이 제한 */
+@media (min-width: 700px) {
+  .collage a[data-zoom] { text-align: center; }
+  .collage img { width: auto; max-width: 100%; max-height: 360px; margin: 0 auto; }
+  .subsec .collage img { max-height: 300px; }
+  #meals .collage img { max-height: 280px; }        /* 급식·간식 사진은 더 작게 */
+}
