@@ -95,7 +95,7 @@ html['thought'] = `
 <div class="subtle">이러한 맥락에서 &lt;어린이의 백 가지 언어&gt;라는 로리스 말라구찌의 시를 이해할 수 있습니다.
 <img class="full" src="./images/2020/100_languages.svg">
 
-<div class="subtle">
+<div class="subtle" id="nuri-2019">
   한미유치원의 놀이 운영에 관한 노하우는 2019 개정 누리과정 놀이운영사례집 <a href="https://i-nuri.go.kr/main/board/view.do?menu_idx=105&manage_idx=31&board_idx=701" target="_blank">&lt;놀이, 유아가 세상을 만나고 살아가는 힘&gt;</a>을 통해서도 만나볼 수 있습니다.
 </div>
 
