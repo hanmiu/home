@@ -9,14 +9,15 @@
 
 <title>한미유치원</title>
 <script>
-  // ?page= 로 연 글은 정적 페이지(/about/…)가 대표 주소
+  // 2024 화면은 정리됨(2026-10-21) — 같은 글의 지금 페이지로 바로 이동
   (function() {
-    let slug = {hanmi: 'history', thought: 'thought', about_play: 'play', playground: 'playground', parent: 'parent'}[new URLSearchParams(location.search).get('page')];
+    let page = new URLSearchParams(location.search).get('page');
+    let slug = {hanmi: 'history', thought: 'thought', about_play: 'play', playground: 'playground', parent: 'parent'}[page];
     if(slug) {
-      let link = document.createElement('link');
-      link.rel = 'canonical';
-      link.href = `https://www.hanmiu.cc/about/${slug}/`;
-      document.head.appendChild(link);
+      location.replace(`/about/${slug}/` + location.hash);
+    }
+    else if(!page || page === 'admission') {
+      location.replace('/');
     }
   })();
 </script>
