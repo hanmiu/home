@@ -270,3 +270,5 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 .readable ol { padding-left: 1.3em; }
 .readable li { margin-bottom: 8px; }
 @media (min-width: 700px) { .readable { max-width: 760px; } }
+.readable .more { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 15px; }
+.readable .more a { font-weight: 700; color: var(--green); }
