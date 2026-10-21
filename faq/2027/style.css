@@ -91,6 +91,7 @@ a[data-zoom] { display: block; cursor: zoom-in; }
 .facts dt { font: 400 30px/1 var(--serif); min-width: 2.6em; }
 .facts dd { margin: 0; }
 .facts strong { display: block; }
+.facts strong a { color: var(--green); }
 .facts span { color: var(--sub); font-size: 15px; }
 blockquote { margin: 20px 0 10px; padding: 2px 0 2px 16px; border-left: 4px solid var(--lime); font: 400 20px/1.6 var(--serif); }
 blockquote p { margin: 0; }
