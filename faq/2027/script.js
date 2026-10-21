@@ -133,7 +133,14 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
 (function () {
   var m = document.querySelector(".peek"), cover = document.querySelector(".cover");
   if (!m || !cover) return;
-  var ready = false, busy = false;
+  var ready = false, busy = false, slogan = cover.querySelector(".slogan");
+  // 휴대폰: 머리말 밑 구석이 아니라 표지 문구("…질을 높이는") 바로 아래 오른쪽에(문구 줄 수에 따라 자리를 잼)
+  function place() {
+    if (window.innerWidth < 700 && slogan) m.style.top = Math.round(slogan.getBoundingClientRect().bottom + window.scrollY + 4) + "px";
+    else m.style.top = "";
+  }
+  place();
+  window.addEventListener("resize", place);
   function update() {
     busy = false;
     m.classList.toggle("on", ready && window.scrollY < cover.offsetTop + cover.offsetHeight - 120);

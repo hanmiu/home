@@ -375,5 +375,6 @@ main { margin-top: 60px; }
 .nav-links a[aria-current="page"] { color: var(--green); }
 section, .readable { scroll-margin-top: 68px; }
 #toc { scroll-margin-top: 72px; }
-.peek { top: 50px; z-index: 900; }
-@media (min-width: 700px) { .peek { top: 58px; } }
+.peek { position: absolute; top: 120px; z-index: 900; }        /* 휴대폰: 표지 문구 아래(정확한 자리는 script.js) */
+@media (min-width: 700px) { .peek { position: fixed; top: 58px; } }
+@media (max-width: 380px) { .peek.on { transform: translateX(42%) rotate(-18deg); } }   /* 좁은 화면: 제목에 닿지 않게 덜 빼꼼 */
