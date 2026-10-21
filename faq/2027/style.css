@@ -258,3 +258,15 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 .glit .g { animation-name: glg; }
 @keyframes glr { 0%, 100% { color: transparent; } 40% { color: hsl(var(--h) 100% 50%); } 55% { color: hsl(var(--h) 100% 60%); } }
 @keyframes glg { 0%, 100% { color: transparent; } 35% { color: hsl(45 90% 42%); } 50% { color: hsl(46 96% 58%); } 65% { color: hsl(44 88% 46%); } }
+
+/* 개념도 글로 읽기(접힌 상자) */
+.readable { margin: 18px auto 8px; max-width: 520px; border: 1px solid var(--cardline); border-radius: 12px; background: var(--card); }
+.readable summary { cursor: pointer; padding: 12px 16px; font-size: 15px; font-weight: 700; color: var(--sub); list-style: none; }
+.readable summary::-webkit-details-marker { display: none; }
+.readable summary::before { content: "▸"; display: inline-block; margin-right: 8px; color: var(--green); transition: transform .2s; }
+.readable[open] summary::before { transform: rotate(90deg); }
+.readable[open] summary { border-bottom: 1px solid var(--line); }
+.readable > p, .readable ol { margin: 12px 16px; font-size: 16px; }
+.readable ol { padding-left: 1.3em; }
+.readable li { margin-bottom: 8px; }
+@media (min-width: 700px) { .readable { max-width: 760px; } }
