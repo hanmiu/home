@@ -273,3 +273,108 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 @media (min-width: 700px) { .readable { max-width: 760px; } }
 .readable .more { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 15px; }
 .readable .more a { font-weight: 700; color: var(--green); }
+
+/* 메인 페이지 머리말·메뉴(site_chrome.py 가 index.html 에서 꺼냄) */
+header {position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: #F0EEE7;;
+    backdrop-filter: blur(20px);
+    z-index: 1000;}
+.header-container {max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;}
+.logo {font-size: 1.25rem;
+    font-weight: 500;
+    color: #00000000;
+    text-decoration: none;
+    letter-spacing: -0.02em;
+    background-image: url(https://www.hanmiu.cc/images/logotype/hanmi_logotype.svg);
+    background-repeat: none;
+    background-size: contain;}
+.hamburger {width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    transition: opacity 0.2s ease;}
+.hamburger:hover {opacity: 0.6;}
+.hamburger span {display: block;
+    width: 20px;
+    height: 1.5px;
+    background-color: #000000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);}
+.hamburger.active span:nth-child(1) {transform: translateY(6.5px) rotate(45deg);}
+.hamburger.active span:nth-child(2) {opacity: 0;}
+.hamburger.active span:nth-child(3) {transform: translateY(-6.5px) rotate(-45deg);}
+.nav-overlay {position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    max-width: 360px;
+    height: 100vh;
+    background-color: #ffffff;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 999;
+    overflow-y: auto;
+    border-left: 1px solid #e8e8e8;}
+.nav-overlay.active {right: 0;}
+.nav-content {padding: 80px 40px 40px;}
+.nav-links {list-style: none;}
+.nav-links li {margin-bottom: 8px;
+    border-bottom: 1px solid #f5f5f5;}
+.emoji {font-family: 'Noto Emoji';}
+.nav-links .emoji {color: green;}
+.nav-links li:last-child {border-bottom: none;}
+.nav-links a {display: block;
+    position: relative;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #000000;
+    text-decoration: none;
+    padding: 16px 56px 16px 0px;
+    transition: all 0.2s ease;
+    letter-spacing: -0.01em;}
+.nav-links a:hover {color: green;
+    padding-left: 8px;}
+.nav-links a::after {content: "";
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-image: var(--creature-url);
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: contain;
+    pointer-events: none; 
+    opacity: 0.95;}
+@media (max-width: 768px) {
+  .header-container {padding: 0 20px;}
+  .nav-overlay {max-width: 100%;}
+  .nav-content {padding: 80px 20px 40px;}
+}
+
+header { background-color: var(--bg); }
+main { margin-top: 60px; }
+.logo:hover, .nav-links a:hover { text-decoration: none; }
+.nav-links { margin: 0; padding: 0; }
+.nav-links .emo { width: 1em; height: 1em; margin-right: 0; vertical-align: -0.125em; }
+.nav-links a[aria-current="page"] { color: green; }
+section, .readable { scroll-margin-top: 68px; }
+#toc { scroll-margin-top: 72px; }
+.peek { top: 50px; z-index: 900; }
+@media (min-width: 700px) { .peek { top: 58px; } }
