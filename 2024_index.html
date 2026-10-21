@@ -8,6 +8,18 @@
 <meta property="og:image" content="https://www.hanmiu.cc/images/logotype/preview.jpg" />
 
 <title>한미유치원</title>
+<script>
+  // ?page= 로 연 글은 정적 페이지(/about/…)가 대표 주소
+  (function() {
+    let slug = {hanmi: 'history', thought: 'thought', about_play: 'play'}[new URLSearchParams(location.search).get('page')];
+    if(slug) {
+      let link = document.createElement('link');
+      link.rel = 'canonical';
+      link.href = `https://www.hanmiu.cc/about/${slug}/`;
+      document.head.appendChild(link);
+    }
+  })();
+</script>
 <link rel="icon" type="image/png" href="./images/logotype/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;400;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Song+Myung&display=swap" rel="stylesheet">

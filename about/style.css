@@ -1,0 +1,322 @@
+/* 2024_index.html 의 <style> 에서 자동 생성 — 여기서 고치지 말 것 */
+body {
+    margin: 0;
+    font-size: 14px;
+    background-color: white;
+  }
+  
+  a {
+    color: black;
+    text-decoration: none;
+    border-bottom: 1px solid black;
+    /*
+    border-style: solid;
+    border-image: linear-gradient(90deg, cyan, #dd04dd) 30;
+    transition: 0.2s;
+    border-width: 0px 0px 1px 0px;
+    */
+    transition: 0.2s;
+  }
+  
+  a.no-underline {
+    border-width: 0px;
+    background-color: transparent;
+  }
+  
+  a:hover {
+    background-color: #bdf8ff;
+    /* text-shadow: 0px 0px 5px #95f3ff; */
+  }
+  
+  a.no-underline:hover {
+    background-color: transparent;
+  }
+  
+  a:visited {
+    color: black;
+  }
+  
+  #stage {
+    margin: auto;
+    max-width: 1024px;
+    overflow: hidden;
+  }
+  
+  #pebbles {
+    position: relative;
+    width: 100%;
+    background-color: white;
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+  
+  #bg3d {
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    opacity: 0;
+    transition: opacity 1s ease-in-out, left 5s ease-in-out;
+  }
+  
+  .pebble {
+    position: relative;
+    box-sizing: border-box;
+    font-family: 'Noto Serif KR', serif;
+    height: 200px;
+    overflow: hidden;
+    /* border-bottom: 1px solid #cecece; */
+    border-style: solid;
+    border-image: linear-gradient(90deg, cyan, #dd04dd) 30;
+    transition: 0.2s;
+    border-width: 0px 0px 1px 0px;
+  }
+  
+  .pebble .layer {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  .pebble .subject {
+    /*
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    font-size: 3rem;
+    font-weight: 400;
+    */
+    position: absolute;
+    /* left: 1rem; */
+    left: 1.8rem;
+    top: 2rem;
+    font-size: 2.7rem;
+    font-weight: 400;
+  }
+  
+  .pebble .description {
+    position: absolute;
+    /*left: 1.5rem;*/
+    left: 2rem;
+    top: 6rem;
+    /* font-size: 1.5rem; */
+    font-size: 1.25rem;
+    font-weight: 200;
+  }
+  
+  .pebble #description-logo {
+    /*
+    position: relative;
+    display: flex;
+    margin-top: 6.5rem;
+    font-size: 1.5rem;
+    justify-content: center;
+    */
+    position: relative;
+    display: flex;
+    margin-top: 6.5rem;
+    font-size: 1.35rem;
+    justify-content: center;
+  }
+  
+  .pebble .touch {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  
+  #info {
+    display: none;
+    position: fixed;
+    right: 0px;
+    top: 0px;
+  }
+  
+  #detail {
+    visibility: hidden;
+    width: 100%;
+    height: 0;
+    font-family: 'Noto Serif KR', serif;
+    background-color: white;
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+  
+  #detail #header {
+    position: fixed;
+    display: flex;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    max-width: 1024px;
+    height: 100px;
+    background-color: white;
+    z-index: 100;
+    cursor: pointer;
+    
+    border-style: solid;
+    border-image: linear-gradient(90deg, cyan, #dd04dd) 30;
+    transition: 0.2s;
+    border-width: 0px 0px 1px 0px;
+  }
+  
+  #detail #header #back-arrow{
+    width: 40px;
+    height: 100px;
+    padding-left: 1rem;
+    padding-top: 1.5rem;
+    font-size: 2rem;
+    color: #989898;
+  }
+  
+  #detail #header #title {
+    margin-top: 1rem;
+    font-size: 2.7rem;
+  }
+  
+  #detail #header #logo {
+    /* transform: translate(-10px, -10px); */
+  }
+  
+  #detail #content {
+    margin-top: 100px;
+    font-size: 1.5rem;
+    line-height: 2.25rem;
+    padding: 2rem;
+  }
+  
+  #detail #content .subtle {
+    font-size: 1.25rem;
+    line-height: 1.875rem;
+    word-break: break-all;
+  }
+  
+  #detail #content .quote {
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: #6a6a6a;
+    word-break: break-all;
+    /* border-left: 1px dashed #b5b5b5; */
+  }
+  
+  #detail #content strong {
+    display: inline;
+    background-image: linear-gradient(90deg, yellow, cyan);
+    border-radius: 5px;
+  }
+  
+  #detail #content ul.leaf {
+    list-style: url('/images/symbols/leaf01.svg');
+  }
+  
+  #detail #content ul.flower {
+    list-style: url('/images/symbols/flower01.svg');
+  }
+  
+  #detail #content ul.musical {
+   list-style: url('/images/symbols/musical_note_01.svg');
+  }
+  
+  #detail #content li {
+    margin-bottom: 1rem;
+    margin-left: -1em;
+  }
+  
+  #detail #content li.bambini {
+    margin-bottom: 1rem;
+    font-family: 'Song Myung', serif;
+  }
+  
+  #detail #content span.bambini {
+    font-family: 'Song Myung', serif;
+  }
+  
+  #detail #content .full {
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  #detail #content audio {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  #musical {
+    display: block;
+    margin: auto;
+    width: 75%;
+    cursor: pointer;
+    image-rendering: pixelated;
+    transition: opacity 1s;
+  }
+  
+  .iframe-container {
+    position: relative;
+    width: 100%;
+    height: 250px;
+  }
+  
+  .iframe-container .video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #footer {
+    /* padding-top: 1rem;  */
+    /* padding-bottom: 1rem; */
+    font-family: 'Noto Serif KR', serif;
+    line-height: 1.5rem;
+  }
+
+  #footer .subject {
+    padding-left: 1.8rem;
+    margin-top: 2rem;
+    font-size: 2rem;
+  }
+  
+  #footer .tel {
+    padding-left: 2rem;
+    margin-top: 1rem;
+    font-size: 1rem;
+  }
+  
+  #footer .address {
+    padding-left: 2rem;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  #footer .notice {
+    padding-left: 2rem;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  @media print {
+    #detail #header {
+      position: absolute;
+      left: 0px !important;
+    }
+    
+    img {
+      page-break-inside: avoid;
+    }
+  }
+
+/* --- 정적 페이지(about/) 전용 --- */
+#detail { visibility: visible; height: auto; }
+#detail #header { left: 0; right: 0; margin: 0 auto; color: black; }
+a#header, a#header:hover { border-bottom: 0; background-color: white; }
+#detail #header h1#title { margin: 1rem 0 0; font-weight: 400; }
+#footer { padding-bottom: 3rem; }
+#footer .pages { padding-left: 2rem; margin-top: 2rem; font-size: 1rem; }
+#footer .pages a { display: inline-block; margin: 0 0.75rem 0.5rem 0; white-space: nowrap; }

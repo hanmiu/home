@@ -22,4 +22,16 @@
     <image:image><image:loc>https://www.hanmiu.cc/faq/2027/img/events-photos-1-1080.jpg</image:loc></image:image>
     <image:image><image:loc>https://www.hanmiu.cc/faq/2027/img/parent-programs-photos-1-1080.jpg</image:loc></image:image>
   </url>
+  <url>
+    <loc>https://www.hanmiu.cc/about/history/</loc>
+    <lastmod>2026-10-21</lastmod>
+  </url>
+  <url>
+    <loc>https://www.hanmiu.cc/about/thought/</loc>
+    <lastmod>2026-10-21</lastmod>
+  </url>
+  <url>
+    <loc>https://www.hanmiu.cc/about/play/</loc>
+    <lastmod>2026-10-21</lastmod>
+  </url>
 </urlset>
