@@ -136,8 +136,9 @@ document.querySelectorAll(".flowfig path[marker-end], .flowfig path[marker-start
   var ready = false, busy = false, slogan = cover.querySelector(".slogan");
   // 휴대폰: 머리말 밑 구석이 아니라 표지 문구("…질을 높이는") 바로 아래 오른쪽에(문구 줄 수에 따라 자리를 잼)
   function place() {
-    if (window.innerWidth < 700 && slogan) m.style.top = Math.round(slogan.getBoundingClientRect().bottom + window.scrollY + 4) + "px";
-    else m.style.top = "";
+    var box = m.parentNode;
+    if (window.innerWidth < 700 && slogan) box.style.top = Math.round(slogan.getBoundingClientRect().bottom + window.scrollY + 4 - 16) + "px";   // 상자 안 여유 16px
+    else box.style.top = "";
   }
   place();
   window.addEventListener("resize", place);

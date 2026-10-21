@@ -375,6 +375,8 @@ main { margin-top: 60px; }
 .nav-links a[aria-current="page"] { color: var(--green); }
 section, .readable { scroll-margin-top: 68px; }
 #toc { scroll-margin-top: 72px; }
-.peek { position: absolute; top: 120px; z-index: 900; }        /* 휴대폰: 표지 문구 아래(정확한 자리는 script.js) */
-@media (min-width: 700px) { .peek { position: fixed; top: 58px; } }
+/* 빼꼼 몬스터는 화면 오른쪽 끝의 작은 상자 안에서만 움직임 — 상자 밖으로 나간 부분은 잘려 가로 스크롤이 생기지 않음 */
+.peekbox { position: absolute; top: 104px; right: 0; width: 90px; height: 160px; overflow: hidden; z-index: 900; pointer-events: none; }
+.peekbox .peek { position: absolute; top: 16px; right: 0; }  /* 위 16px: 회전한 귀퉁이 여유. 휴대폰 상자 자리(표지 문구 아래)는 script.js */
+@media (min-width: 700px) { .peekbox { position: fixed; top: 42px; width: 130px; height: 210px; } }
 @media (max-width: 380px) { .peek.on { transform: translateX(42%) rotate(-18deg); } }   /* 좁은 화면: 제목에 닿지 않게 덜 빼꼼 */
