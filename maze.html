@@ -7,7 +7,7 @@
   <style>
     :root { --footer-h: 64px; --thumb: 64px; }
     html, body { height: 100%; margin: 0; }
-    body { display: flex; flex-direction: column; align-items: center; background: #F0EEE7; color: #111; }
+    body { display: flex; flex-direction: column; align-items: center; background: #FBF7EE; color: #111; }
     #main { flex: 0 0 auto; display: flex; justify-content: center; width: 100%; }
     canvas { display: block; outline: none; touch-action: manipulation; image-rendering: auto; }
     #footer {
@@ -59,7 +59,7 @@
     const rows = ensureOdd(def(Q.get('rows'), 13));
     const AGENTS_TARGET = clamp(Math.floor(def(Q.get('agents'), 4)), 1, 64);
     const AGENT_SPEED = clamp(parseFloat(def(Q.get('speed'), 3)) || 3, 0.25, 30); // cells/sec
-    const wallColor = normalizeHex(def(Q.get('wall'), 'F0EEE7'), 'F0EEE7');
+    const wallColor = normalizeHex(def(Q.get('wall'), 'FBF7EE'), 'FBF7EE');
     const pathColor = normalizeHex(def(Q.get('path'), 'FFFFFF'), 'FFFFFF');
 
     const seedParam = Q.get('seed');

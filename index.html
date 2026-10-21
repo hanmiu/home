@@ -17,6 +17,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400;500;600&family=Noto+Sans+KR:wght@100..900&family=Noto+Emoji:wght@300..700&display=swap" rel="stylesheet">
 
 <style>
+  /* 색 이름표 — 카드뉴스·FAQ 와 같은 팔레트(2026-10-21). 색을 바꿀 땐 여기만 */
+  :root {
+    --bg: #FBF7EE;        /* 바탕(크림) */
+    --card: #FFFFFF;      /* 흰 상자 */
+    --cardline: #EDE6D6;  /* 흰 상자 테두리 */
+    --green: #41B763;     /* 강조 초록(메뉴·아이콘) */
+    --lime: #C8F071;      /* 연두(버튼·강조) */
+  }
+
   * {
     margin: 0;
     padding: 0;
@@ -25,7 +34,7 @@
   
   body {
     font-family: 'Noto Sans KR', sans-serif;
-    background-color: #F0EEE7;
+    background-color: var(--bg);
     color: #1a1a1a;
     line-height: 1.7;
     overflow-x: hidden;
@@ -38,7 +47,7 @@
     left: 0;
     right: 0;
     height: 60px;
-    background-color: #F0EEE7;;
+    background-color: var(--bg);
     backdrop-filter: blur(20px);
     z-index: 1000;
     /* border-bottom: 1px solid #e8e8e8; */
@@ -141,7 +150,7 @@
   }
 
   .nav-links .emoji {
-    color: green;
+    color: var(--green);
   }
   
   .nav-links li:last-child {
@@ -161,7 +170,7 @@
   }
   
   .nav-links a:hover {
-    color: green;
+    color: var(--green);
     padding-left: 8px;
   }
 
@@ -240,7 +249,7 @@
   
   /* Event Section */
   .event-section {
-    background-color: #F0EEE7;
+    background-color: var(--bg);
     --gap: 22px;        /* 좌우 여백 */
     --thickness: 1px;   /* 선 두께 */
     --color: #9b9b9b;
@@ -275,9 +284,9 @@
   }
   
   .event-details {
-    background-color: white;
+    background-color: var(--card);
     padding: 40px;
-    border: 1px solid #e8e8e8;
+    border: 1px solid var(--cardline);
     border-radius: 10px;
     margin-bottom: 40px;
   }
@@ -311,7 +320,7 @@
     max-width: 200px;
     margin: 0 auto;
     padding: 5px 20px;
-    background: #c8f071;
+    background: var(--lime);
     color: black;
     text-decoration: none;
     font-size: 1.2rem;
@@ -330,7 +339,7 @@
   
   /* Video Section */
   .video-section {
-    background-color: #F0EEE7;
+    background-color: var(--bg);
     --gap: 22px;        /* 좌우 여백 */
     --thickness: 1px;   /* 선 두께 */
     --color: #9b9b9b;
@@ -361,7 +370,7 @@
     padding-bottom: 56.25%;
     height: 0;
     overflow: hidden;
-    border: 1px solid #e8e8e8;
+    border: 1px solid var(--cardline);
     border-radius: 10px;
   }
   
@@ -376,7 +385,7 @@
   /* Carousel Section */
   .carousel-section {
     /* display: none; */
-    background-color: #F0EEE7;
+    background-color: var(--bg);
     --gap: 22px;        /* 좌우 여백 */
     --thickness: 1px;   /* 선 두께 */
     --color: #9b9b9b;
@@ -405,7 +414,7 @@
   
   .carousel-wrapper {
     overflow: hidden;
-    border: 1px solid #e8e8e8;
+    border: 1px solid var(--cardline);
   }
   
   .carousel-track {
@@ -455,7 +464,7 @@
   
   /* Creatures Section */
   .creatures-section {
-    background-color: #F0EEE7;
+    background-color: var(--bg);
   }
   
   .creatures-container {
@@ -485,13 +494,13 @@
   }
   
   .creatures-link {
-    background-color: #fafafa;
+    background-color: var(--card);
     padding: 40px 30px;
     text-align: center;
     text-decoration: none;
     color: #000000;
     transition: all 0.2s ease;
-    border: 1px solid #e8e8e8;
+    border: 1px solid var(--cardline);
     border-radius: 10px;
   }
   
@@ -728,7 +737,7 @@
     </section> -->
     <iframe
       id="maze"
-      src="maze.html?cols=29&rows=15&wall=F0EEE7&path=FFFFFF"
+      src="maze.html?cols=29&rows=15&wall=FBF7EE&path=FFFFFF"
       style="border:0; width: 100%;"
       height="264"
     ></iframe>
@@ -740,16 +749,16 @@
     <section class="event-section">
       <div class="event-container">
         <h2 class="event-title">2027 교육 설명회 및 시설 참관</h2>
-        <p class="event-subtitle"><a href="/faq/2027/" style="color: inherit; font-weight: 700; text-underline-offset: 4px; word-break: keep-all;"><span class="emoji" style="color: green" data-emoji="❓"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-2753"/></svg></span> 입학 전, 가장 많이 물어보신 10가지<br>2027학년도 FAQ</a></p>
+        <p class="event-subtitle"><a href="/faq/2027/" style="color: inherit; font-weight: 700; text-underline-offset: 4px; word-break: keep-all;"><span class="emoji" style="color: var(--green)" data-emoji="❓"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-2753"/></svg></span> 입학 전, 가장 많이 물어보신 10가지<br>2027학년도 FAQ</a></p>
         <p class="event-subtitle">대상: 2023, 2022, 2021년생 어린이 가족</p>
         
         <div class="event-details">
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>교육 설명회</strong>는 한미유치원의 풍요롭고 재미있는 놀이와 배움에 관한 이야기와 공지사항(일과시간, 방과후 특성화활동, 방과후과정, 통학차, 교육비 등)을 소개하는 시간입니다.</p>
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>시설 참관</strong>은 자녀와 함께 유치원을 방문하여 다양한 매체와 놀이감을 가지고 놀이를 체험하는 시간입니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>교육 설명회</strong>는 한미유치원의 풍요롭고 재미있는 놀이와 배움에 관한 이야기와 공지사항(일과시간, 방과후 특성화활동, 방과후과정, 통학차, 교육비 등)을 소개하는 시간입니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>시설 참관</strong>은 자녀와 함께 유치원을 방문하여 다양한 매체와 놀이감을 가지고 놀이를 체험하는 시간입니다.</p>
           
           <div class="event-info">
-            <p><strong><span class="emoji" style="color: green" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 교육 설명회</strong><br>10/24(토) 10시<br>10/27(화) 11시<br>10/29(목) 11시</p>
-            <p><strong><span class="emoji" style="color: green" data-emoji="🕓"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f553"/></svg></span> 시설 참관 기간</strong><br>10/26(월) ~ 10/30(금)<br>16시 ~ 18시</p>
+            <p><strong><span class="emoji" style="color: var(--green)" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 교육 설명회</strong><br>10/24(토) 10시<br>10/27(화) 11시<br>10/29(목) 11시</p>
+            <p><strong><span class="emoji" style="color: var(--green)" data-emoji="🕓"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f553"/></svg></span> 시설 참관 기간</strong><br>10/26(월) ~ 10/30(금)<br>16시 ~ 18시</p>
           </div>
         </div>
         
@@ -765,17 +774,17 @@
         <p class="event-subtitle">대상: 2022, 2021, 2020년생 어린이 가족</p>
         <p class="event-subtitle">입학 문의는 031-975-6567, 031-976-6567 전화로 부탁드립니다.</p>
         <div class="event-details">
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 신입생 1차 소집일 안내<br>1차 소집일에는 부모님과 함께 유치원을 방문하여 초청공연을 관람하고, 온라인으로 작성한 입학원서를 출력 및 서명 후 제출하며 가방을 선물로 받습니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 신입생 1차 소집일 안내<br>1차 소집일에는 부모님과 함께 유치원을 방문하여 초청공연을 관람하고, 온라인으로 작성한 입학원서를 출력 및 서명 후 제출하며 가방을 선물로 받습니다.</p>
           
           <div class="event-info">
-            <p><strong><span class="emoji" style="color: green" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 1차 소집일 + 입학전 적응교육</strong></p>
+            <p><strong><span class="emoji" style="color: var(--green)" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 1차 소집일 + 입학전 적응교육</strong></p>
             <p>날짜·시간: 2025년 12월 20일(토) 오전 11시</p>
             <p>대상: 2026학년도 입학할 어린이와 가족</p>
         </div>
         <br>
         <div class="event-info">
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 전화 상담 후 대면 상담 약속을 잡아 한미유치원의 환경과 교육 등에 관해 상세하게 안내드립니다.</p>
-          <p><span class="emoji" style="color: green" data-emoji="✨"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-2728"/></svg></span> 아래 '입학원서 작성'은 입학 확정 후에 입력하는 링크입니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 전화 상담 후 대면 상담 약속을 잡아 한미유치원의 환경과 교육 등에 관해 상세하게 안내드립니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="✨"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-2728"/></svg></span> 아래 '입학원서 작성'은 입학 확정 후에 입력하는 링크입니다.</p>
         </div>
         <br>
         <a href="https://forms.gle/9TgouHco8A4ZMKh67" target="_blank" class="apply-button">입학원서 작성</a>
@@ -789,9 +798,9 @@
         <h2 class="event-title">2026학년도 공고</h2>
         <p class="event-subtitle"><a href="https://docs.google.com/document/d/1SkB3xw5D9bv71TPOVFaKxdlX941BTVtVppg5juLdJVo/edit?usp=sharing" target="_blank">유보통합 협력교사 「마주봄교사」 채용 공고</a></p>
         <div class="event-details">
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 유보통합 협력교사 「마주봄교사」는 담임교사와 함께 수업 협력·관찰기록·교육적 돌봄·개별 유아 지원 등 유아를 마주하며 봄처럼 따뜻하게 살피는 교사를 의미하며, 2026년 유보통합 협력교사 「마주봄교사」 시범운영에 따른 한시채용 강사(비담임)를 말합니다. <strong>채용 상세 공고는 위 링크를 클릭해 주세요.</strong></p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 유보통합 협력교사 「마주봄교사」는 담임교사와 함께 수업 협력·관찰기록·교육적 돌봄·개별 유아 지원 등 유아를 마주하며 봄처럼 따뜻하게 살피는 교사를 의미하며, 2026년 유보통합 협력교사 「마주봄교사」 시범운영에 따른 한시채용 강사(비담임)를 말합니다. <strong>채용 상세 공고는 위 링크를 클릭해 주세요.</strong></p>
           <div class="event-info">
-            <p><span class="emoji" style="color: green" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 게시 기간: 2026. 3. 13. (금요일) 09:00 ～ 2026. 3. 19. (목요일) 15:00까지</p>
+            <p><span class="emoji" style="color: var(--green)" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 게시 기간: 2026. 3. 13. (금요일) 09:00 ～ 2026. 3. 19. (목요일) 15:00까지</p>
         </div>
       </div>
     </section>
@@ -803,11 +812,11 @@
         <h2 class="event-title">2026 교육 설명회 및 시설 참관</h2>
         <p class="event-subtitle">대상: 2022, 2021, 2020년생 어린이 가족</p>
         <div class="event-details">
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>전화 문의</strong>가 많아 4차 교육 설명회를 계획했습니다.</p>
-          <p><span class="emoji" style="color: green" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>교육 설명회</strong>는 한미유치원의 풍요롭고 재미있는 놀이와 배움에 관한 이야기와 공지사항(일과시간, 방과후 특성화활동, 방과후과정, 통학차, 교육비 등)을 소개받고 시설 참관을 하며 궁금한 것에 관해 상담을 나누는 시간입니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>전화 문의</strong>가 많아 4차 교육 설명회를 계획했습니다.</p>
+          <p><span class="emoji" style="color: var(--green)" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> <strong>교육 설명회</strong>는 한미유치원의 풍요롭고 재미있는 놀이와 배움에 관한 이야기와 공지사항(일과시간, 방과후 특성화활동, 방과후과정, 통학차, 교육비 등)을 소개받고 시설 참관을 하며 궁금한 것에 관해 상담을 나누는 시간입니다.</p>
           
           <div class="event-info">
-            <p><strong><span class="emoji" style="color: green" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 교육 설명회</strong><br>11/19(수) 11시</p>
+            <p><strong><span class="emoji" style="color: var(--green)" data-emoji="🕙"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f559"/></svg></span> 교육 설명회</strong><br>11/19(수) 11시</p>
             <p>약 1시간 진행하며, 정시에 시작합니다.</p>
         </div>
         <br>
@@ -1068,7 +1077,7 @@
   </div>
   <iframe
     id="maze"
-    src="maze.html?cols=29&rows=13&agents=5&wall=F0EEE7&path=FFFFFF"
+    src="maze.html?cols=29&rows=13&agents=5&wall=FBF7EE&path=FFFFFF"
     style="border:0; width: 100%;"
     height="264"
   ></iframe>

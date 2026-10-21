@@ -280,7 +280,7 @@ header {position: fixed;
     left: 0;
     right: 0;
     height: 60px;
-    background-color: #F0EEE7;;
+    background-color: var(--bg);
     backdrop-filter: blur(20px);
     z-index: 1000;}
 .header-container {max-width: 1400px;
@@ -336,7 +336,7 @@ header {position: fixed;
 .nav-links li {margin-bottom: 8px;
     border-bottom: 1px solid #f5f5f5;}
 .emoji {font-family: 'Noto Emoji';}
-.nav-links .emoji {color: green;}
+.nav-links .emoji {color: var(--green);}
 .nav-links li:last-child {border-bottom: none;}
 .nav-links a {display: block;
     position: relative;
@@ -347,7 +347,7 @@ header {position: fixed;
     padding: 16px 56px 16px 0px;
     transition: all 0.2s ease;
     letter-spacing: -0.01em;}
-.nav-links a:hover {color: green;
+.nav-links a:hover {color: var(--green);
     padding-left: 8px;}
 .nav-links a::after {content: "";
     position: absolute;
@@ -368,12 +368,11 @@ header {position: fixed;
   .nav-content {padding: 80px 20px 40px;}
 }
 
-header { background-color: var(--bg); }
 main { margin-top: 60px; }
 .logo:hover, .nav-links a:hover { text-decoration: none; }
 .nav-links { margin: 0; padding: 0; }
 .nav-links .emo { width: 1em; height: 1em; margin-right: 0; vertical-align: -0.125em; }
-.nav-links a[aria-current="page"] { color: green; }
+.nav-links a[aria-current="page"] { color: var(--green); }
 section, .readable { scroll-margin-top: 68px; }
 #toc { scroll-margin-top: 72px; }
 .peek { top: 50px; z-index: 900; }
