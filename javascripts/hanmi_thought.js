@@ -74,7 +74,7 @@ html['thought'] = `
 </ul>
 <br>
 
-<div class="subtle">관련해서 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt;</a>과 <a href="https://https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;호기심의 두 얼굴&gt;</a>의 내용도 인용해 봅니다.
+<div class="subtle">관련해서 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;평생유치원&gt;</a>과 <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=169324895" target="_blank">&lt;호기심의 두 얼굴&gt;</a>의 내용도 인용해 봅니다.
 <ul class="flower">
   <li>
     <strong>아이들이 자기의 관심을 좇아서, 자기 아이디어를 탐구하고, 자기 목소리를 내는 기회를 제공하는 것이다.</strong>
