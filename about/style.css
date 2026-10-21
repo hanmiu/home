@@ -635,9 +635,9 @@
       font-size: 3rem;
     }
   }
+  .emoji svg, svg.emo { width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
 
 /* --- 상세 페이지(about/) 본문: 2024 글의 클래스를 메인 스타일로 --- */
-.emoji svg, svg.emo { width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
 .page-hero { flex-direction: column; padding: 70px 40px 50px; }
 .page-hero h1 { font-family: 'Noto Serif KR', serif; }
 .page-hero .page-desc { margin-top: 12px; font-size: 1rem; color: #555; word-break: keep-all; }
