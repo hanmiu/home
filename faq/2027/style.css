@@ -273,6 +273,8 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 @media (min-width: 700px) { .readable { max-width: 760px; } }
 .readable .more { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 15px; }
 .readable .more a { font-weight: 700; color: var(--green); }
+.story h3 a.vid { color: var(--green); }
+.story h3 a.vid .icon { margin-left: 4px; vertical-align: -0.12em; color: inherit; }
 
 /* 메인 페이지 머리말·메뉴(site_chrome.py 가 index.html 에서 꺼냄) */
 header {position: fixed;
