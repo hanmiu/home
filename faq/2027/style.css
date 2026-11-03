@@ -273,6 +273,8 @@ section > ol:last-child > li:last-child, .when li:last-child, .flow li:last-chil
 @media (min-width: 700px) { .readable { max-width: 760px; } }
 .readable .more { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 15px; }
 .readable .more a { font-weight: 700; color: var(--green); }
+section > .more { margin-top: 20px; font-size: 15px; }
+section > .more a { font-weight: 700; color: var(--green); }
 .story h3 a.vid { color: var(--green); }
 .story h3 a.vid .icon { margin-left: 4px; vertical-align: -0.12em; color: inherit; }
 
