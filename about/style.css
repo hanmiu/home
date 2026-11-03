@@ -318,6 +318,15 @@
     background: white;
     color: #000000;
   }
+
+  /* 두 번째 버튼(덜 급한 것): 흰 바탕, 마우스를 올리면 연두 */
+  .apply-button.secondary {
+    background: var(--card);
+  }
+
+  .apply-button.secondary:hover {
+    background: var(--lime);
+  }
   
   /* Video Section */
   .video-section {
@@ -676,6 +685,72 @@
 .article audio { display: block; width: 100%; margin: 0.5rem 0; }
 #musical { display: block; margin: auto; width: 75%; cursor: pointer; image-rendering: pixelated; transition: opacity 1s; }
 .nav-links a[aria-current="page"] { color: var(--green); }
+/* 30주년 신문(/about/history/30th/) — 신문 꾸밈을 줄이고 글·사진 순서만 살림. 분홍 = 신문의 교사 기록·인용 색 */
+.article .news-cover { margin: 0 auto 1rem; max-width: 420px; }
+.article .news-cover img { display: block; width: 100%; height: auto; border: 1px solid var(--cardline); border-radius: 6px; }
+.article .masthead { text-align: center; font-size: 0.9rem; color: #555; margin: 0; }
+.article > .note { text-align: center; margin: 0.25rem 0 2rem; }
+.article .news-toc { background: var(--card); border: 1px solid var(--cardline); border-radius: 10px; padding: 18px 24px; margin-bottom: 2.5rem; font-size: 1rem; }
+.article .news-toc strong { background: none; }
+.article .news-toc ol { margin: 0.5rem 0 0 1.4em; columns: 2; column-gap: 2rem; }
+.article .news-toc li { margin-bottom: 0.3rem; }
+.article h2 { font-family: 'Noto Serif KR', serif; font-size: 1.9rem; margin: 3.5rem 0 1rem; padding-top: 1rem; border-top: 3px solid #222; }
+.article h3 { font-size: 1.35rem; margin: 2.5rem 0 0.75rem; }
+.article h4 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
+.article p { margin: 0 0 1rem; }
+.article .lead { font-size: 1.05rem; color: #333; }
+.article .sub { color: #d70564; font-weight: 600; margin-top: -0.4rem; }
+.article .by, .article .sign { text-align: right; color: #555; font-size: 1rem; }
+.article .q { font-weight: 700; margin-top: 2rem; }
+.article .a b, .article .q b { color: var(--green); }
+.article .news-dark { background: #3a3a3a; color: #fff; border-radius: 10px; padding: 20px 24px; margin: 1.25rem 0; font-size: 1rem; }
+.article .news-dark p:last-child { margin-bottom: 0; }
+.article .news-dark .src { text-align: right; color: #ddd; }
+.article .news-dark .foot { color: #ddd; font-size: 0.9rem; }
+.article .news-dark a { border-bottom-color: #aaa; }
+.article blockquote { margin: 0; }
+.article .pull { margin: 1.75rem 0; padding: 0 0 0 20px; border-left: 3px solid #d70564; color: #d70564; font-size: 1.05rem; }
+.article .pull p { margin: 0; }
+.article .pull cite { display: block; text-align: right; font-style: normal; font-size: 0.9rem; margin-top: 0.4rem; }
+.article .record { color: #b0084f; font-size: 1rem; }
+.article .news-box { border: 1.5px solid #e66a9f; border-radius: 12px; padding: 18px 22px; margin: 1.5rem 0; color: #b0084f; font-size: 1rem; }
+.article .news-box strong { display: block; color: #d70564; font-size: 1.15rem; background: none; }
+.article .news-box em { display: block; font-style: normal; margin: 0.2rem 0 0.6rem; color: #d70564; }
+.article .news-box p:last-child { margin-bottom: 0; }
+.article .news-box .src { text-align: right; }
+.article .news-box.report { border-color: var(--cardline); background: var(--card); color: #333; }
+.article .news-box.report strong { color: #222; }
+.article .talk { list-style: none; margin: 1rem 0 1.5rem; padding: 14px 20px; background: var(--card); border: 1px solid var(--cardline); border-radius: 14px; font-size: 1rem; }
+.article .talk li { margin: 0.2rem 0; }
+.article .talk li::before { content: "“ "; color: var(--green); font-weight: 700; }
+.article .voices { margin: 1rem 0 1.5rem; font-size: 0.98rem; }
+.article .voices blockquote { background: var(--card); border: 1px solid var(--cardline); border-radius: 12px; padding: 12px 18px; margin: 0 0 0.6rem; color: #b0084f; }
+.article .voices .src { text-align: right; font-size: 0.85rem; color: #666; }
+.article .news-list { display: inline-block; vertical-align: top; width: calc(50% - 10px); margin: 0.5rem 0 1rem; padding: 16px 20px; box-sizing: border-box;
+                      background: var(--card); border: 1px solid var(--cardline); border-radius: 12px; font-size: 0.98rem; }
+.article .news-list + .news-list { margin-left: 16px; }
+.article .news-list strong { display: inline-block; background: #222; color: #fff; border-radius: 999px; padding: 2px 14px; }
+.article .news-list ul { margin: 0.6rem 0 0 1.2em; }
+.article .news-list li { margin-bottom: 0.25rem; }
+.article .news-fig { margin: 1.25rem 0 1.75rem; }
+.article .news-fig .row { display: flex; gap: 6px; align-items: flex-start; }
+.article .news-fig .cell { min-width: 0; }
+.article .news-fig .cell img { display: block; width: 100%; height: auto; border-radius: 4px; background: #eee; }
+.article .news-fig .cell span { display: block; font-size: 0.8rem; color: #666; margin-top: 0.25rem; line-height: 1.4; }
+.article .news-fig .tall-cell { flex: 0 0 38%; margin: 0 auto; }
+.article .news-fig .tall { max-height: 70vh; overflow-y: auto; border: 1px solid var(--cardline); border-radius: 4px; }
+.article .news-fig figcaption { font-size: 0.85rem; color: #666; margin-top: 0.4rem; }
+.article .news-fig.diagram { max-width: 520px; margin-left: auto; margin-right: auto; }
+.article .back { margin-top: 3rem; }
+@media (max-width: 768px) {
+  .article .news-toc ol { columns: 1; }
+  .article h2 { font-size: 1.5rem; }
+  .article .news-list { display: block; width: auto; }
+  .article .news-list + .news-list { margin-left: 0; }
+  .article .news-fig .row { flex-wrap: wrap; }
+  .article .news-fig .cell { flex-basis: 40% !important; }
+  .article .news-fig .tall-cell { flex-basis: 70% !important; }
+}
 @media (max-width: 768px) {
   .page-hero { padding: 50px 20px 36px; }
   .article-section { padding-top: 40px; }
