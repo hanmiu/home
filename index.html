@@ -672,6 +672,20 @@
     }
   }
   .emoji svg, svg.emo { width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
+
+  /* 자료를 읽는 길 */
+  .guide-section .event-title { margin-bottom: 28px; }
+  .guide-list { list-style: none; max-width: 560px; margin: 0 auto; padding: 0; text-align: center; word-break: keep-all; }
+  .guide-list li { margin: 0 0 14px; line-height: 1.7; }
+  .guide-list a { font-weight: 700; color: inherit; text-underline-offset: 4px; white-space: nowrap; }
+  .guide-note { font-size: 0.85em; color: #666; white-space: nowrap; }
+  .guide-more { max-width: 560px; margin: 26px auto 0; font-size: 0.95rem; line-height: 1.8; word-break: keep-all; text-align: left; }
+  .guide-more summary { cursor: pointer; text-align: center; color: #555; }
+  .guide-more p { margin: 14px 0 0; }
+  .guide-more a { color: inherit; text-underline-offset: 3px; }
+  .guide-more ul { margin: 8px 0 0; padding-left: 1.1em; }
+  .guide-more li { margin: 8px 0 0; }
+  @media (max-width: 480px) { .guide-list a { white-space: normal; } }
 </style>
 </head>
 <body>
@@ -727,6 +741,7 @@
         <li><a href="/about/history/"><span class="emoji" data-emoji="✨"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-2728"/></svg></span> 역사 · 문화 · 환경</a></li>
         <li><a href="/about/thought/"><span class="emoji" data-emoji="💭"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f4ad"/></svg></span> 교육에 관한 생각</a></li>
         <li><a href="/about/play/"><span class="emoji" data-emoji="🧩"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f9e9"/></svg></span> 놀이</a></li>
+        <li><a href="/stories/"><span class="emoji" data-emoji="🌱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f331"/></svg></span> 놀이 속 배움</a></li>
         <li><a href="https://docs.google.com/document/d/1UEDdYHwOuGW_jTv3b9lxsP4qSMkjL0GBPp1TdpTjBZw/edit?usp=sharing" target="_blank"><span class="emoji" data-emoji="🍱"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f371"/></svg></span> 급식</a></li>
         <li><a href="/about/parent/"><span class="emoji" data-emoji="💕"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f495"/></svg></span> 부모 참여</a></li>
         <li><a href="/about/playground/"><span class="emoji" data-emoji="🛝"><svg class="emo" aria-hidden="true" focusable="false"><use href="#emo-1f6dd"/></svg></span> 디지털 놀이터</a></li>
@@ -834,6 +849,33 @@
       </div>
     </section>
     -->
+
+    <!-- 자료를 읽는 길: 사람에겐 네 줄, 자세한 설명은 펼쳐 보기(글은 HTML 에 그대로 있어 검색엔진·AI 도 읽음) -->
+    <section class="event-section guide-section">
+      <div class="event-container">
+        <h2 class="event-title">한미유치원, 어디부터 볼까요?</h2>
+        <ul class="guide-list">
+          <li>입학이 궁금하다면 <a href="/faq/2027/">2027학년도 FAQ</a></li>
+          <li>어린이들의 놀이와 배움이 궁금하다면 <a href="/stories/">한미유치원의 이야기</a></li>
+          <li>왜 놀이인지 궁금하다면 <a href="/about/thought/">교육에 관한 생각</a></li>
+          <li>지나온 고민이 궁금하다면 <a href="/about/history/30th/">어제와 오늘, 그리고 내일</a> <span class="guide-note">30주년 신문</span></li>
+        </ul>
+        <details class="guide-more">
+          <summary>자료를 함께 읽는 법</summary>
+          <p>한미유치원의 교육은 미리 정한 프로그램을 따라가는 것이 아니라, 레지오 에밀리아 접근의 <a href="/about/thought/">프로제타지오네</a>처럼 어린이들과 함께 계획하고 고쳐 가며 만들어 갑니다. 그래서 놀이 사례 하나로 설명하기 어렵습니다. 한 페이지는 나무 한 그루를 보여 줄 뿐이니, 오랜 시간의 고민과 시행착오, 교육에 관한 생각, 오늘 교실의 놀이, 현재의 운영을 꼼꼼히 함께 읽어 숲을 봐 주세요.</p>
+          <p>자료마다 쓴 시기와 목적이 다릅니다.</p>
+          <ul>
+            <li><a href="/faq/2027/">2027학년도 FAQ</a> — 2027학년도 기준의 입학 안내. 교육방향, 공간, 교사와 학급 구성, 만 3세 적응, 하루 일과와 통학차, 흐름이 있는 놀이, 급식, 방과후과정, 행사, 가정과 함께까지 10가지 질문으로 답합니다. 운영에 관한 내용은 이곳을 기준으로 봐 주세요.</li>
+            <li><a href="/about/history/30th/">어제와 오늘, 그리고 내일</a> — 2014년 30주년 신문. 원장 인터뷰로 1997년 레지오 에밀리아 접근을 시작한 깨달음과 도전, 시행착오, 어린이·교육자·가족의 학습공동체, 기록 작업과 동료 장학의 부담, ‘내적 동기’의 문제, 교육자의 문화를 들려줍니다. 2003년 OECD 유아교육과 보육 검토단의 방문과 평가도 담겼습니다. 지금의 교육이 어떤 고민을 거쳐 왔는지 보여 주는 자료입니다.</li>
+            <li><a href="/about/thought/">교육에 관한 생각</a> — 프로제타지오네(프로그램마지오네의 반대말)를 바탕으로, 짜인 대로 나아가기만 하지 않고 멈춤과 후퇴를 인정하며 어린이의 성향과 리듬을 존중하는 교육을 설명합니다. 기록 작업, 『평생유치원』의 창의적 배움의 나선, 말라구찌의 ‘어린이의 백 가지 언어’, 어린이의 힘을 믿는 교육, 2019 개정 누리과정 놀이운영사례집에 실린 한미유치원 사례로 이어집니다.</li>
+            <li><a href="/stories/first-time/">한미유치원은 처음이라</a> — 만 3세 적응 기록. 설렘과 두려움은 차례로 지나가지 않고 끝까지 함께 갑니다. 어린이가 스스로 찾은 ‘슬픔을 이겨 내는 나만의 방법’(애착 인형·스티커·카메라), 말로 어려운 마음을 사진으로 듣는 3월 회고, 남은 시간을 미리 알리는 정리 시간의 조정, 엄마를 기다리던 창문이 친구를 기다리는 창문이 되는 변화를 담았습니다. 매체 전환(긴 종이)과 “그래서 어떻게 됐어?”라는 질문으로 이어진 이야기가 노래가 되기까지, 교사의 예상과 달리 흐르는 과정도 볼 수 있습니다.</li>
+            <li><a href="/stories/small-numbers/">작은 수, 풍성한 배움의 씨앗</a> — 만 4세 가게 놀이 기록. 높은 층수를 읽는 것과 수의 의미를 아는 것은 다르며, 5 이하의 작은 수에서 수 감각의 핵심(1대1 대응, 5의 합성과 분해)을 익힙니다. 단추 화폐(5원·1원), 43원 나누기, “5원을 잘라 주세요”에서 수가 공정과 배려의 문제와 만나고, 어린이마다 경로와 속도가 다르며, 또래 교수가 일어납니다. 궁리할 시간과 열린 질문 속에서 놀이가 멈췄다 이어지고 합쳐지고 갈라져 반 전체의 문화가 되는 과정, 곧 ‘흐름이 있는 놀이’의 실제 사례입니다.</li>
+            <li><a href="/stories/in-bloom/">일곱 살, 활짝 핀 놀이</a> — 만 5세 놀이의 다양성과 다중 양식 문해력을 보여 주는 2025학년도 새반 영상 모음. 스톱 모션(상상력이 동기, 합 맞추기와 말로 주고받는 신호의 협력), 수상한 한글(자모 조형으로 한글과 친해지기), 한자 딱지(한자를 조합해 말 짓기), 디테일 꾸미기(반복 선의 표현과 감정 어휘의 세분화), 미로(천장 카메라로 평면 계획과 입체 실행 맞추기). 세 해를 보낸 학부모의 추천사가 환경, 놀이, 시행착오, 사람, 학습에 끌려가지 않는 일상을 이유로 꼽습니다.</li>
+            <li><a href="/about/parent/">부모 참여</a> — 매주 ‘교육의 흐름’과 소식지, 학기마다 개별상담·공유모임·참여수업, 포트폴리오 ‘나의 유치원생활’, 부모교육으로 유치원과 가정이 어린이의 놀이를 같은 눈으로 이해해 가는 방법입니다.</li>
+          </ul>
+        </details>
+      </div>
+    </section>
 
     <!-- Video Section -->
     <section class="video-section">

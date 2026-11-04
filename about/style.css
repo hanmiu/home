@@ -655,6 +655,18 @@
   }
   .emoji svg, svg.emo { width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
 
+  /* 자료를 읽는 길 */
+  .guide-section .event-title { margin-bottom: 28px; }
+  .guide-list { list-style: none; max-width: 560px; margin: 0 auto; padding: 0; text-align: center; word-break: keep-all; }
+  .guide-list li { margin: 0 0 14px; line-height: 1.7; }
+  .guide-list a { font-weight: 700; color: inherit; text-underline-offset: 4px; white-space: nowrap; }
+  .guide-note { font-size: 0.85em; color: #666; white-space: nowrap; }
+  .guide-more { max-width: 560px; margin: 26px auto 0; font-size: 0.95rem; line-height: 1.8; word-break: keep-all; text-align: left; }
+  .guide-more summary { cursor: pointer; text-align: center; color: #555; }
+  .guide-more p { margin: 14px 0 0; }
+  .guide-more a { color: inherit; text-underline-offset: 3px; }
+  @media (max-width: 480px) { .guide-list a { white-space: normal; } }
+
 /* --- 상세 페이지(about/) 본문: 2024 글의 클래스를 메인 스타일로 --- */
 .page-hero { flex-direction: column; padding: 70px 40px 50px; }
 .page-hero h1 { font-family: 'Noto Serif KR', serif; }
