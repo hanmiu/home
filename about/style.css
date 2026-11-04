@@ -812,6 +812,7 @@
   .article .news-list + .news-list { margin-left: 0; }
   .article .news-fig .row { flex-wrap: wrap; }
   .article .news-fig .cell { flex-basis: 40% !important; }
+  .article .news-fig .cell:only-child:not(.tall-cell) { flex: 1 1 100% !important; }   /* 한 장짜리는 폭 전체(줄어들면 슬라이드 글자를 못 읽음) */
   .article .news-fig .tall-cell { flex-basis: 70% !important; }
 }
 @media (max-width: 768px) {
