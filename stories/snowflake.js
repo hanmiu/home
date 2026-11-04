@@ -282,7 +282,7 @@
   new IntersectionObserver(function (e) {
     seen = e[0].isIntersecting;
     if (seen && phase && phase !== "done") { last = performance.now(); kick(); }
-  }).observe(cv);
+  }, { threshold: 0.35 }).observe(cv);            // 글 아래쪽으로 옮겨서: 어느 정도 보일 때 피어나기 시작
   addEventListener("resize", function () { if (phase === "done") drawSim(1.0001, true); });
   btn.addEventListener("click", start);
   start();
