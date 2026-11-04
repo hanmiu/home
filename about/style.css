@@ -794,6 +794,27 @@
 .article .chat .bubble { display: block; position: relative; max-width: 78%; padding: 10px 14px; border-radius: 18px; background: #eceaea; font-size: 0.98rem; line-height: 1.5; }
 .article .chat li.r .bubble { background: #fbeb4f; }
 .article .chat.green li.r .bubble { background: #cfe5a8; }
+.article .chat.blue li.r .bubble { background: #cfe7f6; }
+.article .bloom-lead { margin: 0 0 2.2rem; }
+.article .bloom { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.2rem 1.5rem; align-items: start; }
+.article .bloom-play { margin: 0; padding: 0; max-width: none; }
+.article .bloom-play.wide { grid-column: 1 / -1; }
+.article .bloom-play h3 { margin: 0 0 0.4rem; font-size: 1.25rem; }
+.article .bloom-play p { margin: 0 0 0.7rem; font-size: 1rem; line-height: 1.75; }
+.article .bloom-play .yts { display: grid; gap: 0.8rem; }
+.article .bloom-play.wide .yts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.article .bloom-play figure { margin: 0; }
+.article .bloom-play figcaption { font-size: 0.82rem; color: #666; margin-top: 0.3rem; line-height: 1.4; }
+.article .yt, .article .bloom-play iframe { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; overflow: hidden; background: #111; }
+.article .yt img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.article .yt .play { position: absolute; left: 50%; top: 50%; width: 56px; height: 40px; margin: -20px 0 0 -28px; border-radius: 10px; background: rgba(0, 0, 0, .72); }
+.article .yt .play::after { content: ""; position: absolute; left: 22px; top: 11px; border-left: 16px solid #fff; border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+.article .yt:hover .play { background: #e60000; }
+.article .rec-by { margin: -0.4rem 0 1.5rem; color: #666; font-size: 0.95rem; }
+.article .rec h3 { margin: 2rem 0 0.6rem; font-size: 1.2rem; }
+.article .rec-list { list-style: none; margin: 1rem 0; padding: 0.9rem 1.1rem; background: var(--card); border: 1px solid var(--cardline); border-radius: 12px; }
+.article .rec-list li { margin: 0.15rem 0; }
+.article .rec-close { margin-top: 1.5rem; }
 .article .chat .bubble p { margin: 0; }
 .article .chat .react { position: absolute; top: -12px; right: -6px; width: 24px; height: 24px; border-radius: 50%; background: #f1efef; display: grid; place-items: center; font-size: 0.8rem; }
 .article .chat li.r .react { right: auto; left: -6px; }
@@ -809,6 +830,8 @@
   .article h2 { font-size: 1.5rem; }
   .article .news-list { display: block; width: auto; }
   .article .news-list + .news-list { margin-left: 0; }
+  .article .bloom, .article .bloom-play.wide .yts { grid-template-columns: minmax(0, 1fr); }
+  .article .bloom-play figure.square .yt, .article .bloom-play figure.square iframe { aspect-ratio: 1; }
   .article .news-fig .row { flex-wrap: wrap; }
   .article .news-fig .cell { flex-basis: 40% !important; }
   .article .news-fig .cell:only-child:not(.tall-cell) { flex: 1 1 100% !important; }   /* 한 장짜리는 폭 전체(줄어들면 슬라이드 글자를 못 읽음) */
