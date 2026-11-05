@@ -60,6 +60,7 @@ html['hanmi'] = `
   <ul class="leaf">
     <li><a href="https://docs.google.com/document/d/1y0eWpakT_k0jztMM092pN_1vTu-ii6Ot7T8vpWP49Ak/edit?usp=sharing" target="_blank">감동이 있는 알나무 동네(1997) 후일담</a></li>
     <li><a href="https://drive.google.com/file/d/1mfuc-oR_Ga11l0bEbfq5pVuGTZAooGSJ/view?usp=sharing" target="_blank">한국의 유아교육과 보육정책에 대한 총괄적 진단과 분석: OECD의 관점 (2004)</a> - 2019 개정누리과정까지 이어지는 맥락 속의 한미유치원 (127p)</li>
+    <li><a href="https://repo.kicce.re.kr/handle/2019.oak/5919" target="_blank">영유아기 최상의 교육·보육을 위한 미래 과제: 유보통합의 질적 전환과 재개념화를 중심으로 (육아정책연구소, 2025)</a> - 제4장 최상의 교육·보육 경험 구현 사례 분석 속의 한미유치원 (130p)</li>
     <li><a href="/?page=thought">한미유치원의 교육에 관한 생각</a> →</li>
     <li><a href="/?page=about_play">영상으로 보는 풍요롭고 재밌는 한미유치원의 놀이</a> →</li>
     <li><a href="/?page=playground">한미유치원의 디지털 놀이터 - 어린이들의 놀이를 지원하기 위한 건강한 미디어</a> →</li>

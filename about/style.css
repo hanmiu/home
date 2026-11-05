@@ -665,6 +665,8 @@
   .guide-more summary { cursor: pointer; text-align: center; color: #555; }
   .guide-more p { margin: 14px 0 0; }
   .guide-more a { color: inherit; text-underline-offset: 3px; }
+  .guide-more ul { margin: 8px 0 0; padding-left: 1.1em; }
+  .guide-more li { margin: 8px 0 0; }
   @media (max-width: 480px) { .guide-list a { white-space: normal; } }
 
 /* --- 상세 페이지(about/) 본문: 2024 글의 클래스를 메인 스타일로 --- */
